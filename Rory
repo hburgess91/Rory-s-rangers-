@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rory’s Rangers</title>
+<style>
+  :root{
+    --bg:#0f1225; --card:#171a34; --accent:#ff7a00; --accent2:#ffb703; --good:#6ee7b7; --bad:#f97316; --ink:#e6e9ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, #1c2150 0%, #0f1225 60%) no-repeat var(--bg);
+    color:var(--ink); display:grid; place-items:center;
+  }
+  .wrap{width:min(1000px,92vw); display:grid; grid-template-columns:1fr 320px; gap:18px; align-items:stretch}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr} }
+  .card{background:linear-gradient(180deg,#1a1d3c, #131634); border:1px solid #252a61; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .stage{position:relative; padding:16px; display:grid; place-items:center}
+  canvas{width:100%; height:520px; max-height:62vh; image-rendering:pixelated}
+  .panel{display:flex; flex-direction:column; padding:16px; gap:14px}
+  h1{margin:.2rem 0 .4rem; font-size:clamp(22px,2.3vw,30px); letter-spacing:.3px}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  button{
+    appearance:none; border:none; border-radius:12px; padding:14px 16px; cursor:pointer; font-weight:700;
+    color:#0f1225; background:linear-gradient(180deg,var(--accent),var(--accent2));
+    box-shadow:0 6px 20px rgba(255,122,0,.35); transition:transform .06s ease, filter .2s ease;
+  }
+  button:active{transform:translateY(1px)}
+  .ghost{background:#202556; color:#e6e9ff; box-shadow:none; border:1px solid #2b3270}
+  .stats{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .kpi{background:#10133a; border:1px solid #242a61; border-radius:12px; padding:10px 12px}
+  .kpi b{display:block; font-size:13px; opacity:.75}
+  .kpi span{font-size:22px; font-variant-numeric:tabular-nums}
+  .bar{
+    --val:0%;
+    background:#0d1031; border:1px solid #2a2f67; border-radius:10px; overflow:hidden; height:12px; position:relative;
+  }
+  .bar>i{display:block; height:100%; width:var(--val); background:linear-gradient(90deg,#34d399,#22c55e 45%,#f59e0b 70%,#ef4444 95%)}
+  .tip{font-size:13px; opacity:.85}
+  .log{height:140px; overflow:auto; background:#0d1031; border:1px solid #2b306d; border-radius:10px; padding:10px; font-size:13px}
+  .ok{color:var(--good)} .warn{color:var(--bad)}
+  .footer{font-size:12px; opacity:.7}
+  .kbd{padding:2px 6px;border:1px solid #3a3f80;border-radius:6px;background:#15194a;color:#cdd3ff}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card stage">
+      <canvas id="game" width="800" height="520" aria-label="Rory’s Rangers game area"></canvas>
+    </div>
+    <aside class="card panel">
+      <h1>Rory’s Rangers</h1>
+      <div class="stats">
+        <div class="kpi"><b>Calories</b><span id="cal">0</span></div>
+        <div class="kpi"><b>Score</b><span id="score">0</span></div>
+      </div>
+      <div>
+        <b>Fullness</b>
+        <div class="bar"><i id="fullBar"></i></div>
+      </div>
+      <div class="row">
+        <button id="burgerBtn" title="Key: B">🍔 Feed Burger</button>
+        <button id="pizzaBtn" class="ghost" title="Key: P">🍕 Feed Pizza</button>
+      </div>
+      <div class="tip">Controls: <span class="kbd">B</span> burger, <span class="kbd">P</span> pizza, <span class="kbd">Space</span> dance.</div>
+      <div class="log" id="log" role="log" aria-live="polite"></div>
+      <div class="footer">Keep Rory happy but don’t overfill him. Hitting the sweet spot boosts score; overfeeding triggers a burp penalty.</div>
+    </aside>
+  </div>
+
+<script>
+(() => {
+  // ----- Game State -----
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const ui = {
+    cal: document.getElementById('cal'),
+    score: document.getElementById('score'),
+    fullBar: document.getElementById('fullBar'),
+    log: document.getElementById('log'),
+    burgerBtn: document.getElementById('burgerBtn'),
+    pizzaBtn: document.getElementById('pizzaBtn'),
+  };
+
+  const state = {
+    calories: 0,
+    fullness: 0, // 0..100
+    score: 0,
+    time: 0,
+    animTick: 0,
+    dancing: false,
+    mood: 'okay', // 'okay'|'stuffed'|'hungry'
+    foods: [], // active flying foods
+  };
+
+  // Nutrition constants (tuned for fun, not realism)
+  const FOOD = {
+    burger: { cal: 550, fill: 30, emoji: '🍔', color: '#ffaf45' },
+    pizza:  { cal: 420, fill: 22, emoji: '🍕', color: '#ffd166' },
+  };
+  const DECAY = 1.6; // fullness decay per second
+  const SWEET_SPOT = [45, 75]; // best fullness range
+
+  function log(msg, cls=''){
+    const p = document.createElement('div');
+    if(cls) p.className = cls;
+    p.textContent = `• ${msg}`;
+    ui.log.appendChild(p);
+    ui.log.scrollTop = ui.log.scrollHeight;
+  }
+
+  // ----- Rory (the hero) -----
+  const rory = {
+    x: W*0.5, y: H*0.64, scale: 1,
+    eatTimer: 0,
+    burpTimer: 0,
+  };
+
+  // Draw Rory using primitive shapes so we don’t rely on assets.
+  function drawRory() {
+    const t = state.time;
+    const bob = Math.sin(t*2) * (state.dancing ? 8 : 3);
+    const sway = Math.sin(t*1.7) * (state.dancing ? 0.2 : 0.1);
+
+    ctx.save();
+    ctx.translate(rory.x, rory.y + bob);
+    ctx.scale(rory.scale, rory.scale);
+    ctx.rotate(sway);
+
+    // Torso (shirtless)
+    roundedRect(-70, -60, 140, 160, 24, '#f4c8a8', '#e2b18f'); // chest/abs
+    // Nipples (tasteful dots)
+    circle(-35, -10, 4, '#d49a7c');
+    circle( 35, -10, 4, '#d49a7c');
+
+    // Arms
+    limb(-80, -20, -120, 40, 22);
+    limb( 80, -20,  120, 40, 22);
+
+    // Head
+    circle(0, -150, 55, '#f1c19d'); // skull (bald)
+    // Ears
+    circle(-48, -150, 10, '#ecb593'); circle(48, -150, 10, '#ecb593');
+
+    // Eyes
+    eye(-18, -160); eye(18, -160);
+
+    // Ginger beard (big)
+    beard(0, -125, 50, 65);
+
+    // Mouth (opens when eating)
+    const mouthOpen = rory.eatTimer > 0 ? Math.min(18, rory.eatTimer*22) : 6;
+    mouth(0, -130, mouthOpen);
+
+    // Trousers
+    roundedRect(-72, 80, 144, 50, 16, '#2c3b8f', '#1c2864');
+
+    // Feet (little shoes)
+    roundedRect(-68, 124, 64, 18, 8, '#0f101f', '#0f101f');
+    roundedRect(  4, 124, 64, 18, 8, '#0f101f', '#0f101f');
+
+    // Status halo
+    drawHalo();
+
+    ctx.restore();
+
+    // Burp bubble
+    if (rory.burpTimer > 0) {
+      const a = Math.min(1, rory.burpTimer);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#9ae6b4';
+      ctx.font = '24px system-ui, sans-serif';
+      ctx.fillText('BURP!', rory.x + 60, rory.y - 160);
+      ctx.restore();
+      rory.burpTimer -= dt();
+    }
+  }
+
+  function drawHalo(){
+    const f = state.fullness;
+    let col = '#34d399';
+    if (f < SWEET_SPOT[0]) col = '#60a5fa';
+    if (f > SWEET_SPOT[1]) col = '#ef4444';
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    circle(0, -150, 70 + Math.sin(state.time*3)*3, col);
+    ctx.restore();
+  }
+
+  function dt(){ return Math.min(0.05, (performance.now() - lastFrame)/1000); }
+
+  function circle(x,y,r, fill, stroke){
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.stroke(); }
+  }
+  function roundedRect(x,y,w,h,r, fill, shade){
+    ctx.beginPath();
+    const rr = Math.min(r, Math.abs(w/2), Math.abs(h/2));
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    if(fill){
+      const g = ctx.createLinearGradient(0,y,0,y+h);
+      g.addColorStop(0, fill);
+      g.addColorStop(1, shade||fill);
+      ctx.fillStyle = g; ctx.fill();
+    } else ctx.stroke();
+  }
+  function limb(x1,y1,x2,y2,w){
+    ctx.save();
+    ctx.strokeStyle = '#ebb997'; ctx.lineWidth = w; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.restore();
+  }
+  function eye(x,y){
+    circle(x,y,7,'#fff'); circle(x+2,y,3,'#222');
+  }
+  function beard(cx, cy, rx, ry){
+    ctx.save();
+    const g = ctx.createLinearGradient(0,cy-ry,0,cy+ry);
+    g.addColorStop(0,'#b84c1d'); g.addColorStop(1,'#7a2d0e');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy+8, rx, ry, 0, 0, Math.PI, false); // lower arc
+    ctx.fill();
+    // moustache
+    roundedRect(cx-40, cy-10, 80, 18, 9, '#a84317', '#7e2f0f');
+    ctx.restore();
+  }
+  function mouth(cx, cy, open){
+    ctx.save();
+    ctx.fillStyle = '#2a1b28';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 16, open, 0, 0, Math.PI*2);
+    ctx.fill();
+    // tongue
+    if(open>8){ ctx.fillStyle = '#e3637e'; ctx.beginPath(); ctx.ellipse(cx, cy+open/2, 10, open/3, 0, 0, Math.PI*2); ctx.fill(); }
+    ctx.restore();
+  }
+
+  // ----- Food projectiles -----
+  function spawnFood(kind){
+    const f = FOOD[kind];
+    state.foods.push({
+      kind, x: Math.random()<.5 ? -60 : W+60, y: H*0.25 + Math.random()*H*0.4,
+      vx:  (rory.x - (Math.random()<.5 ? -60 : W+60)) * (0.004 + Math.random()*0.0015),
+      vy:  (rory.y - 100 - (H*0.25 + Math.random()*H*0.4)) * (0.004 + Math.random()*0.0015),
+      r: 18, spin: (Math.random()-.5)*0.1, a:1
+    });
+    // Start eat animation (mouth opens)
+    rory.eatTimer = 0.6;
+  }
+
+  function drawFood(f){
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.spin * state.time*60);
+    ctx.globalAlpha = f.a;
+    // Simple emoji fallback look:
+    ctx.font = '28px system-ui';
+    const e = FOOD[f.kind].emoji;
+    ctx.fillText(e, -14, 10);
+    ctx.restore();
+  }
+
+  function updateFoods(dt){
+    for (let i=state.foods.length-1;i>=0;i--){
+      const f = state.foods[i];
+      f.x += f.vx * 60;
+      f.y += f.vy * 60;
+      // Homing a bit toward mouth
+      f.vx += (rory.x - f.x) * 0.00006;
+      f.vy += ((rory.y-130) - f.y) * 0.00006;
+
+      // Collision with mouth
+      const dx = f.x - rory.x, dy = f.y - (rory.y-130);
+      if (dx*dx + dy*dy < 26*26){
+        eat(f.kind);
+        state.foods.splice(i,1);
+        continue;
+      }
+      // Fade out if misses (rare)
+      if (f.x<-120 || f.x>W+120 || f.y<-120 || f.y>H+120){
+        state.foods.splice(i,1);
+      }
+    }
+  }
+
+  // ----- Eating logic -----
+  function eat(kind){
+    const k = FOOD[kind];
+    state.calories += k.cal;
+    state.fullness = Math.min(100, state.fullness + k.fill);
+    rory.burpTimer = 0.7;
+    pulseBar();
+    // Scoring: sweet spot bonus
+    let delta = 5;
+    if (state.fullness >= SWEET_SPOT[0] && state.fullness <= SWEET_SPOT[1]) {
+      delta = 40;
+      log(`Perfect bite! ${kind.toUpperCase()} for +${delta} pts`, 'ok');
+    } else if (state.fullness > 90) {
+      delta = -25;
+      log(`Overfed! Burp penalty ${delta} pts`, 'warn');
+    } else if (state.fullness < 25) {
+      delta = 15;
+      log(`Good snack. +${delta} pts`);
+    } else {
+      log(`Yum. +${delta} pts`);
+    }
+    state.score = Math.max(0, state.score + delta);
+    updateUI();
+  }
+
+  function pulseBar(){
+    ui.fullBar.parentElement.animate([{transform:'scale(1)'},{transform:'scale(1.03)'},{transform:'scale(1)'}],
+                                     {duration:280, easing:'ease-out'});
+  }
+
+  // ----- UI & Controls -----
+  function updateUI(){
+    ui.cal.textContent = state.calories.toLocaleString();
+    ui.score.textContent = state.score.toLocaleString();
+    ui.fullBar.style.setProperty('--val', state.fullness+'%');
+  }
+
+  ui.burgerBtn.addEventListener('click', ()=> spawnFood('burger'));
+  ui.pizzaBtn.addEventListener('click',  ()=> spawnFood('pizza'));
+
+  window.addEventListener('keydown', (e)=>{
+    if (e.repeat) return;
+    if (e.key.toLowerCase()==='b') spawnFood('burger');
+    if (e.key.toLowerCase()==='p') spawnFood('pizza');
+    if (e.code==='Space'){ state.dancing = true; setTimeout(()=> state.dancing=false, 600); }
+  });
+
+  // ----- Game Loop -----
+  let lastFrame = performance.now();
+  function loop(now){
+    const d = dt();
+    state.time += d;
+    rory.eatTimer = Math.max(0, rory.eatTimer - d*1.8);
+
+    // fullness decay over time
+    state.fullness = Math.max(0, state.fullness - DECAY*d);
+    updateUI();
+
+    // Background
+    ctx.clearRect(0,0,W,H);
+    drawBackground();
+
+    // Update & draw foods
+    updateFoods(d);
+    state.foods.forEach(drawFood);
+
+    // Draw Rory
+    drawRory();
+
+    lastFrame = now;
+    requestAnimationFrame(loop);
+  }
+
+  function drawBackground(){
+    // Floor
+    ctx.fillStyle = '#0a0c28';
+    ctx.fillRect(0, H-60, W, 60);
+    // Subtle spotlight
+    const g = ctx.createRadialGradient(W/2, H*0.45, 40, W/2, H*0.55, 360);
+    g.addColorStop(0, 'rgba(255,255,255,0.06)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+    // Confetti when dancing
+    if (state.dancing){
+      for (let i=0;i<24;i++){
+        const x = Math.random()*W, y = Math.random()*H*0.5;
+        ctx.fillStyle = `hsl(${(i*37+state.time*200)%360} 90% 60%)`;
+        ctx.fillRect(x, y, 3, 7);
+      }
+    }
+  }
+
+  // Boot
+  updateUI();
+  log('Welcome to Rory’s Rangers. Keep Rory in the sweet spot!');
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
