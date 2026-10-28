@@ -101,7 +101,7 @@ export class Begour implements Target {
   contactRects(): Rect[] {
     if (this.defeated || this.invuln && this.phase < 0) return [];
     if (this.mode === 'slide') return [this.slideRect()];
-    if (this.mode === 'background') return this.hugPaws.map((p) => ({ x: p.img.x - 40, y: FLOOR - 100, w: 80, h: 100 }));
+    if (this.mode === 'background') return this.hugPaws.map((p) => ({ x: p.img.x - BEGOUR.pawHitW / 2, y: FLOOR - BEGOUR.pawHitH, w: BEGOUR.pawHitW, h: BEGOUR.pawHitH }));
     const b = this.bodyRect();
     return [{ x: b.x + 10, y: b.y + 14, w: b.w - 20, h: b.h - 14 }];
   }
@@ -323,7 +323,7 @@ export class Begour implements Target {
     const d = this.dirToPlayer();
     for (let i = 0; i < 4; i++) {
       this.shot(s, {
-        texture: 'e_heart', x: this.root.x + d * 30, y: FLOOR - 70, vx: d * (90 + i * 32), vy: -(200 + (i % 2) * 70),
+        texture: 'e_heart', x: this.root.x + d * 30, y: FLOOR - 64, vx: d * (90 + i * 32), vy: -(200 + (i % 2) * 70),
         gravity: 380, damage: 1, lifeMs: 5000, hitW: 12, world: 'bounce', bounces: 3, bounceFactor: 0.82, reflectable: true, fadeOut: true,
       });
       AudioBus.sfx('sfx_boing', { vol: 0.5 });
@@ -401,7 +401,7 @@ export class Begour implements Target {
       this.host.fx.shake(160, 0.01);
       this.host.fx.dust(x - 20, FLOOR, 5);
       this.host.fx.dust(x + 20, FLOOR, 5);
-      this.host.combat.addZone({ team: 'enemy', rect: () => ({ x: x - 28, y: FLOOR - 70, w: 56, h: 70 }), until: this.host.now + 140, damage: 1, tickMs: 1000, kind: 'hazard', phaseScoped: true });
+      this.host.combat.addZone({ team: 'enemy', rect: () => ({ x: x - 28, y: FLOOR - 64, w: 56, h: 70 }), until: this.host.now + 140, damage: 1, tickMs: 1000, kind: 'hazard', phaseScoped: true });
       if (k === 2) {
         for (const d of [-1, 1]) this.shot(s, { texture: 'e_wave', x: x + d * 30, y: FLOOR - 5, vx: d * 170, vy: 0, damage: 1, lifeMs: 3000, hitW: 18, hitH: 8, world: 'none' });
       }
@@ -509,8 +509,8 @@ export class Begour implements Target {
     this.hugPaws = [];
     for (const side of [-1, 1] as const) {
       const start = side < 0 ? -36 : 676;
-      const img = s.own(this.host.add.image(start, FLOOR, 'begour_bigpaw').setOrigin(0.5, 1).setDepth(48).setScale(0.85).setFlipX(side > 0));
-      const heart = s.own(this.host.add.image(start - side * 34, FLOOR - 62, 'begour_target').setDepth(49));
+      const img = s.own(this.host.add.image(start, FLOOR, 'begour_bigpaw').setOrigin(0.5, 1).setDepth(48).setScale(BEGOUR.pawScale).setFlipX(side > 0));
+      const heart = s.own(this.host.add.image(start - side * 22, FLOOR - 64, 'begour_target').setDepth(49));
       s.tween({ targets: heart, scale: { from: 1, to: 1.25 }, yoyo: true, repeat: -1, duration: 260 });
       this.hugPaws.push({ img, heart, side, hp: BEGOUR.pawHp, start, retreating: false });
     }
@@ -523,7 +523,7 @@ export class Begour implements Target {
           p.img.x += -p.side * speed * 0.03;
           if (Math.abs(p.img.x - 320) <= 44) { p.img.x = 320 + p.side * 44; closed++; }
         }
-        p.heart.setPosition(p.img.x - p.side * 34, FLOOR - 62);
+        p.heart.setPosition(p.img.x - p.side * 22, FLOOR - 64);
       }
       if (closed === 2) this.bigHug(s);
     });

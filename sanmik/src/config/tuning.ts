@@ -103,8 +103,12 @@ export const BEGOUR = {
   heartSpeed: 150,
   beeSpeed: 165,
   tearSpeed: 250,
-  pawHp: 140,
-  hugCloseMs: 9000,
+  pawHp: 110,
+  hugCloseMs: 10500,
+  // phase-3 hug paws: hitbox must stay well under MOVE.jumpHeight so they can be jumped
+  pawScale: 0.5,
+  pawHitW: 40,
+  pawHitH: 46,
 } as const;
 
 export const SCORE = {
