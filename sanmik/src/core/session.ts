@@ -61,6 +61,6 @@ export const CHAR_INFO: Record<CharId, { name: string; title: string; costumes: 
     title: 'DA POLSONATOR',
     costumes: ['classic', 'dayout', 'party'],
     costumeNames: ['CLASSIC', 'DAY OUT', 'PARTY'],
-    blurb: ['Crutch reach, guards and gas.', 'Jam doughnuts, bean bombs, sausage rolls.', 'Down + Melee: Rancid Fart.', 'Special: CRUNK MODE.'],
+    blurb: ['Crutch reach, guards and gas.', 'Jam doughnuts, bean bombs, sausage rolls.', 'S + Melee: Rancid Fart.', 'Special: CRUNK MODE.'],
   },
 };

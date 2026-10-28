@@ -34,17 +34,21 @@ npm test           # Playwright browser smoke tests
 
 | Action | Keyboard | Gamepad |
 |---|---|---|
-| Move / aim | WASD or arrows | Left stick / D-pad |
-| Jump (YEEE / YEGHHH) | K, Space | A |
-| Shoot | J, Z | X, RT |
-| Melee | L, C | B |
-| Alt (SanMik pose / SanChz guard) | Shift, U | Y |
-| Special (Delusion / Crunk) | I, V | LT |
+| Move | A / D | Left stick / D-pad |
+| Jump (YEEE / YEGHHH) | W (or Space) | A |
+| Crouch / drop through (S + W) | S | Down |
+| Shoot forward | → | X, RT |
+| Shoot upward | ↑ | Up + X |
+| Melee (SanChz fart: S + ←) | ← | B |
+| Special (Delusion / Crunk) | ↓ | LT |
+| Pose (SanMik) / Guard (SanChz) | Shift | Y |
 | Switch weapon | Q / E | LB / RB |
 | Pause | Esc, P | Start |
 
+Menus: arrows or WASD, Enter to confirm.
+
 SanMik holds Shoot to auto-fire; releasing after a long hold fires a charged YEE blast.
-SanChz: Down + Melee is the Rancid Fart; Alt is a short crutch guard that reflects shots.
+SanChz: S + ← is the Rancid Fart; Shift is a short crutch guard that reflects shots.
 
 ## Art and audio
 

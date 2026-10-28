@@ -63,9 +63,9 @@ for (const char of ['sanmik', 'sanchz'] as const) {
     const v0 = await page.evaluate((id) => (window as any).__SANMIK.audio.voice[id] ?? 0, voiceId);
     const j0 = (await state(page))!.jumps;
     // tap jumps, a long held jump (must not retrigger), and a mashed jump mid-air
-    await tap(page, 'k', 80); await sleep(900);
-    await tap(page, 'k', 700); await sleep(500);
-    await tap(page, 'k', 60); await sleep(150); await tap(page, 'k', 60); await sleep(900);
+    await tap(page, 'w', 80); await sleep(900);
+    await tap(page, 'w', 700); await sleep(500);
+    await tap(page, 'w', 60); await sleep(150); await tap(page, 'w', 60); await sleep(900);
     const v1 = await page.evaluate((id) => (window as any).__SANMIK.audio.voice[id] ?? 0, voiceId);
     const s = (await state(page))!;
     expect(s.jumps - j0).toBe(3);
@@ -83,7 +83,7 @@ for (const char of ['sanmik', 'sanchz'] as const) {
     await sleep(300);
     await page.keyboard.down('d');
     await sleep(60);
-    await page.keyboard.down('k');
+    await page.keyboard.down('w');
     let onTop = false;
     for (let i = 0; i < 40 && !onTop; i++) {
       const s = (await state(page))!;
@@ -91,21 +91,21 @@ for (const char of ['sanmik', 'sanchz'] as const) {
       await sleep(25);
     }
     await page.keyboard.up('d');
-    await page.keyboard.up('k');
+    await page.keyboard.up('w');
     expect(onTop).toBe(true);
     // widest gap (148px): runway 1648-1728, landing starts at x=1876
     await page.evaluate(() => (window as any).__SANMIK.cheat.teleport(1662, 318));
     await sleep(400);
     await page.keyboard.down('d');
     await sleep(300);
-    await page.keyboard.down('k');
+    await page.keyboard.down('w');
     let landed = false;
     for (let i = 0; i < 80 && !landed; i++) {
       const s = (await state(page))!;
       if (s.onGround && s.x > 1876 && s.y <= 321) landed = true;
       await sleep(25);
     }
-    await page.keyboard.up('k');
+    await page.keyboard.up('w');
     await page.keyboard.up('d');
     expect(landed).toBe(true);
     const s = (await state(page))!;
@@ -211,9 +211,9 @@ for (const id of ['jobcentre', 'freedom', 'warehouse', 'lampe']) {
     await waitGameplay(page, 'level');
     await page.evaluate(() => (window as any).__SANMIK.cheat.god(true));
     for (let i = 0; i < 4; i++) { await tap(page, 'Enter', 60); await sleep(250); }
-    await page.keyboard.down('d'); await page.keyboard.down('j');
+    await page.keyboard.down('d'); await page.keyboard.down('ArrowRight');
     await sleep(3000);
-    await page.keyboard.up('d'); await page.keyboard.up('j');
+    await page.keyboard.up('d'); await page.keyboard.up('ArrowRight');
     await page.evaluate(() => (window as any).__SANMIK.cheat.god(false));
     await page.evaluate(() => (window as any).__SANMIK.cheat.killPlayer());
     await page.waitForFunction(() => { const s = (window as any).__SANMIK.state(); return s && s.scene === 'level' && s.alive && s.hp === 4 && s.jumps === 0; }, null, { timeout: 10_000 });
@@ -234,7 +234,7 @@ for (const [key, phases, nextKey] of [['fame', 2, 'tesko'], ['tank', 2, 'level']
     await page.evaluate(() => (window as any).__SANMIK.cheat.god(true));
     await page.evaluate(() => (window as any).__SANMIK.cheat.nextPhase());
     await page.waitForFunction(() => (window as any).__SANMIK.state()?.boss?.phase === 0);
-    await page.keyboard.down('j');
+    await page.keyboard.down('ArrowRight');
     for (let p = 1; p < phases; p++) {
       await sleep(3500);
       await page.evaluate(() => (window as any).__SANMIK.cheat.nextPhase());
@@ -243,7 +243,7 @@ for (const [key, phases, nextKey] of [['fame', 2, 'tesko'], ['tank', 2, 'level']
       expect(st.scopes).toBe(1);
     }
     await sleep(4000);
-    await page.keyboard.up('j');
+    await page.keyboard.up('ArrowRight');
     const s = (await state(page))!;
     expect(s.boss!.entries).toBe(Array(phases).fill('1').join('/'));
     await page.evaluate(() => (window as any).__SANMIK.cheat.killBoss());

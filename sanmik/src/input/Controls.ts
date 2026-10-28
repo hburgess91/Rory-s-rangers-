@@ -8,20 +8,40 @@ export type Action =
   | 'jump' | 'shoot' | 'melee' | 'alt' | 'special'
   | 'prev' | 'next' | 'pause' | 'confirm' | 'back';
 
-const KEYS: Record<Action, string[]> = {
+// In-game: WASD moves (W jumps), arrows fight.
+//   -> shoot forward, ^ shoot up, <- melee, v special. Shift = pose/guard, Q/E = weapon.
+const GAME_KEYS: Record<Action, string[]> = {
+  left: ['A'],
+  right: ['D'],
+  up: ['UP'],
+  down: ['S'],
+  jump: ['W', 'SPACE'],
+  shoot: ['RIGHT', 'UP'],
+  melee: ['LEFT'],
+  alt: ['SHIFT'],
+  special: ['DOWN'],
+  prev: ['Q'],
+  next: ['E'],
+  pause: ['ESC', 'P'],
+  confirm: ['ENTER', 'SPACE'],
+  back: ['ESC', 'BACKSPACE'],
+};
+
+// Menus: arrows or WASD to navigate.
+const MENU_KEYS: Record<Action, string[]> = {
   left: ['LEFT', 'A'],
   right: ['RIGHT', 'D'],
   up: ['UP', 'W'],
   down: ['DOWN', 'S'],
-  jump: ['K', 'SPACE', 'X'],
-  shoot: ['J', 'Z'],
-  melee: ['L', 'C'],
-  alt: ['SHIFT', 'U'],
-  special: ['I', 'V'],
+  jump: ['SPACE'],
+  shoot: [],
+  melee: [],
+  alt: [],
+  special: [],
   prev: ['Q'],
   next: ['E'],
   pause: ['ESC', 'P'],
-  confirm: ['ENTER', 'SPACE', 'K', 'Z', 'J'],
+  confirm: ['ENTER', 'SPACE'],
   back: ['ESC', 'BACKSPACE'],
 };
 
@@ -40,7 +60,7 @@ const PAD: Partial<Record<Action, number[]>> = {
 };
 
 export const CONTROL_HINTS = {
-  keyboard: 'Move: WASD/Arrows  Jump: K/Space  Shoot: J  Melee: L  Alt: Shift  Special: I  Weapon: Q/E  Pause: Esc',
+  keyboard: 'Move: A/D  Jump: W  Crouch: S  Shoot: \u2192 (\u2191 shoots up)  Melee: \u2190  Special: \u2193  Pose/Guard: Shift  Weapon: Q/E  Pause: Esc',
   pad: 'Move: Stick/D-pad  Jump: A  Shoot: X/RT  Melee: B  Alt: Y  Special: LT  Weapon: LB/RB  Pause: Start',
 };
 
@@ -54,10 +74,13 @@ export class Controls {
   private tapped = new Set<number>();
   private onKey = (e: KeyboardEvent) => { this.tapped.add(e.keyCode); };
 
-  constructor(private scene: Phaser.Scene) {
+  private keymap: Record<Action, string[]>;
+
+  constructor(private scene: Phaser.Scene, mode: 'menu' | 'game' = 'menu') {
+    this.keymap = mode === 'game' ? GAME_KEYS : MENU_KEYS;
     const kb = scene.input.keyboard;
     if (kb) {
-      const all = new Set(Object.values(KEYS).flat());
+      const all = new Set(Object.values(this.keymap).flat());
       for (const k of all) this.keys.set(k, kb.addKey(k, true, false));
       kb.on('keydown', this.onKey);
     }
@@ -75,10 +98,10 @@ export class Controls {
     const pad = this.pad;
     let padUsed = false;
     let kbUsed = false;
-    for (const a of Object.keys(KEYS) as Action[]) {
+    for (const a of Object.keys(this.keymap) as Action[]) {
       let down = false;
       if (this.enabled) {
-        for (const k of KEYS[a]) {
+        for (const k of this.keymap[a]) {
           const key = this.keys.get(k);
           if (key && (key.isDown || this.tapped.has(key.keyCode))) { down = true; kbUsed = true; break; }
         }

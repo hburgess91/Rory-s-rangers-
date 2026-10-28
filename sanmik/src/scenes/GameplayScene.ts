@@ -99,7 +99,7 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     this.godMode = debugApi.god;
 
     this.fx = new Fx(this);
-    this.controls = new Controls(this);
+    this.controls = new Controls(this, 'game');
     this.solids = this.physics.add.staticGroup();
     this.oneWays = this.physics.add.staticGroup();
     this.enemies = this.add.group();

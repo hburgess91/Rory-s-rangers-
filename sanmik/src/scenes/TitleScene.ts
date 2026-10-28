@@ -120,7 +120,7 @@ export class TitleScene extends Phaser.Scene {
       'KEYBOARD', CONTROL_HINTS.keyboard.replace(/  /g, '\n'), '',
     ];
     this.panel.add(this.add.text(170, 220, lines.join('\n'), { ...textStyle(9, '#ffffff', '#120c16', 2), align: 'left' }).setOrigin(0.5));
-    this.panel.add(this.add.text(460, 220, ['GAMEPAD', CONTROL_HINTS.pad.replace(/  /g, '\n'), '', 'SanChz: Down + Melee = Rancid Fart', 'SanChz: Alt = Crutch Guard', 'SanMik: Alt = Pose (gains Fame)'].join('\n'), { ...textStyle(9, '#ffffff', '#120c16', 2), align: 'left' }).setOrigin(0.5));
+    this.panel.add(this.add.text(460, 220, ['GAMEPAD', CONTROL_HINTS.pad.replace(/  /g, '\n'), '', 'SanChz: Down + B = Rancid Fart', 'SanChz: Y = Crutch Guard', 'SanMik: Y = Pose (gains Fame)'].join('\n'), { ...textStyle(9, '#ffffff', '#120c16', 2), align: 'left' }).setOrigin(0.5));
     this.panel.add(this.add.text(VIEW.W / 2, 290, 'PRESS CONFIRM / BACK', textStyle(9, '#ffe14a', '#120c16', 2)).setOrigin(0.5));
   }
 

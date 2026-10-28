@@ -77,9 +77,9 @@ export const LEVELS: Record<string, LevelDef> = {
     ],
     build: (s) => {
       ground(s, [[0, 900, 'office'], [980, 800, 'office'], [1860, 1140, 'office']]);
-      s.addSign(110, G, 'PRES JUMP 2 YEE', 'Jump: K / Space / (A). Tap for a hop, hold for a full jump.');
-      s.addSign(260, G, 'SHOOT DA HATERS', 'Shoot: hold J / (X). Hold Up/Down to aim. SanMik: release after a long hold for a YEE blast.');
-      s.addSign(420, G, 'MELEE 4 CLOSE STUFF', 'Melee: L / (B).  SanChz: Down + Melee = Rancid Fart.  Wheelchair racers rev first: JUMP them.');
+      s.addSign(110, G, 'PRES JUMP 2 YEE', 'Jump: W / (A). Tap for a hop, hold for a full jump. Move: A / D.');
+      s.addSign(260, G, 'SHOOT DA HATERS', 'Shoot: hold \u2192 / (X). \u2191 shoots upward. SanMik: release after a long hold for a YEE blast.');
+      s.addSign(420, G, 'MELEE 4 CLOSE STUFF', 'Melee: \u2190 / (B).  SanChz: S + \u2190 = Rancid Fart.  Wheelchair racers rev first: JUMP them.');
       s.oneWay(500, 262, 90, 'office');
       s.oneWay(640, 222, 90, 'office');
       s.addPickup(685, 222, 'pepsi');
@@ -91,7 +91,7 @@ export const LEVELS: Record<string, LevelDef> = {
       wheelie(s, 1180);
       form(s, 1260, 200);
       s.addCheckpoint(1350, G);
-      s.addSign(1420, G, 'METER FULL? PRES SPECIAL', 'Special: I / (LT) when the meter is full.  Alt: Shift / (Y) - SanMik poses, SanChz guards.');
+      s.addSign(1420, G, 'METER FULL? PRES SPECIAL', 'Special: \u2193 / (LT) when the meter is full.  Shift / (Y): SanMik poses, SanChz guards.');
       form(s, 1500, 180);
       s.solid(1600, 286, 120, 34, 'office');
       hen(s, 1660, 286);

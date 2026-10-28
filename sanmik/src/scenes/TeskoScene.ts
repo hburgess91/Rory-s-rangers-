@@ -40,10 +40,10 @@ export class TeskoScene extends GameplayScene {
     this.solid(560, 290, 120, 30, 'tesko');
     this.oneWay(720, 262, 96, 'tesko');
     this.oneWay(860, 222, 96, 'tesko');
-    this.addSign(110, G, 'PRES JUMP 2 YEE', 'Jump: K / Space / (A). Tap for a hop, hold for a full jump.');
-    this.addSign(260, G, 'SHOOT DA TROLLEYS', 'Shoot: J / Z / (X). Hold Up/Down to aim. SanMik: keep holding, then release for a YEE blast.');
-    this.addSign(420, G, 'MELEE 4 CLOSE STUFF', 'Melee: L / C / (B).  SanChz: Down + Melee = Rancid Fart.');
-    this.addSign(650, 290, 'DOWN + JUMP 2 DROP', 'Stand on a shelf, hold Down and press Jump to drop through.');
+    this.addSign(110, G, 'PRES JUMP 2 YEE', 'Jump: W / (A). Tap for a hop, hold for a full jump. Move: A / D.');
+    this.addSign(260, G, 'SHOOT DA TROLLEYS', 'Shoot: hold \u2192 / (X). \u2191 shoots upward. SanMik: keep holding, then release for a YEE blast.');
+    this.addSign(420, G, 'MELEE 4 CLOSE STUFF', 'Melee: \u2190 / (B).  SanChz: S + \u2190 = Rancid Fart.');
+    this.addSign(650, 290, 'DOWN + JUMP 2 DROP', 'Stand on a shelf, hold S and press W to drop through.');
     this.addSign(1130, G, 'MIND DA GAP', 'Pits cost 1 HP and put you back on solid ground.');
     this.addEnemy(Charger.wheelie(this, 480, G));
     this.addEnemy(Charger.wheelie(this, 1000, G));
@@ -58,7 +58,7 @@ export class TeskoScene extends GameplayScene {
     this.addEnemy(Charger.wheelie(this, 1420, G));
     this.addEnemy(new HenDo(this, 1560, G));
     this.addCheckpoint(1620, G);
-    this.addSign(1690, G, 'METER FULL? PRES SPECIAL', 'Special: I / V / (LT) when the meter is full.  Alt: Shift / (Y): SanMik poses, SanChz guards.');
+    this.addSign(1690, G, 'METER FULL? PRES SPECIAL', 'Special: \u2193 / (LT) when the meter is full.  Shift / (Y): SanMik poses, SanChz guards.');
     this.addPickup(1740, G, 'pepsimax');
     this.solid(1780, 284, 120, 36, 'tesko');
 

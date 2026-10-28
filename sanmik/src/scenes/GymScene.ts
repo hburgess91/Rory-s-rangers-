@@ -53,7 +53,7 @@ export class GymScene extends GameplayScene {
     this.oneWay(x + 100, 268, 80, 'gym');
     this.oneWay(x + 180, 216, 80, 'gym');
     this.oneWay(x + 100, 164, 80, 'gym');
-    this.addSign(x + 60, G, 'ONE-WAY STACK', 'Down + Jump drops through one-way platforms.');
+    this.addSign(x + 60, G, 'ONE-WAY STACK', 'S + W drops through one-way platforms.');
     this.addEnemy(Charger.wheelie(this, x + 400, G));
     this.addEnemy(new HenDo(this, x + 460, G));
 
