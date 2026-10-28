@@ -252,7 +252,7 @@ function mikFrames(costume: 'classic' | 'alt'): FrameDef[] {
 interface ChzPalette {
   skin: string; skinShade: string; top: string; topHi: string; trousers: string; trousersLo: string; shoe: string;
   hat: string; hatDot: string; brim: string; glass: string; lens: string; crutch: string; crutchLo: string; cuff: string;
-  wig?: string; wigHi?: string; jacket?: string; jacketLo?: string;
+  wig?: string; wigHi?: string; jacket?: string; jacketLo?: string; hair?: string; tattoo?: string; pack?: string;
 }
 
 const CHZ_PAL: Record<string, ChzPalette> = {
@@ -264,6 +264,11 @@ const CHZ_PAL: Record<string, ChzPalette> = {
     skin: '#f4d3c0', skinShade: '#d9a993', top: '#ff4fa8', topHi: '#ff8fca', trousers: '#ff6fb8', trousersLo: '#d94a92', shoe: '#ffffff',
     hat: '#111111', hatDot: '#ffffff', brim: '#111111', glass: '#ff7a1a', lens: '#7a55e0', crutch: '#a8b2bd', crutchLo: '#5e6670', cuff: '#2a2d33',
     wig: '#ff2f8f', wigHi: '#ff8cc6', jacket: '#ff59ad', jacketLo: '#c93b84',
+  },
+  dayout: {
+    skin: '#f6cdb8', skinShade: '#dba48e', top: '#f0eeea', topHi: '#ffffff', trousers: '#cfc5b0', trousersLo: '#b0a690', shoe: '#e8e8e8',
+    hat: '#000000', hatDot: '#000000', brim: '#000000', glass: '#000000', lens: '#000000', crutch: '#a8b2bd', crutchLo: '#5e6670', cuff: '#2a2d33',
+    hair: '#e8d58a', tattoo: '#3a3a4a', pack: '#ffd84a',
   },
 };
 
@@ -298,7 +303,10 @@ function drawCrutch(p: Pix, pal: ChzPalette, hand: Pt, tip: Pt) {
   return top;
 }
 
-export function drawSanChz(p: Pix, pose: ChzPose, costume: 'classic' | 'party') {
+export type ChzCostume = 'classic' | 'party' | 'dayout';
+
+// SanChz is a big lad: broad shoulders, round belly, fuller face (see reference photos).
+export function drawSanChz(p: Pix, pose: ChzPose, costume: ChzCostume) {
   const pal = CHZ_PAL[costume];
   const ctx = p.ctx;
   if (pose.tilt) {
@@ -308,118 +316,174 @@ export function drawSanChz(p: Pix, pose: ChzPose, costume: 'classic' | 'party') 
     ctx.rotate((pose.tilt * Math.PI) / 180);
     ctx.translate(-fx, -fy);
   }
+  // widen the stance for a big lad: front hand sits outside the belly, back hand behind the hip
+  pose = {
+    ...pose,
+    front: pose.front ? { ...pose.front, hand: [pose.front.hand[0] + 4, pose.front.hand[1]], tip: [pose.front.tip[0] + 2, pose.front.tip[1]] } : pose.front,
+    back: pose.back ? { ...pose.back, hand: [pose.back.hand[0] - 2, pose.back.hand[1]], tip: [pose.back.tip[0] - 1, pose.back.tip[1]] } : pose.back,
+    throwHand: pose.throwHand ? [pose.throwHand[0] + 3, pose.throwHand[1]] : undefined,
+  };
   const by = (pose.bob ?? 0) + (pose.crouch ? 8 : 0);
   const lx = pose.lean ?? 0;
-  const shB: Pt = [24 + lx, 31 + by];
-  const shF: Pt = [33 + lx, 31 + by];
+  const shB: Pt = [22 + lx, 31 + by];
+  const shF: Pt = [35 + lx, 31 + by];
+  const sleeveCol = costume === 'party' ? pal.jacketLo! : costume === 'dayout' ? pal.skin : pal.skinShade;
 
-  const armTo = (sh: Pt, hand: Pt, elbow: Pt | null, col: string) => {
-    if (elbow) {
-      p.line(sh[0], sh[1], elbow[0], elbow[1], col, 3);
-      p.line(elbow[0], elbow[1], hand[0], hand[1], col, 3);
-    } else p.line(sh[0], sh[1], hand[0], hand[1], col, 3);
-    p.rect(hand[0] - 1, hand[1] - 1, 3, 3, pal.skin);
+  const armTo = (sh: Pt, hand: Pt, elbow: Pt | null, col: string, front: boolean) => {
+    const pts: Pt[] = elbow ? [sh, elbow, hand] : [sh, hand];
+    for (let i = 0; i + 1 < pts.length; i++) p.line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], col, 4);
+    if (costume === 'dayout') {
+      // short white sleeve + forearm tattoos (bands and a star)
+      const a = pts[0], b = pts[1];
+      p.line(a[0], a[1], a[0] + (b[0] - a[0]) * 0.35, a[1] + (b[1] - a[1]) * 0.35, pal.top, 5);
+      if (front) {
+        const last = pts[pts.length - 2], h = pts[pts.length - 1];
+        const mx = last[0] + (h[0] - last[0]) * 0.5, my = last[1] + (h[1] - last[1]) * 0.5;
+        p.rect(Math.round(mx) - 1, Math.round(my) - 1, 3, 3, pal.tattoo!);
+        p.px(Math.round(mx), Math.round(my), pal.skin);
+        const ex = a[0] + (b[0] - a[0]) * 0.55, ey = a[1] + (b[1] - a[1]) * 0.55;
+        p.rect(Math.round(ex) - 2, Math.round(ey), 4, 1, pal.tattoo!);
+      }
+    }
+    p.rect(hand[0] - 2, hand[1] - 1, 4, 4, pal.skin);
   };
-  const sleeve = costume === 'party' ? pal.jacketLo! : pal.skinShade;
 
   if (pose.dropped) {
     p.line(4, 62, 30, 60, pal.crutch, 2);
     p.line(22, 63, 50, 61, pal.crutch, 2);
   }
 
-  // back crutch + back arm
-  if (pose.back) {
-    const top = pose.back.free ? null : drawCrutch(p, pal, pose.back.hand, pose.back.tip);
-    if (pose.back.free) drawCrutch(p, pal, pose.back.hand, pose.back.tip);
-    armTo(shB, pose.back.hand, top, sleeve);
+  // backpack (Day Out) sits behind everything
+  if (costume === 'dayout') {
+    p.rect(14 + lx, 31 + by, 8, 15, pal.pack!);
+    p.rect(14 + lx, 31 + by, 8, 2, '#f8e88a');
+    p.poly([[18 + lx, 35 + by], [16 + lx, 39 + by], [18 + lx, 39 + by], [17 + lx, 43 + by], [20 + lx, 38 + by], [18 + lx, 38 + by]], '#3a6ad0');
   }
 
-  // legs
-  const hipY = 46 + by;
+  // back crutch + back arm
+  if (pose.back) {
+    const top = drawCrutch(p, pal, pose.back.hand, pose.back.tip);
+    armTo(shB, pose.back.hand, pose.back.free ? null : top, sleeveCol, false);
+  }
+
+  // legs (chunky)
+  const hipY = 47 + by;
   const drawLeg = (hipX: number, leg: [number, number], back: boolean) => {
     const col = back ? pal.trousersLo : pal.trousers;
     const fx = hipX + leg[0], fy = 62 - leg[1];
     if (pose.crouch) {
-      p.line(hipX + 1, hipY, hipX + 6, hipY + 3, col, 4);
-      p.line(hipX + 6, hipY + 3, fx + 1, fy - 1, col, 4);
-    } else p.line(hipX + 1 + lx * 0.3, hipY, fx + 1, fy - 1, col, 4);
-    p.rect(fx - 1, fy - 1, 7, 3, pal.shoe);
-    p.rect(fx - 1, fy + 1, 7, 1, '#9a9aa4');
+      p.line(hipX + 1, hipY, hipX + 7, hipY + 3, col, 5);
+      p.line(hipX + 7, hipY + 3, fx + 1, fy - 1, col, 5);
+    } else p.line(hipX + 1 + lx * 0.3, hipY, fx + 1, fy - 1, col, 5);
+    if (costume === 'dayout') p.line(fx + 1, fy - 6, fx + 1, fy - 1, pal.skin, 4); // shorts: bare shins
+    p.rect(fx - 2, fy - 1, 8, 3, pal.shoe);
+    p.rect(fx - 2, fy + 1, 8, 1, '#9a9aa4');
   };
-  drawLeg(25 + lx, pose.legB ?? [0, 0], true);
-  drawLeg(30 + lx, pose.legA ?? [0, 0], false);
+  drawLeg(24 + lx, pose.legB ?? [0, 0], true);
+  drawLeg(31 + lx, pose.legA ?? [0, 0], false);
 
-  // torso
+  // torso: broad chest + round belly pushing forward
+  const tx = 20 + lx, ty = 29 + by;
+  const bellyX = 32 + lx, bellyY = 41 + by;
+  // shadow under the gut so it reads as round
+  p.ellipse(bellyX, bellyY + 2, 11, 8, '#00000033');
   if (costume === 'classic') {
-    p.rect(23 + lx, 29 + by, 11, 18, pal.top);
-    p.rect(23 + lx, 29 + by, 2, 4, pal.skin);
-    p.rect(32 + lx, 29 + by, 2, 4, pal.skin);
-    p.rect(30 + lx, 33 + by, 2, 12, pal.topHi);
+    p.rect(tx, ty, 18, 19, pal.top);
+    p.ellipse(bellyX, bellyY, 11, 9, pal.top);
+    p.rect(tx, ty, 3, 4, pal.skin);
+    p.rect(tx + 15, ty, 3, 4, pal.skin);
+    p.ellipse(bellyX + 4, bellyY - 2, 4, 5, pal.topHi);
+    p.ellipse(bellyX + 2, bellyY, 7, 7, pal.top);
+    p.line(bellyX - 6, bellyY + 8, bellyX + 6, bellyY + 8, '#000000', 1);
+  } else if (costume === 'party') {
+    p.rect(tx + 3, ty, 12, 19, pal.skin);
+    p.ellipse(bellyX, bellyY, 11, 9, pal.skin);
+    p.ellipse(bellyX + 2, bellyY + 2, 7, 5, pal.skinShade);
+    p.ellipse(bellyX + 1, bellyY + 1, 7, 5, pal.skin);
+    p.rect(tx, ty, 5, 20, pal.jacket!);
+    p.rect(tx + 14, ty, 5, 12, pal.jacket!);
+    p.rect(tx, ty, 1, 20, pal.jacketLo!);
+    p.line(tx + 8, ty, tx + 10, ty + 8, '#2b2b2b', 1);
+    p.rect(tx + 9, ty + 8, 3, 4, '#3a2a1a');
+    p.px(tx + 10, ty + 9, '#7a5a30');
+    p.px(bellyX + 1, bellyY + 2, '#b98672'); // belly button
   } else {
-    p.rect(25 + lx, 29 + by, 7, 18, pal.skin);
-    p.rect(22 + lx, 29 + by, 4, 18, pal.jacket!);
-    p.rect(31 + lx, 29 + by, 4, 18, pal.jacket!);
-    p.rect(22 + lx, 29 + by, 1, 18, pal.jacketLo!);
-    p.line(27 + lx, 29 + by, 29 + lx, 37 + by, '#2b2b2b', 1);
-    p.rect(28 + lx, 37 + by, 3, 4, '#3a2a1a');
-    p.px(29 + lx, 38 + by, '#7a5a30');
+    p.rect(tx, ty, 18, 19, pal.top);
+    p.ellipse(bellyX, bellyY, 11, 9, pal.top);
+    p.ellipse(bellyX + 4, bellyY - 1, 5, 5, pal.topHi);
+    p.ellipse(bellyX + 2, bellyY, 7, 7, pal.top);
+    p.line(bellyX - 6, bellyY + 9, bellyX + 6, bellyY + 9, '#c8c0b0', 1);
+    // tee print (two lines of text + a dashed stripe)
+    p.rect(tx + 5, ty + 5, 11, 2, '#3a7a3a');
+    p.rect(tx + 5, ty + 8, 2, 1, '#1a1a1a'); p.rect(tx + 8, ty + 8, 2, 1, '#1a1a1a'); p.rect(tx + 11, ty + 8, 2, 1, '#1a1a1a'); p.rect(tx + 14, ty + 8, 2, 1, '#1a1a1a');
+    p.rect(tx + 5, ty + 10, 11, 2, '#9adf6a');
+    // backpack strap over the shoulder
+    p.line(tx + 2, ty, tx + 1, ty + 16, pal.pack!, 2);
+    p.rect(tx, ty + 7, 3, 2, '#222222');
   }
 
-  // head
-  const hx = 29 + lx, hy = 20 + by;
-  p.rect(hx - 2, hy + 6, 4, 4, pal.skinShade);
-  p.rect(hx - 7, hy - 1, 2, 4, pal.skinShade);
-  p.ellipse(hx, hy, 6, 7, pal.skin);
-  p.rect(hx - 5, hy + 4, 10, 2, pal.skinShade);
+  // head: big round face and a double chin
+  const hx = 30 + lx, hy = 19 + by;
+  p.rect(hx - 8, hy - 1, 2, 5, pal.skinShade);
+  p.ellipse(hx, hy + 1, 8, 8, pal.skin);
+  p.ellipse(hx + 1, hy + 7, 7, 3, pal.skinShade);
+  p.ellipse(hx + 1, hy + 6, 6, 2, pal.skin);
+  p.px(hx - 5, hy + 3, '#efa59a'); p.px(hx + 6, hy + 3, '#efa59a');
   if (costume === 'classic') {
-    p.ellipse(hx - 1, hy - 6, 8, 4, pal.hat);
-    p.rect(hx - 9, hy - 6, 17, 3, pal.hat);
+    p.ellipse(hx - 1, hy - 6, 9, 4, pal.hat);
+    p.rect(hx - 10, hy - 6, 19, 3, pal.hat);
     const r = rng(9);
-    for (let i = 0; i < 14; i++) p.px(hx - 8 + Math.floor(r() * 16), hy - 9 + Math.floor(r() * 6), pal.hatDot);
-    p.rect(hx + 3, hy - 4, 10, 2, pal.brim);
-    p.rect(hx + 3, hy - 3, 10, 1, '#14686a');
-  } else {
-    p.ellipse(hx - 2, hy - 4, 11, 9, pal.wig!);
-    for (let i = 0; i < 9; i++) p.circle(hx - 12 + i * 3, hy - 11 + (i % 2) * 2, 3, pal.wig!);
-    p.rect(hx - 10, hy - 2, 4, 14, pal.wig!);
+    for (let i = 0; i < 16; i++) p.px(hx - 9 + Math.floor(r() * 18), hy - 9 + Math.floor(r() * 6), pal.hatDot);
+    p.rect(hx + 4, hy - 4, 10, 2, pal.brim);
+    p.rect(hx + 4, hy - 3, 10, 1, '#14686a');
+  } else if (costume === 'party') {
+    p.ellipse(hx - 2, hy - 4, 12, 9, pal.wig!);
+    for (let i = 0; i < 9; i++) p.circle(hx - 13 + i * 3, hy - 11 + (i % 2) * 2, 3, pal.wig!);
+    p.rect(hx - 11, hy - 2, 4, 14, pal.wig!);
     const r = rng(4);
-    for (let i = 0; i < 24; i++) p.px(hx - 12 + Math.floor(r() * 20), hy - 13 + Math.floor(r() * 18), pal.wigHi!);
+    for (let i = 0; i < 24; i++) p.px(hx - 13 + Math.floor(r() * 21), hy - 13 + Math.floor(r() * 18), pal.wigHi!);
     p.rect(hx - 5, hy - 15, 10, 4, pal.hat);
     p.text('PA', hx - 4, hy - 15, '#ffffff');
-  }
-  // thick glasses (party: giant orange specs)
-  if (costume === 'classic') {
-    p.rect(hx - 4, hy - 3, 12, 5, pal.glass);
-    p.rect(hx - 3, hy - 2, 4, 3, pal.lens);
-    p.rect(hx + 3, hy - 2, 4, 3, pal.lens);
-    p.px(hx - 3, hy - 2, '#ffffff'); p.px(hx + 3, hy - 2, '#ffffff');
   } else {
-    p.circle(hx - 1, hy - 1, 4, pal.glass);
-    p.circle(hx + 6, hy - 1, 4, pal.glass);
-    p.circle(hx - 1, hy - 1, 3, pal.lens);
-    p.circle(hx + 6, hy - 1, 3, pal.lens);
-    p.px(hx - 2, hy - 3, '#ffffff'); p.px(hx + 5, hy - 3, '#ffffff');
+    // short blond fade
+    p.ellipse(hx - 1, hy - 5, 8, 4, pal.hair!);
+    p.rect(hx - 8, hy - 5, 4, 5, '#e9c9a8');
+    p.rect(hx - 7, hy - 7, 14, 2, pal.hair!);
+    p.px(hx - 3, hy - 8, '#fff3c0'); p.px(hx + 2, hy - 8, '#fff3c0');
+  }
+  // eyes / glasses
+  if (costume === 'classic') {
+    p.rect(hx - 4, hy - 2, 13, 5, pal.glass);
+    p.rect(hx - 3, hy - 1, 5, 3, pal.lens);
+    p.rect(hx + 3, hy - 1, 5, 3, pal.lens);
+    p.px(hx - 3, hy - 1, '#ffffff'); p.px(hx + 3, hy - 1, '#ffffff');
+  } else if (costume === 'party') {
+    p.circle(hx - 1, hy, 4, pal.glass);
+    p.circle(hx + 6, hy, 4, pal.glass);
+    p.circle(hx - 1, hy, 3, pal.lens);
+    p.circle(hx + 6, hy, 3, pal.lens);
+    p.px(hx - 2, hy - 2, '#ffffff'); p.px(hx + 5, hy - 2, '#ffffff');
+  } else {
+    p.rect(hx, hy, 2, 2, '#3a5a8a'); p.rect(hx + 5, hy, 2, 2, '#3a5a8a');
+    p.rect(hx - 1, hy - 2, 3, 1, '#c8a85a'); p.rect(hx + 5, hy - 2, 3, 1, '#c8a85a');
+    p.rect(hx + 3, hy + 2, 2, 2, pal.skinShade);
   }
   const mouth = pose.mouth ?? 'smile';
-  if (mouth === 'smile') { p.rect(hx, hy + 4, 5, 1, '#6a2a2a'); p.px(hx + 5, hy + 3, '#6a2a2a'); }
-  else if (mouth === 'open') { p.rect(hx - 1, hy + 2, 7, 5, '#330a0a'); p.rect(hx, hy + 2, 5, 1, '#ffffff'); }
-  else { p.rect(hx - 1, hy + 3, 7, 2, '#330a0a'); p.rect(hx, hy + 3, 5, 1, '#ffffff'); }
+  if (mouth === 'smile') { p.rect(hx + 1, hy + 5, 5, 1, '#6a2a2a'); p.px(hx + 6, hy + 4, '#6a2a2a'); }
+  else if (mouth === 'open') { p.rect(hx, hy + 3, 7, 5, '#330a0a'); p.rect(hx + 1, hy + 3, 5, 1, '#ffffff'); }
+  else { p.rect(hx, hy + 4, 7, 2, '#330a0a'); p.rect(hx + 1, hy + 4, 5, 1, '#ffffff'); }
 
   // front arm + front crutch
   if (pose.front) {
-    if (pose.front.free) {
-      drawCrutch(p, pal, pose.front.hand, pose.front.tip);
-    } else {
-      const top = drawCrutch(p, pal, pose.front.hand, pose.front.tip);
-      armTo(shF, pose.front.hand, top, sleeve);
-    }
+    const top = drawCrutch(p, pal, pose.front.hand, pose.front.tip);
+    if (!pose.front.free) armTo(shF, pose.front.hand, top, sleeveCol, true);
   }
-  if (pose.throwHand) armTo(shF, pose.throwHand, null, sleeve);
+  if (pose.throwHand) armTo(shF, pose.throwHand, null, sleeveCol, true);
 
   if (pose.tilt) ctx.restore();
 }
 
-function chzFrames(costume: 'classic' | 'party'): FrameDef[] {
+function chzFrames(costume: ChzCostume): FrameDef[] {
   const frames: FrameDef[] = [];
   const add = (name: string, pose: ChzPose) => frames.push({ name, draw: (p) => drawSanChz(p, pose, costume) });
   const stand = (b: number) => ({ front: { hand: [37, 43 + b] as Pt, tip: [43, 62] as Pt }, back: { hand: [21, 43 + b] as Pt, tip: [15, 62] as Pt } });
@@ -485,7 +549,7 @@ export function buildCharacters(scene: Phaser.Scene) {
       draw: (p: Pix) => drawMikArm(p, it.split('_')[0], costume, Number(it.split('_')[1] ?? 0)),
     })));
   }
-  for (const costume of ['classic', 'party'] as const) buildSheet(scene, `sanchz_${costume}`, SANCHZ_FRAME.w, SANCHZ_FRAME.h, chzFrames(costume));
+  for (const costume of ['classic', 'party', 'dayout'] as const) buildSheet(scene, `sanchz_${costume}`, SANCHZ_FRAME.w, SANCHZ_FRAME.h, chzFrames(costume));
 
   // portraits for menus / dialogue (scaled-up head crops are made in code)
 }
@@ -505,7 +569,7 @@ export function registerCharacterAnims(scene: Phaser.Scene) {
     mk(tex, 'idle', 4, 5); mk(tex, 'run', 6, 13); mk(tex, 'jump', 2, 8, 0); mk(tex, 'fall', 2, 8);
     mk(tex, 'crouch', 1, 1, 0); mk(tex, 'hurt', 2, 12, 0); mk(tex, 'ko', 3, 6, 0); mk(tex, 'victory', 4, 6); mk(tex, 'pose', 1, 1, 0);
   }
-  for (const tex of ['sanchz_classic', 'sanchz_party']) {
+  for (const tex of ['sanchz_classic', 'sanchz_party', 'sanchz_dayout']) {
     mk(tex, 'idle', 4, 5); mk(tex, 'run', 6, 11); mk(tex, 'jump', 2, 8, 0); mk(tex, 'fall', 2, 8);
     mk(tex, 'crouch', 1, 1, 0); mk(tex, 'hurt', 2, 12, 0); mk(tex, 'ko', 3, 6, 0); mk(tex, 'victory', 4, 6);
     mk(tex, 'throw', 2, 20, 0); mk(tex, 'throwup', 2, 20, 0);

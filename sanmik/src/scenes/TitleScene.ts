@@ -6,11 +6,13 @@ import { AudioBus } from '../audio/AudioBus';
 import { VIEW } from '../config/tuning';
 import { getSettings, updateSettings } from '../core/settings';
 import { debugApi } from '../core/debug';
+import { CHAPTERS } from '../levels/chapters';
 
 export class TitleScene extends Phaser.Scene {
   private controls!: Controls;
   private menu!: Menu;
   private settingsMenu!: Menu;
+  private chapterMenu!: Menu;
   private started = false;
   private pressStart!: Phaser.GameObjects.Text;
   private panel: Phaser.GameObjects.Container | null = null;
@@ -38,7 +40,7 @@ export class TitleScene extends Phaser.Scene {
     const sub = this.add.text(VIEW.W / 2, 112, 'YEEE OF DESTRUCTION', textStyle(22, '#ff3ad0', '#120c16', 6)).setOrigin(0.5);
     this.tweens.add({ targets: title, scale: { from: 1, to: 1.04 }, yoyo: true, repeat: -1, duration: 650, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: sub, y: 116, yoyo: true, repeat: -1, duration: 450, ease: 'Sine.easeInOut' });
-    this.add.text(VIEW.W / 2, 134, 'VERTICAL SLICE  -  CHAPTER 2: BIG TESK-O', textStyle(9, '#ffffff', '#120c16', 3)).setOrigin(0.5);
+    this.add.text(VIEW.W / 2, 134, '5 CHAPTERS. 5 BOSSES. 3 VIEWS.', textStyle(9, '#ffffff', '#120c16', 3)).setOrigin(0.5);
 
     this.pressStart = this.add.text(VIEW.W / 2, 220, 'PRESS START', textStyle(18, '#ffffff', '#120c16', 5)).setOrigin(0.5);
     this.tweens.add({ targets: this.pressStart, alpha: 0.2, yoyo: true, repeat: -1, duration: 500 });
@@ -46,8 +48,8 @@ export class TitleScene extends Phaser.Scene {
     this.input.gamepad?.on('connected', () => this.padNote.setText('Controller connected. YEE.'));
 
     this.menu = new Menu(this, this.controls, [
-      { id: 'm-story', label: 'STORY (VERTICAL SLICE)', onSelect: () => this.scene.start('select', { next: 'story' }) },
-      { id: 'm-boss', label: 'FIGHT BEGOUR', onSelect: () => this.scene.start('select', { next: 'begour' }) },
+      { id: 'm-story', label: 'STORY MODE', onSelect: () => this.scene.start('select', { next: 'story' }) },
+      { id: 'm-chapters', label: 'CHAPTER SELECT', onSelect: () => this.openChapters() },
       { id: 'm-gym', label: 'DEBUG GYM', onSelect: () => this.scene.start('select', { next: 'gym' }) },
       { id: 'm-settings', label: 'SETTINGS', onSelect: () => this.openSettings() },
       { id: 'm-controls', label: 'CONTROLS', onSelect: () => this.openControls() },
@@ -60,10 +62,18 @@ export class TitleScene extends Phaser.Scene {
       { label: () => `MUSIC  < ${pct(getSettings().musicVol)} >`, onLeft: () => step('musicVol', -0.1), onRight: () => step('musicVol', 0.1) },
       { label: () => `SFX  < ${pct(getSettings().sfxVol)} >`, onLeft: () => step('sfxVol', -0.1), onRight: () => step('sfxVol', 0.1) },
       { label: () => `VOICE (YEEE)  < ${pct(getSettings().voiceVol)} >`, onLeft: () => step('voiceVol', -0.1), onRight: () => step('voiceVol', 0.1) },
+      { label: () => `SWEARING  < ${getSettings().swearing ? 'ON' : 'OFF'} >`, onLeft: () => updateSettings({ swearing: !getSettings().swearing }), onRight: () => updateSettings({ swearing: !getSettings().swearing }) },
       { label: () => `SCREEN SHAKE  < ${getSettings().screenShake ? 'ON' : 'OFF'} >`, onLeft: () => updateSettings({ screenShake: !getSettings().screenShake }), onRight: () => updateSettings({ screenShake: !getSettings().screenShake }) },
       { label: 'BACK', onSelect: () => this.closePanel() },
     ], VIEW.W / 2, 172, 20, 12, 260);
     this.settingsMenu.setVisible(false);
+
+    const chItems = CHAPTERS.flatMap((c) => [
+      { label: `${c.n}. ${c.title}`, onSelect: () => this.scene.start('select', { next: c.level }) },
+      { label: `    BOSS: ${c.boss}`, onSelect: () => this.scene.start('select', { next: c.arena }) },
+    ]);
+    this.chapterMenu = new Menu(this, this.controls, [...chItems, { label: 'BACK', onSelect: () => this.closePanel() }], VIEW.W / 2, 128, 17, 10, 260);
+    this.chapterMenu.setVisible(false);
 
     this.input.on('pointerdown', () => this.begin());
     this.input.keyboard?.on('keydown', () => this.begin());
@@ -87,10 +97,19 @@ export class TitleScene extends Phaser.Scene {
   private openSettings() {
     this.menu.setVisible(false);
     this.panel = this.add.container(0, 0).setDepth(250);
-    this.panel.add(this.add.rectangle(VIEW.W / 2, 210, 320, 130, 0x120c16, 0.92).setStrokeStyle(2, 0xffe14a));
+    this.panel.add(this.add.rectangle(VIEW.W / 2, 220, 320, 150, 0x120c16, 0.92).setStrokeStyle(2, 0xffe14a));
     this.settingsMenu.index = 0;
     this.settingsMenu.setVisible(true);
     this.settingsMenu.refresh();
+  }
+
+  private openChapters() {
+    this.menu.setVisible(false);
+    this.panel = this.add.container(0, 0).setDepth(250);
+    this.panel.add(this.add.rectangle(VIEW.W / 2, 222, 420, 210, 0x120c16, 0.94).setStrokeStyle(2, 0xffe14a));
+    this.chapterMenu.index = 0;
+    this.chapterMenu.setVisible(true);
+    this.chapterMenu.refresh();
   }
 
   private openControls() {
@@ -109,12 +128,18 @@ export class TitleScene extends Phaser.Scene {
     this.panel?.destroy();
     this.panel = null;
     this.settingsMenu.setVisible(false);
+    this.chapterMenu.setVisible(false);
     this.menu.setVisible(true);
   }
 
   update() {
     this.controls.update();
     if (!this.started) return;
+    if (this.chapterMenu.enabled) {
+      if (this.controls.justPressed('back')) { this.closePanel(); return; }
+      this.chapterMenu.update();
+      return;
+    }
     if (this.panel && !this.settingsMenu.enabled) {
       if (this.controls.justPressed('confirm') || this.controls.justPressed('back')) this.closePanel();
       return;

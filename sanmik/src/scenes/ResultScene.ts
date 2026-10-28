@@ -4,6 +4,7 @@ import { textStyle } from '../core/Fx';
 import { VIEW, SCORE } from '../config/tuning';
 import { session } from '../core/session';
 import { AudioBus } from '../audio/AudioBus';
+import { CHAPTERS, SceneRef, afterChapter } from '../levels/chapters';
 
 export function rankFor(hits: number, deaths: number, seconds: number) {
   if (hits === 0) return { rank: 'PHRESH', note: 'No hits taken. Unreal. Probably edited.' };
@@ -16,10 +17,17 @@ export function rankFor(hits: number, deaths: number, seconds: number) {
 export class ResultScene extends Phaser.Scene {
   private controls!: Controls;
   private ready = false;
+  private next: SceneRef = { key: 'title' };
 
   constructor() {
     super('result');
   }
+
+  init(data: { chapter?: number; next?: SceneRef }) {
+    this.chapterN = data?.chapter ?? 2;
+    this.next = data?.next ?? afterChapter(this.chapterN);
+  }
+  private chapterN = 2;
 
   create() {
     this.controls = new Controls(this);
@@ -33,15 +41,17 @@ export class ResultScene extends Phaser.Scene {
     const secs = Math.round((performance.now() - session.chapterStartedAt) / 1000);
     const noHit = session.chapterHits === 0;
     if (noHit) session.score += SCORE.noHitBonus;
-    const { rank, note } = rankFor(session.chapterHits, session.deaths, secs);
+    const { rank, note } = rankFor(session.chapterHits, session.chapterDeaths, secs);
+    const ch = CHAPTERS.find((c) => c.n === this.chapterN);
+    const nextCh = CHAPTERS.find((c) => c.n === this.chapterN + 1);
 
-    this.add.text(VIEW.W / 2, 30, 'CHAPTER 2 CLEAR', textStyle(24, '#ffe14a', '#120c16', 6)).setOrigin(0.5);
-    this.add.text(VIEW.W / 2, 54, 'BIG TESK-O / FRENDSHIP FOREST', textStyle(10, '#ffffff', '#120c16', 3)).setOrigin(0.5);
+    this.add.text(VIEW.W / 2, 30, `CHAPTER ${this.chapterN} CLEAR`, textStyle(24, '#ffe14a', '#120c16', 6)).setOrigin(0.5);
+    this.add.text(VIEW.W / 2, 54, ch ? `${ch.title}  -  ${ch.boss}` : '', textStyle(10, '#ffffff', '#120c16', 3)).setOrigin(0.5);
     const rows: [string, string][] = [
       ['TIME', `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`],
       ['ENEMIES DESTROYED', `${session.kills}`],
       ['HITS TAKEN', `${session.chapterHits}`],
-      ['DEATHS (NOT CANON)', `${session.deaths}`],
+      ['DEATHS (NOT CANON)', `${session.chapterDeaths}`],
       ['JUMPS', `${session.jumps}  (${session.jumps} x ${session.char === 'sanmik' ? 'YEEE' : 'YEGHHH'})`],
       ['FOLLOWERS CLAIMED', `${session.followersClaimed.toLocaleString()}`],
       ['FOLLOWERS ACTUAL', '3'],
@@ -57,13 +67,14 @@ export class ResultScene extends Phaser.Scene {
     const nt = this.add.text(VIEW.W / 2, 276, note, textStyle(9, '#ffffff', '#120c16', 2)).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: rk, scale: 1, alpha: 1, delay: 1500, duration: 220, ease: 'Back.easeOut', onStart: () => AudioBus.sfx('sfx_stamp') });
     this.tweens.add({ targets: nt, alpha: 1, delay: 1800, duration: 300 });
-    const next = this.add.text(VIEW.W / 2, 318, 'NEXT: NIGHT OF FREEDOM  (still being made. like the album.)', textStyle(9, '#ffe14a', '#120c16', 2)).setOrigin(0.5).setAlpha(0);
-    const cont = this.add.text(VIEW.W / 2, 340, 'PRESS CONFIRM', textStyle(10, '#ffffff', '#120c16', 3)).setOrigin(0.5).setAlpha(0);
+    const next = this.add.text(VIEW.W / 2, 318, nextCh ? `NEXT: CHAPTER ${nextCh.n} - ${nextCh.title}` : 'NEXT: DA ENDING', textStyle(9, '#ffe14a', '#120c16', 2)).setOrigin(0.5).setAlpha(0);
+    const cont = this.add.text(VIEW.W / 2, 340, 'CONFIRM: CONTINUE   ESC: TITLE', textStyle(10, '#ffffff', '#120c16', 3)).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: [next, cont], alpha: 1, delay: 2200, duration: 300, onComplete: () => { this.ready = true; } });
   }
 
   update() {
     this.controls.update();
-    if (this.ready && (this.controls.justPressed('confirm') || this.controls.justPressed('pause'))) this.scene.start('title');
+    if (this.ready && this.controls.justPressed('confirm')) this.scene.start(this.next.key, this.next.data ?? {});
+    else if (this.ready && this.controls.justPressed('pause')) this.scene.start('title');
   }
 }

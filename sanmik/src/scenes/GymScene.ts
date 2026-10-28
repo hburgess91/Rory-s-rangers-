@@ -1,5 +1,6 @@
 import { GameplayScene } from './GameplayScene';
-import { Dummy, Pitcher, TrolleyGoblin, Mascot } from '../enemies/types';
+import { Dummy, Pitcher } from '../enemies/types';
+import { Charger, HenDo } from '../enemies/roster';
 import { VIEW, MOVE } from '../config/tuning';
 import { Pickup } from '../enemies/Pickup';
 import { session } from '../core/session';
@@ -53,8 +54,8 @@ export class GymScene extends GameplayScene {
     this.oneWay(x + 180, 216, 80, 'gym');
     this.oneWay(x + 100, 164, 80, 'gym');
     this.addSign(x + 60, G, 'ONE-WAY STACK', 'Down + Jump drops through one-way platforms.');
-    this.addEnemy(new TrolleyGoblin(this, x + 400, G));
-    this.addEnemy(new Mascot(this, x + 460, G));
+    this.addEnemy(Charger.wheelie(this, x + 400, G));
+    this.addEnemy(new HenDo(this, x + 460, G));
 
     // endless pickup stations
     this.stations = [];

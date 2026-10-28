@@ -4,6 +4,7 @@ import { textStyle } from '../core/Fx';
 import { AudioBus } from '../audio/AudioBus';
 import { VIEW } from '../config/tuning';
 import { CHAR_INFO, CharId, newSession, session } from '../core/session';
+import type { SceneRef } from '../levels/chapters';
 
 export class SelectScene extends Phaser.Scene {
   private controls!: Controls;
@@ -12,14 +13,14 @@ export class SelectScene extends Phaser.Scene {
   private sprites: Record<CharId, Phaser.GameObjects.Sprite> = {} as never;
   private frames: Record<CharId, Phaser.GameObjects.Rectangle> = {} as never;
   private costumeText: Record<CharId, Phaser.GameObjects.Text> = {} as never;
-  private next = 'story';
+  private next: string | SceneRef = 'story';
   private locked = false;
 
   constructor() {
     super('select');
   }
 
-  init(data: { next?: string }) {
+  init(data: { next?: string | SceneRef }) {
     this.next = data.next ?? 'story';
   }
 
@@ -78,8 +79,10 @@ export class SelectScene extends Phaser.Scene {
     this.cameras.main.flash(150, 255, 255, 255);
     newSession(id, costume);
     this.time.delayedCall(700, () => {
-      if (this.next === 'gym') this.scene.start('gym');
-      else if (this.next === 'begour') this.scene.start('begour', {});
+      const n = this.next;
+      if (typeof n === 'object') this.scene.start(n.key, n.data ?? {});
+      else if (n === 'gym') this.scene.start('gym');
+      else if (n === 'begour') this.scene.start('begour', {});
       else this.scene.start('intro');
     });
   }

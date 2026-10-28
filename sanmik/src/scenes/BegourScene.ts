@@ -4,6 +4,7 @@ import { AudioBus } from '../audio/AudioBus';
 import { VIEW, BEGOUR } from '../config/tuning';
 import { session } from '../core/session';
 import { bubble, Line } from '../ui/Dialogue';
+import { afterChapter } from '../levels/chapters';
 
 // Boss arena: Frendship Forest clearing.
 export class BegourScene extends GameplayScene {
@@ -29,6 +30,7 @@ export class BegourScene extends GameplayScene {
 
   protected afterCreate() {
     const retry = !!this.data_.retry;
+    session.chapter = 2;
     this.boss = new Begour(this, retry ? 560 : 400, retry ? 0.8 : 0.32);
     this.combat.targets.add(this.boss);
     this.boss.onDefeated = () => this.onBossDefeated();
@@ -53,16 +55,22 @@ export class BegourScene extends GameplayScene {
     const me = isMik ? 'SANMIK' : 'SANCHZ';
     const face = isMik ? 'ui_face_sanmik' : 'ui_face_sanchz';
     this.player.vx = 0;
+    const B = (text: string, voice: 'vo_bear' | 'vo_bear_sob' = 'vo_bear', onShow?: () => void): Line => ({ who: 'BEGOUR', text, voice, onShow });
     const lines: Line[] = [
-      { who: 'BEGOUR', text: "Hello! It's me, Begour! We're best friends!", voice: 'vo_bear' },
+      B("Oh hey kids, how's it going? Aw, I'm so cute. Tickle tickle! I'm Begour the bear! Are you ready? I'm Begour, yee-haw!"),
+      B("I'm Begour the Bear, yes I am Begour the Bear! My best friend's name is SanMik, he is so great, he is the best, I love him so much yeah!"),
       isMik
-        ? { who: me, face, text: 'Yee. Dis is clearly a boss fight innit.' }
-        : { who: me, face, text: 'YEGHHH... he seems alright to be fair.' },
-      { who: 'BEGOUR', text: "I found this shiny star in the garden aisle! Isn't it pretty? I think I'll keep it close to my heart.", voice: 'vo_bear', onShow: () => this.wishGrow() },
-      { who: 'BEGOUR', text: 'Oh! I feel ever so BIG! And ever so FRIENDLY!', voice: 'vo_bear' },
+        ? { who: me, face, text: 'Oi Begour, what the fuck do you think you\'re doing in a supermarket garden aisle, you fucking pedo?' }
+        : { who: me, face, text: 'Alright Begour. SanMik says you\'re a nonce.' },
+      B(isMik ? 'Ooh, SanMik! My best friend! Hey everyone, give him a round of applause!' : "What's a nonce? Is it a type of biscuit? Ooh, SanChz! Hello SanChz!"),
       isMik
-        ? { who: me, face, text: "Dat's da wish fragment. Stand back, bear. I'm a professional." }
-        : { who: me, face, text: "Dat's da wish thing. Sorry mate. Nothing personal." },
+        ? { who: me, face, text: "Fuck off Begour. I'll fucking sherk you, you stupid little cunt." }
+        : { who: me, face, text: 'YEGHHH. He seems alright, to be fair.' },
+      B('Sorry! ...Ooh, look what I found next to the bird seed! A shiny wish! I think I\'ll keep it close to my heart.', 'vo_bear', () => this.wishGrow()),
+      B('Oh! I feel ever so BIG! And ever so FRIENDLY! You silly man, have you been drinking many cans?'),
+      isMik
+        ? { who: me, face, text: "That's MY wish, you furry cunt. Give it here or I'll shove a Pepsi Max up your arse." }
+        : { who: me, face, text: "Sorry Begour mate. Nothing personal. It's for the pub." },
     ];
     this.time.delayedCall(500, () => this.dialogue.play(lines, () => this.beginFight()));
   }
@@ -115,9 +123,10 @@ export class BegourScene extends GameplayScene {
         const me = isMik ? 'SANMIK' : 'SANCHZ';
         const face = isMik ? 'ui_face_sanmik' : 'ui_face_sanchz';
         this.dialogue.play([
-          { who: 'BEGOUR', text: '...I only wanted a cuddle.', voice: 'vo_bear_sob' },
-          isMik ? { who: me, face, text: 'Yee. Absolutely smashed him. Legend behaviour.' } : { who: me, face, text: 'YEGHHH. Bit harsh, that.' },
-          { who: 'BEGOUR', text: "That's okay! Here, have a snack for the road. Best friends forever!", voice: 'vo_bear', onShow: () => this.addPickup(b.root.x - 30, FLOOR - 40, 'food') },
+          { who: 'BEGOUR', text: '...No SanMik, it\'s Begour the bear, you can\'t do that. I only wanted a cuddle.', voice: 'vo_bear_sob' },
+          isMik ? { who: me, face, text: 'Shut up, you nonce. Absolutely smashed him. Legend behaviour. Yee.' } : { who: me, face, text: 'YEGHHH. Bit harsh, that. He\'s alright.' },
+          { who: 'BEGOUR', text: "That's okay! Here, have a snack for the road. Smell my fart! Best friends forever!", voice: 'vo_bear', onShow: () => this.addPickup(b.root.x - 30, FLOOR - 40, 'food') },
+          { who: 'BEGOUR', text: 'Bye SanMik! Remember... when it all goes wrong, no one can help you. Not even Begour!', voice: 'vo_bear' },
         ], () => this.outro());
       },
     });
@@ -139,7 +148,7 @@ export class BegourScene extends GameplayScene {
     this.time.delayedCall(1500, () => this.fx.pop(320, 190, '(he is fine. he went home.)', '#ffffff', 10, 10, 2000));
     this.time.delayedCall(3600, () => {
       this.cameras.main.fadeOut(500, 0, 0, 0);
-      this.time.delayedCall(520, () => this.scene.start('result'));
+      this.time.delayedCall(520, () => this.scene.start('result', { chapter: 2, next: afterChapter(2) }));
     });
   }
 

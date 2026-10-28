@@ -7,6 +7,7 @@ const fake = { textures: { exists: (k) => !!canvases[k], addCanvas: (k, c) => { 
 buildCharacters(fake);
 const params = new URLSearchParams(location.search);
 const mod = params.get('mod');
+for (const [m2, fn] of (params.get('mods')||'').split(',').filter(Boolean).map(x=>x.split(':'))) { const m = await import(m2); m[fn](fake); }
 if (mod) { const m = await import(mod); m[params.get('fn')](fake); }
 const out = document.getElementById('out');
 const only = params.get('only') ? new RegExp(params.get('only')) : null; const sc = +(params.get('s')||3);

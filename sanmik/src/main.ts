@@ -9,6 +9,13 @@ import { BegourScene } from './scenes/BegourScene';
 import { GymScene } from './scenes/GymScene';
 import { PauseScene } from './scenes/PauseScene';
 import { ResultScene } from './scenes/ResultScene';
+import { LevelScene } from './scenes/LevelScene';
+import { FameScene } from './scenes/FameScene';
+import { TankScene } from './scenes/TankScene';
+import { RikScene } from './scenes/RikScene';
+import { GaborScene } from './scenes/GaborScene';
+import { EndingScene } from './scenes/EndingScene';
+import { CreditsScene } from './scenes/CreditsScene';
 import { AudioBus } from './audio/AudioBus';
 import { Scope } from './bosses/Scope';
 import { debugApi } from './core/debug';
@@ -26,7 +33,7 @@ const game = new Phaser.Game({
   physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
   input: { gamepad: true, keyboard: true },
   audio: { disableWebAudio: false },
-  scene: [BootScene, TitleScene, SelectScene, IntroScene, TeskoScene, BegourScene, GymScene, PauseScene, ResultScene],
+  scene: [BootScene, TitleScene, SelectScene, IntroScene, LevelScene, TeskoScene, BegourScene, FameScene, TankScene, RikScene, GaborScene, GymScene, PauseScene, ResultScene, EndingScene, CreditsScene],
 });
 
 debugApi.game = game;
@@ -59,7 +66,7 @@ window.__SANMIK = {
     return {
       scene: g.scene?.key,
       x: p.x, y: p.y, vx: p.pbody.velocity.x, vy: p.pbody.velocity.y, hp: p.hp, alive: p.alive, onGround: p.onGround, jumps: p.jumps, meter: p.meter,
-      projectiles: g.combat?.live().length ?? 0, zones: g.combat?.zones.length ?? 0, targets: g.combat?.targets.size ?? 0,
+      projectiles: g.combat?.live().length ?? 0, enemyShots: (g.combat?.live() as { team: string }[] | undefined)?.filter((x) => x.team === 'enemy').length ?? 0, zones: g.combat?.zones.length ?? 0, targets: g.combat?.targets.size ?? 0,
       timers: g.time?.getAllEvents?.().length ?? -1,
       boss: g.boss?.debugInfo ?? null,
       music: AudioBus.currentTrack,

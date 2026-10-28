@@ -6,7 +6,7 @@ import { Player } from '../player/Player';
 import { SanMikKit } from '../player/SanMikKit';
 import { SanChzKit } from '../player/SanChzKit';
 import { Hud } from '../ui/Hud';
-import { Dialogue } from '../ui/Dialogue';
+import { Dialogue, bubble } from '../ui/Dialogue';
 import { Enemy } from '../enemies/Enemy';
 import { Pickup } from '../enemies/Pickup';
 import { session, textureFor } from '../core/session';
@@ -16,7 +16,7 @@ import { getSettings, updateSettings } from '../core/settings';
 import type { GameHost } from '../core/host';
 import { debugApi } from '../core/debug';
 
-export type Theme = 'tesko' | 'forest' | 'gym';
+export type Theme = 'tesko' | 'forest' | 'gym' | 'office' | 'street' | 'pub' | 'heaven' | 'velvet';
 
 export interface GameplayData {
   checkpoint?: number;
@@ -74,6 +74,10 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
   protected abstract buildLevel(): void;
   protected afterCreate(): void {}
   protected levelUpdate(_dt: number): void {}
+  retryData(): GameplayData {
+    return this.onRetry();
+  }
+
   protected onRetry(): GameplayData {
     return { checkpoint: this.checkpointIdx, retry: true };
   }
@@ -91,6 +95,7 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     this.exits = [];
     this.specialLayer = null;
     this.killStreak = [];
+    this.lastTaunt = 0;
     this.godMode = debugApi.god;
 
     this.fx = new Fx(this);
@@ -152,7 +157,7 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
 
   // ---------------- level-building helpers ----------------
 
-  protected solid(x: number, y: number, w: number, h: number, theme: Theme) {
+  solid(x: number, y: number, w: number, h: number, theme: Theme) {
     const top = this.add.tileSprite(x, y, w, 16, `tile_${theme}_top`).setOrigin(0).setDepth(20);
     if (h > 16) this.add.tileSprite(x, y + 16, w, h - 16, `tile_${theme}_fill`).setOrigin(0).setDepth(20);
     const z = this.add.zone(x + w / 2, y + h / 2, w, h);
@@ -161,8 +166,8 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     return z;
   }
 
-  protected oneWay(x: number, y: number, w: number, theme: Theme) {
-    const tex = theme === 'tesko' ? 'plat_shelf' : theme === 'forest' ? 'plat_branch' : 'plat_gym';
+  oneWay(x: number, y: number, w: number, theme: Theme) {
+    const tex = theme === 'tesko' ? 'plat_shelf' : theme === 'forest' ? 'plat_branch' : `plat_${theme}`;
     this.add.tileSprite(x, y, w, 8, tex).setOrigin(0).setDepth(21);
     if (theme === 'tesko') { this.add.rectangle(x + 3, y + 8, 2, this.worldH - y, 0x8a8f9c).setOrigin(0).setDepth(19); this.add.rectangle(x + w - 5, y + 8, 2, this.worldH - y, 0x8a8f9c).setOrigin(0).setDepth(19); }
     const z = this.add.zone(x + w / 2, y + 4, w, 8);
@@ -174,29 +179,29 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     return z;
   }
 
-  protected addEnemy<T extends Enemy>(e: T): T {
+  addEnemy<T extends Enemy>(e: T): T {
     this.enemies.add(e);
     return e;
   }
 
-  protected addPickup(x: number, y: number, kind: string, floating = false) {
+  addPickup(x: number, y: number, kind: string, floating = false) {
     const p = new Pickup(this, x, y, kind, session.char, floating);
     this.pickups.add(p);
     return p;
   }
 
-  protected addCheckpoint(x: number, y: number) {
+  addCheckpoint(x: number, y: number) {
     const flag = this.add.image(x, y, 'prop_checkpoint').setOrigin(0.5, 1).setDepth(30);
     this.checkpoints.push({ x, y: y - 2, flag });
   }
 
-  protected addSign(x: number, y: number, text: string, hint = '') {
+  addSign(x: number, y: number, text: string, hint = '') {
     this.add.image(x, y, 'prop_sign').setOrigin(0.5, 1).setDepth(25);
     this.add.text(x, y - 27, text, { ...textStyle(8, '#3a1a0a', '#fff6d8', 0), wordWrap: { width: 62 }, lineSpacing: -1 }).setOrigin(0.5).setDepth(26);
     if (hint) this.signs.push({ x, hint, shown: false });
   }
 
-  protected addExit(x: number, y: number, w: number, h: number, fn: () => void) {
+  addExit(x: number, y: number, w: number, h: number, fn: () => void) {
     this.exits.push({ rect: new Phaser.Geom.Rectangle(x, y, w, h), fn, used: false });
   }
 
@@ -233,6 +238,14 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     const claimed = Math.floor(2000 + Math.random() * 60000);
     this.hud.addFollowers(claimed);
     if (Math.random() < 0.25) this.fx.pop(x, y - 10, `+${(claimed / 1000).toFixed(1)}K FOLLOWERS`, '#9fe2ff', 8, 22, 800);
+    // trash talk
+    if (this.now - this.lastTaunt > 5000 && Math.random() < 0.25) {
+      this.lastTaunt = this.now;
+      const lines = session.char === 'sanmik'
+        ? ["I'LL FUCKING SHERK YOU", 'GET FUCKED', 'CATFORD FOX CREW', 'NO CUNT TOUCHES ME', "I'M THE FUCKING BEST", 'FUCK ALL HATERS', 'YEE YEE', 'BRAP BRAP', 'NEEKY CUNT']
+        : ['YEGHHH', 'BIG UP ALL DA MANZ', 'GO AND SUCK UR NANS', 'MC POLSONATOR!', 'MC WHEELCHAIR BLUD', 'FUCKIN HAVE IT', 'SORRY. NOT SORRY.'];
+      bubble(this, () => ({ x: this.player.x, y: this.player.y - 66 }), lines[Math.floor(Math.random() * lines.length)], 1100);
+    }
     // "I'm Really Friendly" streak bonus
     this.killStreak.push(this.now);
     this.killStreak = this.killStreak.filter((t) => this.now - t < 2500);
@@ -246,6 +259,7 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     else if (r < 0.16) this.addPickup(x, y, 'friggle');
   }
   private killStreak: number[] = [];
+  private lastTaunt = 0;
 
   onSpecial(kind: 'delusion' | 'crunk', on: boolean) {
     this.specialLayer?.destroy();
@@ -303,6 +317,7 @@ export abstract class GameplayScene extends Phaser.Scene implements GameHost {
     if (this.dead) return;
     this.dead = true;
     session.deaths++;
+    session.chapterDeaths++;
     const msg = RETCONS[Math.floor(Math.random() * RETCONS.length)];
     this.time.delayedCall(500, () => this.fx.stamp(msg, '#ff3a5a', 24, 1000, 130));
     const id = this.runId;

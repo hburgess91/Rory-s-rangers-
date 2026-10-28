@@ -18,15 +18,22 @@ Browser 2D run-and-gun boss game. Phaser 4.2.1 + TypeScript + Vite, Arcade Physi
 - `src/bosses/Scope.ts` — every boss phase owns a Scope; disposing it kills its timers,
   tweens and objects. Attacks are `async (s) => { await s.wait(ms) }`.
 - `src/scenes/GameplayScene.ts` — base for levels, arenas and the Debug Gym.
+- `src/levels/defs.ts` — data for chapters 1/3/4/5 (played by `LevelScene`); `src/levels/chapters.ts` — campaign order.
+- `src/bosses/BossBase.ts` + `src/scenes/BossScene.ts` — shared boss logic/arena (Fame, Tank, Rik, Gabor).
+  Begour predates them and has its own scene.
+- `src/enemies/roster.ts` — general enemies (Hen Do, Wheelie Warrior) + reusable Flyer/Hopper/Turret/Charger.
+- `src/core/lang.ts` — swearing filter (Settings toggle). Route new player-facing text through Dialogue/Fx so it applies.
 - `window.__SANMIK` — test/debug hooks (state(), cheat.*). Keep it working; tests rely on it.
 
 ## Non-negotiable design rules
 - Every accepted jump plays exactly one vocal: SanMik "YEEE", SanChz "YEGHHH". Held jump never retriggers.
 - SanChz has cerebral palsy and uses crutches. Same jump, speed and stage access as SanMik.
   His disability is never the joke and never a gameplay penalty. Crutches are mobility aids and a weapon.
+- Lore source of truth: the lyric corpus (Begour's song, Uncle Rik's "I need a shit really badly", the Genie skit, "The End").
 - Begour is genuinely friendly, never secretly evil. Gabor stays recognisably a goat; his
   sadism is non-explicit (cruelty, traps, gloating). No sexual violence, nothing involving minors,
-  no slurs or hateful caricatures, no real private people as targets.
+  no racial/homophobic slurs, no real private people as targets. Profanity is fine.
+- Wheelie Warriors are road-rage racers: the joke is their aggression and speed, never the disability.
 - The central joke: SanMik thinks he's a global star; the game keeps proving he isn't (3 viewers).
 - Boss attacks: telegraph >= ~0.4s on Normal, never spawn on the player, never unavoidable combos.
   Boss phases are one-way; a transition disposes the old Scope and clears phase-scoped shots.

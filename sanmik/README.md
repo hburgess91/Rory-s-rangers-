@@ -3,8 +3,17 @@
 A compact, boss-led 2D run-and-gun in the browser. SanMik thinks he's starring in the
 greatest action game ever made. The game knows he isn't.
 
-**Status: vertical slice.** Title → character select → opening cutscene → Chapter 2
-(Big Tesk-O / Frendship Forest) → BEGOUR THE BEAR (3 phases) → results. Plus a Debug Gym.
+**Status: full campaign (placeholder art/audio).** Opening cutscene, then five chapters,
+each a run-and-gun level plus a boss:
+
+1. Da Jobcentre Beyond → DA FAME ALGORITHM
+2. Big Tesk-O / Frendship Forest → BEGOUR THE BEAR
+3. Night of Freedom → DA BANK TANK
+4. Da Nu Warehouse: Rik's Banta Basement → UNCLE RIK / SANRIK
+5. Da Majek Lampe → GABOR THE GOAT
+
+Then the Genie, two endings (SanMik / SanChz) and credits. Chapter Select on the title
+screen jumps to any level or boss. Swearing is on by default; Settings can turn it off.
 
 ## Just play it
 

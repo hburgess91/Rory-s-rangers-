@@ -15,6 +15,8 @@ export interface Session {
   followersClaimed: number;
   jumps: number;
   seenIntro: boolean;
+  chapter: number;
+  chapterDeaths: number;
 }
 
 export const session: Session = {
@@ -30,13 +32,15 @@ export const session: Session = {
   followersClaimed: 0,
   jumps: 0,
   seenIntro: false,
+  chapter: 1,
+  chapterDeaths: 0,
 };
 
 export function newSession(char: CharId, costume: string) {
   Object.assign(session, {
     char, costume, score: 0, kills: 0, deaths: 0, hitsTaken: 0,
     startedAt: performance.now(), chapterStartedAt: performance.now(), chapterHits: 0,
-    followersClaimed: 0, jumps: 0,
+    followersClaimed: 0, jumps: 0, chapterDeaths: 0, chapter: 1,
   });
 }
 
@@ -55,8 +59,8 @@ export const CHAR_INFO: Record<CharId, { name: string; title: string; costumes: 
   sanchz: {
     name: 'SANCHZ',
     title: 'DA POLSONATOR',
-    costumes: ['classic', 'party'],
-    costumeNames: ['CLASSIC', 'PARTY'],
+    costumes: ['classic', 'dayout', 'party'],
+    costumeNames: ['CLASSIC', 'DAY OUT', 'PARTY'],
     blurb: ['Crutch reach, guards and gas.', 'Jam doughnuts, bean bombs, sausage rolls.', 'Down + Melee: Rancid Fart.', 'Special: CRUNK MODE.'],
   },
 };

@@ -3,6 +3,7 @@ import { textStyle } from '../core/Fx';
 import { VIEW } from '../config/tuning';
 import type { Controls } from '../input/Controls';
 import { AudioBus } from '../audio/AudioBus';
+import { clean } from '../core/lang';
 
 export interface Line {
   who: string;
@@ -54,6 +55,7 @@ export class Dialogue {
 
   private show() {
     const l = this.lines[this.idx];
+    l.text = clean(l.text);
     this.name.setText(l.who).setColor(l.color ?? COLORS[l.who] ?? '#ffe14a');
     this.body.setText('');
     this.shown = 0;
@@ -99,7 +101,7 @@ export class Dialogue {
 
 /** Little speech bubble that follows a world point. Doesn't block input. */
 export function bubble(scene: Phaser.Scene, getPos: () => { x: number; y: number }, text: string, ms = 1600, color = '#120c16') {
-  const t = scene.add.text(0, 0, text, { fontFamily: '"Trebuchet MS", Verdana, sans-serif', fontSize: '10px', color, fontStyle: 'bold', backgroundColor: '#fff6e0', padding: { x: 5, y: 3 }, align: 'center', wordWrap: { width: 170 } })
+  const t = scene.add.text(0, 0, clean(text), { fontFamily: '"Trebuchet MS", Verdana, sans-serif', fontSize: '10px', color, fontStyle: 'bold', backgroundColor: '#fff6e0', padding: { x: 5, y: 3 }, align: 'center', wordWrap: { width: 170 } })
     .setOrigin(0.5, 1).setDepth(140);
   const upd = () => { const p = getPos(); t.setPosition(Math.round(p.x), Math.round(p.y)); };
   upd();

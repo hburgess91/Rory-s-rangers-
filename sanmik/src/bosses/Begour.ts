@@ -233,7 +233,7 @@ export class Begour implements Target {
       await this.toStanding(s);
       this.setFace('sad');
       AudioBus.voice('vo_bear_sob');
-      this.say("OW! DON'T BE CROSS WITH ME!", 1800);
+      this.say("NO SANMIK, IT'S BEGOUR THE BEAR, YOU CAN'T DO THAT!", 1900);
       await s.wait(1300);
       this.setFace('cry');
       this.invuln = false;
@@ -242,7 +242,7 @@ export class Begour implements Target {
       await this.toStanding(s);
       this.setFace('shout');
       AudioBus.voice('vo_bear', { rate: 0.8 });
-      this.say('BIG... BEAR... HUG!!!', 1800);
+      this.say('BIG... BEAR... HUG!!! SMELL MY FART!', 1800);
       this.host.fx.shake(600, 0.006);
       await s.tweenAsync({ targets: this.root, x: 320, y: FLOOR + 66, scale: 1.4, duration: 1200, ease: 'Cubic.easeInOut' });
       this.root.setDepth(8);
@@ -314,7 +314,7 @@ export class Begour implements Target {
 
   private async friendshipHearts(s: Scope) {
     this.setFace('happy');
-    this.say('I LUV U SO MUCH!', 1300);
+    this.say("I'M BEGOUR, YEE-HAW!", 1300);
     await this.pawsTo(s, -20, -60, 20, -60, 200);
     const glow = s.own(this.host.add.image(this.root.x, FLOOR - 60, 'e_heart').setDepth(33).setScale(1.5));
     s.tween({ targets: glow, scale: 2.4, yoyo: true, repeat: 2, duration: 160 });
@@ -462,7 +462,7 @@ export class Begour implements Target {
 
   private async honeySlip(s: Scope) {
     this.setFace('sad');
-    this.say('WHOOPS! WOBBLY FLOOR!', 1600);
+    this.say("YOU SILLY MAN, YOU'VE BEEN DRINKING MANY CANS!", 1600);
     const towardBear = Math.sign(this.root.x - 320) || 1;
     AudioBus.sfx('sfx_whoosh');
     const arrow = s.own(this.host.add.text(320, 120, towardBear > 0 ? 'TILT  >>>' : '<<<  TILT', { fontFamily: 'monospace', fontSize: '22px', color: '#ffe14a', stroke: '#120c16', strokeThickness: 5, fontStyle: 'bold' }).setOrigin(0.5).setDepth(120));

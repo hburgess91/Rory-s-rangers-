@@ -182,7 +182,7 @@ test('Begour: dying mid-fight retries straight into the fight', async ({ page })
   expect(errors).toEqual([]);
 });
 
-test('story: intro skips into Big Tesk-O, and the exit leads to Begour', async ({ page }) => {
+test('story: intro skips into chapter 1, and its exit leads to the Fame Algorithm', async ({ page }) => {
   const errors = collectErrors(page);
   await boot(page);
   await enter(page, 'story', 'sanchz');
@@ -190,12 +190,92 @@ test('story: intro skips into Big Tesk-O, and the exit leads to Begour', async (
   await sleep(500);
   await tap(page, 'Escape');
   await sleep(300);
-  // if the dialogue had started, Escape skipped it; press again to be sure
   await tap(page, 'Escape');
-  await waitGameplay(page, 'tesko');
-  await page.evaluate(() => (window as any).__SANMIK.cheat.teleport(4100, 318));
+  await waitGameplay(page, 'level');
+  // skip the chapter intro dialogue
+  for (let i = 0; i < 3; i++) { await tap(page, 'Escape', 60); await sleep(200); if (await page.evaluate(() => (window as any).__SANMIK.activeScenes.includes('pause'))) { await tap(page, 'Escape', 60); await sleep(200); } }
+  await page.evaluate(() => (window as any).__SANMIK.cheat.teleport(2900, 318));
   await page.keyboard.down('d');
-  await waitGameplay(page, 'begour');
+  await waitGameplay(page, 'fame');
   await page.keyboard.up('d');
+  expect(errors).toEqual([]);
+});
+
+for (const id of ['jobcentre', 'freedom', 'warehouse', 'lampe']) {
+  test(`level ${id} loads, runs and restarts cleanly`, async ({ page }) => {
+    const errors = collectErrors(page);
+    await boot(page);
+    await page.evaluate((i) => (window as any).__SANMIK.game.scene.getScene('title').scene.start('select', { next: { key: 'level', data: { id: i } } }), id);
+    await sleep(400);
+    await tap(page, 'Enter');
+    await waitGameplay(page, 'level');
+    await page.evaluate(() => (window as any).__SANMIK.cheat.god(true));
+    for (let i = 0; i < 4; i++) { await tap(page, 'Enter', 60); await sleep(250); }
+    await page.keyboard.down('d'); await page.keyboard.down('j');
+    await sleep(3000);
+    await page.keyboard.up('d'); await page.keyboard.up('j');
+    await page.evaluate(() => (window as any).__SANMIK.cheat.god(false));
+    await page.evaluate(() => (window as any).__SANMIK.cheat.killPlayer());
+    await page.waitForFunction(() => { const s = (window as any).__SANMIK.state(); return s && s.scene === 'level' && s.alive && s.hp === 4 && s.jumps === 0; }, null, { timeout: 10_000 });
+    const s = (await state(page))!;
+    expect(s.sequencers).toBe(1);
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const [key, phases, nextKey] of [['fame', 2, 'tesko'], ['tank', 2, 'level'], ['rik', 3, 'level'], ['gabor', 3, 'ending']] as const) {
+  test(`boss ${key}: every phase once, defeat, results, next chapter`, async ({ page }) => {
+    const errors = collectErrors(page);
+    await boot(page);
+    await page.evaluate((k) => (window as any).__SANMIK.game.scene.getScene('title').scene.start('select', { next: { key: k } }), key);
+    await sleep(400);
+    await tap(page, 'Enter');
+    await waitGameplay(page, key);
+    await page.evaluate(() => (window as any).__SANMIK.cheat.god(true));
+    await page.evaluate(() => (window as any).__SANMIK.cheat.nextPhase());
+    await page.waitForFunction(() => (window as any).__SANMIK.state()?.boss?.phase === 0);
+    await page.keyboard.down('j');
+    for (let p = 1; p < phases; p++) {
+      await sleep(3500);
+      await page.evaluate(() => (window as any).__SANMIK.cheat.nextPhase());
+      await page.waitForFunction((w) => (window as any).__SANMIK.state()?.boss?.phase === w, p);
+      const st = (await state(page))!;
+      expect(st.scopes).toBe(1);
+    }
+    await sleep(4000);
+    await page.keyboard.up('j');
+    const s = (await state(page))!;
+    expect(s.boss!.entries).toBe(Array(phases).fill('1').join('/'));
+    await page.evaluate(() => (window as any).__SANMIK.cheat.killBoss());
+    await sleep(300);
+    expect(((await state(page)) as any).enemyShots).toBe(0);
+    for (let i = 0; i < 40; i++) {
+      if (await page.evaluate(() => (window as any).__SANMIK.activeScenes.includes('result'))) break;
+      await tap(page, 'Enter', 60);
+      await sleep(350);
+    }
+    await page.waitForFunction(() => (window as any).__SANMIK.activeScenes.includes('result'), null, { timeout: 20_000 });
+    await page.evaluate(() => (window as any).__SANMIK.cheat.god(false));
+    await sleep(2800);
+    await tap(page, 'Enter');
+    await page.waitForFunction((n) => (window as any).__SANMIK.activeScenes.includes(n), nextKey, { timeout: 10_000 });
+    expect(errors).toEqual([]);
+  });
+}
+
+test('ending and credits play for SanChz', async ({ page }) => {
+  const errors = collectErrors(page);
+  await boot(page);
+  await page.evaluate(() => (window as any).__SANMIK.game.scene.getScene('title').scene.start('select', { next: { key: 'ending' } }));
+  await sleep(400);
+  await tap(page, 'ArrowRight');
+  await tap(page, 'Enter');
+  await page.waitForFunction(() => (window as any).__SANMIK.activeScenes.includes('ending'));
+  for (let i = 0; i < 60; i++) {
+    if (await page.evaluate(() => (window as any).__SANMIK.activeScenes.includes('credits'))) break;
+    await tap(page, 'Enter', 60);
+    await sleep(300);
+  }
+  await page.waitForFunction(() => (window as any).__SANMIK.activeScenes.includes('credits'), null, { timeout: 20_000 });
   expect(errors).toEqual([]);
 });

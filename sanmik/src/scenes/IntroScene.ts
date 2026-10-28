@@ -5,8 +5,10 @@ import { Fx, textStyle } from '../core/Fx';
 import { AudioBus } from '../audio/AudioBus';
 import { VIEW } from '../config/tuning';
 import { session } from '../core/session';
+import { clean } from '../core/lang';
 
-// Opening: the crash from "The End", then the afterlife paperwork mix-up.
+// Opening, after "The End" (OrChzMik): the weed trip, the crash, waking up in
+// heaven with wings, Gabor, and then the afterlife paperwork.
 export class IntroScene extends Phaser.Scene {
   private controls!: Controls;
   private dialogue!: Dialogue;
@@ -29,80 +31,108 @@ export class IntroScene extends Phaser.Scene {
     this.crash();
   }
 
-  private crash() {
-    this.cameras.main.setBackgroundColor('#05040a');
-    const cap = this.add.text(VIEW.W / 2, 60, "PREVIOUSLY, ON 'THE END'...", textStyle(16, '#ffffff', '#000000', 4)).setOrigin(0.5);
-    this.add.rectangle(0, 250, VIEW.W, 110, 0x1a1a22).setOrigin(0);
-    for (let x = 0; x < VIEW.W; x += 60) this.add.rectangle(x, 288, 30, 3, 0xffe14a);
-    this.add.rectangle(560, 210, 14, 40, 0x555555).setOrigin(0.5, 0);
-    const car = this.add.image(-60, 270, 'intro_car').setOrigin(0.5, 1);
-    this.tweens.add({
-      targets: car, x: 520, duration: 1500, ease: 'Quad.easeIn',
-      onComplete: () => {
-        if (this.done) return;
-        AudioBus.sfx('sfx_explode');
-        this.fx.shake(500, 0.02);
-        this.cameras.main.flash(300, 255, 120, 40);
-        car.setAngle(160).setY(240);
-        this.add.text(VIEW.W / 2, 130, '*CRASH*', textStyle(36, '#ff3a3a', '#000000', 6)).setOrigin(0.5);
-        this.time.addEvent({ delay: 60, repeat: 20, callback: () => this.fx.sparks(520 + (Math.random() - 0.5) * 50, 240, [0xff8a1a, 0xffe14a, 0xff3a3a][Math.floor(Math.random() * 3)], 3, 90) });
-        this.time.delayedCall(1700, () => this.office(cap));
-      },
+  private clearScene() {
+    for (const o of [...this.children.list]) if (!this.keep.has(o)) o.destroy();
+  }
+
+  private caption(text: string, y: number, delay: number, color = '#ffffff') {
+    this.time.delayedCall(delay, () => {
+      if (this.done) return;
+      const t = this.add.text(VIEW.W / 2, y, clean(text), textStyle(13, color, '#000000', 4)).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: t, alpha: 1, duration: 300 });
     });
   }
 
-  private office(cap: Phaser.GameObjects.Text) {
+  private crash() {
+    this.cameras.main.setBackgroundColor('#05040a');
+    this.add.text(VIEW.W / 2, 30, "PREVIOUSLY, ON 'THE END'...", textStyle(16, '#ffffff', '#000000', 4)).setOrigin(0.5);
+    this.add.rectangle(0, 250, VIEW.W, 110, 0x1a1a22).setOrigin(0);
+    for (let x = 0; x < VIEW.W; x += 60) this.add.rectangle(x, 288, 30, 3, 0xffe14a);
+    this.add.rectangle(560, 270, 120, 30, 0x0a140a).setOrigin(0.5, 0); // the ditch
+    const car = this.add.image(-60, 270, 'intro_corvette').setOrigin(0.5, 1);
+    this.caption('Me and SanChz on another weed trip', 70, 200);
+    this.caption('Hallucinating aliens. Thinking bout Burger King.', 92, 1200);
+    this.caption('SanChz passes me a line of ket. I snort it off the driving wheel.', 114, 2300, '#ff9ad0');
+    this.tweens.add({ targets: car, x: 300, duration: 3300, ease: 'Linear' });
+    this.time.delayedCall(3300, () => {
+      if (this.done) return;
+      this.tweens.add({
+        targets: car, x: 560, y: 300, angle: 170, duration: 700, ease: 'Quad.easeIn',
+        onComplete: () => {
+          if (this.done) return;
+          AudioBus.sfx('sfx_explode');
+          this.fx.shake(500, 0.02);
+          this.cameras.main.flash(300, 255, 120, 40);
+          this.add.text(VIEW.W / 2, 170, '*CRASH*', textStyle(36, '#ff3a3a', '#000000', 6)).setOrigin(0.5);
+          this.time.addEvent({ delay: 60, repeat: 30, callback: () => this.fx.sparks(560 + (Math.random() - 0.5) * 50, 280, [0xff8a1a, 0xffe14a, 0xff3a3a][Math.floor(Math.random() * 3)], 3, 90) });
+          this.caption("Don't use ket in a car or a bike. Unless you want your life to end.", 215, 900, '#ffe14a');
+          this.caption('Me and SanChz are burning to death. He is my only friend.', 236, 2200);
+          this.time.delayedCall(4300, () => this.heaven());
+        },
+      });
+    });
+  }
+
+  private heaven() {
     if (this.done) return;
-    for (const o of [...this.children.list]) if (!this.keep.has(o)) o.destroy();
-    cap.destroy();
-    this.cameras.main.setBackgroundColor('#dfe6ff');
-    this.cameras.main.flash(500, 255, 255, 255);
-    // a heavenly benefits office
-    this.add.rectangle(0, 250, VIEW.W, 110, 0xc9cfe8).setOrigin(0);
-    for (let i = 0; i < 6; i++) this.add.ellipse(60 + i * 110, 236, 120, 40, 0xffffff, 0.9);
-    this.add.rectangle(380, 40, 220, 26, 0x3a6ad0).setStrokeStyle(2, 0xffffff);
-    this.add.text(380, 40, 'AFTERLYFE ADMIN - PLEASE TAKE A TICKET', textStyle(8, '#ffffff', '#1a2a5a', 2)).setOrigin(0.5);
-    const err = this.add.text(VIEW.W / 2, 90, 'AFTERLYFE ERROR 404', textStyle(28, '#c8102e', '#ffffff', 6)).setOrigin(0.5);
-    this.tweens.add({ targets: err, x: { from: VIEW.W / 2 - 2, to: VIEW.W / 2 + 2 }, yoyo: true, repeat: -1, duration: 60 });
-    this.add.image(440, 260, 'intro_desk').setOrigin(0.5, 1).setScale(1.4);
-    const clerk = this.add.image(470, 214, 'intro_clerk').setOrigin(0.5, 1).setScale(1.4);
-    this.tweens.add({ targets: clerk, y: 208, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
-    const mik = this.add.sprite(170, 262, 'sanmik_classic', 'idle_0').setOrigin(0.5, 1).setScale(1.4).play('sanmik_classic:idle');
-    const chz = this.add.sprite(250, 262, 'sanchz_classic', 'idle_0').setOrigin(0.5, 1).setScale(1.4).play('sanchz_classic:idle');
-    if (session.char === 'sanmik' && session.costume !== 'classic') mik.setTexture(`sanmik_${session.costume}`).play(`sanmik_${session.costume}:idle`);
-    if (session.char === 'sanchz' && session.costume !== 'classic') chz.setTexture(`sanchz_${session.costume}`).play(`sanchz_${session.costume}:idle`);
-    let gabor: Phaser.GameObjects.Image | null = null;
+    this.clearScene();
+    this.cameras.main.setBackgroundColor('#fff6dc');
+    this.cameras.main.flash(600, 255, 255, 255);
+    this.add.tileSprite(0, 0, VIEW.W, VIEW.H, 'bg_heaven').setOrigin(0);
+    this.add.tileSprite(0, 262, VIEW.W, 16, 'tile_heaven_top').setOrigin(0);
+    const mikTex = session.char === 'sanmik' ? `sanmik_${session.costume}` : 'sanmik_classic';
+    const chzTex = session.char === 'sanchz' ? `sanchz_${session.costume}` : 'sanchz_classic';
+    const wings = this.add.image(170, 222, 'intro_wings').setScale(1.6);
+    this.tweens.add({ targets: wings, scaleY: 1.3, yoyo: true, repeat: -1, duration: 300 });
+    this.add.sprite(170, 264, mikTex, 'idle_0').setOrigin(0.5, 1).setScale(1.4).play(`${mikTex}:idle`);
+    let chz: Phaser.GameObjects.Sprite | null = null;
+    const enterGabor = () => {
+      AudioBus.sfx('sfx_sparkle');
+      const gabor = this.add.image(300, 264, 'gabor_small').setOrigin(0.5, 1).setScale(1.6).setFlipX(true);
+      this.tweens.add({ targets: gabor, y: 258, yoyo: true, repeat: -1, duration: 400 });
+    };
+    const enterChz = () => {
+      AudioBus.sfx('sfx_explode', { vol: 0.4 });
+      this.cameras.main.flash(200, 255, 80, 0);
+      chz = this.add.sprite(80, 264, chzTex, 'idle_0').setOrigin(0.5, 1).setScale(1.4).play(`${chzTex}:idle`).setTint(0x9a8a7a);
+      this.time.delayedCall(600, () => chz?.clearTint());
+    };
+    const enterClerk = () => {
+      AudioBus.sfx('sfx_ui_select');
+      this.add.image(470, 264, 'intro_desk').setOrigin(0.5, 1).setScale(1.4);
+      const clerk = this.add.image(500, 222, 'intro_clerk').setOrigin(0.5, 1).setScale(1.4);
+      this.tweens.add({ targets: clerk, y: 216, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
+    };
     const stamp = () => {
-      const t = this.add.text(VIEW.W / 2, 150, 'CONTINUITY ERROR\nRETURN 2 SENDER', textStyle(22, '#c8102e', '#ffffff', 5)).setOrigin(0.5).setAngle(-8).setScale(3).setAlpha(0);
+      const t = this.add.text(VIEW.W / 2, 120, 'AFTERLYFE ERROR 404\nCONTINUITY ERROR - RETURN 2 SENDER', textStyle(18, '#c8102e', '#ffffff', 5)).setOrigin(0.5).setAngle(-6).setScale(3).setAlpha(0);
       this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 160, ease: 'Back.easeOut' });
       AudioBus.sfx('sfx_stamp');
       this.fx.shake(150, 0.01);
-      this.time.delayedCall(1500, () => this.tweens.add({ targets: t, alpha: 0, duration: 300 }));
+      this.time.delayedCall(2200, () => this.tweens.add({ targets: t, alpha: 0, duration: 300 }));
     };
-    const enterGabor = () => {
-      AudioBus.sfx('sfx_sparkle');
-      this.cameras.main.flash(200, 255, 230, 150);
-      gabor = this.add.image(330, 262, 'gabor_small').setOrigin(0.5, 1).setScale(1.6).setFlipX(true);
-      const lamp = this.add.image(312, 236, 'lamp').setScale(1.2);
-      this.tweens.add({ targets: [gabor, lamp], y: '-=4', yoyo: true, repeat: -1, duration: 400 });
-    };
+    const MIK = 'ui_face_sanmik', CHZ = 'ui_face_sanchz';
     const lines: Line[] = [
-      { who: 'CLERK', text: 'Next. Name?' },
-      { who: 'SANMIK', face: 'ui_face_sanmik', text: 'SanMik. Da legend. World famous. Yee.' },
-      { who: 'CLERK', text: 'Never heard of you. Says here you both died in a car crash. Very sad. Lovely song.' },
-      { who: 'CLERK', text: '...and then you released another album. Afterwards. While dead.' },
-      { who: 'SANCHZ', face: 'ui_face_sanchz', text: 'YEGHHH.' },
-      { who: 'CLERK', text: 'Heaven has one of you on file. Hell has the other. Neither will take you.', onShow: stamp },
-      { who: '???', text: 'Hiya, best friend!', color: '#ff4f6f', onShow: enterGabor },
-      { who: 'GABOR', text: 'Remember me? From Da Majek Lampe? You had three wishes and you wished for ME. And two Pepsis.' },
-      { who: 'GABOR', text: "The lamp's wishes have gone and scattered all over the afterlife. Collect them, and you go home. Honest." },
-      { who: 'GABOR', text: '(heh.)' },
-      { who: 'SANMIK', face: 'ui_face_sanmik', text: "A world comeback tour. Dis is my moment. YEE." },
-      { who: 'SANCHZ', face: 'ui_face_sanchz', text: 'Can we go pub after?' },
-      { who: 'GABOR', text: "First wish fragment's in the big supermarket. With my friend Begour. He's ever so nice. Go on then!" },
+      { who: 'SANMIK', face: MIK, text: 'Where am I now? Why have I got wings? Why have I got fucking wings?' },
+      { who: 'SANMIK', face: MIK, text: 'Where the fuck am I? Is that you, Gabor?' },
+      { who: 'GABOR', color: '#ff4f6f', text: "Yee! It's okay SanMik, we're in heaven! I missed you SanMik!", onShow: enterGabor },
+      { who: 'SANMIK', face: MIK, text: "Heaven? YEE. Course I'm in heaven. I'm the fucking best. Michael Jackson is second best." },
+      { who: 'SANMIK', face: MIK, text: 'Where the fuck is SanChz?' },
+      { who: 'GABOR', color: '#ff4f6f', text: 'In hell! Hehehe.' },
+      { who: 'SANCHZ', face: CHZ, text: "YEGHHH. Hell's shut. Bus never came. Didn't have a fiver.", onShow: enterChz },
+      { who: 'SANCHZ', face: CHZ, text: "I'm still a bit on fire, SanMik." },
+      { who: 'SANMIK', face: MIK, text: "Shut up, you fat cunt. You're ruining my heaven." },
+      { who: 'CLERK', text: 'Next. ...Oh no. You two.', onShow: enterClerk },
+      { who: 'CLERK', text: 'Says here you died in a ditch, off your tits on ket. Lovely song, by the way.' },
+      { who: 'CLERK', text: '...And then you released ANOTHER fucking album. While dead.' },
+      { who: 'SANMIK', face: MIK, text: "Cause I'm a legend, you neeky cunt. Catford Fox Crew. I'll fucking sherk you." },
+      { who: 'CLERK', text: "Heaven won't have you. Hell won't have you. You're a paperwork problem.", onShow: stamp },
+      { who: 'GABOR', color: '#ff4f6f', text: "Don't worry best friend! The Majek Lampe broke, and its wishes got scattered all over the afterlife. Get them back and you can go home!" },
+      { who: 'GABOR', color: '#ff4f6f', text: '...heh.' },
+      { who: 'SANMIK', face: MIK, text: "Shut the fuck up, you little neeky goat cunt. ...Fine. It's my world comeback tour. YEE." },
+      { who: 'SANCHZ', face: CHZ, text: 'Can we go pub after?' },
+      { who: 'GABOR', color: '#ff4f6f', text: "First stop: the Jobcentre Beyond! SanChz knows the way, don't you SanChz?" },
     ];
     this.time.delayedCall(900, () => { if (!this.done) this.dialogue.play(lines, () => this.finish()); });
-    void gabor;
   }
 
   private finish() {
@@ -110,7 +140,7 @@ export class IntroScene extends Phaser.Scene {
     this.done = true;
     session.seenIntro = true;
     this.cameras.main.fadeOut(400, 0, 0, 0);
-    this.time.delayedCall(420, () => this.scene.start('tesko', {}));
+    this.time.delayedCall(420, () => this.scene.start('level', { id: 'jobcentre' }));
   }
 
   update(_t: number, dt: number) {

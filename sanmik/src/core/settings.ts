@@ -7,10 +7,11 @@ export interface Settings {
   voiceVol: number;
   screenShake: boolean;
   showHitboxes: boolean;
+  swearing: boolean;
 }
 
 const KEY = 'sanmik.settings.v1';
-const DEFAULTS: Settings = { musicVol: 0.55, sfxVol: 0.8, voiceVol: 1, screenShake: true, showHitboxes: false };
+const DEFAULTS: Settings = { musicVol: 0.55, sfxVol: 0.8, voiceVol: 1, screenShake: true, showHitboxes: false, swearing: true };
 
 let current: Settings = { ...DEFAULTS };
 try {

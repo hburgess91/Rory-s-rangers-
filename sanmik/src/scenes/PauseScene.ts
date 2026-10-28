@@ -29,6 +29,7 @@ export class PauseScene extends Phaser.Scene {
     this.menu = new Menu(this, this.controls, [
       { label: 'RESUME', onSelect: () => this.resume() },
       { label: 'RESTART FROM CHECKPOINT', onSelect: () => this.restart() },
+      { label: () => `SWEARING: ${getSettings().swearing ? 'ON' : 'OFF'}`, onSelect: () => updateSettings({ swearing: !getSettings().swearing }) },
       { label: () => `SCREEN SHAKE: ${getSettings().screenShake ? 'ON' : 'OFF'}`, onSelect: () => updateSettings({ screenShake: !getSettings().screenShake }) },
       { label: () => `MUSIC: ${Math.round(getSettings().musicVol * 100)}%`, onLeft: () => updateSettings({ musicVol: Math.max(0, Math.round((getSettings().musicVol - 0.1) * 10) / 10) }), onRight: () => updateSettings({ musicVol: Math.min(1, Math.round((getSettings().musicVol + 0.1) * 10) / 10) }) },
       { label: 'QUIT TO TITLE', onSelect: () => this.quit() },
@@ -42,10 +43,11 @@ export class PauseScene extends Phaser.Scene {
   }
 
   private restart() {
-    const g = this.scene.get(this.from) as Phaser.Scene & { checkpointIdx?: number };
+    const g = this.scene.get(this.from) as Phaser.Scene & { retryData?: () => object };
+    const data = g.retryData ? g.retryData() : { retry: true };
     this.scene.stop();
     this.scene.stop(this.from);
-    this.scene.start(this.from, { checkpoint: g.checkpointIdx ?? 0, retry: true });
+    this.scene.start(this.from, data);
   }
 
   private quit() {

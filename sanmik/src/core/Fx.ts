@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { getSettings } from './settings';
+import { clean } from './lang';
 
 export const FONT = '"Trebuchet MS", "Arial Black", Verdana, sans-serif';
 export const MONO = '"Courier New", Courier, monospace';
@@ -48,7 +49,7 @@ export class Fx {
   }
 
   pop(x: number, y: number, text: string, color = '#ffffff', size = 12, rise = 26, duration = 900) {
-    const t = this.scene.add.text(x, y, text, textStyle(size, color, '#120c16', 3)).setOrigin(0.5).setDepth(90);
+    const t = this.scene.add.text(x, y, clean(text), textStyle(size, color, '#120c16', 3)).setOrigin(0.5).setDepth(90);
     this.scene.tweens.add({ targets: t, y: y - rise, duration, ease: 'Cubic.easeOut' });
     this.scene.tweens.add({ targets: t, alpha: 0, delay: duration * 0.6, duration: duration * 0.4, onComplete: () => t.destroy() });
     return t;
@@ -74,7 +75,7 @@ export class Fx {
   /** Big centred stamp text, e.g. "BEGOUR — DESTROYED". Fixed to the camera. */
   stamp(text: string, color = '#ff3a5a', size = 34, hold = 1600, y = 150) {
     const cam = this.scene.cameras.main;
-    const t = this.scene.add.text(cam.width / 2, y, text, textStyle(size, color, '#120c16', 6)).setOrigin(0.5).setScrollFactor(0).setDepth(200).setScale(3).setAlpha(0).setAngle(-6);
+    const t = this.scene.add.text(cam.width / 2, y, clean(text), textStyle(size, color, '#120c16', 6)).setOrigin(0.5).setScrollFactor(0).setDepth(200).setScale(3).setAlpha(0).setAngle(-6);
     this.scene.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 180, ease: 'Back.easeOut' });
     this.scene.tweens.add({ targets: t, alpha: 0, delay: hold, duration: 400, onComplete: () => t.destroy() });
     return t;
@@ -84,8 +85,8 @@ export class Fx {
   banner(text: string, sub = '', color = '#ffe14a', hold = 1800) {
     const cam = this.scene.cameras.main;
     const bar = this.scene.add.rectangle(cam.width / 2, 120, cam.width, sub ? 64 : 44, 0x120c16, 0.82).setScrollFactor(0).setDepth(199);
-    const t = this.scene.add.text(cam.width / 2, sub ? 108 : 120, text, textStyle(24, color, '#120c16', 5)).setOrigin(0.5).setScrollFactor(0).setDepth(200);
-    const s = sub ? this.scene.add.text(cam.width / 2, 136, sub, textStyle(12, '#ffffff', '#120c16', 3)).setOrigin(0.5).setScrollFactor(0).setDepth(200) : null;
+    const t = this.scene.add.text(cam.width / 2, sub ? 108 : 120, clean(text), textStyle(24, color, '#120c16', 5)).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+    const s = sub ? this.scene.add.text(cam.width / 2, 136, clean(sub), textStyle(12, '#ffffff', '#120c16', 3)).setOrigin(0.5).setScrollFactor(0).setDepth(200) : null;
     const objs = [bar, t, ...(s ? [s] : [])];
     objs.forEach((o) => o.setAlpha(0));
     this.scene.tweens.add({ targets: objs, alpha: 1, duration: 200 });

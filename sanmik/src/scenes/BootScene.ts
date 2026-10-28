@@ -3,6 +3,9 @@ import { finalAudio, finalSprites } from '../config/assets';
 import { buildCharacters, registerCharacterAnims } from '../art/characters';
 import { buildWorldArt, registerWorldAnims } from '../art/world';
 import { buildIntroArt } from '../art/intro';
+import { buildRosterArt, registerRosterAnims } from '../art/roster';
+import { buildChapterArt, registerChapterAnims } from '../art/chapters';
+import { buildBossArt } from '../art/bosses';
 import { AudioBus } from '../audio/AudioBus';
 
 export class BootScene extends Phaser.Scene {
@@ -37,6 +40,11 @@ export class BootScene extends Phaser.Scene {
     buildCharacters(this);
     buildWorldArt(this);
     buildIntroArt(this);
+    buildRosterArt(this);
+    registerRosterAnims(this);
+    buildChapterArt(this);
+    registerChapterAnims(this);
+    buildBossArt(this);
     registerCharacterAnims(this);
     registerWorldAnims(this);
     AudioBus.init(this.game);

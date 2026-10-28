@@ -102,6 +102,11 @@ class Bus {
     this.duck();
   }
 
+  /** Distorted copy of a jump vocal (Gabor mocking you). Not counted as a jump vocal. */
+  mock(id: 'vo_yee' | 'vo_yeghhh', rate = 0.6) {
+    this.playBuffer(`${id}#0`, this.voiceGain, 0.8, rate, 2);
+  }
+
   /** Short sound effect. Round-robins variants and caps simultaneous copies. */
   sfx(id: string, opts: { vol?: number; rate?: number; maxCopies?: number } = {}) {
     this.stats.sfx++;

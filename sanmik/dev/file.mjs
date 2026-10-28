@@ -9,7 +9,8 @@ await p.keyboard.press('Enter'); await new Promise(r => setTimeout(r, 500));
 await p.keyboard.press('Enter');
 await p.waitForFunction(() => window.__SANMIK.activeScenes.includes('intro'), null, { timeout: 10000 });
 await p.keyboard.press('Escape'); await new Promise(r => setTimeout(r, 400)); await p.keyboard.press('Escape');
-await p.waitForFunction(() => window.__SANMIK.state()?.scene === 'tesko', null, { timeout: 10000 });
+await p.waitForFunction(() => window.__SANMIK.state()?.scene === 'level', null, { timeout: 10000 });
+for (let i = 0; i < 3; i++) { await p.keyboard.press('Escape'); await new Promise(r => setTimeout(r, 250)); if (await p.evaluate(() => window.__SANMIK.activeScenes.includes('pause'))) { await p.keyboard.press('Escape'); await new Promise(r => setTimeout(r, 250)); } }
 await p.keyboard.down('d'); await new Promise(r => setTimeout(r, 800)); await p.keyboard.press('k'); await new Promise(r => setTimeout(r, 400)); await p.keyboard.up('d');
 await p.screenshot({ path: process.argv[2] });
 console.log('file ok', JSON.stringify(await p.evaluate(() => window.__SANMIK.state())), errs);
