@@ -6,7 +6,12 @@ greatest action game ever made. The game knows he isn't.
 **Status: vertical slice.** Title → character select → opening cutscene → Chapter 2
 (Big Tesk-O / Frendship Forest) → BEGOUR THE BEAR (3 phases) → results. Plus a Debug Gym.
 
-## Run it
+## Just play it
+
+Download `play/SANMIK.html` and double-click it. It opens in your web browser — no install.
+Click the game once so the sound can start. Rebuild that file with `npm run build:single`.
+
+## Run it (for development)
 
 ```bash
 cd sanmik
