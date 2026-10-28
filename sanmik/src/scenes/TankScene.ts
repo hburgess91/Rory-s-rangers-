@@ -9,7 +9,7 @@ export class TankScene extends BossScene {
 
   protected cfg(): ArenaCfg {
     return {
-      chapter: 3, bg: 'bg_street', theme: 'street', floor: TANK_FLOOR, music: 'mus_begour',
+      chapter: 3, bg: 'bg_street', theme: 'street', floor: TANK_FLOOR, music: 'mus_freedom',
       platforms: [[40, 256, 100], [170, 204, 80]],
       stamp: 'BANK TANK - DESTROYED',
       retryLines: ['ROUND TWO, SANMIK', 'STILL NO BAIL', 'TANK BEATS AFRO'],

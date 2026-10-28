@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GameplayScene } from './GameplayScene';
 import { HoneyWasp } from '../enemies/types';
 import { Charger, HenDo } from '../enemies/roster';
-import { AudioBus } from '../audio/AudioBus';
 import { VIEW } from '../config/tuning';
 import { session } from '../core/session';
 
@@ -133,7 +132,6 @@ export class TeskoScene extends GameplayScene {
     this.signsLayer.setAlpha(1 - t);
     this.bgF.setAlpha(t);
     this.forestMid.setAlpha(t);
-    AudioBus.music(t > 0.5 ? 'mus_forest' : 'mus_tesko');
     if (this.leaving) this.player.pbody.setVelocityX(120);
   }
 

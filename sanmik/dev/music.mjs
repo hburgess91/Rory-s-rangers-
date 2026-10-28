@@ -1,0 +1,22 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => (m.type() === 'error' || m.type() === 'warning') && !m.text().includes('GL Driver') && errs.push(m.text()));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+await p.goto('file://' + process.cwd() + '/play/SANMIK.html');
+await p.waitForFunction(() => window.__SANMIK?.activeScenes.includes('title'), null, { timeout: 30000 });
+await p.mouse.click(640, 360); await sleep(2500);
+const a = () => p.evaluate(() => JSON.stringify(window.__SANMIK.audio));
+console.log('title', await a());
+await p.evaluate(() => window.__SANMIK.game.scene.getScene('title').scene.start('select', { next: { key: 'level', data: { id: 'freedom' } } }));
+await sleep(500); await p.keyboard.press('Enter'); await sleep(3000);
+await p.keyboard.press('Enter'); await sleep(200);
+for (let i = 0; i < 6; i++) { await p.keyboard.press('Escape'); await sleep(200); if (await p.evaluate(() => window.__SANMIK.activeScenes.includes('pause'))) { await p.keyboard.press('Escape'); await sleep(200); } }
+await p.keyboard.down('k'); await sleep(100); await p.keyboard.up('k'); await sleep(900);
+console.log('freedom', await a());
+await p.evaluate(() => window.__SANMIK.cheat.meter()); await sleep(100); await p.keyboard.press('i'); await sleep(2500);
+console.log('delusion', await a());
+await sleep(8000);
+console.log('after', await a());
+console.log('errors', errs);
+await b.close();

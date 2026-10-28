@@ -3,6 +3,7 @@ import { GENERATORS, VARIANTS, DRUMS } from './synth';
 import { TRACKS, Track } from './music';
 import { AUDIO } from '../config/assets';
 import { getSettings, onSettings } from '../core/settings';
+import { MUSIC_FILES, VOICE_FILES } from './files';
 
 // One global audio bus for the whole game. Scenes never create their own
 // music players, so restarting a scene can never duplicate music.
@@ -32,9 +33,15 @@ class Bus {
   private seqNextTime = 0;
   private seqOut: GainNode | null = null;
   private fileMusic: Phaser.Sound.BaseSound | null = null;
+  // real songs: decoded on demand, a couple kept in memory
+  private songCache = new Map<string, AudioBuffer>();
+  private songLoads = new Map<string, Promise<AudioBuffer | null>>();
+  private song: { id: string; src: AudioBufferSourceNode; gain: GainNode; startTime: number; dur: number } | null = null;
+  private songResume = new Map<string, number>();
+  private musicToken = 0;
 
   // counters used by tests and the debug overlay
-  stats = { voice: {} as Record<string, number>, sfx: 0, musicStarts: 0, liveSequencers: 0 };
+  stats = { voice: {} as Record<string, number>, sfx: 0, musicStarts: 0, liveSequencers: 0, song: null as string | null, realTakes: {} as Record<string, number> };
 
   init(game: Phaser.Game) {
     this.game = game;
@@ -64,6 +71,31 @@ class Bus {
       for (let v = 0; v < variants; v++) this.buffers.set(variants > 1 ? `${id}#${v}` : id, this.toBuffer(gen(sr, v)));
     }
     for (const [id, gen] of Object.entries(DRUMS)) this.drumBufs.set(id, this.toBuffer(gen(sr, 0)));
+    void this.loadVoices();
+  }
+
+  /** Swap the generated jump vocals for the real recorded takes once they decode. */
+  private async loadVoices() {
+    for (const [id, urls] of Object.entries(VOICE_FILES)) {
+      if (!urls.length) continue;
+      const bufs = (await Promise.all(urls.map((u) => this.decode(u)))).filter((b): b is AudioBuffer => !!b);
+      if (!bufs.length) continue;
+      bufs.forEach((b, i) => this.buffers.set(`${id}#${i}`, b));
+      this.realVoices.set(id, bufs.length);
+      this.stats.realTakes[id] = bufs.length;
+    }
+  }
+  private realVoices = new Map<string, number>();
+
+  private async decode(url: string): Promise<AudioBuffer | null> {
+    if (!this.ctx) return null;
+    try {
+      const res = await fetch(url);
+      return await this.ctx.decodeAudioData(await res.arrayBuffer());
+    } catch (e) {
+      console.warn('[audio] could not decode', url.slice(0, 60), e);
+      return null;
+    }
   }
 
   private toBuffer(samples: Float32Array) {
@@ -75,7 +107,7 @@ class Bus {
   applyVolumes() {
     if (!this.ctx) return;
     const s = getSettings();
-    this.musicGain.gain.value = s.musicVol * 0.5;
+    this.musicGain.gain.value = s.musicVol * 0.55;
     this.sfxGain.gain.value = s.sfxVol * 0.7;
     this.voiceGain.gain.value = s.voiceVol;
   }
@@ -97,10 +129,20 @@ class Bus {
       this.duck();
       return;
     }
-    const variants = VARIANTS[id] ?? 1;
-    this.playBuffer(`${id}#${n % variants}`, this.voiceGain, opts.vol ?? 1, opts.rate ?? 1, 3);
+    const real = this.realVoices.get(id);
+    if (real) {
+      // random take, never the same one twice in a row
+      let k = Math.floor(Math.random() * real);
+      if (real > 1 && k === this.lastTake.get(id)) k = (k + 1) % real;
+      this.lastTake.set(id, k);
+      this.playBuffer(`${id}#${k}`, this.voiceGain, opts.vol ?? 1, opts.rate ?? 1, 3);
+    } else {
+      const variants = VARIANTS[id] ?? 1;
+      this.playBuffer(`${id}#${n % variants}`, this.voiceGain, opts.vol ?? 1, opts.rate ?? 1, 3);
+    }
     this.duck();
   }
+  private lastTake = new Map<string, number>();
 
   /** Distorted copy of a jump vocal (Gabor mocking you). Not counted as a jump vocal. */
   mock(id: 'vo_yee' | 'vo_yeghhh', rate = 0.6) {
@@ -157,6 +199,7 @@ class Bus {
 
   /** Set the level/scene music. Calling it again with the same id does nothing. */
   music(id: string | null) {
+    if (id !== this.baseTrack) this.songResume.clear();
     this.baseTrack = id;
     this.refreshMusic();
   }
@@ -174,10 +217,18 @@ class Bus {
   private refreshMusic() {
     const want = this.override ?? this.baseTrack;
     if (want === this.playingTrack) return;
-    this.stopMusicNow();
+    const leaving = this.playingTrack;
+    // remember where the level song was when a special-mode song interrupts it
+    const resumeLater = !!this.override && leaving === this.baseTrack;
+    this.stopMusicNow(resumeLater);
     this.playingTrack = want;
     if (!want) return;
     this.stats.musicStarts++;
+    if (MUSIC_FILES[want] && this.ctx) {
+      const fromStart = !(want === this.baseTrack && this.songResume.has(want) && !this.override);
+      void this.startSong(want, fromStart);
+      return;
+    }
     if (this.game.cache.audio.exists(want)) {
       this.fileMusic = this.game.sound.add(want, { loop: true, volume: getSettings().musicVol });
       this.fileMusic.play();
@@ -188,7 +239,52 @@ class Bus {
     this.startSequencer(track);
   }
 
-  private stopMusicNow() {
+  private async startSong(id: string, fromStart: boolean) {
+    const token = ++this.musicToken;
+    this.stats.liveSequencers++;
+    let buf = this.songCache.get(id) ?? null;
+    if (!buf) {
+      let p = this.songLoads.get(id);
+      if (!p) { p = this.decode(MUSIC_FILES[id]!); this.songLoads.set(id, p); }
+      buf = await p;
+      this.songLoads.delete(id);
+      if (buf) this.songCache.set(id, buf);
+    }
+    // a different track was requested while this one decoded
+    if (token !== this.musicToken || this.playingTrack !== id) { this.stats.liveSequencers--; return; }
+    if (!buf) { this.stats.liveSequencers--; const t = TRACKS[id]; if (t) this.startSequencer(t); return; }
+    // keep memory down: only hold the songs that can come back soon
+    for (const k of [...this.songCache.keys()]) if (k !== id && k !== this.baseTrack && k !== 'mus_delusion') this.songCache.delete(k);
+    const c = this.ctx!;
+    const offset = fromStart ? 0 : (this.songResume.get(id) ?? 0) % buf.duration;
+    this.songResume.delete(id);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = c.createGain();
+    gain.gain.setValueAtTime(0, c.currentTime);
+    gain.gain.linearRampToValueAtTime(0.9, c.currentTime + 0.3);
+    src.connect(gain).connect(this.musicGain);
+    src.start(0, offset);
+    this.song = { id, src, gain, startTime: c.currentTime - offset, dur: buf.duration };
+    this.stats.song = `${id}@${offset.toFixed(1)}`;
+  }
+
+  private stopMusicNow(remember = false) {
+    this.musicToken++;
+    if (this.song && this.ctx) {
+      const s = this.song;
+      if (remember) this.songResume.set(s.id, (this.ctx.currentTime - s.startTime) % s.dur);
+      const t = this.ctx.currentTime;
+      s.gain.gain.cancelScheduledValues(t);
+      s.gain.gain.setValueAtTime(s.gain.gain.value, t);
+      s.gain.gain.linearRampToValueAtTime(0, t + 0.25);
+      s.src.stop(t + 0.3);
+      s.src.onended = () => s.gain.disconnect();
+      this.song = null;
+      this.stats.song = null;
+      this.stats.liveSequencers--;
+    }
     if (this.fileMusic) {
       this.fileMusic.stop();
       this.fileMusic.destroy();

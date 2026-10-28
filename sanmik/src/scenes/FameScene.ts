@@ -11,7 +11,7 @@ export class FameScene extends BossScene {
 
   protected cfg(): ArenaCfg {
     return {
-      chapter: 1, bg: 'bg_jobcentre', theme: 'office', floor: FAME_FLOOR, music: 'mus_begour', preMusic: 'mus_tesko',
+      chapter: 1, bg: 'bg_jobcentre', theme: 'office', floor: FAME_FLOOR, music: 'mus_jobcentre',
       platforms: [[110, 258, 96], [300, 214, 80], [440, 258, 96]],
       stamp: 'ALGORITHM - DELETED',
       retryLines: ['WELCOME BACK. STILL 3 FOLLOWERS.', 'U AGAIN? NOT RELEVANT.', 'ENGAGEMENT: DOWN 100%'],

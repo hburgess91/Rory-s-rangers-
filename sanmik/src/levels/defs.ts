@@ -67,7 +67,7 @@ function ground(s: LevelScene, segs: [number, number, Theme][]) {
 export const LEVELS: Record<string, LevelDef> = {
   jobcentre: {
     id: 'jobcentre', chapter: 1, title: 'DA JOBCENTRE BEYOND', subtitle: 'Sign on. Get the wish. Do not take a ticket.',
-    music: 'mus_tesko', width: 3000, next: { key: 'fame' },
+    music: 'mus_jobcentre', width: 3000, next: { key: 'fame' },
     layers: [{ tex: 'bg_jobcentre', scroll: 0.25 }, { tex: 'bg_jobcentre_mid', scroll: 0.5, y: 64, h: 120, depth: -9 }],
     intro: () => [
       chz('Sitting in the job centre plus. Didn\'t have a fiver to pay for the bus.'),
@@ -111,7 +111,7 @@ export const LEVELS: Record<string, LevelDef> = {
 
   freedom: {
     id: 'freedom', chapter: 3, title: 'NIGHT OF FREEDOM', subtitle: 'Fifteen cop cars on my tail. If they arrest me I won\'t get bail.',
-    music: 'mus_begour', width: 3600, next: { key: 'tank' },
+    music: 'mus_freedom', width: 3600, next: { key: 'tank' },
     layers: [{ tex: 'bg_street', scroll: 0.25 }, { tex: 'bg_catford', scroll: 0.5, y: 120, h: 200, depth: -9 }],
     intro: () => [
       gabor('Hiya best friend! Next wish is in a bank vault in Catford. Next to a goat. Not me. A different goat.'),
@@ -187,7 +187,7 @@ export const LEVELS: Record<string, LevelDef> = {
 
   warehouse: {
     id: 'warehouse', chapter: 4, title: "DA NU WAREHOUSE: RIK'S BANTA BASEMENT", subtitle: 'A legendary nightclub. (A pub function room from 2009.)',
-    music: 'mus_crunk', width: 3400, next: { key: 'rik' },
+    music: 'mus_warehouse', width: 3400, next: { key: 'rik' },
     layers: [{ tex: 'bg_pub', scroll: 0.25 }, { tex: 'bg_pub_mid', scroll: 0.5, y: 40, h: 120, depth: -9 }],
     intro: () => [
       gabor('Best friend! The next wish is at Da Nu Warehouse. Your uncle ate it.'),

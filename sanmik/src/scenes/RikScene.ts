@@ -11,7 +11,7 @@ export class RikScene extends BossScene {
 
   protected cfg(): ArenaCfg {
     return {
-      chapter: 4, bg: 'bg_toilets', theme: 'pub', floor: RIK_FLOOR, music: 'mus_crunk',
+      chapter: 4, bg: 'bg_toilets', theme: 'pub', floor: RIK_FLOOR, music: 'mus_warehouse',
       platforms: [[100, 250, 96], [444, 250, 96]],
       stamp: 'UNCLE RIK - FLUSHED',
       retryLines: ['ELLO AGAIN. STILL NEED A SHIT.', 'SAME TIME THURSDAY?', 'YEE. REP HIM.'],

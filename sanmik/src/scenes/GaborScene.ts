@@ -16,7 +16,7 @@ export class GaborScene extends BossScene {
 
   protected cfg(): ArenaCfg {
     return {
-      chapter: 5, bg: 'bg_heaven', theme: 'heaven', floor: GABOR_FLOOR, music: 'mus_begour', preMusic: 'mus_intro',
+      chapter: 5, bg: 'bg_heaven', theme: 'heaven', floor: GABOR_FLOOR, music: 'mus_gabor', preMusic: 'mus_intro',
       platforms: [[110, 250, 96], [434, 250, 96]],
       stamp: 'GABOR - BACK IN DA LAMPE',
       retryLines: ['Back for more? Lovely.', 'Hehehe. Again.', 'You died! My favourite bit!'],
@@ -46,7 +46,6 @@ export class GaborScene extends BossScene {
       this.tweens.add({ targets: r, y: r.y + 400, angle: r.angle + 90, alpha: 0, duration: 1200 + Math.random() * 600, onComplete: () => r.destroy() });
     }
     this.tweens.add({ targets: [this.velvet, this.velvetFloor, this.velvetFill], alpha: 1, duration: 600 });
-    AudioBus.music('mus_crunk');
   }
 
   protected bar() {

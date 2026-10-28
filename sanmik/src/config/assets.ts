@@ -52,6 +52,8 @@ export const SPRITES: SpriteAsset[] = [
   { id: 'enemy_dummy', file: 'assets/sprites/enemy_dummy.png', frameW: 32, frameH: 60, status: 'placeholder', notes: 'Life-size SanMik cardboard cutout.' },
 ];
 
+// NOTE: real songs and jump takes now live in src/assets/audio and are wired in src/audio/files.ts.
+// The entries below are the legacy Phaser-loader slots and stay as placeholders.
 export const AUDIO: AudioAsset[] = [
   // The jump vocals are the most important audio in the game. Supply real takes.
   { id: 'vo_yee_1', file: 'assets/audio/voice/yee_1.ogg', category: 'voice', status: 'placeholder', notes: 'SanMik jump: high, thin, nasal, shrill.' },

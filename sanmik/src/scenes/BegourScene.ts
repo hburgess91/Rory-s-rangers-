@@ -13,7 +13,7 @@ export class BegourScene extends GameplayScene {
 
   constructor() {
     super('begour');
-    this.musicKey = 'mus_forest';
+    this.musicKey = 'mus_tesko';
   }
 
   protected buildLevel() {

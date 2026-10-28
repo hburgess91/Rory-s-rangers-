@@ -9,6 +9,7 @@ export default defineConfig({
     outDir: 'dist-single',
     emptyOutDir: true,
     modulePreload: false,
+    assetsInlineLimit: () => true, // inline every asset (the songs) as data so the file runs alone
     chunkSizeWarningLimit: 4000,
     rollupOptions: { output: { format: 'iife', inlineDynamicImports: true, entryFileNames: 'game.js' } },
   },
