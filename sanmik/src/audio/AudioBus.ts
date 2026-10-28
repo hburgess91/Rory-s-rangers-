@@ -254,7 +254,7 @@ class Bus {
     if (token !== this.musicToken || this.playingTrack !== id) { this.stats.liveSequencers--; return; }
     if (!buf) { this.stats.liveSequencers--; const t = TRACKS[id]; if (t) this.startSequencer(t); return; }
     // keep memory down: only hold the songs that can come back soon
-    for (const k of [...this.songCache.keys()]) if (k !== id && k !== this.baseTrack && k !== 'mus_delusion') this.songCache.delete(k);
+    for (const k of [...this.songCache.keys()]) if (k !== id && k !== this.baseTrack && k !== 'mus_delusion' && k !== 'mus_crunk') this.songCache.delete(k);
     const c = this.ctx!;
     const offset = fromStart ? 0 : (this.songResume.get(id) ?? 0) % buf.duration;
     this.songResume.delete(id);

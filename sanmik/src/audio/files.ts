@@ -19,6 +19,7 @@ export const MUSIC_FILES: Record<string, string | undefined> = {
   mus_warehouse: M.pure_banta_bang,
   mus_gabor: M.deep_in_ure_ass,
   mus_delusion: M.phresh,
+  mus_crunk: M.gettin_crunk,
   mus_results: M.shouldve_gone_viral,
 };
 

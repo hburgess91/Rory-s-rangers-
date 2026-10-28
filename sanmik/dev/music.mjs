@@ -9,7 +9,7 @@ await p.mouse.click(640, 360); await sleep(2500);
 const a = () => p.evaluate(() => JSON.stringify(window.__SANMIK.audio));
 console.log('title', await a());
 await p.evaluate(() => window.__SANMIK.game.scene.getScene('title').scene.start('select', { next: { key: 'level', data: { id: 'freedom' } } }));
-await sleep(500); await p.keyboard.press('Enter'); await sleep(3000);
+await sleep(500); await p.keyboard.press('ArrowRight'); await sleep(100); await p.keyboard.press('Enter'); await sleep(3000);
 await p.keyboard.press('Enter'); await sleep(200);
 for (let i = 0; i < 6; i++) { await p.keyboard.press('Escape'); await sleep(200); if (await p.evaluate(() => window.__SANMIK.activeScenes.includes('pause'))) { await p.keyboard.press('Escape'); await sleep(200); } }
 await p.keyboard.down('k'); await sleep(100); await p.keyboard.up('k'); await sleep(900);
