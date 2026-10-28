@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
+await p.goto('http://localhost:5300/');
+await p.waitForFunction(() => window.__SANMIK?.activeScenes.includes('title'), null, { timeout: 20000 });
+await p.keyboard.press('Enter'); await new Promise(r => setTimeout(r, 300));
+await p.evaluate(() => window.__SANMIK.game.scene.getScene('title').scene.start('select', { next: 'gym' }));
+await new Promise(r => setTimeout(r, 400)); await p.keyboard.press('Enter');
+await p.waitForFunction(() => window.__SANMIK.state()?.scene === 'gym', null, { timeout: 10000 });
+console.log('prod ok', errs);
+await b.close();
