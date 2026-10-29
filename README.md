@@ -59,8 +59,8 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 - **Krazy Facts**: at the end of each chapter you pick a fact; it becomes law (run modifiers).
 - **Ban Risk / Exile / Ban Tribunal**, Wonk meter and Krezz Burst, Pussy Juice infrastructure,
   Fizzy Bongos and intoxication, the Wonking Machine, vending machines.
-- **KrelTV**: CRT TV in your house, the pub, Polson Towers and the town square. Eight channels,
-  fourteen episodes, all data. Includes *Thick Cumming Cock* Ep. 7 as supplied.
+- **KrelTV**: CRT TV in your house, the pub, Polson Towers and the town square. Ten channels,
+  seventeen episodes, all data. Includes *Thick Cumming Cock* Ep. 7 as supplied.
 - **The Krezz Arms** pub: seven conversations that open up as you drink.
 - **Music**: the two supplied songs. *The Star Spangled Banner (Krelworld Edition)* plays in
   Drongus's office (the Citadel parade ground), where his army stands to attention and you
@@ -75,7 +75,15 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
   Flenky (Mollor, the psychology exam, Russell Brand at BJJ), Krezmar (Grumbo the Blues Troll,
   finished with a headbutt), Gronny (Carpet Kev and the carpet), Lil' Crongus (the bread and
   butter pudding), Krezwonk (HGH, the deadlift, three girlfriends, Brick Kolbane) and Scrombus
-  (renovate, flip, coup). Each has a permanent reward. Villains are fictional stand-ins.
+  (renovate, flip, coup) and Kreblis (keep the "gear" coming for 99 Woodcutting, a HIIT burpee
+  EMOM for eternal life, and a Facebook trolling minigame). Each has a permanent reward.
+  Villains are fictional stand-ins.
+- **Shared side quests** for every character: *The Cuddle Cronster* (Gazette article, the
+  Sergeant Swig press conference, a hunt for six chocolate cuddle tokens, and a boss fight) and
+  *Polson Gets Fit* (two seconds on a treadmill, then burgers, pizza and fudge; then CCTV of
+  his "gym session").
+- **More KrelTV**: *Krelworld: The Creation Myth*, *EastEnders: The Krezz Conspiracy* (BBK One)
+  and *Beep Show* (Channel Krez).
 - **New Krez+** after the credits: keeps the Archive and TV, harder enemies, extra Krazy Facts.
 
 ## Project layout

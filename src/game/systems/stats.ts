@@ -24,6 +24,8 @@ export function maxHp(s: GameState): number {
   if (s.ngPlus > 0) hp += 10;
   if (s.flags.arc_gronny_done) hp += 20;
   if (s.flags.arc_krezwonk_done) hp += 15;
+  if (s.flags.arc_kreblis_done) hp += 25;
+  if (s.flags.arc_cronster_done) hp += 15;
   return Math.max(30, hp);
 }
 

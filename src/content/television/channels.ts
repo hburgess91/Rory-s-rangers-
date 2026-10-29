@@ -1,5 +1,8 @@
 import { parseScreenplay, type TVEpisode } from "../../game/systems/tv";
 import { TCC_EP07 } from "./thickCummingCock/episode07";
+import { CREATION_MYTH } from "./extra/creationMyth";
+import { EASTENDERS_KREZZ } from "./extra/eastenders";
+import { BEEP_SHOW } from "./extra/beepShow";
 
 // Everything on KrelTV. Episodes are data; most are written in the screenplay format
 // (see parseScreenplay) so new ones can be pasted in.
@@ -318,7 +321,7 @@ VJ: Absolute tune. Our studio has decided not to react to it as a mark of respec
   { unlockFlag: "met_emergency", unlockHint: "Premieres after the Emergency Reaction Session" },
 );
 
-export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO];
+export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW];
 
 export const CHANNELS: string[] = [
   "KRELFORD NEWS AT SIX",
@@ -329,12 +332,24 @@ export const CHANNELS: string[] = [
   "EMERGENCY DRONGUS BROADCAST",
   "KRELWORLD DOCUMENTARIES",
   "KMTV (KRELWORLD MUSIC TELEVISION)",
+  "BBK ONE",
+  "CHANNEL KREZ",
 ];
 
 /** Which set a shot uses. The TV renderer draws these procedurally. */
 export function setKeyFor(set: string): string {
   const s = set.toUpperCase();
   if (s.includes("NEWSDESK")) return "newsdesk";
+  if (s.includes("CAVE")) return "cave";
+  if (s.includes("CELLAR")) return "cellar";
+  if (s.includes("QUEEN VIC")) return "pubbar";
+  if (s.includes("PRESS ROOM")) return "press";
+  if (s.includes("COCKPIT") || s.includes("PLANE")) return "cockpit";
+  if (s.includes("BUNKER")) return "bunker";
+  if (s.includes("CELL")) return "cell";
+  if (s.includes("CORPORATE") || s.includes("BOARDROOM") || s.includes("INTERROGATION")) return "boardroom";
+  if (s.includes("LIVING ROOM") || s.includes("FLAT") || s.includes("BEDROOM")) return "livingroom";
+  if (s.includes("SANA") || s.includes("HOTEL") || s.includes("HIGH STREET") || s.includes("PARADE")) return "street_day";
   if (s.includes("POLSON")) return "polson_ext";
   if (s.includes("TOWNHALL")) return "townhall_cam";
   if (s.includes("KRELLBALL")) return "pitch";

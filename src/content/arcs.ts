@@ -10,7 +10,9 @@ export type ArcStepKind =
   | { kind: "arena"; intro: Line[]; dungeon: string }
   | { kind: "minigame"; intro: Line[]; mode: string; success: Line[]; fail: Line[] }
   | { kind: "vignette"; intro: Line[]; id: string }
-  | { kind: "pay"; intro: Line[]; cost: number; success: Line[] };
+  | { kind: "pay"; intro: Line[]; cost: number; success: Line[] }
+  /** Pick up glowing items around Krelford. Not tied to a building (use at: "FIELD"). */
+  | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[] };
 
 export interface ArcStep {
   id: string;
@@ -21,7 +23,10 @@ export interface ArcStep {
 
 export interface Arc {
   id: string;
-  player: PlayableId;
+  /** Whose story it is. "ALL" = a shared side quest anyone can do. */
+  player: PlayableId | "ALL";
+  /** Earliest chapter it appears in (default 1). */
+  minChapter?: number;
   title: string;
   blurb: string;
   steps: ArcStep[];
@@ -294,8 +299,171 @@ export const ARCS: Arc[] = [
       },
     ],
   },
+  {
+    id: "arc_kreblis",
+    player: "KREBLIS",
+    title: "The Ascension of Kreblis",
+    blurb: "Keep the gear coming. Become the greatest RuneScape player who ever lived. Attain eternal life through HIIT. Troll Facebook.",
+    reward: { coins: 450, desc: "+25 max HP (eternal life, pending verification)." },
+    steps: [
+      {
+        id: "gear",
+        text: "Source some 'gear' from the man in the Krezz Arms toilets (120 Krezzcoin).",
+        at: "PUB",
+        step: {
+          kind: "pay",
+          cost: 120,
+          intro: [
+            say("KREBLIS", "Feel a bit manic… better get some gear in!"),
+            dir("The Krezz Arms gents. Third cubicle. A man called Gary is sitting on the closed lid like it's an office."),
+            say("GARY", "Alright Kreblis. The usual? For the… RuneScape?"),
+            say("KREBLIS", "Hmmmm… gear… 😋"),
+          ],
+          success: [say("GARY", "Lovely. Don't tell Drongus where you got it. Actually do, he's a regular."), dir("You now have 'gear'. Your jaw has started doing something on its own.")],
+        },
+      },
+      {
+        id: "runescape",
+        text: "Get 99 Woodcutting. Become the greatest RuneScape player ever (keep the gear coming).",
+        at: "HOME",
+        step: {
+          kind: "minigame",
+          mode: "runescape",
+          intro: [say("KREBLIS", "You're making me angry… angry enough to play RuneScape!"), say("KREBLIS", "RuneScape servers playing up again… doesn't matter. Tonight I get 99.")],
+          success: [say("KREBLIS", "Rank 1. Overall. Of all time. Jagex have sent a cake."), say("KREBLIS", "Bro the RuneScape anthem should be the national anthem if you get me.")],
+          fail: [say("KREBLIS", "Ran out of gear at level 80-something. Unacceptable. Again.")],
+        },
+      },
+      {
+        id: "burpees",
+        text: "Attain eternal life: finish the HIIT burpee EMOM at Krunch Gym.",
+        at: "GYM",
+        step: {
+          kind: "minigame",
+          mode: "burpees",
+          intro: [
+            say("KREBLIS", "The theory is simple. If I'm fit enough, I can't die. Basically eternal life."),
+            say("KREBLIS", "Round 1: chest to floor burpees. Lmfao. Then squat jumps. Then more burpees."),
+          ],
+          success: [say("KREBLIS", "I am now immortal. Probably. I'll know for sure in about eighty years."), dir("ETERNAL LIFE: ATTAINED (pending verification).")],
+          fail: [say("KREBLIS", "The hardest is the burpees. I'll go again. Death can wait.")],
+        },
+      },
+      {
+        id: "facebook",
+        text: "Troll Facebook from the laptop at home. Make Krelford furious.",
+        at: "HOME",
+        step: {
+          kind: "minigame",
+          mode: "facebook",
+          intro: [say("KREBLIS", "It's such a good group for trolling."), say("KREBLIS", "Most people are shit at trolling. It's an art. Bad spelling, total sincerity, never break.")],
+          success: [say("KREBLIS", "Four hundred angry reacts and someone's mum has called the police. Wot a nite."), dir("Kreblis is now the most hated man on Krelford Community Noticeboard. He has never been happier.")],
+          fail: [say("KREBLIS", "Got reported. Too obvious. The trick is to make them think you mean it.")],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_cronster",
+    player: "ALL",
+    minChapter: 2,
+    title: "The Cuddle Cronster",
+    blurb: "Krelford is in the icy grip of terror. Find the Cuddle Cronster before he strikes again.",
+    reward: { coins: 300, desc: "+15 max HP. Also, a lifetime supply of evidence (chocolate)." },
+    steps: [
+      {
+        id: "gazette",
+        text: "Read this morning's Krelford Gazette (at home).",
+        at: "HOME",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("THE KRELFORD GAZETTE. Front page: TERROR GRIPS KRELFORD AS THE 'CUDDLE CRONSTER' STRIKES AGAIN."),
+            dir("Krelford is once again in the icy grip of terror as the elusive criminal known only as the 'Cuddle Cronster' continues his reign of bizarre and unsettling crimes."),
+            dir("The latest victim, identified only as a local woman from the outskirts of town, discovered a cryptic note in her home. Written in disturbingly cheery handwriting, it read:"),
+            dir("'I'll cuddle you, squeeze you, and extract all your lovely juices'"),
+            dir("The note was signed with an unsettlingly cheerful smiley face and accompanied by one of the Cronster's infamous edible 'cuddle tokens' – intricate chocolate coins that bear his terrifying motto: 'Sweet hugs, sweeter squeezes.'"),
+            dir("Police will hold a press conference today at Krelford Constabulary."),
+            dir("You put the paper down. You'd better go."),
+          ],
+        },
+      },
+      {
+        id: "presser",
+        text: "Attend the police press conference at Krelford Constabulary.",
+        at: "POLICE",
+        step: { kind: "vignette", id: "press_conference", intro: [dir("Krelford Constabulary. The press room is packed. Sergeant Grimbolus Swig, lead investigator, approaches the podium holding a small bag of chocolate coins.")] },
+      },
+      {
+        id: "tokens",
+        text: "Find the Cronster's six chocolate cuddle tokens around Krelford (the trail to his lair).",
+        at: "FIELD",
+        step: {
+          kind: "collect",
+          label: "Cuddle token",
+          pickup: [dir("A chocolate cuddle token. 'Sweet hugs, sweeter squeezes.' It smells incredible. You do not eat it. You think about eating it.")],
+          spots: [
+            { x: 300, y: 600, name: "dark choccy" },
+            { x: 1560, y: 980, name: "mint choccy" },
+            { x: 2200, y: 1050, name: "caramel choccy" },
+            { x: 420, y: 1440, name: "ruby choccy" },
+            { x: 1900, y: 1620, name: "white choccy" },
+            { x: 2480, y: 470, name: "orange choccy (rare)" },
+          ],
+        },
+      },
+      {
+        id: "handin",
+        text: "Hand the tokens in to Sergeant Swig.",
+        at: "POLICE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            say("SERGEANT SWIG", "You found them. All six. Dark, mint, caramel, ruby… even the orange."),
+            dir("He eats all six, in one go, while maintaining eye contact."),
+            say("SERGEANT SWIG", "Evidence secured."),
+            say("DR. GRUNGUS FLORP", "(from the corner) The Cuddle Cronster is a master manipulator. By combining his grotesque threats with sweet, irresistible treats, he's playing a twisted game with the authorities. And clearly, it's working."),
+            dir("The wrappers have a factory stamp. The Cronster's lair is behind the chocolate factory. Sergeant Swig is 'too full' to come."),
+          ],
+        },
+      },
+      {
+        id: "lair",
+        text: "Raid the Cronster's lair (Krelford Constabulary will drive you).",
+        at: "POLICE",
+        step: { kind: "arena", dungeon: "arena_cronster", intro: [say("SERGEANT SWIG", "Bring back any tokens you find. For evidence. Obviously.")] },
+      },
+    ],
+  },
+  {
+    id: "arc_polson_fit",
+    player: "ALL",
+    minChapter: 3,
+    title: "Polson Gets Fit",
+    blurb: "Polson has asked you to take him to the gym for 'an intense workout'.",
+    reward: { coins: 200, desc: "Polson's gym membership, which you are paying for." },
+    steps: [
+      {
+        id: "gym",
+        text: "Pick Polson up from Polson Towers and take him to the gym for 'an intense workout'.",
+        at: "POLSON_ROAD",
+        step: { kind: "vignette", id: "polson_gym", intro: [say("POLSON", "Right. Gym. Intense workout. Today's the day."), say("EDEN", "(from upstairs) Take a water bottle."), say("POLSON", "Mork.")] },
+      },
+      {
+        id: "cctv",
+        text: "Polson says he's at the gym. Check the FGM War Room surveillance feed (under the Archive).",
+        at: "ARCHIVE",
+        step: { kind: "vignette", id: "polson_cctv", intro: [dir("A message from Polson: 'At the gym again 💪 might be a while'."), dir("Mikey's FGM War Room has a camera on everything. You pull up the Polson Towers feed. Just to check.")] },
+      },
+    ],
+  },
 ];
 
 export function arcFor(player: PlayableId): Arc | undefined {
   return ARCS.find((a) => a.player === player);
+}
+
+/** The player's own story first, then the shared ones. */
+export function arcsFor(player: PlayableId): Arc[] {
+  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL")];
 }

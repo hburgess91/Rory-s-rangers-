@@ -5,7 +5,7 @@ import { switchTo, currentStep } from "../Flow";
 import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { GENERIC_UPGRADES, upgradeCost, maxHp, counter } from "../systems/stats";
-import { arcFor, arcAvailable, currentArcStep, stepDone } from "../systems/arcs";
+import { arcsFor, arcAvailable, currentArcSteps, stepDone } from "../systems/arcs";
 import { personalQuest, pickupsCollected, MINISTRY_QUESTS, ministryQuestState, ministryProgress } from "../systems/quests";
 import { factById } from "../../data/historicalRevisions";
 import { narrativeActor } from "../systems/narrative";
@@ -96,11 +96,13 @@ export class MenuScene extends Phaser.Scene {
           lines.push(`  ${pq.blurb}`);
           if (!s.flags[`pq_done_${pq.id}`]) lines.push(`  Turn in at: ${pq.turnIn.at.replace("_", " ")}`);
         }
-        const arc = arcFor(s.player);
-        if (arc) {
+        const open = currentArcSteps(s);
+        for (const arc of arcsFor(s.player)) {
           lines.push("");
-          const cur = currentArcStep(s);
-          lines.push(`SIDE STORY: ${arc.title} ${s.flags[`${arc.id}_done`] ? "(COMPLETE)" : arcAvailable(s) ? "" : "(unlocks after the Emergency Reaction Session)"}`);
+          const cur = open.find((c) => c.arc === arc);
+          const lock = s.flags[`${arc.id}_done`] ? "(COMPLETE)" : !s.flags.met_emergency ? "(unlocks after the Emergency Reaction Session)" : !arcAvailable(s, arc) ? `(unlocks in Chapter ${arc.minChapter})` : "";
+          lines.push(`${arc.player === "ALL" ? "SIDE QUEST" : "SIDE STORY"}: ${arc.title} ${lock}`);
+          if (lock && !s.flags[`${arc.id}_done`]) continue;
           for (const st of arc.steps) lines.push(`  ${stepDone(s, arc, st) ? "✓" : cur?.step === st ? "•" : "○"} ${st.text}`);
         }
         if (s.flags.ministerial_quests) {

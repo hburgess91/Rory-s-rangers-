@@ -626,6 +626,20 @@ export function generateBosses(scene: Phaser.Scene) {
     px(ctx, ox + 22, 20, 8, 22, 0x7a1f2b);
     px(ctx, ox + 23, 20, 6, 3, 0xd6c49a);
   });
+  human("boss_cronster", { skin: 0xf1c7a5, hair: 0xf9a8d4, hairStyle: "hat", beard: null, glasses: "none", top: 0xf9a8d4, topDetail: 0xffffff, bottom: 0xec4899, shoes: 0x7c2d12, accent: 0x7c2d12, bulk: 2 }, (ctx, f, ox) => {
+    // balaclava with a smiley, and open arms for cuddles
+    px(ctx, ox + 10, 2, 12, 10, 0xf9a8d4);
+    px(ctx, ox + 13, 5, 2, 2, 0x111111);
+    px(ctx, ox + 18, 5, 2, 2, 0x111111);
+    px(ctx, ox + 13, 9, 7, 1, 0x111111);
+    px(ctx, ox + 0, 18 - (f % 2) * 2, 6, 3, 0xf9a8d4);
+    px(ctx, ox + 26, 18 - (f % 2) * 2, 6, 3, 0xf9a8d4);
+  });
+  human("npc_swig", { skin: 0xf1c7a5, hair: 0x5a3a1a, hairStyle: "hat", beard: 0x5a3a1a, glasses: "none", top: 0x1e3a8a, topDetail: 0xfacc15, bottom: 0x111827, shoes: 0x000000, accent: 0xffffff, bulk: 2 }, (ctx, _f, ox) => {
+    px(ctx, ox + 9, 0, 14, 4, 0x111827);
+    px(ctx, ox + 14, 1, 4, 2, 0xfacc15);
+  });
+  human("npc_journo", { skin: 0xd9a77e, hair: 0x111111, hairStyle: "long", beard: null, glasses: "round", top: 0x6d8f4f, topDetail: 0xffffff, bottom: 0x3b3b5a, shoes: 0x222222, bulk: 1 });
   human("boss_rival", { skin: 0xd97706, hair: null, hairStyle: "bald", beard: null, glasses: "shades", top: 0x111111, topDetail: 0xd97706, bottom: 0x1f2937, shoes: 0xffffff, accent: 0xffffff, bulk: 2 });
   bossCanvas(scene, "boss_lorelord", 64, 80, 2, (ctx, f, ox) => {
     const [tmp, tctx] = canvas(16, 24);
@@ -730,6 +744,24 @@ export function generateProps(scene: Phaser.Scene) {
     P(66, 0, 10, 20, 0x111111);
     P(14, 3, 6, 14, 0x374151);
     P(60, 3, 6, 14, 0x374151);
+  });
+  prop(scene, "p_token", 14, 14, (ctx, P) => {
+    P(2, 0, 10, 14, 0x7c2d12);
+    P(0, 2, 14, 10, 0x7c2d12);
+    P(3, 2, 8, 10, 0xa0522d);
+    P(5, 5, 4, 4, 0xf9a8d4);
+  });
+  prop(scene, "p_tree", 48, 64, (ctx, P) => {
+    P(20, 36, 8, 28, 0x6b4527);
+    P(6, 8, 36, 30, 0x2f5a22);
+    P(12, 2, 24, 10, 0x3d7a2c);
+    P(10, 12, 8, 6, 0x4a8a3a);
+  });
+  prop(scene, "p_food", 60, 24, (ctx, P) => {
+    // burger, pizza slice, fudge
+    P(0, 6, 18, 4, 0xd97706); P(0, 10, 18, 3, 0x16a34a); P(0, 13, 18, 4, 0x7c2d12); P(0, 17, 18, 4, 0xd97706);
+    P(22, 4, 16, 16, 0xfbbf24); P(24, 6, 12, 12, 0xef4444); P(27, 9, 3, 3, 0xfbbf24);
+    P(42, 8, 16, 12, 0x5a3a1a); P(44, 10, 4, 4, 0x7c4a2a);
   });
   prop(scene, "p_phone", 20, 34, (ctx, P) => {
     P(0, 0, 20, 34, 0x111111);

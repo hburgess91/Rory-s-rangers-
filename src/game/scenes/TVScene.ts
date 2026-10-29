@@ -40,6 +40,8 @@ interface Actor {
   name: string;
 }
 
+const EXTRA_CAST_SHOWS = new Set(["creation_myth", "eastenders_krezz", "beep_show"]);
+
 export class TVScene extends Phaser.Scene {
   private overlay = false;
   private caller = "";
@@ -450,6 +452,71 @@ export class TVScene extends Phaser.Scene {
         g.fillCircle(SX + 280, SY + 120, 80);
         for (let i = 0; i < 9; i++) P(220 + ((i * 29) % 120), 80 + ((i * 17) % 80), 6, 6, 0xc084fc);
         break;
+      case "cave":
+        P(0, 0, SW, SH, 0x1a1410);
+        for (let i = 0; i < 14; i++) P((i * 47) % SW, (i * 31) % 200, 60, 40, 0x2a2018);
+        P(0, 320, SW, 100, 0x3a2a1a);
+        P(240, 280, 90, 50, 0x6b4527);
+        g.fillStyle(0xffd27a, 0.25);
+        g.fillCircle(SX + 120, SY + 160, 70);
+        break;
+      case "livingroom":
+        P(0, 0, SW, SH, 0x6b5b4b);
+        P(0, 300, SW, 120, 0x4a3a2a);
+        P(60, 230, 240, 80, 0x7a1f2b);
+        P(380, 150, 120, 90, 0x111111);
+        P(390, 160, 100, 70, 0x3b82f6, 0.6);
+        P(330, 40, 90, 70, 0x9fd0ff);
+        break;
+      case "pubbar":
+        P(0, 0, SW, SH, 0x3b2a1a);
+        P(0, 260, SW, 160, 0x2a1a0a);
+        P(40, 220, 480, 60, 0x5a3a20);
+        for (let i = 0; i < 6; i++) P(80 + i * 70, 60, 30, 100, 0x8a5a2a);
+        this.stage.add(this.add.text(SX + 280, SY + 30, "THE QUEEN VIC", { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5));
+        break;
+      case "cellar":
+        P(0, 0, SW, SH, 0x1f2328);
+        for (let i = 0; i < 5; i++) P(0, 40 + i * 50, SW, 8, 0x4b5563);
+        P(220, 200, 140, 120, 0x6b7280);
+        P(240, 220, 100, 30, 0xffb6c1);
+        break;
+      case "press":
+        P(0, 0, SW, SH, 0x1e3a8a);
+        P(0, 0, SW, 60, 0x172554);
+        P(250, 200, 60, 120, 0x5a3a20);
+        P(270, 180, 20, 30, 0x111111);
+        break;
+      case "cockpit":
+        P(0, 0, SW, SH, 0x111827);
+        P(60, 40, 440, 160, 0x7ec8f0);
+        P(120, 120, 20, 70, 0x6b7280);
+        P(140, 100, 10, 90, 0x6b7280);
+        P(0, 220, SW, 200, 0x1f2937);
+        for (let i = 0; i < 20; i++) P(60 + (i % 10) * 44, 250 + Math.floor(i / 10) * 30, 20, 12, i % 3 ? 0x22c55e : 0xef4444);
+        break;
+      case "bunker":
+        P(0, 0, SW, SH, 0x2a2f3a);
+        P(0, 300, SW, 120, 0x1f232b);
+        P(120, 230, 320, 50, 0x3b2a1a);
+        P(220, 40, 120, 80, 0x0f2a5a);
+        break;
+      case "boardroom":
+        P(0, 0, SW, SH, 0xd6c49a);
+        P(0, 300, SW, 120, 0x6b4527);
+        P(60, 240, 440, 60, 0x3b2a1a);
+        P(360, 50, 140, 100, 0xe7d8b0);
+        break;
+      case "cell":
+        P(0, 0, SW, SH, 0x3a3f4a);
+        for (let x = 20; x < SW; x += 40) P(x, 0, 8, SH, 0x111827);
+        P(0, 330, SW, 90, 0x2a2f3a);
+        break;
+      case "street_day":
+        P(0, 0, SW, SH, 0x9fd0ff);
+        for (let i = 0; i < 10; i++) P(i * 58, 140 + ((i * 37) % 60), 50, 200, [0xc9a227, 0xd6c49a, 0xb08d57][i % 3]);
+        P(0, 330, SW, 90, 0x9a9488);
+        break;
       default:
         P(0, 0, SW, SH, 0x222222);
     }
@@ -470,7 +537,18 @@ export class TVScene extends Phaser.Scene {
     const c = CAST[name.toUpperCase()];
     if (typeof c === "string") return c;
     if (c) return `tv_${name.toUpperCase()}`;
-    return null;
+    return this.extraActorTex(name.toUpperCase());
+  }
+
+  /** Stand-in actors for shows without a bespoke cast (townsfolk sprites, picked by name). */
+  private extraActorTex(name: string): string | null {
+    if (!this.ep || !EXTRA_CAST_SHOWS.has(this.ep.id)) return null;
+    if (["PHONE", "NARRATOR", "VJ"].includes(name)) return null;
+    const named: Record<string, string> = { KROZNO: "boss_krozno", "KEIR STARMER": "npc_journo", "PHIL": "boss_rival", "GOKU": "spr_KREZMAR" };
+    if (named[name]) return named[name];
+    let h = 0;
+    for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return `spr_FOLK${h % 4}`;
   }
 
   private ensureActor(name: string): Actor | null {
@@ -479,8 +557,9 @@ export class TVScene extends Phaser.Scene {
     const tex = this.actorTex(key);
     if (!tex || this.setKey === "nyc_skyline") return null;
     const count = Object.keys(this.actors).length;
-    const x = SX + 150 + count * 250;
-    const spr = this.add.sprite(x, SY + 280, tex, 0).setScale(5);
+    const extra = !CAST[key];
+    const x = extra ? SX + 110 + (count % 3) * 170 : SX + 150 + count * 250;
+    const spr = this.add.sprite(x, SY + 280, tex, 0).setScale((this.textures.getFrame(tex, 0)?.height ?? 24) > 30 ? 2.5 : 5);
     this.stage.add(spr);
     const a = { spr, name: key };
     this.actors[key] = a;

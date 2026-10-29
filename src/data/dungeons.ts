@@ -460,4 +460,26 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     returnAt: "GYM",
     rooms: [{ name: "The Free Weights Section", w: 1200, h: 760, theme: "industrial", boss: "rival" }],
   },
+  arena_cronster: {
+    id: "arena_cronster",
+    chapter: 0,
+    name: "THE CRONSTER'S LAIR (behind the chocolate factory)",
+    music: "ominous",
+    arenaFlag: "cronster_caught",
+    returnAt: "POLICE",
+    rooms: [
+      {
+        name: "The Cuddle Corridor",
+        w: 1200,
+        h: 720,
+        theme: "mansion",
+        waves: [[["cheese_mite", 8]], [["friend_crawler", 5]]],
+        enterLines: [
+          { s: "NARRATOR", t: "The trail of chocolate wrappers ends at a door with a heart-shaped letterbox. Inside, every wall is covered in drawings of people being cuddled. Some of them are of you.", dir: true },
+          { s: "NARRATOR", t: "A note on the floor, in disturbingly cheery handwriting: 'I'll cuddle you, squeeze you, and extract all your lovely juices :)'", dir: true },
+        ],
+      },
+      { name: "The Squeezing Room", w: 1100, h: 720, theme: "mansion", boss: "cronster" },
+    ],
+  },
 };

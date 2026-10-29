@@ -222,6 +222,26 @@ export const BOSS_TEXT: Record<string, BossText> = {
     ],
     taunts: ["DO YOU EVEN LIFT?!", "SQUAT RACK IS FOR CURLS!", "ROID RAGE!", "I'M NOT RE-RACKING THAT!", "FOUR HUNDRED!"],
   },
+  cronster: {
+    id: "cronster",
+    name: "THE CUDDLE CRONSTER",
+    title: "Sweet Hugs, Sweeter Squeezes",
+    intro: [
+      dir("A figure in a pink balaclava with a smiley face drawn on it rises from a beanbag. He opens his arms. They keep opening. They're very long arms."),
+      say("THE CUDDLE CRONSTER", "Hello! I'll cuddle you, squeeze you, and extract all your lovely juices."),
+      say("THE CUDDLE CRONSTER", "Did you like the tokens? Dark choccy, mint choccy, caramel choccy, even the fancy ruby choccy. Sergeant Swig did."),
+      dir("You ask why they call him the Cronster."),
+      say("THE CUDDLE CRONSTER", "That cron stuff is so 2021. I'm the last remaining vestige."),
+      say("THE CUDDLE CRONSTER", "Come here. Come here. COME HERE."),
+    ],
+    outro: [
+      say("THE CUDDLE CRONSTER", "Nobody… ever… cuddles… the Cronster…"),
+      dir("The Cuddle Cronster is apprehended, mostly by you, slightly by Sergeant Swig, who arrives late with chocolate round his mouth and arrests a beanbag."),
+      ping("DRONGUS", "Is the cuddle cronster the kuddle kronster ??"),
+      ping("DRONGUS", "Does this go against convention"),
+    ],
+    taunts: ["SWEET HUGS!", "SWEETER SQUEEZES!", "Have a token!", "Juices, please!"],
+  },
 };
 
 /** Phase banners for the final fight. */

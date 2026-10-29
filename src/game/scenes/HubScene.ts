@@ -17,7 +17,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, ministryQuestFor, ministryQuestState, acceptMinistry, completeMinistry, ministryProgress } from "../systems/quests";
 import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
-import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
+import { arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
 
 const WORLD_W = 2560;
@@ -51,6 +51,7 @@ const BUILDINGS: Building[] = [
   { id: "FIXER_UPPER", name: "FIXER-UPPER (FOR SALE, AS SEEN)", x: 2350, y: 1300, w: 220, h: 160, wall: 0x8a7f6a, roof: 0x4a3f2f, door: { x: 2350, y: 1380 } },
   { id: "BOOTH", name: "THE BOOTH", x: 940, y: 680, w: 150, h: 110, wall: 0x6d28d9, roof: 0x111827, door: { x: 940, y: 735 } },
   { id: "ABANDONED", name: "ABANDONED BUILDING", x: 1000, y: 1660, w: 220, h: 140, wall: 0x2a2a2a, roof: 0x111111, door: { x: 1000, y: 1730 } },
+  { id: "POLICE", name: "KRELFORD CONSTABULARY", x: 1700, y: 1670, w: 240, h: 130, wall: 0x1e3a8a, roof: 0x111827, door: { x: 1700, y: 1735 } },
   { id: "OLD_FLAT", name: "YOUR OLD FLAT", x: 700, y: 1650, w: 200, h: 130, wall: 0x9a8a7a, roof: 0x5a3a2a, door: { x: 700, y: 1715 } },
 ];
 
@@ -436,6 +437,7 @@ export class HubScene extends Phaser.Scene {
       this.interactables.push({ x: gt.x, y: gt.y, r: 60, label: () => this.doorLabel({ id: gt.id, name: gt.name } as Building), use: () => this.enterBuilding({ id: gt.id, name: gt.name } as Building) });
     }
     this.interactables.push({ x: 1450, y: 780, r: 60, label: () => "Watch KrelTV", use: () => this.openTV() });
+    this.spawnCollectibles();
     // Kreblis quest: strange occurrences
     for (const { quest, spot, anchor } of pickupsInHub(G.s)) {
       const a = ANCHORS[anchor];
@@ -461,11 +463,43 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  /** Glowing pickups for any open "collect" side-quest step. */
+  private spawnCollectibles() {
+    for (const c of currentArcSteps(G.s)) {
+      const k = c.step.step;
+      if (k.kind !== "collect") continue;
+      k.spots.forEach((sp, i) => {
+        const f = spotFlag(c.arc, c.step, i);
+        if (G.s.flags[f]) return;
+        const glow = this.add.circle(sp.x, sp.y, 20, 0xf9a8d4, 0.25).setDepth(sp.y - 1);
+        const img = this.add.image(sp.x, sp.y, "p_token").setScale(2).setDepth(sp.y);
+        this.tweens.add({ targets: img, y: sp.y - 6, yoyo: true, repeat: -1, duration: 600 });
+        this.interactables.push({
+          x: sp.x,
+          y: sp.y,
+          r: 46,
+          label: () => `Pick up: ${k.label} (${sp.name})`,
+          enabled: () => !G.s.flags[f],
+          use: async () => {
+            G.s.flags[f] = true;
+            synth.play("pickup");
+            img.destroy();
+            glow.destroy();
+            const got = k.spots.filter((_, j) => G.s.flags[spotFlag(c.arc, c.step, j)]).length;
+            await this.talk(k.pickup);
+            G.emit("toast", { title: c.arc.title.toUpperCase(), text: `${k.label}: ${sp.name} (${got}/${k.spots.length})` });
+            G.save();
+          },
+        });
+      });
+    }
+  }
+
   private doorLabel(b: Building): string {
     const s = G.s;
     const ch = chapterDef(s.chapter);
     const arc = arcStepAt(s, b.id);
-    if (arc && !(b.id === "TOWN_HALL" && this.townHallBusy())) return `${b.name}: ★ ${arc.step.text}`;
+    if (arc && !this.buildingBusy(b.id)) return `${b.name}: ★ ${arc.step.text}`;
     if (b.id === ch.dungeonDoor) {
       const o = dungeonOpen();
       return o.open ? `Enter: ${b.name}` : `${b.name} (locked: ${o.why})`;
@@ -497,6 +531,8 @@ export class HubScene extends Phaser.Scene {
         return s.flags.arc_crongus_done ? "The Abandoned Building (you think about it every day)" : "The Abandoned Building";
       case "OLD_FLAT":
         return "Your old flat";
+      case "POLICE":
+        return "Enter Krelford Constabulary";
       case "AIRPORT":
         return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
@@ -523,7 +559,7 @@ export class HubScene extends Phaser.Scene {
       this.go("Dungeon", { dungeon: ch.dungeon, room: 0 });
       return;
     }
-    if (!(b.id === "TOWN_HALL" && this.townHallBusy()) && (await this.runArcStep(b.id))) return;
+    if (!this.buildingBusy(b.id) && (await this.runArcStep(b.id))) return;
     switch (b.id) {
       case "BOOTH":
         await this.talk(
@@ -547,6 +583,13 @@ export class HubScene extends Phaser.Scene {
           s.flags.arc_crongus_done
             ? [dir("The door is boarded up again. From inside, faintly: 'mmmm'."), say(s.player, "…no. No. Keep walking.")]
             : [dir("Boarded windows. A faint smell of custard. Something inside is breathing slowly and contentedly. You decide you're not ready.")],
+        );
+        return;
+      case "POLICE":
+        await this.talk(
+          s.flags.cronster_caught
+            ? [dir("Krelford Constabulary. Sergeant Swig is asleep at his desk, surrounded by wrappers. A sign reads 'CRONSTER: CAUGHT (by us, basically)'.")]
+            : [dir("Krelford Constabulary. Sergeant Swig is at the front desk eating a chocolate coin he insists is evidence."), say("SERGEANT SWIG", "Move along. Unless you've got choccy.")],
         );
         return;
       case "OLD_FLAT":
@@ -624,7 +667,10 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
-  private townHallBusy() {
+  /** Story beats (meetings, outros) take priority over side quests at these doors. */
+  private buildingBusy(id: string) {
+    if (id === "ARCHIVE") return archiveAction().kind === "meeting";
+    if (id !== "TOWN_HALL") return false;
     const k = townHallAction().kind;
     return k === "meeting" || k === "outro" || k === "fact";
   }

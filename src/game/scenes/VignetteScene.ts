@@ -28,6 +28,9 @@ export class VignetteScene extends Phaser.Scene {
       pudding: () => this.pudding(),
       flatmate: () => this.flatmate(),
       rival: () => this.rival(),
+      press_conference: () => this.pressConference(),
+      polson_gym: () => this.polsonGym(),
+      polson_cctv: () => this.polsonCctv(),
     };
     await (run[data.id] ?? (async () => undefined))();
     G.s.flags[`vig_${data.id}`] = true;
@@ -197,6 +200,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: luke, alpha: 0, scale: 2.6, duration: 600 });
     door.setFillStyle(0x000000);
     await this.wait(1600);
+    synth.music("bbp", true);
     const moans = ["mmmm", "MMMMMM", "mmmmmmmm…", "oh", "OHHH", "mmmMMMMM", "…mmm", "MMMMMMMMMMM"];
     for (let i = 0; i < 14; i++) {
       this.time.delayedCall(i * 380, () => {
@@ -227,6 +231,7 @@ export class VignetteScene extends Phaser.Scene {
       say("CRONGUS", "*puts phone face down*"),
       dir("You have found the bread and butter pudding. You will never speak of it. You will think about it every single day."),
     ]);
+    synth.stopMusic();
   }
 
   // ---------------------------------------------------------------- CARPET KEV
@@ -351,4 +356,181 @@ export class VignetteScene extends Phaser.Scene {
       dir("The gym erupts in applause. For the first time in Krunch Gym's history, every weight is re-racked."),
     ]);
   }
+
+  // ---------------------------------------------------------------- CUDDLE CRONSTER PRESS CONFERENCE
+
+  private async pressConference() {
+    this.add.rectangle(480, 270, 960, 540, 0x1e2a44);
+    this.add.rectangle(480, 120, 700, 120, 0x1e3a8a).setStrokeStyle(4, 0xfacc15);
+    this.add.text(480, 120, "KRELFORD CONSTABULARY\nPRESS CONFERENCE", { fontFamily: FONT, fontSize: "22px", color: "#ffffff", fontStyle: "bold", align: "center" }).setOrigin(0.5);
+    this.add.rectangle(480, 330, 120, 90, 0x5a3a20).setDepth(20);
+    const swig = this.add.sprite(480, 280, "npc_swig", 0).setScale(3).setDepth(15);
+    const press: Phaser.GameObjects.Sprite[] = [];
+    for (let i = 0; i < 9; i++) {
+      const tex = i === 4 ? "npc_journo" : `spr_FOLK${i % 4}`;
+      press.push(this.add.sprite(110 + i * 92, 470 + (i % 2) * 14, tex, 0).setScale(tex === "npc_journo" ? 1.6 : 2.6).setDepth(30 + i));
+    }
+    synth.music("ominous");
+    const flashes = this.time.addEvent({ delay: 400, loop: true, callback: () => this.cameras.main.flash(60, 255, 255, 255) });
+    await this.talk([
+      dir("In a hastily organised press conference, Sergeant Grimbolus Swig, the lead investigator on the case, addresses the growing panic in Krelford."),
+      say("SERGEANT SWIG", "Krelford. Please. Remain calm. The situation is under control."),
+      dir("He attempts to downplay the Cronster's activities. However, things quickly unravel when he begins discussing the chocolate tokens left behind by the criminal."),
+    ]);
+    flashes.remove();
+    const drool = this.add.text(500, 262, "💧", { fontSize: "18px" }).setDepth(16);
+    this.tweens.add({ targets: drool, y: 300, alpha: 0, duration: 900, repeat: -1 });
+    await this.talk([
+      dir("He begins salivating. Then drooling."),
+      say("SERGEANT SWIG", "We've got to find them all!"),
+      dir("His eyes gleam with excitement."),
+      say("SERGEANT SWIG", "There are several different flavors I've yet to try—dark choccy, mint choccy, caramel choccy, even that fancy ruby choccy! Honestly, it's the real treasure in all this!"),
+      dir("The crowd of reporters stares in stunned silence. Then a female journalist bravely asks the question on everyone's mind."),
+      say("JOURNALIST", "Why are you more interested in the tokens than in apprehending the Cuddle Cronster?"),
+      dir("Sergeant Swig pauses, visibly annoyed."),
+      say("SERGEANT SWIG", "I'm sorry, did anyone else hear that incomprehensible high-pitched screeching, squawking noise?"),
+    ]);
+    synth.play("laugh");
+    for (const p of press) {
+      const t = this.add.text(p.x, p.y - 60, ["BOOO", "SHAME", "BOOOO", "OI"][Math.floor(Math.random() * 4)], { fontFamily: FONT, fontSize: "16px", color: "#ff6b6b", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(60);
+      this.tween({ targets: t, y: t.y - 30, alpha: 0, duration: 1200 });
+    }
+    await this.talk([dir("His dismissive remark is met with an immediate chorus of boos and jeers from the press."), say("SERGEANT SWIG", "Oh, fuck off!")]);
+    swig.setFrame(3);
+    this.caption("BANG BANG BANG", "#ffd23f", 34);
+    for (let i = 0; i < 10; i++) {
+      this.time.delayedCall(i * 160, () => {
+        synth.play("shoot");
+        this.cameras.main.shake(100, 0.01);
+        const target = press[Math.floor(Math.random() * press.length)];
+        const fl = this.add.circle(510, 300, 10, 0xffd23f).setDepth(40);
+        this.tween({ targets: fl, x: target.x, y: target.y - 20, duration: 120 }).then(() => fl.destroy());
+      });
+    }
+    press.forEach((p, i) => this.tweens.add({ targets: p, x: i % 2 ? p.x + 600 : p.x - 600, duration: 1400, delay: 200 + i * 60 }));
+    await this.wait(2000);
+    synth.stopMusic();
+    await this.talk([
+      dir("He pulls out his sidearm and fires indiscriminately into the audience. Journalists dive under chairs, behind cameras, and in one case into a bin."),
+      dir("Many are now questioning the competence of law enforcement to handle the case."),
+      dir("Citizens have been urged to report any suspicious activity and to avoid consuming any chocolate tokens they may find, no matter how tempting."),
+      dir("As tensions rise and trust in law enforcement plummets, one question remains: will the Cuddle Cronster be stopped before he strikes again? Or will Krelford continue to spiral into fear, chaos, and chocolate-fueled madness?"),
+      say("SERGEANT SWIG", "(quietly, to you, reloading) Find the tokens. Bring them to me. For evidence."),
+      dir("NEW OBJECTIVE: find six chocolate cuddle tokens around Krelford. They glow pink."),
+    ]);
+  }
+
+  // ---------------------------------------------------------------- POLSON GETS FIT
+
+  private async polsonGym() {
+    this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    const tm = this.add.rectangle(480, 400, 220, 30, 0x111111).setDepth(5);
+    this.add.rectangle(560, 340, 12, 100, 0x374151).setDepth(5);
+    this.add.text(480, 300, "TREADMILL", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5);
+    const pol = this.add.sprite(200, 380, "spr_POLSON", 0).setScale(3).setDepth(10);
+    const me = this.add.sprite(120, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    synth.music("hub");
+    await this.talk([
+      dir("Krunch Gym. You have taken Polson for 'an intense workout'. He is wearing brand new trainers, brand new shorts and a headband. The tags are still on all of them."),
+      say("POLSON", "Right. Let's do this. Intense. Proper intense."),
+    ]);
+    await this.tween({ targets: pol, x: 470, y: 370, duration: 900 });
+    synth.play("select");
+    const belt = this.time.addEvent({ delay: 80, loop: true, callback: () => tm.setFillStyle(tm.fillColor === 0x111111 ? 0x222222 : 0x111111) });
+    this.time.addEvent({ delay: 100, repeat: 18, callback: () => pol.setFrame(pol.frame.name === "1" ? 2 : 1) });
+    const clock = this.add.text(480, 250, "0.0s", { fontFamily: FONT, fontSize: "28px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(50);
+    const t0 = this.time.now;
+    const tick = this.time.addEvent({ delay: 50, loop: true, callback: () => clock.setText(`${((this.time.now - t0) / 1000).toFixed(1)}s`) });
+    await this.wait(2000);
+    tick.remove();
+    belt.remove();
+    clock.setText("2.0s");
+    await this.tween({ targets: pol, x: 620, y: 380, duration: 300 });
+    pol.setFrame(0);
+    await this.talk([
+      say("POLSON", "Phwoar."),
+      say("POLSON", "That's great for the core, that."),
+      say(G.s.player, "That was two seconds."),
+      say("POLSON", "Two seconds of pure core, mate. You can't overtrain the core. Ask anyone."),
+      say("POLSON", "Right. Take me home. Via the restaurant. I need to refuel."),
+    ]);
+    // restaurant
+    this.children.removeAll(true);
+    this.lastCaption = undefined;
+    this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+    this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
+    this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
+    const pol2 = this.add.sprite(420, 320, "spr_POLSON", 0).setScale(3).setDepth(10);
+    this.add.sprite(560, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    void me;
+    await this.talk([
+      say("POLSON", "Four burgers. Double. Large pizza, meat feast, extra cheese. Stuffed crust. And the fudge. All the fudge."),
+      say("WAITER", "All of it?"),
+      say("POLSON", "It's bulking food. Great bulking food. You've got to eat for the gains."),
+    ]);
+    for (let i = 0; i < 9; i++) {
+      const f = this.add.image(380 + (i % 3) * 40, 360, "p_food").setScale(1.4).setDepth(20).setCrop((i % 3) * 20, 0, 20, 24);
+      synth.play(i % 2 ? "gulp" : "slurp");
+      pol2.setFrame(3);
+      await this.tween({ targets: f, x: pol2.x, y: pol2.y - 20, scale: 0.2, duration: 260 });
+      f.destroy();
+      pol2.setFrame(0);
+      pol2.setScale(3 + i * 0.08, 3 + i * 0.03);
+    }
+    await this.talk([
+      say("POLSON", "Bulked."),
+      say("POLSON", "Same time tomorrow? Intense workout. Then here."),
+      dir("You pay. Obviously you pay. Polson 'left his wallet in his gym bag', which he did not bring."),
+      ping("EDEN", "Did he eat fudge"),
+      ping("EDEN", "He's not allowed fudge"),
+    ]);
+    synth.stopMusic();
+  }
+
+  private async polsonCctv() {
+    this.add.rectangle(480, 270, 960, 540, 0x0a0f1a);
+    // four CCTV feeds; feed 1 is Polson's living room
+    const feeds: [number, number, string][] = [
+      [250, 150, "CAM 1 — POLSON TOWERS: LOUNGE"],
+      [710, 150, "CAM 2 — KRUNCH GYM: FRONT DESK"],
+      [250, 380, "CAM 3 — POLSON TOWERS: FRIDGE"],
+      [710, 380, "CAM 4 — KRUNCH GYM: TREADMILLS"],
+    ];
+    for (const [x, y, l] of feeds) {
+      this.add.rectangle(x, y, 420, 200, 0x1f2937).setStrokeStyle(3, 0x22c55e);
+      this.add.text(x - 200, y - 96, l, { fontFamily: "monospace", fontSize: "11px", color: "#22c55e" });
+    }
+    const rec = this.add.text(20, 510, "● REC   FGM WAR ROOM — OPERATION GAINS", { fontFamily: "monospace", fontSize: "13px", color: "#ef4444" });
+    this.tweens.add({ targets: rec, alpha: 0.3, yoyo: true, repeat: -1, duration: 500 });
+    const clock = this.add.text(940, 510, "", { fontFamily: "monospace", fontSize: "13px", color: "#22c55e" }).setOrigin(1, 0);
+    let mins = 0;
+    this.time.addEvent({ delay: 120, loop: true, callback: () => { mins += 3; clock.setText(`${String(14 + Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`); } });
+    const sofa = this.add.rectangle(250, 190, 160, 40, 0x7a1f2b);
+    void sofa;
+    const pol = this.add.sprite(250, 160, "spr_POLSON", 0).setScale(2.4);
+    this.add.image(330, 200, "p_food").setScale(1.2);
+    this.add.text(710, 150, "(nobody)", { fontFamily: FONT, fontSize: "14px", color: "#6b7280" }).setOrigin(0.5);
+    this.add.text(710, 380, "(empty treadmill)", { fontFamily: FONT, fontSize: "14px", color: "#6b7280" }).setOrigin(0.5);
+    this.add.image(250, 380, "p_fridge").setScale(2);
+    synth.music("ominous");
+    this.time.addEvent({ delay: 500, loop: true, callback: () => pol.setFrame(pol.frame.name === "3" ? 0 : 3) });
+    await this.talk([
+      dir("14:00. Polson's message: 'At the gym 💪'. CAM 1: Polson is on the sofa. CAM 2: Polson is not at the gym."),
+      ping("POLSON", "Leg day today. Brutal."),
+      dir("CAM 1: Polson opens a family-size bag of crisps with both hands."),
+    ]);
+    await this.tween({ targets: pol, x: 250, y: 360, duration: 900 });
+    await this.talk([dir("CAM 3: Polson at the fridge. He eats cheese directly from the block. He looks over his shoulder. He eats more cheese."), ping("POLSON", "Just finished my sets. Pumped.")]);
+    await this.tween({ targets: pol, y: 160, duration: 900 });
+    await this.talk([
+      dir("16:30. CAM 1: Polson is asleep on the sofa, holding a slice of pizza like a teddy bear."),
+      ping("POLSON", "Done 3 hours. Absolutely destroyed. Core is on fire."),
+      say("MIKEY", "(over the War Room comms) FGM to base. Subject has not left the house. Repeat, subject has not left the house. Subject has, however, eaten an entire fudge."),
+      ping("EDEN", "Why is there no cheese"),
+      ping("POLSON", "Mork."),
+      dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Eden will definitely want it."),
+    ]);
+    synth.stopMusic();
+  }
+
 }

@@ -18,22 +18,29 @@ export const MUSIC_FILES: Record<string, string> = {
   prison: "audio/prison.mp3",
   wiki: "audio/wiki.mp3",
   airport: "audio/airport.mp3",
+  ominous: "audio/ominous.mp3",
   boss: "audio/boss1.mp3",
-  boss_salmon: "audio/boss1.mp3",
-  boss_feedback: "audio/boss2.mp3",
-  boss_machine: "audio/boss3.mp3",
-  boss_banhammer: "audio/boss1.mp3",
-  boss_spectre: "audio/boss2.mp3",
-  boss_krozno: "audio/boss3.mp3",
+  boss_salmon: "audio/boss_salmon.mp3",
+  boss_feedback: "audio/boss_feedback.mp3",
+  boss_machine: "audio/boss_machine.mp3",
+  boss_banhammer: "audio/boss_banhammer.mp3",
+  boss_spectre: "audio/boss_spectre.mp3",
+  boss_krozno: "audio/boss_krozno.mp3",
+  boss_brand: "audio/boss1.mp3",
+  boss_troll: "audio/boss2.mp3",
+  boss_flatmate: "audio/boss3.mp3",
+  boss_rival: "audio/boss1.mp3",
+  boss_cronster: "audio/boss2.mp3",
   boss_arena: "audio/boss3.mp3",
   final: "audio/final.mp3",
   ending: "audio/ending.mp3",
   anthem: "audio/anthem.mp3",
   crazy: "audio/crazy_for_krelworld.mp3",
+  bbp: "audio/bbp.mp3",
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["anthem"]);
+const ONE_SHOT = new Set(["anthem", "bbp"]);
 
 type Wave = OscillatorType;
 

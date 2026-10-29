@@ -740,6 +740,61 @@ export class BrandBoss extends Boss {
   }
 }
 
+// ----------------------------------------------------------------- THE CUDDLE CRONSTER (everyone)
+
+export class CronsterBoss extends Boss {
+  lungeUntil = 0;
+  lungeAngle = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "cronster", x, y, 1500, "boss_cronster", 32, 0xf9a8d4, 32, 48);
+    this.setScale(2.6);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const ts = this.world.enemyTimeScale;
+    this.setFrame(Math.floor(now / 180) % 3);
+    if (now < this.lungeUntil) {
+      this.moveToward(this.x + Math.cos(this.lungeAngle) * 100, this.y + Math.sin(this.lungeAngle) * 100, 480 * ts);
+      if (Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y) < 50 && now > p.grappledUntil && !p.invulnerable(now)) {
+        p.grappledUntil = now + 2400;
+        p.grappleEscape = 0;
+        this.lungeUntil = 0;
+        this.world.toast("CUDDLED", "He's squeezing out all your lovely juices. MASH ATTACK / DODGE to escape!");
+        this.world.floatText(this.x, this.y - 60, "SWEET HUGS, SWEETER SQUEEZES", "#f9a8d4", 16);
+      }
+      return;
+    }
+    if (now < p.grappledUntil) {
+      this.halt();
+      this.setPosition(p.x - 16, p.y - 4);
+      if (Math.random() < dt / 400) {
+        this.world.damagePlayer(5, undefined, { unblockable: true, label: "-5 (squeezed)" });
+        this.hp = Math.min(this.maxHp, this.hp + 8);
+      }
+      return;
+    }
+    this.moveToward(p.x, p.y, (this.phase ? 100 : 80) * ts);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 3;
+    this.taunt();
+    if (pick === 0) {
+      this.lungeAngle = Math.atan2(p.y - this.y, p.x - this.x);
+      this.world.enemyLine(this.x, this.y, this.lungeAngle, 380, 56, 0, 650 * this.world.telegraphMult);
+      this.halt();
+      this.world.sc.time.delayedCall(650 * this.world.telegraphMult, () => (this.lungeUntil = this.world.now() + 600));
+      this.nextPattern = now + 2300;
+    } else if (pick === 1) {
+      // a scatter of chocolate cuddle tokens
+      this.ring(this.phase ? 18 : 12, 170, 9, 0x7c2d12, now / 300);
+      this.nextPattern = now + 1500;
+    } else {
+      for (let i = 0; i < 3; i++) this.world.enemyAoe(p.x + (i - 1) * 90, p.y + ((i % 2) * 2 - 1) * 40, 70, 16, 900, 0xf9a8d4);
+      this.world.floatText(p.x, p.y - 70, "GROUP HUG", "#f9a8d4", 14);
+      this.nextPattern = now + 1900;
+    }
+  }
+}
+
 // ----------------------------------------------------------------- GRUMBO THE BLUES TROLL (Krezmar arena)
 
 export class TrollBoss extends Boss {
@@ -888,6 +943,8 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
       return new Krozno(w, x, y);
     case "brand":
       return new BrandBoss(w, x, y);
+    case "cronster":
+      return new CronsterBoss(w, x, y);
     case "troll":
       return new TrollBoss(w, x, y);
     case "flatmate":
