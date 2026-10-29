@@ -1,0 +1,220 @@
+import type { Cond, SpeakerId } from "../../data/types";
+
+// NPCs talking to each other with no player input. Played as speech bubbles when the
+// player wanders near any participant. "NOTIFY" lines arrive as Drongus pings.
+
+export interface Chatter {
+  id: string;
+  who: SpeakerId[];
+  lines: { s: SpeakerId; t: string }[];
+  cond?: Cond;
+}
+
+const X = (id: string, lines: [SpeakerId, string][], cond?: Cond): Chatter => ({
+  id,
+  who: Array.from(new Set(lines.map((l) => l[0]).filter((s) => s !== "DRONGUS" && s !== "NARRATOR"))),
+  lines: lines.map(([s, t]) => ({ s, t })),
+  cond,
+});
+
+export const CHATTER: Chatter[] = [
+  X("bongo_plan", [
+    ["KREZMAR", "Anyone fancy a fizzy bongo?"],
+    ["SCROMBUS", "We're in an emergency cabinet session."],
+    ["KREZMAR", "I didn't say now."],
+    ["SCROMBUS", "You're already holding one."],
+    ["KREZMAR", "I like to plan ahead."],
+  ]),
+  X("am_i_banned", [
+    ["FLENKY", "Am I banned?"],
+    ["KREBLIS", "Not currently."],
+    ["FLENKY", "Nice."],
+    ["DRONGUS", "New rule."],
+    ["FLENKY", "Ah for fuck sake."],
+  ]),
+  X("proctus_lunch", [
+    ["KREZWONK", "I have seen tomorrow."],
+    ["KREBON", "And?"],
+    ["KREZWONK", "Proctus drops his lunch."],
+    ["PROCTUS", "I don't have lunch."],
+    ["NARRATOR", "*Proctus drops a sandwich.*"],
+    ["KREZWONK", "The prophecy is fulfilled."],
+  ]),
+  X("purple", [
+    ["SCROMBUS", "Threat level is purple today, lads."],
+    ["KREBLIS", "Is purple high or low?"],
+    ["SCROMBUS", "That's what I asked in January. Nobody answered."],
+    ["KREBLIS", "Welcome to my world, Drongus would say."],
+    ["SCROMBUS", "Don't. He'll hear you."],
+  ]),
+  X("krebon_menu", [
+    ["CRONGUS", "Have you seen the menu at the Krezz Arms? Says 'Krebon — real butter'."],
+    ["KREBON", "Yes."],
+    ["CRONGUS", "Is that you?"],
+    ["KREBON", "It's the butter."],
+    ["CRONGUS", "Right."],
+  ]),
+  X("trousers", [
+    ["GRONNY", "Anyone seen my trousers?"],
+    ["KREZMAR", "Drongus is holding them ransom."],
+    ["GRONNY", "Still?"],
+    ["KREZMAR", "Since January."],
+    ["GRONNY", "Fair enough."],
+  ]),
+  X("plural", [
+    ["KREZMAR", "What's the plural of Drongus?"],
+    ["KREZWONK", "Drongi."],
+    ["KREZMAR", "What's the plural of Krezwonk?"],
+    ["KREZWONK", "There is only one Krezwonk. The idea is more important than the man."],
+    ["KREZMAR", "That's not a plural."],
+    ["KREZWONK", "It's a prophecy."],
+  ]),
+  X("machine_feelings", [
+    ["SCROMBUS", "Has anyone used the wonking machine yet?"],
+    ["CRONGUS", "As Children's Minister I can't comment."],
+    ["SCROMBUS", "Has ANYONE—"],
+    ["GRONNY", "I'll have Big Bertha."],
+    ["SCROMBUS", "That's not what I— thank you, Gronny."],
+  ]),
+  X("kreltower", [
+    ["KREBLIS", "Kreltower's been breached."],
+    ["FLENKY", "Wasn't me."],
+    ["KREBLIS", "Nobody said it was you."],
+    ["FLENKY", "Got out just in time by doing a ninja backflip."],
+    ["KREBLIS", "Got out? Got out of WHAT, Jenko?"],
+    ["FLENKY", "...nothing."],
+  ]),
+  X("wiki_edit", [
+    ["SCROMBUS", "Somebody's edited my wiki page. It says I'm 'the half loremaker'."],
+    ["KREZWONK", "That was me."],
+    ["SCROMBUS", "You're the half loremaker."],
+    ["KREZWONK", "Exactly. So I'd know."],
+  ]),
+  X("salmon_blame", [
+    ["CRONGUS", "Is the salmon thing my fault? I said 'salmon diet' in 2022."],
+    ["KREBON", "Everything is someone's fault."],
+    ["CRONGUS", "That's not reassuring."],
+    ["KREBON", "It wasn't meant to be."],
+  ], { chapter: 1 }),
+  X("polson_food", [
+    ["POLSON", "Takeaway?"],
+    ["EDEN", "No."],
+    ["POLSON", "Cooking?"],
+    ["EDEN", "Who's cooking?"],
+    ["POLSON", "Restaurant?"],
+    ["EDEN", "We've got people coming round."],
+    ["POLSON", "So... takeaway?"],
+  ], { chapterAtLeast: 2 }),
+  X("mork", [
+    ["POLSON", "Mmrrrk hrrm mork."],
+    ["MIKEY", "What does that mean?"],
+    ["POLSON", "Mork mork. Hrrm."],
+    ["MIKEY", "Hahaha. I think he wants cheese."],
+    ["POLSON", "MORK."],
+    ["MIKEY", "Yeah he wants cheese."],
+  ], { chapterAtLeast: 2 }),
+  X("vending_pride", [
+    ["KREZMAR", "That's my vending machine."],
+    ["KREBLIS", "They're all your vending machines."],
+    ["KREZMAR", "And every one of them is my child."],
+    ["KREBLIS", "Strange occurrence."],
+  ], { chapterAtLeast: 3 }),
+  X("ban_appeal", [
+    ["FLENKY", "I'd like to appeal my ban."],
+    ["PROCTUS", "Which one?"],
+    ["FLENKY", "The current one."],
+    ["PROCTUS", "There are four current ones."],
+    ["FLENKY", "...all of them then."],
+    ["PROCTUS", "Denied. Sorry. I'm also banned."],
+  ], { chapterAtLeast: 4 }),
+  X("headmaster", [
+    ["FLENKY", "Did I ever tell you about the headmaster?"],
+    ["GRONNY", "One punch, age four."],
+    ["FLENKY", "One punch, age four."],
+    ["GRONNY", "The rest is history."],
+    ["FLENKY", "The rest is history."],
+  ]),
+  X("krelball", [
+    ["KREZMAR", "What are the most popular sporting activities in Krelworld?"],
+    ["KREZWONK", "Krelball is the big one."],
+    ["KREZMAR", "What are the rules?"],
+    ["KREZWONK", "Nobody has written them yet. Drongus said the wiki will be updated at some point."],
+  ]),
+  X("godric", [
+    ["MIKEY", "Who actually made Krelworld?"],
+    ["SCROMBUS", "Drongulus Maximus Scromulus. The tree. The Krezzsplosion."],
+    ["KREBLIS", "Godric Gryffindor. One million years ago. A Waluigi universe."],
+    ["SCROMBUS", "Revisionism!"],
+    ["KREBLIS", "Revelation!"],
+    ["MIKEY", "Right. Cool. I'm getting a bongo."],
+  ]),
+  X("avatar", [
+    ["KREZMAR", "WHERE ARE THE REST OF THE FUCKING AVATARS FFS"],
+    ["KREZWONK", "I don't know how to make one."],
+    ["KREZMAR", "There I said it, you said."],
+    ["KREZWONK", "There I said it."],
+  ]),
+  X("proctus_doctor", [
+    ["PROCTUS", "I'm a doctor now."],
+    ["KREBON", "Since when."],
+    ["PROCTUS", "Since a Krazy Fact."],
+    ["KREBON", "That's not how medicine works."],
+    ["PROCTUS", "It's how everything works here."],
+  ], { revision: "PROCTUS_DOCTOR" }),
+  X("tap_talks", [
+    ["TAP", "Hello."],
+    ["GRONNY", "Did the Tap just—"],
+    ["TAP", "Glug."],
+    ["GRONNY", "Fair enough."],
+  ], { revision: "TAP_SENTIENT" }),
+  X("drongus_pings", [
+    ["DRONGUS", "@everyone what's everyone up to then lads ?"],
+    ["CRONGUS", "Ignore it."],
+    ["KREZMAR", "I can't ignore it, it's got an @everyone."],
+    ["DRONGUS", "Hello ?"],
+    ["CRONGUS", "Ignore it harder."],
+  ]),
+  X("krenshaw", [
+    ["KREZWONK", "Krenshaw Kroplis."],
+    ["KREBLIS", "What?"],
+    ["KREZWONK", "Drongus dreamt it. Two words. On a loop."],
+    ["KREBLIS", "What does it mean?"],
+    ["KREZWONK", "We're about to find out. He said that in January. We still haven't."],
+  ]),
+  X("crobley", [
+    ["CRONGUS", "Nibble on a crobley…"],
+    ["FLENKY", "Nibble on a crobley…"],
+    ["CRONGUS", "It will strengthen your 'member'…"],
+    ["FLENKY", "To nibble on a crobley."],
+    ["KREBLIS", "The Crobley Arc begins."],
+  ]),
+  X("brother_call", [
+    ["SCROMBUS", "He rang his brother to read the script down the phone. To confirm it was funny."],
+    ["KREZMAR", "Was it funny?"],
+    ["SCROMBUS", "His brother said yes."],
+    ["KREZMAR", "Under duress?"],
+    ["SCROMBUS", "Under extreme duress."],
+  ], { chapterAtLeast: 2 }),
+  X("krezz2", [
+    ["SCROMBUS", "Krezz 2.0 glows in the dark."],
+    ["KREBON", "Why."],
+    ["SCROMBUS", "Easier to forage for."],
+    ["KREBON", "Who forages for Krezz."],
+    ["SCROMBUS", "...the science apes, mostly."],
+  ], { chapterAtLeast: 3 }),
+  X("bertha", [
+    ["GRONNY", "Where's Big Bertha?"],
+    ["SCROMBUS", "Basement."],
+    ["GRONNY", "Can I have her?"],
+    ["SCROMBUS", "She's crusty, Gronny."],
+    ["GRONNY", "So am I."],
+  ], { chapterAtLeast: 3 }),
+  X("final_jitters", [
+    ["KREZMAR", "What if we just... all react to the song? Right now?"],
+    ["KREBLIS", "Can't. It's sealed in the Citadel."],
+    ["KREZMAR", "What if we'd reacted to it in the first place?"],
+    ["KREBLIS", "Don't."],
+    ["KREZMAR", "Just saying."],
+    ["KREBLIS", "DON'T."],
+  ], { chapter: 6 }),
+];

@@ -1,0 +1,172 @@
+import type { Cond, Line } from "../../data/types";
+import { canon, dir, say } from "../dsl";
+
+// The Krezz Arms. Sit at a table, drink Fizzy Bongos, listen.
+// Lines with intoxAtLeast only appear when you're pissed enough to hear them.
+
+export interface PubConversation {
+  id: string;
+  title: string;
+  cond?: Cond;
+  /** Who sits at the table (the player is always there too). */
+  seats: string[];
+  lines: Line[];
+  unlocksArchive?: string;
+}
+
+const tipsy: Cond = { intoxAtLeast: 25 };
+const pissed: Cond = { intoxAtLeast: 50 };
+const gone: Cond = { intoxAtLeast: 75 };
+
+export const PUB_CONVERSATIONS: PubConversation[] = [
+  {
+    id: "pub_cronstons",
+    title: "Regional Snack Nomenclature",
+    seats: ["KREZMAR", "GRONNY", "CRONGUS"],
+    lines: [
+      say("KREZMAR", "Chocolate cronstons. Choccy cronnies. Every nan had them in her choccy drawer."),
+      say("GRONNY", "Down south we called them Cheesy Scronties."),
+      say("CRONGUS", "That's a completely different snack, Gronny."),
+      say("GRONNY", "Is it?"),
+      say("CRONGUS", "One's chocolate. One's cheese."),
+      say("GRONNY", "Fair enough."),
+      say("KREZMAR", "Creamy Crobler. That was another one."),
+      say("CRONGUS", "That's not a snack. That was a nickname. For Krebon."),
+      say("KREZMAR", "Creamy DINGUS was Krebon. Creamy Crobler's a pudding."),
+      say("KREZMAR", "Or it's what you call... no. No, it's a pudding.", { cond: tipsy }),
+      say("GRONNY", "Every nan had one in her drawer.", { cond: tipsy }),
+      say("CRONGUS", "Gronny, please stop saying that about every single thing.", { cond: tipsy }),
+      say("KREZMAR", "Lads. Lads. What if... the choccy drawer... was a Krelworld portal. All along. The nans knew.", { cond: pissed }),
+      say("CRONGUS", "That's actually the best lore anyone's had all week.", { cond: pissed }),
+      say("GRONNY", "Every nan had a portal in her drawer.", { cond: gone }),
+      say("KREZMAR", "Somebody write this down. Somebody tell Drongus. No. Don't tell Drongus. He'll want a reaction.", { cond: gone }),
+    ],
+  },
+  {
+    id: "pub_scrombus_arrival",
+    title: "Where The Fuck Am I?",
+    seats: ["SCROMBUS", "KREZMAR", "KREBLIS"],
+    unlocksArchive: "arch_scrombus_arrival",
+    lines: [
+      say("KREBLIS", "Tell them about your first night, Scrombo."),
+      say("SCROMBUS", "I got added at quarter to ten on New Year's Eve. First message I saw was 'the prophecy… it was all true'."),
+      say("KREZMAR", "And I said—"),
+      canon("welcome_hell", { s: "KREZMAR" }),
+      say("SCROMBUS", "And then he made a welcome post. 'I make a post for every new member.' With music."),
+      say("KREBLIS", "And then he asked if everyone was caught up."),
+      say("SCROMBUS", "I said 'Ok, makes sense'. It did not make sense. Nothing has made sense since."),
+      say("SCROMBUS", "Then I scrolled up. I love when Drongus asks a question to the group and it's totally ignored. I said that on day ONE.", { cond: tipsy }),
+      say("KREZMAR", "You saw it coming. Day one. Prophetic.", { cond: tipsy }),
+      say("SCROMBUS", "I'm not the prophet. Krezwonk's the prophet. I'm lore.", { cond: tipsy }),
+      say("KREBLIS", "You were the prophecy, mate. You were the thing they prophesied.", { cond: pissed }),
+      say("SCROMBUS", "Two hours fourteen minutes ahead of schedule. The ancients work in mysterious ways.", { cond: pissed }),
+      say("SCROMBUS", "Honestly. Best group I've ever been in. Worst. Both. I am thrilled. ✊", { cond: gone }),
+    ],
+  },
+  {
+    id: "pub_flenky_bans",
+    title: "The Corridor Years",
+    seats: ["FLENKY", "MIKEY", "CRONGUS"],
+    lines: [
+      say("FLENKY", "Nine times. Nine times I've been removed from the group."),
+      say("MIKEY", "Ten if you count the Queen one."),
+      say("FLENKY", "The Queen one doesn't count. She died the same day. I was back by teatime."),
+      say("CRONGUS", "I said 'let's hope she doesn't in that case'. And she did. I've never felt so powerful."),
+      say("MIKEY", "Then there was the parents one."),
+      say("FLENKY", "My parents are still together. I can't help that. Can't help it."),
+      say("CRONGUS", "That rule was written with you in mind. It's in the Archive. It says 'targeted'.", { cond: tipsy }),
+      say("FLENKY", "DIRTY THIEF DO NOT ENGAGE. Krezwonk set that as my nickname. In April. I didn't steal anything.", { cond: tipsy }),
+      say("MIKEY", "You stole the headmaster's consciousness. One punch. Age four.", { cond: tipsy }),
+      say("FLENKY", "Let's all be honest lads. I'd do it again.", { cond: pissed }),
+      say("FLENKY", "Do you know what the corridor's like? Outside the chat? It's quiet. It's lovely. Nobody asks for Krazy facts.", { cond: pissed }),
+      say("CRONGUS", "Is that... is that why you keep getting banned? On purpose?", { cond: gone }),
+      say("FLENKY", "...", { cond: gone }),
+      say("FLENKY", "Get a couple pints down you mate.", { cond: gone }),
+    ],
+  },
+  {
+    id: "pub_drongus_craft",
+    title: "Twenty Takes (A Quiet One)",
+    seats: ["SCROMBUS", "KREZWONK", "KREBON"],
+    cond: { chapterAtLeast: 3 },
+    unlocksArchive: "arch_drongus_craft",
+    lines: [
+      say("SCROMBUS", "Can I say something slightly sincere. About Drongus."),
+      say("KREBON", "Don't."),
+      say("SCROMBUS", "He told us how he makes the songs. Ten, twenty generations. Melody's garbage, regenerate. Pronunciation's wrong, regenerate. Weird artifacts in the vocals, regenerate."),
+      say("KREZWONK", "He writes the lyrics himself. He said ChatGPT's lyrics aren't funny."),
+      canon("chuckle", { s: "DRONGUS", dir: false }),
+      say("SCROMBUS", "Then he sends it. And we turn it off after ten seconds. If we play it at all."),
+      say("KREBON", "That's his choice. Nobody made him spend hours.", { cond: tipsy }),
+      say("KREZWONK", "Nobody made us not react, either.", { cond: tipsy }),
+      say("KREBON", "...", { cond: tipsy }),
+      say("SCROMBUS", "He called his brother. To read a script down the phone. To confirm it was funny.", { cond: pissed }),
+      say("KREZWONK", "I lurk. I see everything. I just never... press anything.", { cond: pissed }),
+      say("KREBON", "Fine. He's still the final boss.", { cond: pissed }),
+      say("SCROMBUS", "Oh, he's absolutely still the final boss. He cut off the TAP.", { cond: pissed }),
+      say("KREZWONK", "I have foreseen that when this is over, we will still not react to the next one.", { cond: gone }),
+      say("SCROMBUS", "That's the bleakest prophecy you've ever done.", { cond: gone }),
+      say("KREZWONK", "It's also the most accurate.", { cond: gone }),
+    ],
+  },
+  {
+    id: "pub_krezbians",
+    title: "The Defence Of The Realm",
+    seats: ["KREBLIS", "KREBON", "GRONNY"],
+    lines: [
+      say("KREBLIS", "Eighty million Krezbians. Mad Max style. Purple hue. Cannons for right arms."),
+      say("KREBON", "And no defence minister."),
+      say("GRONNY", "I'll do it."),
+      say("KREBLIS", "You're Minister Without Portfolio."),
+      say("GRONNY", "Exactly. Room in the portfolio."),
+      say("KREBLIS", "They age in dog years, Scrombus said. Three years and they're at the border.", { cond: tipsy }),
+      say("KREBON", "Let them come. I've survived worse. I've survived Krezteua d'If. I've survived this cabinet.", { cond: tipsy }),
+      say("GRONNY", "Waa waa wee waa.", { cond: tipsy }),
+      say("KREBLIS", "We need to invade neighbouring Kreddle. Pre-emptively.", { cond: pissed }),
+      say("KREBON", "Kreddle has done nothing.", { cond: pissed }),
+      say("KREBLIS", "That's exactly what a country planning something would do.", { cond: pissed }),
+      say("GRONNY", "Fair enough.", { cond: gone }),
+      dir("Gronny is now, unofficially, the Minister of Defence. Nobody will remember this tomorrow.", { cond: gone, set: { gronny_defence: true } }),
+    ],
+  },
+  {
+    id: "pub_fragmar_vets",
+    title: "Veterans Of FGM ULTRA",
+    seats: ["MIKEY", "KREZWONK", "KREBLIS"],
+    cond: { chapterAtLeast: 2 },
+    unlocksArchive: "arch_nuclear_option",
+    lines: [
+      say("MIKEY", "April 2022. 3:27 in the morning. Drongus drops the plan. 'We launch Operation Fragmar in the day. Maybe 12 Midday.'"),
+      say("KREZWONK", "Classification: Extremely Petty."),
+      say("KREBLIS", "And you sent the wrong messages first."),
+      say("MIKEY", "I sent BOTH. That's tactical redundancy."),
+      say("KREZWONK", "Should we all like then unlike. My suggestion, separate operation. Still underused.", { cond: tipsy }),
+      say("MIKEY", "And the Nuclear Option. My idea.", { cond: tipsy }),
+      say("KREBLIS", "That was Drongus. 'That's the nuclear war option lol.' It's in the Archive.", { cond: tipsy }),
+      say("MIKEY", "The Archive's been vandalised.", { cond: tipsy }),
+      say("KREZWONK", "The Archive's annotation says 'Archive vandalism. Ignore.' Signed Drongus. On the version that credits HIM.", { cond: pissed }),
+      say("MIKEY", "...so he's vandalising his own credit to give it to me?", { cond: pissed }),
+      say("KREBLIS", "Or he's vandalising the footnote that gives it to him so it looks like he's being humble.", { cond: pissed }),
+      say("KREZWONK", "He's too humble. He just didn't want to make it all about him.", { cond: gone }),
+      say("MIKEY", "Feelin russhen 2day.", { cond: gone }),
+    ],
+  },
+  {
+    id: "pub_proctus",
+    title: "Who Is Proctus Krelmor?",
+    seats: ["PROCTUS", "KREBLIS", "KREZMAR"],
+    lines: [
+      say("PROCTUS", "Can I ask a question? Where did I come from?"),
+      say("KREBLIS", "The Krebley case. There was a Detective Krelmor. Promised to bring the full force of the law. Then took leave citing his depression and anxiety."),
+      say("PROCTUS", "That sounds like me. That sounds exactly like me."),
+      say("KREZMAR", "And Mikey said 'frothy krelmor' in May 2022. No context. Nobody ever asked."),
+      say("PROCTUS", "FROTHY? Who told you about the froth?", { cond: tipsy }),
+      say("KREBLIS", "Then when the Silence started and someone had to fill in for whoever's off saving the country... you just appeared. In a bowler hat.", { cond: tipsy }),
+      say("PROCTUS", "I woke up at the table with a sash on. It said 'ACTING'. I've been acting ever since.", { cond: tipsy }),
+      say("KREZMAR", "Constitutional substitute. Like a sub in five-a-side.", { cond: pissed }),
+      say("PROCTUS", "Will I disappear? When it's over?", { cond: pissed }),
+      say("KREBLIS", "Nobody disappears from the group, Proctus. They just get removed. And re-added.", { cond: pissed }),
+      say("PROCTUS", "That's the nicest thing anyone's ever said to me. I'm going to cry. Is it pussy juice? Oh, it's tears. Okay.", { cond: gone }),
+    ],
+  },
+];
