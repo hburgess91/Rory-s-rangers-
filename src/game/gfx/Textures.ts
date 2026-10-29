@@ -601,6 +601,32 @@ export function generateBosses(scene: Phaser.Scene) {
     drawCharacter(tctx, L, f % 4, 0);
     ctx.drawImage(tmp, 0, 0, 16, 24, ox, 0, 32, 48);
   });
+  // Human-shaped bosses built from character looks (32x48, 4 frames: idle, walk, walk, attack)
+  const human = (key: string, look: SpriteLook, extra?: (ctx: Ctx, f: number, ox: number) => void) =>
+    bossCanvas(scene, key, 32, 48, 4, (ctx, f, ox) => {
+      const [tmp, tctx] = canvas(16, 24);
+      drawCharacter(tctx, look, f, 0);
+      ctx.drawImage(tmp, 0, 0, 16, 24, ox, 0, 32, 48);
+      extra?.(ctx, f, ox);
+    });
+  human("boss_krozno", { skin: 0xd9a77e, hair: 0x111111, hairStyle: "hat", beard: 0x111111, glasses: "shades", top: 0x1f2937, topDetail: 0xfacc15, bottom: 0x111827, shoes: 0x000000, accent: 0xef4444, bulk: 2 }, (ctx, f, ox) => {
+    px(ctx, ox + 9, 0, 14, 3, 0x1f3a8a);
+    px(ctx, ox + 12, 2, 8, 1, 0xfacc15);
+  });
+  human("boss_brand", { skin: 0xf1c7a5, hair: 0x111111, hairStyle: "long", beard: 0x111111, glasses: "none", top: 0xf4f4f0, topDetail: 0xf1c7a5, bottom: 0xf4f4f0, shoes: 0xf1c7a5, accent: 0x111111, bulk: 1 });
+  human("boss_troll", { skin: 0x7d8f6a, hair: null, hairStyle: "bald", beard: 0x1a1a1a, glasses: "none", top: 0x5a3a20, topDetail: 0x3b2a1a, bottom: 0x2b2b38, shoes: 0x3b2a1a, bulk: 2 }, (ctx, f, ox) => {
+    // sunburst Les Paul
+    px(ctx, ox + 6, 26 + (f % 2), 12, 10, 0xb45309);
+    px(ctx, ox + 8, 28 + (f % 2), 8, 6, 0xfbbf24);
+    px(ctx, ox + 18, 22 + (f % 2), 12, 3, 0x3b2a1a);
+    px(ctx, ox + 28, 21 + (f % 2), 4, 5, 0x111111);
+  });
+  human("boss_flatmate", { skin: 0xf1c7a5, hair: 0x8a5a2a, hairStyle: "short", beard: 0x8a5a2a, glasses: "none", top: 0x6b7280, topDetail: 0x111111, bottom: 0x3b5b8b, shoes: 0xffffff, bulk: 1 }, (ctx, f, ox) => {
+    // rolled-up carpet under one arm
+    px(ctx, ox + 22, 20, 8, 22, 0x7a1f2b);
+    px(ctx, ox + 23, 20, 6, 3, 0xd6c49a);
+  });
+  human("boss_rival", { skin: 0xd97706, hair: null, hairStyle: "bald", beard: null, glasses: "shades", top: 0x111111, topDetail: 0xd97706, bottom: 0x1f2937, shoes: 0xffffff, accent: 0xffffff, bulk: 2 });
   bossCanvas(scene, "boss_lorelord", 64, 80, 2, (ctx, f, ox) => {
     const [tmp, tctx] = canvas(16, 24);
     const LL: SpriteLook = { ...L, skin: 0xffe27a, top: 0x6d28d9, topDetail: 0xffd23f, bottom: 0x4c1d95, beard: 0xffb703, accent: 0xffffff, bulk: 2 };
@@ -679,6 +705,37 @@ function prop(scene: Phaser.Scene, key: string, w: number, h: number, draw: (ctx
 }
 
 export function generateProps(scene: Phaser.Scene) {
+  prop(scene, "p_kreltower", 60, 200, (ctx, P) => {
+    P(10, 20, 40, 180, 0x9ca3af);
+    P(14, 24, 32, 172, 0xb0b8c4);
+    for (let y = 30; y < 190; y += 10) for (let x = 17; x < 44; x += 7) P(x, y, 4, 5, (x + y) % 3 ? 0x1e3a5f : 0xffe08a);
+    P(26, 0, 8, 20, 0x6b7280);
+    P(29, 0, 2, 4, 0xef4444);
+  });
+  prop(scene, "p_rubble", 120, 60, (ctx, P) => {
+    for (let i = 0; i < 40; i++) P((i * 37) % 110, 20 + ((i * 13) % 36), 10 + (i % 4) * 3, 8 + (i % 3) * 3, [0x6b7280, 0x9ca3af, 0x4b5563][i % 3]);
+    P(50, 0, 6, 30, 0x6b7280);
+  });
+  prop(scene, "p_plane", 64, 24, (ctx, P) => {
+    P(4, 9, 56, 8, 0xe5e7eb);
+    P(56, 10, 8, 6, 0x9ca3af);
+    P(26, 0, 10, 24, 0xd1d5db);
+    P(2, 4, 8, 8, 0xd1d5db);
+    for (let x = 14; x < 54; x += 5) P(x, 11, 2, 2, 0x1e3a5f);
+    P(6, 13, 50, 1, 0xef4444);
+  });
+  prop(scene, "p_barbell", 80, 20, (ctx, P) => {
+    P(0, 9, 80, 3, 0x9ca3af);
+    P(4, 0, 10, 20, 0x111111);
+    P(66, 0, 10, 20, 0x111111);
+    P(14, 3, 6, 14, 0x374151);
+    P(60, 3, 6, 14, 0x374151);
+  });
+  prop(scene, "p_phone", 20, 34, (ctx, P) => {
+    P(0, 0, 20, 34, 0x111111);
+    P(2, 3, 16, 26, 0x1f2937);
+    P(8, 30, 4, 2, 0x6b7280);
+  });
   prop(scene, "p_tap", 48, 64, (ctx, P) => {
     P(4, 48, 40, 14, 0x9a8a6a);
     P(8, 44, 32, 6, 0xb5a585);

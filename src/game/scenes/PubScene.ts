@@ -10,7 +10,7 @@ import { bump, intoxLabel } from "../systems/stats";
 import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, personalQuest, pickupFlag } from "../systems/quests";
 import { CHARACTERS } from "../../data/characters";
-import { dir, say } from "../../content/dsl";
+import { dir, ping, say } from "../../content/dsl";
 import type { Line } from "../../data/types";
 
 export class PubScene extends Phaser.Scene {
@@ -62,9 +62,29 @@ export class PubScene extends Phaser.Scene {
     items.push(["🛍 Buy a Fizzy Bongo to take away (12 Krezzcoin)", () => this.buy()]);
     items.push(["📺 Watch the pub telly", () => this.tv()]);
     items.push(["📜 Read the menu", () => this.readMenu()]);
+    items.push([synth.playingFile() === "crazy" ? "🎵 Jukebox: stop the song" : "🎵 Jukebox: 'Krazy For The Krelworld' (2 Krezzcoin)", () => this.jukebox()]);
     if (canTurnIn(s, "PUB")) items.push(["✨ Open Krezmond's treasure", () => this.turnIn()]);
     items.push(["🚪 Leave", () => switchTo(this, "Hub", { at: "PUB" })]);
     items.forEach(([t, fn], i) => this.menu.add(button(this, 480, 180 + i * 36, t, () => !this.busy && fn(), { w: 760, h: 32, size: 13 })));
+  }
+
+  private async jukebox() {
+    const s = G.s;
+    if (synth.playingFile() === "crazy") {
+      synth.music("pub");
+      this.showMenu();
+      return;
+    }
+    if (s.coins < 2) return this.play([dir("The jukebox wants 2 Krezzcoin. You have the lore but not the coin.")]);
+    s.coins -= 2;
+    synth.music("crazy", true);
+    this.showMenu();
+    await this.play([
+      dir("NOW PLAYING: 'Krazy For The Krelworld'. The whole pub turns to look at the jukebox, then at you, then at their phones."),
+      ping("DRONGUS", "Is that my song playing in the Krezz Arms ??"),
+      ping("DRONGUS", "Someone react to it. Anyone. Please. Thumbs up will do"),
+      say("KREZMAR", "Absolute banger. I'd rather die than react."),
+    ]);
   }
 
   private async play(lines: Line[]) {

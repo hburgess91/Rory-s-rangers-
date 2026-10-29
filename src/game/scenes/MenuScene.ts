@@ -5,6 +5,7 @@ import { switchTo, currentStep } from "../Flow";
 import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { GENERIC_UPGRADES, upgradeCost, maxHp, counter } from "../systems/stats";
+import { arcFor, arcAvailable, currentArcStep, stepDone } from "../systems/arcs";
 import { personalQuest, pickupsCollected, MINISTRY_QUESTS, ministryQuestState, ministryProgress } from "../systems/quests";
 import { factById } from "../../data/historicalRevisions";
 import { narrativeActor } from "../systems/narrative";
@@ -94,6 +95,13 @@ export class MenuScene extends Phaser.Scene {
           lines.push(`PERSONAL: ${pq.title} ${s.flags[`pq_done_${pq.id}`] ? "(COMPLETE)" : `(${pickupsCollected(s, pq)}/${pq.pickups.length})`}`);
           lines.push(`  ${pq.blurb}`);
           if (!s.flags[`pq_done_${pq.id}`]) lines.push(`  Turn in at: ${pq.turnIn.at.replace("_", " ")}`);
+        }
+        const arc = arcFor(s.player);
+        if (arc) {
+          lines.push("");
+          const cur = currentArcStep(s);
+          lines.push(`SIDE STORY: ${arc.title} ${s.flags[`${arc.id}_done`] ? "(COMPLETE)" : arcAvailable(s) ? "" : "(unlocks after the Emergency Reaction Session)"}`);
+          for (const st of arc.steps) lines.push(`  ${stepDone(s, arc, st) ? "✓" : cur?.step === st ? "•" : "○"} ${st.text}`);
         }
         if (s.flags.ministerial_quests) {
           lines.push("");

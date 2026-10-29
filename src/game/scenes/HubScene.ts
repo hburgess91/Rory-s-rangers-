@@ -15,8 +15,10 @@ import { synth } from "../audio/Synth";
 import { maxBottles, maxHp } from "../systems/stats";
 import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, ministryQuestFor, ministryQuestState, acceptMinistry, completeMinistry, ministryProgress } from "../systems/quests";
-import { dir, say } from "../../content/dsl";
+import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
+import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
+import { DUNGEONS } from "../../data/dungeons";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
@@ -44,11 +46,18 @@ const BUILDINGS: Building[] = [
   { id: "WILDERN", name: "WILDERN ACADEMY (Krelford)", x: 1280, y: 1300, w: 420, h: 220, wall: 0xa0522d, roof: 0x5a5a6a, door: { x: 1280, y: 1410 } },
   { id: "MINISTRY", name: "MINISTRY OF BONER CONTROL", x: 2000, y: 1270, w: 340, h: 220, wall: 0x4b5563, roof: 0xd97706, door: { x: 2000, y: 1380 } },
   { id: "BONKY_TEMPLE", name: "THE BONKY TEMPLE", x: 2300, y: 220, w: 300, h: 200, wall: 0xc9a227, roof: 0x7c2d12, door: { x: 2300, y: 320 } },
+  { id: "UNIVERSITY", name: "KRELFORD UNIVERSITY (Dept. of Philosophy & Psychology)", x: 840, y: 1260, w: 260, h: 180, wall: 0xb9b2a0, roof: 0x1e3a5f, door: { x: 840, y: 1350 } },
+  { id: "GYM", name: "KRUNCH GYM", x: 2350, y: 600, w: 240, h: 170, wall: 0x3f3f46, roof: 0xf97316, door: { x: 2350, y: 685 } },
+  { id: "FIXER_UPPER", name: "FIXER-UPPER (FOR SALE, AS SEEN)", x: 2350, y: 1300, w: 220, h: 160, wall: 0x8a7f6a, roof: 0x4a3f2f, door: { x: 2350, y: 1380 } },
+  { id: "BOOTH", name: "THE BOOTH", x: 940, y: 680, w: 150, h: 110, wall: 0x6d28d9, roof: 0x111827, door: { x: 940, y: 735 } },
+  { id: "ABANDONED", name: "ABANDONED BUILDING", x: 1000, y: 1660, w: 220, h: 140, wall: 0x2a2a2a, roof: 0x111111, door: { x: 1000, y: 1730 } },
+  { id: "OLD_FLAT", name: "YOUR OLD FLAT", x: 700, y: 1650, w: 200, h: 130, wall: 0x9a8a7a, roof: 0x5a3a2a, door: { x: 700, y: 1715 } },
 ];
 
 const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "POLSON_ROAD", name: "→ POLSON TOWERS", x: 2500, y: 1010 },
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
+  { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
 ];
 
 const NPC_SPOTS: Record<string, { x: number; y: number }> = {
@@ -129,6 +138,8 @@ export class HubScene extends Phaser.Scene {
   create(data: { at?: string; from?: string }) {
     const s = G.s;
     s.phase = "hub";
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
     this.npcs = [];
     this.interactables = [];
     this.busy = false;
@@ -169,6 +180,20 @@ export class HubScene extends Phaser.Scene {
       s.flags.ch1_hub_tip = true;
       G.emit("toast", { title: "KRELFORD", text: "WASD to walk. E to talk/interact. Follow the yellow arrow. Esc for menu (quests, upgrades, save)." });
     }
+    if (s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved && !s.flags.hijack_alert) {
+      s.flags.hijack_alert = true;
+      synth.play("alarm");
+      await this.talk([
+        say("KREBLIS", "This is a Krelmergency message. I repeat. This is a Krelmergency message."),
+        say("KREBLIS", "Flight KR-069 out of Krelford International has been hijacked. The hijacker is wearing a balaclava and a stick-on moustache. It's Krozno. It's obviously Krozno."),
+        say("KREBLIS", "The plane is heading for the Kreltower. Which, I'd like to remind everyone, only just got rebuilt."),
+        ping("DRONGUS", "Not the Kreltower !!"),
+        ping("DRONGUS", "Somebody do something. Not me, I'm busy making a song about it"),
+        dir("NEW OBJECTIVE: get to Krelford International (south-east gate) and stop Flight KR-069. You will be on a clock."),
+      ]);
+      G.save();
+    }
+    if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: "Report to the Town Hall." });
   }
@@ -203,6 +228,16 @@ export class HubScene extends Phaser.Scene {
     this.add.image(1280, 800, "p_tap").setScale(3).setDepth(800);
     this.add.text(1280, 690, "THE GREAT PUSSY JUICE TAP", { fontFamily: FONT, fontSize: "11px", color: "#ffb6c1", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(801);
     this.colliders.add(this.add.rectangle(1280, 840, 120, 60, 0, 0));
+    // The Kreltower
+    if (G.s.flags.kreltower_fell) {
+      this.add.image(1650, 1100, "p_rubble").setOrigin(0.5, 1).setScale(2).setDepth(1100);
+      this.add.text(1650, 1110, "WHERE THE KRELTOWER WAS (AGAIN)", { fontFamily: FONT, fontSize: "11px", color: "#ff9a9a", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(1101);
+    } else {
+      this.add.image(1650, 1100, "p_kreltower").setOrigin(0.5, 1).setScale(1.2).setDepth(1100);
+      this.add.text(1650, 1110, "THE KRELTOWER (rebuilt)", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(1101);
+    }
+    this.colliders.add(this.add.rectangle(1650, 1085, 70, 30, 0, 0));
+    this.interactables.push({ x: 1650, y: 1135, r: 55, label: () => (G.s.flags.kreltower_fell ? "Look at the rubble" : "Read the Kreltower plaque"), use: () => this.kreltowerPlaque() });
     // public TV
     this.add.image(1450, 740, "p_tv").setScale(3).setDepth(740);
     this.add.text(1450, 700, "KrelTV", { fontFamily: FONT, fontSize: "10px", color: "#88aaff" }).setOrigin(0.5).setDepth(741);
@@ -429,6 +464,8 @@ export class HubScene extends Phaser.Scene {
   private doorLabel(b: Building): string {
     const s = G.s;
     const ch = chapterDef(s.chapter);
+    const arc = arcStepAt(s, b.id);
+    if (arc && !(b.id === "TOWN_HALL" && this.townHallBusy())) return `${b.name}: ★ ${arc.step.text}`;
     if (b.id === ch.dungeonDoor) {
       const o = dungeonOpen();
       return o.open ? `Enter: ${b.name}` : `${b.name} (locked: ${o.why})`;
@@ -448,6 +485,20 @@ export class HubScene extends Phaser.Scene {
         return "Go home (sleep · save · TV)";
       case "BAN_TRIBUNAL":
         return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the constitutional crisis)";
+      case "BOOTH":
+        return "The Booth (Bully Mikey · vent your frustration)";
+      case "UNIVERSITY":
+        return "Enter Krelford University";
+      case "GYM":
+        return "Enter Krunch Gym";
+      case "FIXER_UPPER":
+        return "Look at the fixer-upper";
+      case "ABANDONED":
+        return s.flags.arc_crongus_done ? "The Abandoned Building (you think about it every day)" : "The Abandoned Building";
+      case "OLD_FLAT":
+        return "Your old flat";
+      case "AIRPORT":
+        return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
       case "WILDERN":
       case "MINISTRY":
@@ -472,7 +523,50 @@ export class HubScene extends Phaser.Scene {
       this.go("Dungeon", { dungeon: ch.dungeon, room: 0 });
       return;
     }
+    if (!(b.id === "TOWN_HALL" && this.townHallBusy()) && (await this.runArcStep(b.id))) return;
     switch (b.id) {
+      case "BOOTH":
+        await this.talk(
+          s.player === "MIKEY"
+            ? [dir("The Booth. There's a heavy bag in here shaped like you. Mikey can't bully Mikey, so Proctus Krelmor has been volunteered as Acting Mikey."), say("PROCTUS", "I've been told this is ministerial.")]
+            : [dir("The Booth. Mikey is hanging from the ceiling in a punching-bag harness. He has brought his own harness."), say("MIKEY", "Mikey here. Go on then. Get it out of your system.")],
+        );
+        this.go("Minigame", { mode: "bully", returnAt: "BOOTH" });
+        return;
+      case "UNIVERSITY":
+        await this.talk([dir("Krelford University. A student is protesting outside the philosophy department with a sign that reads 'IS THE LORE REAL?'. Inside, a lecture on 'Seen By 9: Phenomenology of Being Ignored' is oversubscribed.")]);
+        return;
+      case "GYM":
+        await this.talk([dir("Krunch Gym. Smells of pre-workout and regret. Somebody has written 'RE-RACK YOUR WEIGHTS' on the wall, and somebody else has written 'NO' underneath."), say("FOLK1", "Do you even wonk, bro?")]);
+        return;
+      case "FIXER_UPPER":
+        await this.talk(s.flags.arc_scrombus_done ? [dir("SOLD. A blue plaque reads: 'Ben Scrombus flipped this. Krelworld was next.'")] : [dir("A crumbling terrace. 'FOR SALE (AS SEEN)'. There is a hole where the bathroom should be, and a bathroom where the hole should be.")]);
+        return;
+      case "ABANDONED":
+        await this.talk(
+          s.flags.arc_crongus_done
+            ? [dir("The door is boarded up again. From inside, faintly: 'mmmm'."), say(s.player, "…no. No. Keep walking.")]
+            : [dir("Boarded windows. A faint smell of custard. Something inside is breathing slowly and contentedly. You decide you're not ready.")],
+        );
+        return;
+      case "OLD_FLAT":
+        await this.talk([dir("Your old flat. Someone's new tenancy agreement is pinned to the door. It specifically mentions the carpet. In bold. Underlined.")]);
+        return;
+      case "AIRPORT": {
+        if (s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved) {
+          G.rt.timerEnd = 0;
+          this.go("Dungeon", { dungeon: "airport", room: 0 });
+          return;
+        }
+        await this.talk(
+          s.flags.kreltower_fell
+            ? [dir("Krelford International. Every flight is cancelled. The departures board just says 'NO'.")]
+            : s.flags.kreltower_saved
+              ? [dir("Krelford International. There's a new statue in departures of you pulling a plane out of the sky. It is anatomically generous.")]
+              : [dir("Krelford International. Flights to Kreddle, Krezteua d'If and 'Fragmar Prime (Seasonal)'. Security is one man reacting to his phone.")],
+        );
+        return;
+      }
       case "TOWN_HALL": {
         const a = townHallAction();
         if (a.kind === "meeting") {
@@ -528,6 +622,109 @@ export class HubScene extends Phaser.Scene {
       default:
         await this.talk([dir(`${b.name}. Not now. The lore says not yet.`)]);
     }
+  }
+
+  private townHallBusy() {
+    const k = townHallAction().kind;
+    return k === "meeting" || k === "outro" || k === "fact";
+  }
+
+  private arcPayout() {
+    const r = maybeFinishArc(G.s);
+    if (r) {
+      synth.play("cheer");
+      G.emit("toast", { title: "SIDE STORY COMPLETE", text: r });
+      G.save();
+    }
+  }
+
+  /** Run the player's current character-arc step at this building. Returns true if it took over. */
+  private async runArcStep(at: string): Promise<boolean> {
+    const s = G.s;
+    const c = arcStepAt(s, at);
+    if (!c) return false;
+    const { arc, step } = c;
+    const k = step.step;
+    G.emit("toast", { title: arc.title.toUpperCase(), text: step.text });
+    switch (k.kind) {
+      case "dialogue":
+        await this.talk(k.lines);
+        completeStep(s, arc, step);
+        break;
+      case "pay": {
+        await this.talk(k.intro);
+        if (s.coins < k.cost) {
+          await this.talk([dir(`You need ${k.cost} Krezzcoin. You have ${s.coins}. Go kill some smolts.`)]);
+          return true;
+        }
+        delete s.flags.arc_pay;
+        await this.talk([{ s: "NARRATOR", t: `Pay ${k.cost} Krezzcoin?`, dir: true, choice: [{ label: `Pay ${k.cost}`, set: { arc_pay: 1 } }, { label: "Not now", set: { arc_pay: 0 } }] }]);
+        if (s.flags.arc_pay !== 1) return true;
+        s.coins -= k.cost;
+        synth.play("coin");
+        completeStep(s, arc, step);
+        await this.talk(k.success);
+        break;
+      }
+      case "quiz": {
+        await this.talk(k.intro);
+        let score = 0;
+        for (const q of k.questions) {
+          delete s.flags.arc_q;
+          await this.talk([{ s: "NARRATOR", t: q.q, dir: true, choice: q.options.map((o, i) => ({ label: o, set: { arc_q: i === q.correct ? 1 : 0 } })) }]);
+          if (s.flags.arc_q === 1) {
+            score++;
+            synth.play("ding");
+          } else {
+            synth.play("tap_fail");
+            await this.talk([dir(q.wrong)]);
+          }
+        }
+        delete s.flags.arc_q;
+        if (score >= k.need) {
+          completeStep(s, arc, step);
+          await this.talk(k.success);
+        } else {
+          await this.talk([...k.fail, dir(`(${score}/${k.need} needed. Try again.)`)]);
+          return true;
+        }
+        break;
+      }
+      case "arena":
+        await this.talk(k.intro);
+        G.emit("toast", { title: "ARENA", text: DUNGEONS[k.dungeon]?.name ?? "Fight!" });
+        this.go("Dungeon", { dungeon: k.dungeon, room: 0 });
+        return true;
+      case "minigame":
+        await this.talk(k.intro);
+        this.go("Minigame", { mode: k.mode, returnAt: at });
+        return true;
+      case "vignette":
+        await this.talk(k.intro);
+        completeStep(s, arc, step);
+        G.save();
+        this.go("Vignette", { id: k.id, returnAt: at });
+        return true;
+    }
+    G.save();
+    this.arcPayout();
+    return true;
+  }
+
+  private async kreltowerPlaque() {
+    const f = G.s.flags;
+    if (f.kreltower_fell)
+      await this.talk([
+        dir("A pile of rubble. Someone has already put a sign in it: 'KRELTOWER III — COMING SOON'. Someone else has stuck a fizzy bongo in the top like a candle."),
+        say(G.s.player, "It only just got rebuilt."),
+      ]);
+    else if (f.kreltower_saved)
+      await this.talk([dir("THE KRELTOWER. Built. Destroyed. Rebuilt. NOT destroyed again, thanks to you. There's a new line on the plaque: 'Saved from Flight KR-069. Krozno was up to his usual dirty bloody tricks.'")]);
+    else
+      await this.talk([
+        dir("THE KRELTOWER. A plaque reads: 'Destroyed in the Great Krezzsplosion. Rebuilt with Krelfund money. Please do not fly anything into it.'"),
+        dir("Someone has scratched underneath: 'pls react'."),
+      ]);
   }
 
   private async home() {
@@ -669,7 +866,7 @@ export class HubScene extends Phaser.Scene {
   private vendingLabel() {
     const s = G.s;
     if (s.chapter === 3 && !s.flags.ch3_clear) return "Vending machine (OUT OF ORDER: pressure low)";
-    return "Pussy Juice Vending (15 Krezzcoin: +1 bottle)";
+    return s.flags.arc_krezmar_done ? "Pussy Juice Vending (FREE for you, forever)" : "Pussy Juice Vending (15 Krezzcoin: +1 bottle)";
   }
 
   private vend(x: number, y: number) {
@@ -682,11 +879,12 @@ export class HubScene extends Phaser.Scene {
       G.emit("toast", { title: "VENDING", text: "Your bottle belt is full." });
       return;
     }
-    if (s.coins < 15) {
+    const cost = s.flags.arc_krezmar_done ? 0 : 15;
+    if (s.coins < cost) {
       G.emit("toast", { title: "VENDING", text: "Insufficient Krezzcoin. The machine judges you." });
       return;
     }
-    s.coins -= 15;
+    s.coins -= cost;
     s.bottles += 1;
     synth.play("coin");
     G.emit("toast", { title: "VENDING", text: "+1 bottle of pussy juice. Psychedelic dystopian branding." });

@@ -225,11 +225,13 @@ export const CHAPTERS: ChapterDef[] = [
     dungeonDoor: "CITADEL",
     steps: [
       { id: "s_final", text: "Attend the Final Reading (Town Hall)", done: { flag: "final_reading" }, target: "TOWN_HALL" },
+      { id: "s_hijack", text: "KRELMERGENCY: Flight KR-069 has been hijacked. Stop it at Krelford International (south-east gate) before it hits the Kreltower.", done: { flag: "kreltower_resolved" }, target: "AIRPORT" },
       { id: "s_dungeon", text: "Ascend the Great Wiki Citadel. React to the song.", done: { flag: "ch6_clear" }, target: "CITADEL" },
     ],
     intro: [
       dir("CHAPTER SIX. The Citadel gates are open. Through them you can see corridors made of wiki pages. One of the walls is the 'Krezzsplosion' article. It is very long. It is still being edited."),
       ping("DRONGUS", "There's a new sheriff in town boys…"),
+      dir("Meanwhile, at Krelford International, a man in a balaclava with a stick-on moustache boards Flight KR-069 carrying a duty-free bag full of 'dirty bloody tricks'. Nobody stops him. The security guard is reacting to something."),
     ],
     playerScene: {
       FLENKY: [say("FLENKY", "Last time I went up against Drongus I got banned until the Queen died."), dir("This time, nobody's dying. Probably. Let's all be honest lads.")],

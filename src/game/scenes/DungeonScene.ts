@@ -8,7 +8,7 @@ import { Enemy } from "../combat/Enemy";
 import { Controls } from "../combat/Controls";
 import type { CombatWorld, HitOpts, ShotOpts } from "../combat/types";
 import { Boss, createBoss, DrongusBoss, OverWonkedMachine } from "../combat/Bosses";
-import { synth } from "../audio/Synth";
+import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
 import { BOSS_TEXT } from "../../content/bosses";
 import { enemyDamageMult, enemyHpMult, maxHp, bump, maxBottles } from "../systems/stats";
@@ -153,7 +153,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     else this.scene.get("UI").events.emit("mode", "dungeon");
     G.emit("room", { name: `${this.dungeon.name} · ${r.name}`, idx: this.roomIdx, total: this.dungeon.rooms.length });
     G.emit("boss", null);
-    synth.music(r.boss ? (r.boss === "drongus" ? "final" : "boss") : this.dungeon.music);
+    synth.music(r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : this.dungeon.music);
+    this.player.headbuttMode = r.boss === "troll";
+    if (this.dungeon.timerSec && this.roomIdx === 0 && !G.rt.timerEnd) G.rt.timerEnd = Date.now() + this.dungeon.timerSec * 1000;
 
     this.events.on("prophecy", (ms: number) => {
       this.prophecyUntil = this.now() + ms;
@@ -368,6 +370,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       enter.push(say("DRONGUS", rule?.decree ?? "NEW RULE.", { notify: true, sfx: "decree" }));
     }
     if (enter.length) await this.talk(enter);
+    if (r.event === "anthem") await this.anthemEvent();
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
     if (this.roomIdx === 0) G.drongus("enter_dungeon");
     this.busy = false;
@@ -493,6 +496,36 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (const sh of [...this.shots]) this.killShot(sh);
     this.rule = null;
     G.emit("rule", null);
+    if (this.dungeon.arenaFlag) {
+      await this.talk(BOSS_TEXT[b.bossId].outro);
+      s.flags[this.dungeon.arenaFlag] = true;
+      s.coins += 150;
+      s.hp = maxHp(s);
+      s.phase = "hub";
+      G.save();
+      const vig = b.bossId === "flatmate" ? "flatmate" : b.bossId === "rival" ? "rival" : null;
+      this.time.delayedCall(800, () => {
+        this.transitioning = true;
+        if (vig) switchTo(this, "Vignette", { id: vig, returnAt: this.dungeon.returnAt });
+        else switchTo(this, "Hub", { at: this.dungeon.returnAt, from: "arena" });
+      });
+      return;
+    }
+    if (b.bossId === "krozno") {
+      await this.talk(BOSS_TEXT.krozno.outro);
+      Object.assign(s.flags, { kreltower_resolved: true, kreltower_saved: true });
+      G.rt.timerEnd = 0;
+      G.emit("timer", null);
+      s.coins += 300;
+      s.hp = maxHp(s);
+      s.phase = "hub";
+      G.save();
+      this.time.delayedCall(600, () => {
+        this.transitioning = true;
+        switchTo(this, "Vignette", { id: "kreltower_saved", returnAt: "AIRPORT" });
+      });
+      return;
+    }
     if (b.bossId === "drongus") {
       s.flags.ch6_clear = true;
       G.save();
@@ -531,6 +564,92 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         switchTo(this, "Hub", { from: "dungeon" });
       });
     });
+  }
+
+  /** Drongus's army stands to attention for the national anthem. */
+  private async anthemEvent() {
+    const r = this.room;
+    const s = G.s;
+    const army: Phaser.GameObjects.Sprite[] = [];
+    this.add.image(r.w / 2, 70, "spr_DRONGUS", 0).setScale(4).setDepth(5);
+    this.add.rectangle(r.w / 2, 70, 90, 110).setStrokeStyle(6, 0xd4a017).setDepth(6);
+    this.add.text(r.w / 2, 130, "OUR SUPREME LEADER", { fontFamily: FONT, fontSize: "10px", color: "#d4a017" }).setOrigin(0.5).setDepth(6);
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 8; col++) {
+        const x = r.w * 0.18 + col * ((r.w * 0.64) / 7);
+        const y = 220 + row * 80;
+        army.push(this.add.sprite(x, y, "en_soldier", 0).setScale(2.6).setDepth(y));
+      }
+    }
+    const captain = this.add.sprite(r.w / 2, 480, "en_soldier", 1).setScale(3.2).setTint(0xffd23f).setDepth(480);
+    await this.talk([
+      say("GUARDSMAN CAPTAIN", "ATTEN-SHUN!"),
+      dir("Twenty-four purple boots slam together at once. The floor (the Krezzsplosion article) shakes."),
+      say("GUARDSMAN CAPTAIN", "ALL RISE FOR THE NATIONAL ANTHEM OF KRELWORLD."),
+      say("DRONGUS", "(over the tannoy) Stand to attention. I made this. It took me nineteen generations. If you move, you're disrespecting the anthem AND me.", { notify: true }),
+      {
+        s: "NARRATOR",
+        t: "The anthem is about to start. What do you do?",
+        dir: true,
+        choice: [
+          { label: "Stand to attention (respect the anthem)", set: { anthem_pick: "stand" } },
+          { label: "Sing along, loudly, badly", set: { anthem_pick: "sing" } },
+          { label: "Keep walking. It's not your anthem.", set: { anthem_pick: "walk" } },
+        ],
+      },
+    ]);
+    const pick = s.flags.anthem_pick;
+    synth.music("anthem", true);
+    const banner = this.add
+      .text(this.cameras.main.midPoint.x, this.cameras.main.midPoint.y - 200, "🎵 NOW PLAYING: THE STAR-SPANGLED BANNER (KRELWORLD EDITION)", { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", backgroundColor: "#000000cc", padding: { x: 8, y: 4 } })
+      .setOrigin(0.5)
+      .setDepth(2000)
+      .setScrollFactor(0)
+      .setPosition(480, 90);
+    const salute = this.time.addEvent({ delay: 500, loop: true, callback: () => army.forEach((a, i) => a.setFrame((i + Math.floor(this.now() / 500)) % 2)) });
+    this.busy = true;
+    if (pick === "stand") {
+      this.floatText(this.player.x, this.player.y - 40, "*stands to attention*", "#ffffff", 14);
+      await new Promise<void>((res) => this.time.delayedCall(9000, () => res()));
+      this.busy = false;
+      await this.talk([
+        say("GUARDSMAN CAPTAIN", "…at ease. Lovely posture. Half of you lot, dismissed. The rest of you…"),
+        say("GUARDSMAN CAPTAIN", "…hang on. That's not one of ours. GET THEM. RESPECTFULLY."),
+      ]);
+      this.waves = [[["soldier", 4]], [["soldier", 3], ["ai_portrait", 1]]];
+    } else if (pick === "sing") {
+      this.floatText(this.player.x, this.player.y - 40, "♪ OH SAAAAY CAN YOU KREEEEZ ♪", "#ffd23f", 16);
+      await new Promise<void>((res) => this.time.delayedCall(7000, () => res()));
+      this.busy = false;
+      this.player.wonk = 100;
+      await this.talk([
+        dir("Several guardsmen are openly weeping. The captain is moved. Your WONK METER is full."),
+        say("GUARDSMAN CAPTAIN", "That was… that was the most beautiful… GET THEM ANYWAY."),
+      ]);
+    } else {
+      this.busy = false;
+      this.toast("DISRESPECT TO THE ANTHEM", "The entire army is now very, very upset with you.");
+      await this.talk([say("GUARDSMAN CAPTAIN", "DID THEY JUST… WALK. DURING THE ANTHEM."), say("DRONGUS", "Unbelievable. Seen. Not reacted. And now WALKED.", { notify: true }), say("GUARDSMAN CAPTAIN", "ALL UNITS. ALL OF THEM.")]);
+      this.waves = [[["soldier", 8]], [["soldier", 6], ["ai_portrait", 2]]];
+    }
+    salute.remove();
+    this.tweens.add({ targets: banner, alpha: 0, delay: 3000, duration: 800, onComplete: () => banner.destroy() });
+    army.forEach((a) => a.destroy());
+    captain.destroy();
+  }
+
+  private missionFailed() {
+    this.busy = true;
+    const s = G.s;
+    Object.assign(s.flags, { kreltower_resolved: true, kreltower_fell: true });
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
+    s.hp = maxHp(s);
+    s.phase = "hub";
+    G.save();
+    this.cameras.main.flash(600, 255, 255, 255);
+    this.transitioning = true;
+    switchTo(this, "Vignette", { id: "kreltower_fall", returnAt: "AIRPORT" });
   }
 
   // ------------------------------------------------------------------ events: Polson Towers
@@ -834,7 +953,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const now = this.now();
     let a = amount;
     if (now < e.markedUntil) a *= 1.35;
-    if (e instanceof Boss) a = e.incoming(a);
+    if (e instanceof Boss) {
+      a = e.incoming(a, { source: opts.source });
+      if (a <= 0 && !e.shielded) return;
+    }
     if (opts.fixed) a = amount;
     if (e instanceof Boss && e.shielded) {
       if (opts.label !== "" && Math.random() < 0.3) this.floatText(e.x, e.y - 40, "SHIELDED", "#88aaff", 12);
@@ -1058,7 +1180,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private talk(lines: Line[]): Promise<void> {
     this.paused = true;
+    const t0 = Date.now();
     return runDialogue(this, lines).then(() => {
+      if (G.rt.timerEnd) G.rt.timerEnd += Date.now() - t0;
       this.controls?.swallow();
       this.paused = false;
     });
@@ -1093,6 +1217,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.physics.world.isPaused) this.physics.world.resume();
     const dt = Math.min(delta, 50);
     const s = G.s;
+    if (this.dungeon.timerSec && G.rt.timerEnd) {
+      const left = Math.max(0, G.rt.timerEnd - Date.now());
+      G.emit("timer", left / 1000);
+      if (left <= 0 && !this.busy) {
+        this.missionFailed();
+        return;
+      }
+    }
     // timescale (Terrible Prophecy)
     this.enemyTimeScale = now < this.prophecyUntil ? 0.25 : 1;
     const ne = this.nearestEnemy(this.player.x, this.player.y, 520);

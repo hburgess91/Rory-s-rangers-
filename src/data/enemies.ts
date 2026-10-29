@@ -49,4 +49,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
   deleted_text: { id: "deleted_text", name: "Deleted Text", behavior: "bomber", hp: 40, speed: 120, damage: 22, size: 15, color: 0xdc2626, accent: 0xffffff, shape: "page", label: "✕", coins: 5, krezz: 5 },
   ai_portrait: { id: "ai_portrait", name: "AI Portrait", behavior: "shooter", hp: 58, speed: 70, damage: 12, size: 18, color: 0xffd23f, accent: 0x111827, shape: "box", label: "AI", projectile: { speed: 250, damage: 12, color: 0xffe066, rate: 1300, spread: 0.2, count: 3 }, coins: 8, krezz: 7 },
   unread: { id: "unread", name: "Unread Notification", behavior: "shooter", hp: 28, speed: 100, damage: 9, size: 13, color: 0xff3b30, accent: 0xffffff, shape: "bubble", label: "9", projectile: { speed: 200, damage: 9, color: 0xff3b30, rate: 1500 }, coins: 4, krezz: 4, counter: "kill_wisp" },
+  // Kreltower plot — Krozno's bandits
+  bandit: { id: "bandit", name: "Krozno's Bandit", behavior: "chaser", hp: 48, speed: 120, damage: 12, size: 15, color: 0x3f3f46, accent: 0xef4444, shape: "humanoid", coins: 6, krezz: 5 },
+  bandit_gunner: { id: "bandit_gunner", name: "Bandit Lookout", behavior: "shooter", hp: 44, speed: 85, damage: 11, size: 15, color: 0x52525b, accent: 0xfacc15, shape: "humanoid", projectile: { speed: 240, damage: 11, color: 0xfacc15, rate: 1300 }, coins: 6, krezz: 5 },
+  trolley: { id: "trolley", name: "Possessed Drinks Trolley", behavior: "charger", hp: 70, speed: 70, damage: 18, size: 18, color: 0xd1d5db, accent: 0xe0a35a, shape: "box", label: "B", coins: 9, krezz: 6 },
+  // Drongus's army (Citadel parade ground)
+  soldier: { id: "soldier", name: "Krelworld Guardsman", behavior: "chaser", hp: 56, speed: 110, damage: 13, size: 16, color: 0x6d28d9, accent: 0xffd23f, shape: "humanoid", coins: 6, krezz: 6 },
+  // Arena minions
+  roadie: { id: "roadie", name: "Roadie", behavior: "chaser", hp: 40, speed: 115, damage: 10, size: 15, color: 0x1f2937, accent: 0xe5e7eb, shape: "humanoid", coins: 5, krezz: 4 },
+  gym_bro: { id: "gym_bro", name: "Gym Bro", behavior: "charger", hp: 60, speed: 85, damage: 14, size: 18, color: 0xf97316, accent: 0x111827, shape: "brute", coins: 7, krezz: 5 },
+  invoice: { id: "invoice", name: "Unpaid Bill", behavior: "swarm", hp: 16, speed: 140, damage: 7, size: 11, color: 0xffffff, accent: 0xdc2626, shape: "page", label: "£", coins: 2, krezz: 2 },
 };

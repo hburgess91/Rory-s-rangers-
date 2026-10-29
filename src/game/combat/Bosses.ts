@@ -82,7 +82,7 @@ export abstract class Boss extends Enemy {
   abstract pattern(dt: number, now: number): void;
 
   /** Damage multiplier the boss applies to incoming damage. */
-  incoming(amount: number): number {
+  incoming(amount: number, _opts?: { source?: string }): number {
     return this.shielded ? 0 : amount;
   }
 
@@ -300,7 +300,7 @@ export class OverWonkedMachine extends Boss {
     }
   }
   /** Concentrated Krezz overloads the machine. */
-  incoming(amount: number): number {
+  incoming(amount: number, _opts?: { source?: string }): number {
     const p = this.world.player;
     const now = this.world.now();
     const concentrated = now < p.burstUntil + 600 || now - (p.specialCd - (p.def.signature?.cooldown ?? 0)) < 1200;
@@ -650,6 +650,228 @@ export class DrongusBoss extends Boss {
   }
 }
 
+
+// ----------------------------------------------------------------- KROZNO (Kreltower plot)
+
+export class Krozno extends Boss {
+  nextTurb = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "krozno", x, y, 1600, "boss_krozno", 32, 0x1f2937, 32, 48);
+    this.setScale(2.6);
+    this.nextTurb = w.now() + 5000;
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    this.moveToward(p.x + Math.cos(now / 900) * 160, p.y - 140, 80 * this.world.enemyTimeScale);
+    this.setFrame(Math.floor(now / 200) % 3);
+    if (now > this.nextTurb) {
+      this.nextTurb = now + (this.phase ? 5000 : 7000);
+      this.world.toast("TURBULENCE", "Please return to your seats.");
+      this.world.shake(700, 0.02);
+      const a = Math.random() * Math.PI * 2;
+      (p.spr.body as Phaser.Physics.Arcade.Body).velocity.add(new Phaser.Math.Vector2(Math.cos(a) * 520, Math.sin(a) * 520));
+    }
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 3;
+    this.taunt();
+    if (pick === 0) {
+      this.fan(this.phase ? 9 : 7, 0.15, 240, 12, 0xfacc15);
+      this.nextPattern = now + 1500;
+    } else if (pick === 1) {
+      for (let i = 0; i < (this.phase ? 3 : 2); i++) this.world.spawnEnemy(i % 2 ? "bandit_gunner" : "bandit", this.x + (i - 1) * 60, this.y + 60, { minion: true });
+      this.nextPattern = now + 2600;
+    } else {
+      // "seatbelt" sweeps: horizontal lines across the cabin
+      const b = this.world.bounds;
+      for (let i = 0; i < 3; i++) this.world.enemyLine(b.left, b.top + 120 + i * ((b.height - 160) / 2), 0, b.width, 36, 16, 900 + i * 250);
+      this.nextPattern = now + 2400;
+    }
+  }
+}
+
+// ----------------------------------------------------------------- RUSSELL BRAND (Flenky arena)
+
+export class BrandBoss extends Boss {
+  lungeUntil = 0;
+  lungeAngle = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "brand", x, y, 1400, "boss_brand", 32, 0xf4f4f0, 32, 48);
+    this.setScale(2.4);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const ts = this.world.enemyTimeScale;
+    this.setFrame(Math.floor(now / 160) % 3);
+    if (now < this.lungeUntil) {
+      this.moveToward(this.x + Math.cos(this.lungeAngle) * 100, this.y + Math.sin(this.lungeAngle) * 100, 520 * ts);
+      if (Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y) < 50 && now > p.grappledUntil && !p.invulnerable(now)) {
+        p.grappledUntil = now + 2600;
+        p.grappleEscape = 0;
+        this.lungeUntil = 0;
+        this.world.toast("GRAPPLED", "He's got you in his guard. MASH ATTACK / DODGE to escape!");
+        this.world.floatText(this.x, this.y - 60, "KIMURA, DARLING!", "#ff6666", 18);
+      }
+      return;
+    }
+    if (now < p.grappledUntil) {
+      this.halt();
+      this.setPosition(p.x + 18, p.y - 6);
+      if (Math.random() < dt / 450) this.world.damagePlayer(5, undefined, { unblockable: true, label: "-5 (submission)" });
+      return;
+    }
+    this.moveToward(p.x, p.y, (this.phase ? 105 : 85) * ts);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 3;
+    this.taunt();
+    if (pick === 0) {
+      this.lungeAngle = Math.atan2(p.y - this.y, p.x - this.x);
+      this.world.enemyLine(this.x, this.y, this.lungeAngle, 360, 50, 0, 700 * this.world.telegraphMult);
+      this.halt();
+      this.world.sc.time.delayedCall(700 * this.world.telegraphMult, () => (this.lungeUntil = this.world.now() + 600));
+      this.nextPattern = now + 2400;
+    } else if (pick === 1) {
+      // berimbolo: spinning AoE
+      this.world.enemyAoe(this.x, this.y, 120, 18, 800, 0xf4f4f0);
+      this.nextPattern = now + 1800;
+    } else {
+      this.ring(this.phase ? 16 : 12, 180, 10, 0x3b6cff, now / 400);
+      this.nextPattern = now + 1600;
+    }
+  }
+}
+
+// ----------------------------------------------------------------- GRUMBO THE BLUES TROLL (Krezmar arena)
+
+export class TrollBoss extends Boss {
+  staggered = false;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "troll", x, y, 1600, "boss_troll", 32, 0x7d8f6a, 32, 48);
+    this.setScale(3);
+  }
+  /** Trolls can only be finished with a headbutt. */
+  incoming(amount: number, opts?: { source?: string }): number {
+    if (opts?.source === "headbutt") return this.staggered ? this.hp + 10 : amount;
+    const floor = this.maxHp * 0.12;
+    return Math.max(0, Math.min(amount, this.hp - floor));
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    this.setFrame(Math.floor(now / 250) % 3);
+    if (!this.staggered && this.hp <= this.maxHp * 0.12 + 1) {
+      this.staggered = true;
+      this.world.toast("STAGGERED", "The troll is dazed. Get close and HEADBUTT him (F / right click)!");
+    }
+    if (this.staggered) {
+      this.halt();
+      this.setAngle(Math.sin(now / 120) * 8);
+      if (Math.floor(now / 600) % 2 === 0) this.world.floatText(this.x, this.y - 80, "HEADBUTT HIM!", "#ffd23f", 14);
+      return;
+    }
+    this.moveToward(p.x, p.y, (this.phase ? 80 : 60) * this.world.enemyTimeScale);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 3;
+    this.taunt();
+    if (pick === 0) {
+      // twelve-bar riff: 12 notes in a spiral
+      for (let i = 0; i < 12; i++) this.world.sc.time.delayedCall(i * 90, () => this.ring(4, 190, 10, 0xfbbf24, i * 0.35));
+      this.nextPattern = now + 2400;
+    } else if (pick === 1) {
+      this.world.enemyAoe(p.x, p.y, 100, 22, 900, 0xb45309);
+      this.world.floatText(p.x, p.y - 60, "GUITAR SWING", "#fbbf24", 14);
+      this.nextPattern = now + 1800;
+    } else {
+      for (let i = 0; i < 3; i++) this.world.spawnEnemy("roadie", this.x + (i - 1) * 60, this.y + 60, { minion: true });
+      this.nextPattern = now + 2600;
+    }
+  }
+}
+
+// ----------------------------------------------------------------- CARPET KEV (Gronny arena)
+
+export class FlatmateBoss extends Boss {
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "flatmate", x, y, 1000, "boss_flatmate", 32, 0x6b7280, 32, 48);
+    this.setScale(2.4);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const b = this.world.bounds;
+    this.setFrame(Math.floor(now / 140) % 3);
+    // He runs away. Always. It's what he does.
+    const away = Math.atan2(this.y - p.y, this.x - p.x);
+    let tx = this.x + Math.cos(away) * 200;
+    let ty = this.y + Math.sin(away) * 200;
+    tx = Phaser.Math.Clamp(tx, b.left + 40, b.right - 40);
+    ty = Phaser.Math.Clamp(ty, b.top + 40, b.bottom - 40);
+    const cornered = Phaser.Math.Distance.Between(tx, ty, this.x, this.y) < 40;
+    this.moveToward(tx, ty, (cornered ? 40 : this.phase ? 150 : 130) * this.world.enemyTimeScale);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 3;
+    this.taunt();
+    if (pick === 0) {
+      for (let i = 0; i < (this.phase ? 6 : 4); i++) this.world.spawnEnemy("invoice", this.x, this.y, { minion: true });
+      this.nextPattern = now + 2200;
+    } else if (pick === 1) {
+      // carpet roll: big slow projectile
+      this.world.shoot(this.x, this.y, { owner: "enemy", damage: 18, speed: 140, angle: Math.atan2(p.y - this.y, p.x - this.x), color: 0x7a1f2b, scale: 3.5, life: 5000 });
+      this.nextPattern = now + 1400;
+    } else {
+      this.fan(5, 0.25, 210, 9, 0xd6c49a);
+      this.nextPattern = now + 1500;
+    }
+  }
+}
+
+// ----------------------------------------------------------------- BRICK KOLBANE (Krezwonk arena)
+
+export class RivalBoss extends Boss {
+  chargeUntil = 0;
+  chargeAngle = 0;
+  flexUntil = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "rival", x, y, 1700, "boss_rival", 32, 0xd97706, 32, 48);
+    this.setScale(3);
+  }
+  incoming(amount: number, opts?: { source?: string }): number {
+    return this.world.now() < this.flexUntil ? amount * 0.2 : super.incoming(amount, opts);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    this.setFrame(Math.floor(now / 200) % 3);
+    if (now < this.flexUntil) {
+      this.halt();
+      this.setTint(0xffaa66);
+      return;
+    }
+    if (now < this.chargeUntil) {
+      this.moveToward(this.x + Math.cos(this.chargeAngle) * 100, this.y + Math.sin(this.chargeAngle) * 100, 560 * this.world.enemyTimeScale);
+      return;
+    }
+    this.moveToward(p.x, p.y, (this.phase ? 90 : 70) * this.world.enemyTimeScale);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 4;
+    this.taunt();
+    if (pick === 0) {
+      this.chargeAngle = Math.atan2(p.y - this.y, p.x - this.x);
+      this.world.enemyLine(this.x, this.y, this.chargeAngle, 480, 70, 0, 800 * this.world.telegraphMult);
+      this.halt();
+      this.world.sc.time.delayedCall(800 * this.world.telegraphMult, () => (this.chargeUntil = this.world.now() + 700));
+      this.nextPattern = now + 2600;
+    } else if (pick === 1) {
+      // thrown dumbbells
+      for (let i = 0; i < (this.phase ? 5 : 3); i++) this.world.enemyAoe(p.x + (Math.random() - 0.5) * 200, p.y + (Math.random() - 0.5) * 200, 55, 20, 900 + i * 120, 0x374151);
+      this.nextPattern = now + 2000;
+    } else if (pick === 2) {
+      this.flexUntil = now + 1800;
+      this.world.floatText(this.x, this.y - 80, "FLEXING (DAMAGE REDUCED)", "#ffaa66", 14);
+      this.nextPattern = now + 2400;
+    } else {
+      for (let i = 0; i < 2; i++) this.world.spawnEnemy("gym_bro", this.x + (i ? 70 : -70), this.y + 50, { minion: true });
+      this.nextPattern = now + 2600;
+    }
+  }
+}
+
 export function createBoss(id: string, w: CombatWorld, x: number, y: number): Boss {
   switch (id) {
     case "salmon":
@@ -662,6 +884,16 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
       return new BanhammerAutomaton(w, x, y);
     case "spectre":
       return new Spectre(w, x, y);
+    case "krozno":
+      return new Krozno(w, x, y);
+    case "brand":
+      return new BrandBoss(w, x, y);
+    case "troll":
+      return new TrollBoss(w, x, y);
+    case "flatmate":
+      return new FlatmateBoss(w, x, y);
+    case "rival":
+      return new RivalBoss(w, x, y);
     default:
       return new DrongusBoss(w, x, y);
   }

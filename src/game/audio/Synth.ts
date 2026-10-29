@@ -5,6 +5,36 @@ export const AUDIO_FILES: Record<string, string> = {
   // e.g. mork_voice: "audio/mork_voice.ogg"  (drop the file in public/audio)
 };
 
+/** Recorded music (public/audio). Ids not listed here fall back to the synthesised tracks. */
+export const MUSIC_FILES: Record<string, string> = {
+  title: "audio/title.mp3",
+  hub: "audio/hub.mp3",
+  pub: "audio/pub.mp3",
+  meeting: "audio/meeting.mp3",
+  school: "audio/school.mp3",
+  mansion: "audio/mansion.mp3",
+  industrial: "audio/industrial.mp3",
+  temple: "audio/temple.mp3",
+  prison: "audio/prison.mp3",
+  wiki: "audio/wiki.mp3",
+  airport: "audio/airport.mp3",
+  boss: "audio/boss1.mp3",
+  boss_salmon: "audio/boss1.mp3",
+  boss_feedback: "audio/boss2.mp3",
+  boss_machine: "audio/boss3.mp3",
+  boss_banhammer: "audio/boss1.mp3",
+  boss_spectre: "audio/boss2.mp3",
+  boss_krozno: "audio/boss3.mp3",
+  boss_arena: "audio/boss3.mp3",
+  final: "audio/final.mp3",
+  ending: "audio/ending.mp3",
+  anthem: "audio/anthem.mp3",
+  crazy: "audio/crazy_for_krelworld.mp3",
+};
+
+/** Songs that should play once rather than loop. */
+const ONE_SHOT = new Set(["anthem"]);
+
 type Wave = OscillatorType;
 
 interface Track {
@@ -62,6 +92,8 @@ export class Synth {
   private timer: number | null = null;
   private vol = { master: 0.8, music: 0.5, sfx: 0.8 };
   private files: Record<string, AudioBuffer> = {};
+  private el: HTMLAudioElement | null = null;
+  private elId = "";
 
   /** Must be called from a user gesture. Safe to call repeatedly. */
   unlock() {
@@ -84,6 +116,7 @@ export class Synth {
       if (this.trackId) this.music(this.trackId, true);
     }
     if (this.ctx.state === "suspended") this.ctx.resume().catch(() => undefined);
+    if (this.el && this.el.paused && this.elId) this.el.play().catch(() => undefined);
   }
 
   private async loadFiles() {
@@ -107,6 +140,7 @@ export class Synth {
     if (!this.ctx) return;
     this.master.gain.value = this.vol.master;
     this.musicGain.gain.value = this.vol.music * 0.35;
+    if (this.el) this.el.volume = Math.min(1, this.vol.master * this.vol.music);
     this.sfxGain.gain.value = this.vol.sfx * 0.6;
   }
 
@@ -301,7 +335,39 @@ export class Synth {
     }
   }
 
+  /** Is a recorded song currently playing? */
+  playingFile(): string {
+    return this.el && !this.el.paused ? this.elId : "";
+  }
+
+  private playFile(id: string, force: boolean) {
+    if (!force && this.elId === id && this.el && !this.el.ended) return;
+    this.stopFile();
+    const el = new Audio(MUSIC_FILES[id]);
+    el.loop = !ONE_SHOT.has(id);
+    el.volume = Math.min(1, this.vol.master * this.vol.music);
+    this.el = el;
+    this.elId = id;
+    el.play().catch(() => undefined);
+  }
+
+  private stopFile() {
+    if (this.el) {
+      this.el.pause();
+      this.el.src = "";
+    }
+    this.el = null;
+    this.elId = "";
+  }
+
   music(id: string, force = false) {
+    if (MUSIC_FILES[id]) {
+      this.trackId = "";
+      this.track = null;
+      this.playFile(id, force);
+      return;
+    }
+    this.stopFile();
     if (!force && id === this.trackId && this.timer !== null) return;
     this.trackId = id;
     this.track = TRACKS[id] ?? null;
@@ -312,6 +378,7 @@ export class Synth {
   }
 
   stopMusic() {
+    this.stopFile();
     this.trackId = "";
     this.track = null;
   }

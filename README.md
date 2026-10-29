@@ -59,9 +59,23 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 - **Krazy Facts**: at the end of each chapter you pick a fact; it becomes law (run modifiers).
 - **Ban Risk / Exile / Ban Tribunal**, Wonk meter and Krezz Burst, Pussy Juice infrastructure,
   Fizzy Bongos and intoxication, the Wonking Machine, vending machines.
-- **KrelTV**: CRT TV in your house, the pub, Polson Towers and the town square. Seven channels,
-  twelve episodes, all data. Includes *Thick Cumming Cock* Ep. 7 as supplied.
+- **KrelTV**: CRT TV in your house, the pub, Polson Towers and the town square. Eight channels,
+  fourteen episodes, all data. Includes *Thick Cumming Cock* Ep. 7 as supplied.
 - **The Krezz Arms** pub: seven conversations that open up as you drink.
+- **Music**: the two supplied songs. *The Star Spangled Banner (Krelworld Edition)* plays in
+  Drongus's office (the Citadel parade ground), where his army stands to attention and you
+  choose to stand, sing or walk on. *Krazy For The Krelworld* is on the pub jukebox, KMTV and
+  the end credits. The other supplied tracks are the soundtrack (`MUSIC_FILES` in `Synth.ts`).
+- **The Kreltower Incident** (Chapter 6): Krozno hijacks Flight KR-069. Five-minute timer
+  through the airport to the cockpit boss. Win and the plane lands in the Great Tap; run out
+  of time and it hits the Kreltower, which collapses in front of everyone. The town, NPCs
+  and ending remember which.
+- **Bully Mikey** at The Booth: a punching-bag minigame (Proctus stands in if you are Mikey).
+- **Character side stories** (`src/content/arcs.ts`), unlocked after the first meeting:
+  Flenky (Mollor, the psychology exam, Russell Brand at BJJ), Krezmar (Grumbo the Blues Troll,
+  finished with a headbutt), Gronny (Carpet Kev and the carpet), Lil' Crongus (the bread and
+  butter pudding), Krezwonk (HGH, the deadlift, three girlfriends, Brick Kolbane) and Scrombus
+  (renovate, flip, coup). Each has a permanent reward. Villains are fictional stand-ins.
 - **New Krez+** after the credits: keeps the Archive and TV, harder enemies, extra Krazy Facts.
 
 ## Project layout
@@ -146,6 +160,8 @@ of modifier needs one line there plus wherever it applies.
   (e.g. `this.load.spritesheet("spr_KREZMAR", "art/krezmar.png", { frameWidth: 16, frameHeight: 24 })`,
   4 frames: idle, walk A, walk B, attack).
 - Portraits: `public/portraits/<name>.png`, keys `pt_<name>` (see `characters.ts`).
+- Music: `MUSIC_FILES` in `src/game/audio/Synth.ts` maps track ids to mp3s in `public/audio/`.
+  Remove an entry and the built-in synth tune plays instead.
 - Audio: register a file in `AUDIO_FILES` in `src/game/audio/Synth.ts`
   (e.g. `mork: "audio/mork_voice.ogg"` in `public/audio/`) and it is used instead of the synth.
   The original Mork Voice recording isn't in the exports, so the game uses a mumble effect.

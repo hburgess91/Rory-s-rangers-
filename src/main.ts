@@ -15,6 +15,8 @@ import { KrazyFactScene } from "./game/scenes/KrazyFactScene";
 import { ExileScene } from "./game/scenes/ExileScene";
 import { MenuScene } from "./game/scenes/MenuScene";
 import { EndingScene } from "./game/scenes/EndingScene";
+import { VignetteScene } from "./game/scenes/VignetteScene";
+import { MinigameScene } from "./game/scenes/MinigameScene";
 import { installDebug } from "./game/debug";
 
 const game = new Phaser.Game({
@@ -44,6 +46,8 @@ const game = new Phaser.Game({
     PubScene,
     KrazyFactScene,
     ExileScene,
+    VignetteScene,
+    MinigameScene,
     MenuScene,
     EndingScene,
   ],

@@ -270,7 +270,55 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR];
+export const ANTHEM_BROADCAST = ep(
+  "anthem_broadcast",
+  "KMTV (KRELWORLD MUSIC TELEVISION)",
+  "KMTV",
+  "The Star Spangled Banner (Krelworld Edition) — State Broadcast",
+  1,
+  `
+# KMTV PRESENTS: THE NATIONAL ANTHEM
+INT. CITADEL PARADE GROUND - DAWN
+VJ: By order of the Supreme Leader, all citizens must stand for the national anthem. Yes, you. On your sofa. Stand up.
+[MUSIC anthem start]
+(The Krelworld Guard stand to attention in perfect rows. A giant portrait of Drongus unfurls from the Citadel. It is airbrushed. Heavily.)
+(A flypast of three pigeons in formation. One of them is wearing the word TOWN.)
+(Close-up: a single tear rolls down a guardsman's face. He has been standing here since 2021.)
+(Drongus salutes himself in a mirror.)
+(Fireworks spell out PLEASE REACT. The R doesn't light.)
+VJ: That was the national anthem. Reactions from the public: zero.
+DRONGUS: Zero ??
+[MUSIC anthem stop]
+`,
+  { unlockFlag: "ch6_intro", unlockHint: "Broadcasts once the Citadel opens (Chapter 6)" },
+);
+
+export const CRAZY_VIDEO = ep(
+  "crazy_video",
+  "KMTV (KRELWORLD MUSIC TELEVISION)",
+  "KMTV",
+  "Krazy For The Krelworld (Official Music Video)",
+  2,
+  `
+# KRAZY FOR THE KRELWORLD (OFFICIAL VIDEO)
+EXT. KRELFORD HIGH STREET - DAY
+VJ: World premiere. The Supreme Leader's latest single. He has asked us to remind viewers that the react button is right there.
+[MUSIC crazy start]
+(Drongus struts down the high street in sunglasses. Townsfolk dance behind him with visible reluctance.)
+(Cut to: the Great Tap. Pussy juice fountains in time with the beat.)
+(Kreblis appears in the background holding a sign that says 'STRANGE'.)
+(Krezwonk lurks in every shot. Nobody cast him. Nobody can explain it.)
+(Mikey tries to get in shot. Mikey is cropped out.)
+(Proctus Krelmor does the dance one beat late, every time, with total commitment.)
+(Wide shot of the Kreltower at sunset. A plane flies harmlessly past it. The director holds the shot slightly too long.)
+(Final shot: the song's view counter. Seen by 9.)
+VJ: Absolute tune. Our studio has decided not to react to it as a mark of respect.
+[MUSIC crazy stop]
+`,
+  { unlockFlag: "met_emergency", unlockHint: "Premieres after the Emergency Reaction Session" },
+);
+
+export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO];
 
 export const CHANNELS: string[] = [
   "KRELFORD NEWS AT SIX",
@@ -280,6 +328,7 @@ export const CHANNELS: string[] = [
   "THICK CUMMING COCK",
   "EMERGENCY DRONGUS BROADCAST",
   "KRELWORLD DOCUMENTARIES",
+  "KMTV (KRELWORLD MUSIC TELEVISION)",
 ];
 
 /** Which set a shot uses. The TV renderer draws these procedurally. */

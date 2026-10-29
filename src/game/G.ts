@@ -21,6 +21,7 @@ class GameContext {
     dungeonId: "",
     room: 0,
     lastToastAt: 0,
+    timerEnd: 0,
   };
 
   constructor() {

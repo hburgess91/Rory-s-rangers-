@@ -136,6 +136,92 @@ export const BOSS_TEXT: Record<string, BossText> = {
     outro: [],
     taunts: ["DODGING IS NOW ILLEGAL!", "HEALING REQUIRES A PERMIT!", "YOUR NAME HAS BEEN CHANGED!", "ALL KREZZ BELONGS TO THE STATE!", "HELLO?", "AM I JUST TALKING TO MYSELF?", "SEEN BY NINE!", "REACT TO THIS!", "WHERE'S YOUR KRAZY FACT BRO?"],
   },
+  krozno: {
+    id: "krozno",
+    name: "KROZNO",
+    title: "Bandit King · Hijacker of Flight KR-069",
+    intro: [
+      dir("The cockpit. Krozno is at the controls, wearing two pilot's hats and a third, smaller hat. Through the windscreen: Kreltower, getting bigger."),
+      say("KROZNO", "It brings me no pleasure to report that Krozno and his bandits are up to their usual dirty bloody tricks."),
+      say("KROZNO", "Drongus said that about me. In January. Do you know how long it's been since anyone mentioned me? I've been waiting for this."),
+      say("KROZNO", "Kreltower only just got rebuilt. So I'm going to un-rebuild it. That's lore. That's ENGAGEMENT."),
+      dir("TIP: Beat him before the timer runs out. Turbulence will throw you around."),
+    ],
+    outro: [
+      say("KROZNO", "My… dirty… bloody… tricks…"),
+      dir("Krozno slumps off the yoke. You grab it. You have never flown a plane. Nobody in Krelworld has ever flown a plane. You pull up."),
+    ],
+    taunts: ["DIRTY BLOODY TRICKS!", "TURBULENCE!", "BANDITS, ASSEMBLE!", "KRELTOWER IS THE LORE!", "PLEASE FASTEN YOUR SEATBELTS!"],
+  },
+  brand: {
+    id: "brand",
+    name: "RUSSELL BRAND",
+    title: "Verbose Grappler · Krelworld Edition",
+    intro: [
+      dir("Krelford University Sports Hall. The mats are laid out. In the corner, stretching extravagantly in a gi with a deep V-neck, is Russell Brand."),
+      say("RUSSELL BRAND", "Ahh, hello darling. The perennial question of the guard, eh? The closed guard is, if you will, a metaphor for the closed mind."),
+      say("FLENKY", "I'm a blue belt."),
+      say("RUSSELL BRAND", "A blue belt. Blue. The colour of the sky, of the sea, of the infinite, insatiable longing of the ego for transcendence. Shall we roll?"),
+      dir("TIP: He grapples. If he catches you, mash attack to escape. Make him tap."),
+    ],
+    outro: [
+      say("RUSSELL BRAND", "*tap tap tap*"),
+      say("RUSSELL BRAND", "Magnificent. A rear-naked choke, if you will, of the very concept of the self."),
+      say("FLENKY", "Today's the day!!!"),
+    ],
+    taunts: ["CLOSED GUARD, CLOSED MIND!", "TRANSCENDENCE!", "I'M GOING FOR THE KIMURA, DARLING!", "THE EGO, YEAH?", "INTERPRETIVE SWEEP!"],
+  },
+  troll: {
+    id: "troll",
+    name: "GRUMBO, THE BLUES TROLL",
+    title: "Cave Troll · Les Paul · Twelve-Bar Menace",
+    intro: [
+      dir("Blues night at the Krezz Arms back room. On the tiny stage: a bald cave troll, eight feet tall, cradling a sunburst Les Paul like a newborn. The band behind him are all slightly afraid."),
+      say("GRUMBO", "Woke up this mornin'… troll in my cave… KREZMAR took my last fizzy bongo… now I'm gonna misbehave…"),
+      say("KREZMAR", "That was one bongo. In 2023."),
+      say("GRUMBO", "THE BLUES DON'T FORGET, BOY."),
+      dir("TIP: Trolls only die to a headbutt. Wear him down, then get close and press F to HEADBUTT."),
+    ],
+    outro: [
+      dir("CRACK. Forehead meets forehead. The Les Paul hits the floor with a perfect, sustained E7."),
+      say("GRUMBO", "…that's… the blues…"),
+      say("KREZMAR", "Group wank? No. Group headbutt."),
+    ],
+    taunts: ["TWELVE-BAR BLUES!", "FEEL THE SUSTAIN!", "WOKE UP THIS MORNIN'!", "GUITAR SOLO!", "TROLL RIFF!"],
+  },
+  flatmate: {
+    id: "flatmate",
+    name: "CARPET KEV",
+    title: "Ex-Flatmate · Deposit Thief · Carpet Destroyer",
+    intro: [
+      dir("Your old flat. The carpet is ruined in ways that should not be physically possible. There's a burn shaped like a Krezbian. There's a stain shaped like the Isle of Wight."),
+      say("CARPET KEV", "Oh. Alright, Gronny. Didn't think you'd find me. About the rent—"),
+      say("GRONNY", "Three months."),
+      say("CARPET KEV", "About the deposit—"),
+      say("GRONNY", "The carpet, Kev."),
+      say("CARPET KEV", "…yeah, fair. Bye!"),
+      dir("TIP: Kev runs. He throws unpaid bills. Corner him."),
+    ],
+    outro: [say("CARPET KEV", "Alright! Alright! I'll Venmo you! I swear on the carpet!")],
+    taunts: ["I'LL PAY YOU NEXT WEEK!", "IT WAS LIKE THAT WHEN I MOVED IN!", "CHECK YOUR VENMO!", "THE CARPET WAS VINTAGE!", "BYE!"],
+  },
+  rival: {
+    id: "rival",
+    name: "BRICK KOLBANE",
+    title: "Rival Bodybuilder · Sociopath · Racist · Never Re-Racks His Weights",
+    intro: [
+      dir("Krunch Gym. Brick Kolbane is doing bicep curls in the squat rack. Nobody has ever stopped him. Several people have tried."),
+      say("BRICK KOLBANE", "Krezwonk. Still pulling three hundred? Cute. I pull four. Before breakfast. Breakfast is also four hundred."),
+      say("KREZWONK", "So what can we say…"),
+      say("BRICK KOLBANE", "You can say nothing, because you're a lurker. And I've got opinions about everyone in this gym that would get me banned from three continents."),
+      say("KREZWONK", "I foresee you being re-racked. Permanently."),
+    ],
+    outro: [
+      say("BRICK KOLBANE", "Impossible… I… never… re-rack…"),
+      dir("You re-rack him."),
+    ],
+    taunts: ["DO YOU EVEN LIFT?!", "SQUAT RACK IS FOR CURLS!", "ROID RAGE!", "I'M NOT RE-RACKING THAT!", "FOUR HUNDRED!"],
+  },
 };
 
 /** Phase banners for the final fight. */

@@ -60,6 +60,10 @@ export class Player {
   stillTime = 0;
   attackHeldTime = 0;
   dead = false;
+  grappledUntil = 0;
+  grappleEscape = 0;
+  /** Arena gimmick: in the troll fight, the special becomes a headbutt. */
+  headbuttMode = false;
   private walkT = 0;
   private lastBark = 0;
   label: Phaser.GameObjects.Text;
@@ -137,9 +141,26 @@ export class Player {
       this.stillTime += dt;
       this.movingTime = 0;
     }
-    let speed = this.def.speed ?? 200;
+    let speed = (this.def.speed ?? 200) * (G.s.flags.arc_crongus_done ? 1.15 : 1);
     if (now < this.bongoUntil) speed *= 0.95;
     const wobble = s.intoxication > 40 ? Math.sin(now / 300) * (s.intoxication / 100) * 0.5 : 0;
+    if (now < this.grappledUntil) {
+      body.setVelocity(0, 0);
+      this.spr.setAngle(Math.sin(now / 60) * 10);
+      if (c.dodge() || (c.attackHeld() && now > this.attackCd)) {
+        this.attackCd = now + 90;
+        this.grappleEscape++;
+        this.world.floatText(this.x, this.y - 40, `ESCAPE ${this.grappleEscape}/7`, "#ffffff", 12);
+        if (this.grappleEscape >= 7) {
+          this.grappledUntil = 0;
+          this.iframesUntil = now + 800;
+          this.spr.setAngle(0);
+          this.world.floatText(this.x, this.y - 50, "ESCAPED (shrimped out)", "#7fdbff", 14);
+        }
+      }
+      return;
+    }
+    this.spr.setAngle(0);
     if (now < this.dodgeUntil) {
       const ds = 520 * (this.id === "FLENKY" && s.upgrades.fl1 ? 1.4 : 1);
       body.setVelocity(Math.cos(this.dodgeAngle) * ds, Math.sin(this.dodgeAngle) * ds);
@@ -387,6 +408,19 @@ export class Player {
 
   private trySpecial(now: number, c: Controls) {
     const sig = this.def.signature!;
+    if (this.headbuttMode) {
+      if (now < this.specialCd) return;
+      this.specialCd = now + 900;
+      this.attackAnimUntil = now + 200;
+      synth.play("crit");
+      this.world.shake(150, 0.012);
+      this.world.floatText(this.x, this.y - 40, "HEADBUTT", "#ffd23f", 16);
+      for (const e of [...this.world.enemies]) {
+        if (e.dead) continue;
+        if (Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y) < e.radius + 40) this.world.damageEnemy(e, 40, { source: "headbutt", crit: true, knock: 200 });
+      }
+      return;
+    }
     if (now < this.specialCd) return;
     if (now < this.noSpecialUntil) {
       this.world.floatText(this.x, this.y - 30, "KREZZ BELONGS TO THE STATE", "#ff6666", 12);

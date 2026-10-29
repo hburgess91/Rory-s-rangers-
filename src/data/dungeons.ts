@@ -20,7 +20,7 @@ export interface RoomDef {
   waves?: [string, number][][];
   props?: PropDef[];
   /** Special scripted event handled by the dungeon scene. */
-  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records";
+  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem";
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
@@ -36,6 +36,12 @@ export interface DungeonDef {
   name: string;
   music: string;
   rooms: RoomDef[];
+  /** Countdown (seconds) across the whole dungeon. Running out triggers `onTimeout`. */
+  timerSec?: number;
+  /** Arena fights belong to a character arc; winning sets this flag and returns to Krelford. */
+  arenaFlag?: string;
+  /** Hub building to return to after an arena or special mission. */
+  returnAt?: string;
 }
 
 export const DUNGEONS: Record<string, DungeonDef> = {
@@ -360,6 +366,17 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [{ s: "NARRATOR", t: "The Talk page. Every argument ever had about Krelworld, at once. At the far end: the REACTION NETWORK TERMINAL. Clear the room, then restore the network (E).", dir: true }],
       },
       {
+        name: "The Supreme Leader's Office (Parade Ground)",
+        w: 1400,
+        h: 860,
+        theme: "wiki",
+        event: "anthem",
+        waves: [[["soldier", 6]], [["soldier", 4], ["ai_portrait", 2]]],
+        enterLines: [
+          { s: "NARRATOR", t: "Drongus's office. A desk the size of a Krelball pitch. Behind it, an oil painting of Drongus painting an oil painting of Drongus. In front of it: his army, in perfect rows, purple uniforms pressed.", dir: true },
+        ],
+      },
+      {
         name: "The Summit: Government Chamber",
         w: 1400,
         h: 900,
@@ -367,5 +384,80 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         boss: "drongus",
       },
     ],
+  },
+
+  airport: {
+    id: "airport",
+    chapter: 6,
+    name: "THE KRELTOWER INCIDENT — FLIGHT KR-069",
+    music: "airport",
+    timerSec: 300,
+    returnAt: "AIRPORT",
+    rooms: [
+      {
+        name: "Krelford International: Departures",
+        w: 1300,
+        h: 760,
+        theme: "industrial",
+        waves: [[["bandit", 6]], [["bandit_gunner", 3], ["bandit", 3]]],
+        enterLines: [
+          { s: "NARRATOR", t: "Krelford International. Gate 6 is empty. Flight KR-069 to Kreddle has pushed back early, with Krozno and his bandits on board, and it is not heading to Kreddle.", dir: true },
+          { s: "KREBLIS", t: "(over the network) This is a Krelmergency message. They've set a course for Kreltower. Again. You've got five minutes. FIVE.", cond: { notPlayer: "KREBLIS" } },
+          { s: "KREBLIS", t: "Krelmergency. They're heading for Kreltower. Again. Five minutes. Go.", cond: { player: "KREBLIS" } },
+          { s: "NARRATOR", t: "A TIMER has started. Reach the cockpit and stop Krozno before KR-069 reaches Kreltower.", dir: true },
+        ],
+      },
+      {
+        name: "Flight KR-069: Economy",
+        w: 1500,
+        h: 520,
+        theme: "industrial",
+        waves: [[["bandit", 5], ["trolley", 1]], [["bandit_gunner", 3], ["trolley", 2]]],
+        enterLines: [{ s: "NARRATOR", t: "You're in. Seatbelt sign on. Krozno's bandits are serving drinks out of a possessed trolley. Nobody ordered anything.", dir: true }],
+      },
+      {
+        name: "Flight KR-069: The Cockpit",
+        w: 1100,
+        h: 700,
+        theme: "industrial",
+        boss: "krozno",
+      },
+    ],
+  },
+  arena_brand: {
+    id: "arena_brand",
+    chapter: 0,
+    name: "KRELFORD UNIVERSITY SPORTS HALL — BJJ OPEN",
+    music: "boss_arena",
+    arenaFlag: "arc_fl_brand",
+    returnAt: "UNIVERSITY",
+    rooms: [{ name: "The Mats", w: 1100, h: 720, theme: "school", boss: "brand" }],
+  },
+  arena_troll: {
+    id: "arena_troll",
+    chapter: 0,
+    name: "THE KREZZ ARMS BACK ROOM — BLUES NIGHT",
+    music: "boss_arena",
+    arenaFlag: "arc_kz_troll",
+    returnAt: "PUB",
+    rooms: [{ name: "Blues Night", w: 1100, h: 720, theme: "mansion", boss: "troll" }],
+  },
+  arena_flatmate: {
+    id: "arena_flatmate",
+    chapter: 0,
+    name: "THE OLD FLAT",
+    music: "boss_arena",
+    arenaFlag: "arc_gr_flatmate",
+    returnAt: "OLD_FLAT",
+    rooms: [{ name: "The Living Room (carpet: destroyed)", w: 1100, h: 720, theme: "mansion", boss: "flatmate" }],
+  },
+  arena_rival: {
+    id: "arena_rival",
+    chapter: 0,
+    name: "KRUNCH GYM — THE SQUAT RACK OF DESTINY",
+    music: "boss_arena",
+    arenaFlag: "arc_kw_rival",
+    returnAt: "GYM",
+    rooms: [{ name: "The Free Weights Section", w: 1200, h: 760, theme: "industrial", boss: "rival" }],
   },
 };

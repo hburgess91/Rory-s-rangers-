@@ -5,6 +5,7 @@ import { FINAL_PROMPT, ENDINGS, EPILOGUES, CREDITS, SEQUEL_CARD, endingKeyFor } 
 import type { ReactionChoice } from "../../data/types";
 import { FONT, title, button } from "../ui/theme";
 import { synth } from "../audio/Synth";
+import { dir, say } from "../../content/dsl";
 import { switchTo } from "../Flow";
 import { portraitKey } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
@@ -83,13 +84,30 @@ export class EndingScene extends Phaser.Scene {
     const banner = title(this, 480, 40, e.title, 22, "#ffd23f").setDepth(600);
     await this.box.play(e.lines);
     banner.destroy();
+    if (s.flags.arc_scrombus_done) {
+      synth.music("anthem", true);
+      await this.box.play([
+        dir("Before anyone can leave, the doors of the Citadel burst open. Ben Scrombus walks in wearing a hard hat and a sash that says 'NEW LEADER (PENDING)'."),
+        say("SCROMBUS", "4.8 million Krezzcoin. One house. Fully renovated. Do you know what that buys in Krelworld?"),
+        say("SCROMBUS", "Everything. It buys everything. I bought the army. I bought the podium. I bought the wiki."),
+        say("DRONGUS", "You can't buy the wiki"),
+        say("SCROMBUS", "I've already edited your page, mate. You're 'Former Supreme Leader, Retired, Lore Consultant (Unpaid)'."),
+        dir("The Krelworld Guard turn, as one, and salute Scrombus. The anthem swells. It is somehow louder."),
+        say("SCROMBUS", "Basically we needed a new leader. So now we have one."),
+        dir("THE SCROMBUS ERA BEGINS. First decree: every house in Krelworld will be renovated whether it wants to be or not."),
+      ]);
+    }
     // epilogue card
     const card = this.add.container(480, 250).setDepth(600);
     card.add(this.add.rectangle(0, 0, 760, 300, 0x141628, 0.97).setStrokeStyle(3, CHARACTERS[s.player].color));
     const pk = portraitKey(this, s.player);
     if (pk) card.add(this.add.image(-300, -60, pk).setDisplaySize(110, 110));
     card.add(this.add.text(-220, -120, "EPILOGUE", { fontFamily: FONT, fontSize: "14px", color: "#ffd23f", fontStyle: "bold" }));
-    card.add(this.add.text(-220, -96, EPILOGUES[s.player], { fontFamily: FONT, fontSize: "15px", color: "#ffffff", wordWrap: { width: 560 }, lineSpacing: 4 }));
+    const extra = [
+      s.flags.kreltower_fell ? "The Kreltower fell (again). Rebuilding starts Monday." : s.flags.kreltower_saved ? "The Kreltower stands. Flight KR-069 lives in the Great Tap now." : "",
+      s.flags.arc_scrombus_done ? "Supreme Leader: Ben Scrombus." : "",
+    ].filter(Boolean).join(" ");
+    card.add(this.add.text(-220, -96, EPILOGUES[s.player] + (extra ? `\n\n${extra}` : ""), { fontFamily: FONT, fontSize: "15px", color: "#ffffff", wordWrap: { width: 560 }, lineSpacing: 4 }));
     await new Promise<void>((res) => {
       card.add(button(this, 0, 110, "CONTINUE", () => res(), { w: 200 }));
     });
@@ -101,6 +119,8 @@ export class EndingScene extends Phaser.Scene {
     return new Promise((res) => {
       this.children.removeAll(true);
       this.add.rectangle(0, 0, 960, 540, 0x000000).setOrigin(0);
+      synth.music("crazy", true);
+      this.add.text(20, 20, "♪ NOW PLAYING: 'Krazy For The Krelworld' — Drongus (unreacted)", { fontFamily: FONT, fontSize: "13px", color: "#ff6fa8" }).setDepth(10);
       const t = this.add.text(480, 560, CREDITS.join("\n"), { fontFamily: FONT, fontSize: "18px", color: "#ffffff", align: "center", lineSpacing: 8 }).setOrigin(0.5, 0);
       this.tweens.add({
         targets: t,

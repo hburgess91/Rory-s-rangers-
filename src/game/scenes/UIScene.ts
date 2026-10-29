@@ -26,6 +26,7 @@ export class UIScene extends Phaser.Scene {
   private wonkT!: Phaser.GameObjects.Text;
   private hpT!: Phaser.GameObjects.Text;
   private kzT!: Phaser.GameObjects.Text;
+  private timerT!: Phaser.GameObjects.Text;
   private toasts: Toast[] = [];
   private boss: { name: string; hp: number; max: number; shielded: boolean } | null = null;
   private rule: string | null = null;
@@ -58,6 +59,7 @@ export class UIScene extends Phaser.Scene {
     this.hpT = this.add.text(70, 22, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
     this.kzT = this.add.text(70, 37, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
     this.wonkT = this.add.text(68, 52, "", { fontFamily: FONT, fontSize: "10px", color: "#ff8c00", fontStyle: "bold" });
+    this.timerT = this.add.text(480, 96, "", { fontFamily: FONT, fontSize: "22px", color: "#ff4d4d", fontStyle: "bold", backgroundColor: "#000000aa", padding: { x: 8, y: 3 } }).setOrigin(0.5, 0).setDepth(50).setVisible(false);
     this.off = G.on((ev, d) => this.onEvent(ev, d));
     this.events.off("mode");
     this.events.on("mode", (m: "hub" | "dungeon") => {
@@ -98,6 +100,14 @@ export class UIScene extends Phaser.Scene {
         break;
       case "conflict":
         this.conflictUntil = this.time.now + d;
+        break;
+      case "timer":
+        if (d == null) this.timerT.setVisible(false);
+        else {
+          const sec = Math.max(0, Math.ceil(d));
+          this.timerT.setVisible(true).setText(`✈ KR-069 IMPACT IN ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
+          this.timerT.setColor(sec <= 30 && sec % 2 ? "#ffffff" : "#ff4d4d");
+        }
         break;
       case "rename":
         this.rename = d;

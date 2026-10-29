@@ -22,6 +22,8 @@ export function maxHp(s: GameState): number {
   if (s.flags.pq_done_pq_gronny) hp += 30;
   if (s.upgrades.gr1) hp += 30;
   if (s.ngPlus > 0) hp += 10;
+  if (s.flags.arc_gronny_done) hp += 20;
+  if (s.flags.arc_krezwonk_done) hp += 15;
   return Math.max(30, hp);
 }
 
@@ -37,6 +39,8 @@ export function damageMult(s: GameState): number {
   let m = 1 + (s.upgrades.dmg ?? 0) * 0.08;
   m *= activeMods(s).playerDamageMult;
   m *= reactionDamageMult(s);
+  if (s.flags.arc_flenky_done) m *= 1.1;
+  if (s.flags.arc_krezwonk_done) m *= 1.08;
   return m;
 }
 

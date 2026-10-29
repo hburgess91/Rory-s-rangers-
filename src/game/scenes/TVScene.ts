@@ -344,6 +344,8 @@ export class TVScene extends Phaser.Scene {
       if (!G.meta.tvWatched.includes(e.id)) G.meta.tvWatched.push(e.id);
       G.saveMeta();
     }
+    const pf = synth.playingFile();
+    if (pf === "anthem" || pf === "crazy") synth.stopMusic();
     this.subs.setText("");
     this.card.setText("");
     this.mode = "episodes";
