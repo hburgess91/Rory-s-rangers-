@@ -1,8 +1,259 @@
 {
- "chars": {},
+ "chars": {
+  "spr_FLENKY": {
+   "file": "chars/FLENKY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KREZMAR": {
+   "file": "chars/KREZMAR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  }
+ },
  "images": {
+  "bld_ABANDONED": {
+   "file": "buildings/ABANDONED.png"
+  },
+  "bld_ARCHIVE": {
+   "file": "buildings/ARCHIVE.png"
+  },
+  "bld_BANK": {
+   "file": "buildings/BANK.png"
+  },
+  "bld_BAN_TRIBUNAL": {
+   "file": "buildings/BAN_TRIBUNAL.png"
+  },
+  "bld_BONKY_TEMPLE": {
+   "file": "buildings/BONKY_TEMPLE.png"
+  },
+  "bld_BOOTH": {
+   "file": "buildings/BOOTH.png"
+  },
+  "bld_CITADEL": {
+   "file": "buildings/CITADEL.png"
+  },
+  "bld_FIXER_UPPER": {
+   "file": "buildings/FIXER_UPPER.png"
+  },
+  "bld_GYM": {
+   "file": "buildings/GYM.png"
+  },
+  "bld_HOME": {
+   "file": "buildings/HOME.png"
+  },
+  "bld_MINISTRY": {
+   "file": "buildings/MINISTRY.png"
+  },
+  "bld_OLD_FLAT": {
+   "file": "buildings/OLD_FLAT.png"
+  },
+  "bld_POLICE": {
+   "file": "buildings/POLICE.png"
+  },
+  "bld_PUB": {
+   "file": "buildings/PUB.png"
+  },
   "bld_TOWN_HALL": {
    "file": "buildings/TOWN_HALL.png"
+  },
+  "bld_UNIVERSITY": {
+   "file": "buildings/UNIVERSITY.png"
+  },
+  "bld_WILDERN": {
+   "file": "buildings/WILDERN.png"
+  },
+  "hd_bench": {
+   "file": "props/p_bench.png"
+  },
+  "hd_bin": {
+   "file": "props/p_bin.png"
+  },
+  "p_bin": {
+   "file": "props/p_bin.png",
+   "hd": 0.5
+  },
+  "hd_gate": {
+   "file": "props/p_gate.png"
+  },
+  "hd_kreltower": {
+   "file": "props/p_kreltower.png"
+  },
+  "p_kreltower": {
+   "file": "props/p_kreltower.png",
+   "hd": 0.6452
+  },
+  "hd_lamp": {
+   "file": "props/p_lamp.png"
+  },
+  "hd_pigeon": {
+   "file": "props/p_pigeon.png"
+  },
+  "p_pigeon": {
+   "file": "props/p_pigeon.png",
+   "hd": 0.6667
+  },
+  "hd_puddle": {
+   "file": "props/p_puddle.png"
+  },
+  "p_puddle": {
+   "file": "props/p_puddle.png",
+   "hd": 0.5357
+  },
+  "hd_rubble": {
+   "file": "props/p_rubble.png"
+  },
+  "p_rubble": {
+   "file": "props/p_rubble.png",
+   "hd": 1.0811
+  },
+  "hd_tap": {
+   "file": "props/p_tap.png"
+  },
+  "p_tap": {
+   "file": "props/p_tap.png",
+   "hd": 0.5517
+  },
+  "hd_tree": {
+   "file": "props/p_tree.png"
+  },
+  "p_tree": {
+   "file": "props/p_tree.png",
+   "hd": 0.8136
+  },
+  "hd_tree2": {
+   "file": "props/p_tree2.png"
+  },
+  "hd_tv": {
+   "file": "props/p_tv.png"
+  },
+  "p_tv": {
+   "file": "props/p_tv.png",
+   "hd": 0.2821
+  },
+  "hd_vending": {
+   "file": "props/p_vending.png"
+  },
+  "p_vending": {
+   "file": "props/p_vending.png",
+   "hd": 0.4762
+  },
+  "tile_road": {
+   "file": "tiles/tile_road.png"
+  },
+  "tile_grass": {
+   "file": "tiles/tile_grass.png"
+  },
+  "tile_cobble": {
+   "file": "tiles/tile_cobble.png"
+  },
+  "tile_sea": {
+   "file": "tiles/tile_sea.png"
+  },
+  "tile_pier": {
+   "file": "tiles/tile_pier.png"
   }
  }
 }

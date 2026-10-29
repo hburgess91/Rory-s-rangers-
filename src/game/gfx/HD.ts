@@ -7,8 +7,9 @@ import Phaser from "phaser";
  * under the same texture keys as the old procedural art, so every scene picks it up.
  *
  * The new sprites are bigger than the old ones (e.g. 64x64 characters vs 16x24). Each texture
- * can carry `customData.hd`, a scale factor applied transparently to setScale/scaleX/scaleY,
- * so existing code like `setScale(2)` keeps working and draws the new art at native size.
+ * can carry `customData.hd`, a factor applied when scale is SET (setScale / scaleX = ...), so
+ * existing code like `setScale(2)` keeps working and draws the new art at native size. Reading
+ * scaleX returns the real scale. Tweens on scale should use scaleOf()/hdScale() below.
  */
 
 export interface CharMeta {
@@ -39,8 +40,9 @@ export function installHdScale() {
       const set = d.set;
       Object.defineProperty(C.prototype, prop, {
         configurable: true,
+        // reads return the real scale (the renderer and physics read it); writes apply the factor
         get(this: { texture?: Phaser.Textures.Texture }) {
-          return get.call(this) / hdOf(this);
+          return get.call(this);
         },
         set(this: { texture?: Phaser.Textures.Texture }, v: number) {
           set.call(this, v * hdOf(this));
@@ -125,4 +127,9 @@ export function feetBody(spr: Phaser.Physics.Arcade.Sprite, w: number, h: number
   body.setSize(w / sx, h / sy, false);
   body.setOffset(spr.displayOriginX - w / sx / 2, spr.displayOriginY + (feet - h) / sy);
   return body;
+}
+
+/** The factor a texture's scale writes are multiplied by (1 for old art). */
+export function hdFactor(o: { texture?: Phaser.Textures.Texture }) {
+  return hdOf(o);
 }

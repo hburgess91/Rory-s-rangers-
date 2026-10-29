@@ -320,6 +320,7 @@ export class HubScene extends Phaser.Scene {
           this.colliders.add(this.add.rectangle(x, y + 6, 10, 8, 0, 0));
         }
       }
+    this.scatterDecor();
     if (bench)
       for (const [x, y] of [
         [1110, 990],
@@ -354,6 +355,87 @@ export class HubScene extends Phaser.Scene {
     const cam = this.cameras.main as Phaser.Cameras.Scene2D.Camera & { postFX?: Phaser.GameObjects.Components.FX };
     if (this.game.renderer.type === Phaser.WEBGL && cam.postFX) {
       cam.postFX.addVignette(0.5, 0.5, 0.9, 0.35);
+    }
+  }
+
+  /** Generated street props: framing building fronts, along the roads, and across the lawns. */
+  private scatterDecor() {
+    const has = (k: string) => this.textures.exists(k);
+    const rnd = new Phaser.Math.RandomDataGenerator(["krel-decor"]);
+    const ROADS = [
+      [80, 780, WORLD_W, 870],
+      [1235, 200, 1325, 1700],
+      [300, 1500, 2300, 1570],
+      [500, 560, 2200, 620],
+      [200, 1000, 270, 1700],
+      [2400, 860, 2560, 1150],
+      [1060, 650, 1500, 990],
+    ];
+    const onRoad = (x: number, y: number, m = 20) => ROADS.some(([x0, y0, x1, y1]) => x > x0 - m && x < x1 + m && y > y0 - m && y < y1 + m);
+    const nearDoor = (x: number, y: number) => BUILDINGS.some((b) => b.door && Math.abs(x - b.door.x) < 60 && y > b.door.y - 20 && y < b.door.y + 90);
+    const nearNpc = (x: number, y: number) => Object.values(NPC_SPOTS).some((p) => Math.hypot(p.x - x, p.y - y) < 50);
+    const taken: { x: number; y: number; r: number }[] = [];
+    const free = (x: number, y: number, r: number) => !taken.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + r);
+    const place = (key: string, x: number, y: number, solid = false, r = 30) => {
+      if (!has(key)) return false;
+      const img = this.add.image(x, y, key).setOrigin(0.5, 1).setDepth(y);
+      taken.push({ x, y, r });
+      if (solid) this.colliders.add(this.add.rectangle(x, y - 8, img.width * 0.8, 14, 0, 0));
+      return true;
+    };
+    // frame each building's front
+    const front = ["d_pot", "d_flowerbed", "d_neonsign", "d_crates", "d_pot", "d_fence", "d_vendingbike", "d_hedge"];
+    BUILDINGS.forEach((b, i) => {
+      if (!b.door) return;
+      const yb = b.y + b.h / 2 + 18;
+      for (const side of [-1, 1]) {
+        const x = b.x + side * (b.w / 2 - 26);
+        const k = front[(i * 2 + (side > 0 ? 1 : 0)) % front.length];
+        if (Math.abs(x - b.door.x) > 50 && !onRoad(x, yb, 0) && free(x, yb, 24)) place(`hd_${k.slice(2)}`, x, yb, k !== "d_pot" && k !== "d_flowerbed", 24);
+      }
+    });
+    // parked cars and scooters along the main road kerbs
+    for (let x = 260; x < WORLD_W - 200; x += 330) {
+      const y = rnd.frac() < 0.5 ? 806 : 872;
+      if (Math.abs(x - 1280) < 260) continue;
+      place(rnd.frac() < 0.6 ? "hd_car" : "hd_scooter", x + rnd.between(-40, 40), y, true, 50);
+    }
+    for (let i = 0; i < 6; i++) {
+      const [x0, y0, x1, y1] = ROADS[i % 3];
+      place("hd_puddle", rnd.between(x0 + 40, Math.min(x1, WORLD_W) - 40), rnd.between(y0 + 10, y1 - 10), false, 10);
+    }
+    // plaza centrepieces
+    place("hd_statue", 1130, 760, true, 40);
+    place("hd_stall", 1120, 960, true, 50);
+    place("hd_stall", 1460, 960, true, 50);
+    // lawns
+    const lawn: [string, number, boolean][] = [
+      ["hd_flowerbed", 12, false],
+      ["hd_hedge", 8, true],
+      ["hd_billboard", 5, true],
+      ["hd_foodtruck", 2, true],
+      ["hd_busstop", 3, true],
+      ["hd_phonebooth", 3, true],
+      ["hd_picnic", 4, true],
+      ["hd_fountain", 2, true],
+      ["hd_pot", 10, false],
+      ["hd_newsstand", 2, true],
+      ["hd_bin", 6, false],
+      ["hd_pigeon", 8, false],
+      ["hd_fence", 6, true],
+      ["hd_vendingbike", 4, false],
+    ];
+    for (const [k, n, solid] of lawn) {
+      if (!has(k)) continue;
+      let left = n;
+      for (let tries = 0; left > 0 && tries < 400; tries++) {
+        const x = rnd.between(80, WORLD_W - 80);
+        const y = rnd.between(140, WORLD_H - 140);
+        if (this.nearBuilding(x, y, 50) || onRoad(x, y) || nearDoor(x, y) || nearNpc(x, y) || !free(x, y, 46)) continue;
+        if (GATES.some((g) => Math.hypot(g.x - x, g.y - y) < 90)) continue;
+        place(k, x, y, solid, 40);
+        left--;
+      }
     }
   }
 
