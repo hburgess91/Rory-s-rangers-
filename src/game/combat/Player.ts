@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { charMeta, facingFrom, feetBody } from "../gfx/HD";
 import { CHARACTERS, type CharacterDef } from "../../data/characters";
 import type { PlayableId } from "../../data/types";
 import { G } from "../G";
@@ -75,7 +76,8 @@ export class Player {
     const sc = world.sc;
     this.spr = sc.physics.add.sprite(x, y, `spr_${this.id}`, 0).setScale(2).setDepth(500);
     const body = this.spr.body as Phaser.Physics.Arcade.Body;
-    body.setSize(10, 10).setOffset(3, 13);
+    if (charMeta(sc, this.spr.texture.key)) feetBody(this.spr, 20, 20, 24);
+    else body.setSize(10, 10).setOffset(3, 13);
     body.setCollideWorldBounds(true);
     this.label = sc.add.text(x, y - 34, "", { fontFamily: "monospace", fontSize: "11px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(600).setVisible(false);
     if (G.s.hp <= 0) G.s.hp = maxHp(G.s);
@@ -180,8 +182,24 @@ export class Player {
       }
     }
     // animation
-    this.spr.setFlipX(Math.cos(this.aim) < 0);
-    if (now < this.attackAnimUntil) this.spr.setFrame(3);
+    const meta = charMeta(this.world.sc, this.spr.texture.key);
+    if (meta) {
+      // PixelLab sheet: face the aim direction, 4-way walk cycle, directional jab
+      const f = facingFrom(Math.cos(this.aim), Math.sin(this.aim));
+      this.spr.setData("facing", f);
+      if (now < this.attackAnimUntil) {
+        const side = f === "east" || f === "west";
+        const cyc = (side ? meta.attack?.east : meta.attack?.south) ?? meta.attack?.east ?? [3];
+        const t = 1 - (this.attackAnimUntil - now) / 200;
+        this.spr.setFlipX(f === "west").setFrame(cyc[Math.max(0, Math.min(cyc.length - 1, Math.floor(t * cyc.length)))]);
+      } else if (moving) {
+        const cyc = meta.walk[f] ?? meta.walk.south;
+        this.spr.setFlipX(false).setFrame(cyc[Math.floor(now / 90) % cyc.length]);
+      } else this.spr.setFlipX(false).setFrame(meta.idle[f] ?? 0);
+    } else this.spr.setFlipX(Math.cos(this.aim) < 0);
+    if (meta) {
+      // handled above
+    } else if (now < this.attackAnimUntil) this.spr.setFrame(3);
     else if (moving) {
       this.walkT += dt;
       if (this.walkT > 120) {

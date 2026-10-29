@@ -19,6 +19,7 @@ import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
 import { arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
+import { animateWalker, feetBody } from "../gfx/HD";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
@@ -131,6 +132,8 @@ export class HubScene extends Phaser.Scene {
   private nextChatter = 0;
   private idleMs = 0;
   private anchorsSpr: Record<string, Phaser.GameObjects.GameObject[]> = {};
+  /** PixelLab art is installed (public/art). */
+  private hd = false;
 
   constructor() {
     super("Hub");
@@ -147,11 +150,13 @@ export class HubScene extends Phaser.Scene {
     this.anchorsSpr = {};
     this.cameras.main.fadeIn(350);
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
+    this.hd = this.textures.exists("bld_TOWN_HALL");
+    if (this.hd) this.fitBuildingsToArt();
     this.drawWorld();
     this.controls = new Controls(this);
     const start = this.spawnPoint(data?.at);
     this.av = this.physics.add.sprite(start.x, start.y, `spr_${s.player}`, 0).setScale(2).setDepth(start.y);
-    (this.av.body as Phaser.Physics.Arcade.Body).setSize(10, 8).setOffset(3, 15).setCollideWorldBounds(true);
+    feetBody(this.av, 20, 16, this.hd ? 26 : 22).setCollideWorldBounds(true);
     this.physics.add.collider(this.av, this.colliders);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.av, true, 0.12, 0.12);
@@ -221,26 +226,39 @@ export class HubScene extends Phaser.Scene {
     // plaza
     this.add.tileSprite(1060, 650, 440, 340, "tile_cobble").setOrigin(0).setDepth(0);
     // sea (docks)
-    this.add.rectangle(0, 1700, 560, 92, 0x1e4b7a).setOrigin(0).setDepth(0);
-    this.add.rectangle(200, 1600, 80, 140, 0x6b4527).setOrigin(0).setDepth(1);
+    if (this.hd && this.textures.exists("tile_sea")) {
+      this.add.tileSprite(0, 1700, 560, 92, "tile_sea").setOrigin(0).setDepth(0);
+      this.add.tileSprite(200, 1600, 80, 140, "tile_pier").setOrigin(0).setDepth(1);
+    } else {
+      this.add.rectangle(0, 1700, 560, 92, 0x1e4b7a).setOrigin(0).setDepth(0);
+      this.add.rectangle(200, 1600, 80, 140, 0x6b4527).setOrigin(0).setDepth(1);
+    }
     this.colliders = this.physics.add.staticGroup();
     for (const b of BUILDINGS) this.drawBuilding(b);
     // The Great Tap
-    this.add.image(1280, 800, "p_tap").setScale(3).setDepth(800);
+    if (this.hd && this.textures.exists("hd_tap")) {
+      this.add.image(1280, 790, "hd_tap").setDepth(850);
+      this.neonGlow(1280, 790, 110, 0xff6bb0);
+    } else this.add.image(1280, 800, "p_tap").setScale(3).setDepth(800);
     this.add.text(1280, 690, "THE GREAT PUSSY JUICE TAP", { fontFamily: FONT, fontSize: "11px", color: "#ffb6c1", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(801);
     this.colliders.add(this.add.rectangle(1280, 840, 120, 60, 0, 0));
     // The Kreltower
     if (G.s.flags.kreltower_fell) {
-      this.add.image(1650, 1100, "p_rubble").setOrigin(0.5, 1).setScale(2).setDepth(1100);
+      if (this.hd && this.textures.exists("hd_rubble")) this.add.image(1650, 1100, "hd_rubble").setOrigin(0.5, 1).setDepth(1100);
+      else this.add.image(1650, 1100, "p_rubble").setOrigin(0.5, 1).setScale(2).setDepth(1100);
       this.add.text(1650, 1110, "WHERE THE KRELTOWER WAS (AGAIN)", { fontFamily: FONT, fontSize: "11px", color: "#ff9a9a", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(1101);
     } else {
-      this.add.image(1650, 1100, "p_kreltower").setOrigin(0.5, 1).setScale(1.2).setDepth(1100);
+      if (this.hd && this.textures.exists("hd_kreltower")) {
+        this.add.image(1650, 1100, "hd_kreltower").setOrigin(0.5, 1).setDepth(1100);
+        this.neonGlow(1650, 870, 70, 0x5ad1ff);
+      } else this.add.image(1650, 1100, "p_kreltower").setOrigin(0.5, 1).setScale(1.2).setDepth(1100);
       this.add.text(1650, 1110, "THE KRELTOWER (rebuilt)", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(1101);
     }
     this.colliders.add(this.add.rectangle(1650, 1085, 70, 30, 0, 0));
     this.interactables.push({ x: 1650, y: 1135, r: 55, label: () => (G.s.flags.kreltower_fell ? "Look at the rubble" : "Read the Kreltower plaque"), use: () => this.kreltowerPlaque() });
     // public TV
-    this.add.image(1450, 740, "p_tv").setScale(3).setDepth(740);
+    if (this.hd && this.textures.exists("hd_tv")) this.add.image(1450, 730, "hd_tv").setDepth(770);
+    else this.add.image(1450, 740, "p_tv").setScale(3).setDepth(740);
     this.add.text(1450, 700, "KrelTV", { fontFamily: FONT, fontSize: "10px", color: "#88aaff" }).setOrigin(0.5).setDepth(741);
     // vending machines
     for (const [x, y] of [
@@ -249,14 +267,16 @@ export class HubScene extends Phaser.Scene {
       [700, 1080],
       [1500, 1450],
     ]) {
-      this.add.image(x, y, "p_vending").setScale(2).setDepth(y);
+      if (this.hd && this.textures.exists("hd_vending")) this.add.image(x, y, "hd_vending").setDepth(y + 20);
+      else this.add.image(x, y, "p_vending").setScale(2).setDepth(y);
       this.colliders.add(this.add.rectangle(x, y + 10, 36, 30, 0, 0));
       this.interactables.push({ x, y: y + 44, r: 46, label: () => this.vendingLabel(), use: () => this.vend(x, y) });
     }
     // gates
     for (const gt of GATES) {
       this.add.text(gt.x, gt.y - 40, gt.name, { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", backgroundColor: "#000000aa", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(gt.y);
-      this.add.rectangle(gt.x, gt.y, 60, 60, 0xffd23f, 0.15).setStrokeStyle(2, 0xffd23f).setDepth(1);
+      if (this.hd && this.textures.exists("hd_gate")) this.add.image(gt.x, gt.y - 20, "hd_gate").setDepth(gt.y + 30);
+      else this.add.rectangle(gt.x, gt.y, 60, 60, 0xffd23f, 0.15).setStrokeStyle(2, 0xffd23f).setDepth(1);
     }
     // trees
     const rnd = new Phaser.Math.RandomDataGenerator(["krelford"]);
@@ -264,20 +284,116 @@ export class HubScene extends Phaser.Scene {
       const x = rnd.between(40, WORLD_W - 40);
       const y = rnd.between(40, WORLD_H - 120);
       if (this.nearBuilding(x, y, 70) || (Math.abs(x - 1280) < 90) || (y > 760 && y < 900) || (y > 1480 && y < 1590)) continue;
-      const t = this.add.circle(x, y, 18, 0x2f5a22).setDepth(y);
-      this.add.circle(x - 5, y - 6, 8, 0x3d7a2c).setDepth(y + 1);
+      if (this.hd && this.textures.exists("hd_tree")) {
+        this.add.image(x, y - 24, i % 3 === 0 && this.textures.exists("hd_tree2") ? "hd_tree2" : "hd_tree").setDepth(y + 16);
+        this.add.ellipse(x, y + 14, 40, 12, 0x1a1033, 0.3).setDepth(1);
+      } else {
+        this.add.circle(x, y, 18, 0x2f5a22).setDepth(y);
+        this.add.circle(x - 5, y - 6, 8, 0x3d7a2c).setDepth(y + 1);
+      }
       this.colliders.add(this.add.rectangle(x, y + 8, 16, 12, 0, 0));
-      void t;
     }
+    if (this.hd) this.dressStreets();
     // world edge text
     this.add.text(1280, WORLD_H - 30, "KRELFORD · Krelworld · its own fucking universe/dimension", { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5).setAlpha(0.4);
+  }
+
+  /** A soft additive neon halo that breathes. */
+  private neonGlow(x: number, y: number, r: number, color = 0xff2e88) {
+    const g = this.add.circle(x, y, r, color, 0.1).setBlendMode(Phaser.BlendModes.ADD).setDepth(4100);
+    this.tweens.add({ targets: g, alpha: { from: 0.05, to: 0.16 }, scale: { from: 0.92, to: 1.06 }, duration: 1600 + Math.random() * 1400, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    return g;
+  }
+
+  /** Street furniture and atmosphere for the PixelLab town. */
+  private dressStreets() {
+    const lamp = this.textures.exists("hd_lamp");
+    const bench = this.textures.exists("hd_bench");
+    // lamps along the main roads
+    if (lamp)
+      for (let x = 160; x < WORLD_W - 100; x += 240) {
+        for (const y of [770, 880]) {
+          if (Math.abs(x - 1280) < 120) continue;
+          this.add.image(x, y - 30, "hd_lamp").setDepth(y + 10);
+          const halo = this.add.circle(x, y - 62, 26, 0xffe98a, 0.18).setBlendMode(Phaser.BlendModes.ADD).setDepth(4100);
+          this.tweens.add({ targets: halo, alpha: 0.28, duration: 900 + Math.random() * 600, yoyo: true, repeat: -1 });
+          this.colliders.add(this.add.rectangle(x, y + 6, 10, 8, 0, 0));
+        }
+      }
+    if (bench)
+      for (const [x, y] of [
+        [1110, 990],
+        [1450, 990],
+        [1700, 640],
+        [880, 1000],
+      ])
+        this.add.image(x, y, "hd_bench").setDepth(y + 10);
+    // drifting sun-motes
+    for (let i = 0; i < 70; i++) {
+      const m = this.add
+        .circle(Math.random() * WORLD_W, Math.random() * WORLD_H, 1.5 + Math.random() * 1.5, [0xffe98a, 0xff6bb0, 0x6fe8d6][i % 3], 0.6)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(4200);
+      this.tweens.add({ targets: m, x: m.x + 60 + Math.random() * 80, y: m.y - 40 - Math.random() * 60, alpha: 0, duration: 6000 + Math.random() * 6000, repeat: -1, delay: Math.random() * 6000 });
+    }
+    // screen-space grade: warm sun from the top-left, violet shade bottom-right
+    const sun = this.add.graphics().setScrollFactor(0).setDepth(4300).setBlendMode(Phaser.BlendModes.ADD);
+    sun.fillGradientStyle(0xffb347, 0x332211, 0x221133, 0x000000, 0.22, 0.06, 0.05, 0);
+    sun.fillRect(0, 0, 960, 540);
+    const shade = this.add.graphics().setScrollFactor(0).setDepth(4301).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    shade.fillGradientStyle(0xffffff, 0xf2e6ff, 0xe6dcff, 0xb8a3e3, 1);
+    shade.fillRect(0, 0, 960, 540);
+    // light shafts
+    for (let i = 0; i < 4; i++) {
+      const shaft = this.add.graphics().setScrollFactor(0).setDepth(4302).setBlendMode(Phaser.BlendModes.ADD);
+      shaft.fillStyle(0xfff4cc, 0.045);
+      const x0 = 80 + i * 170;
+      shaft.fillPoints([new Phaser.Math.Vector2(x0, -10), new Phaser.Math.Vector2(x0 + 70, -10), new Phaser.Math.Vector2(x0 + 340, 560), new Phaser.Math.Vector2(x0 + 230, 560)], true);
+      this.tweens.add({ targets: shaft, alpha: { from: 0.6, to: 1 }, duration: 3000 + i * 700, yoyo: true, repeat: -1 });
+    }
+    const cam = this.cameras.main as Phaser.Cameras.Scene2D.Camera & { postFX?: Phaser.GameObjects.Components.FX };
+    if (this.game.renderer.type === Phaser.WEBGL && cam.postFX) {
+      cam.postFX.addVignette(0.5, 0.5, 0.9, 0.35);
+    }
   }
 
   private nearBuilding(x: number, y: number, pad: number) {
     return BUILDINGS.some((b) => x > b.x - b.w / 2 - pad && x < b.x + b.w / 2 + pad && y > b.y - b.h / 2 - pad && y < b.y + b.h / 2 + pad);
   }
 
+  /** Building footprints follow the generated art; doors sit at the bottom centre. */
+  private fitBuildingsToArt() {
+    for (const b of BUILDINGS) {
+      const key = `bld_${b.id}`;
+      if (!this.textures.exists(key)) continue;
+      const src = this.textures.get(key).getSourceImage();
+      const bottom = b.y + b.h / 2;
+      b.w = src.width;
+      b.h = src.height;
+      b.y = bottom - b.h / 2;
+      if (b.door) b.door = { x: b.x, y: bottom };
+    }
+  }
+
   private drawBuilding(b: Building) {
+    const key = `bld_${b.id}`;
+    if (this.hd && this.textures.exists(key)) {
+      const img = this.add.image(b.x, b.y, key).setDepth(b.y + b.h / 2 - 1);
+      // soft drop shadow on the ground
+      this.add.ellipse(b.x + 10, b.y + b.h / 2 - 4, b.w * 0.95, 26, 0x1a1033, 0.35).setDepth(1);
+      let name = b.name;
+      if (b.id === "TOWN_HALL" && G.s.chapter === 1 && !G.s.flags.ch1_clear) name = "KRELFORD ____ HALL";
+      if (b.id === "HOME") name = `${CHARACTERS[G.s.player].name}'S HOUSE`;
+      this.add
+        .text(b.x, b.y + b.h / 2 + 6, name, { fontFamily: FONT, fontSize: "11px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 }, align: "center", wordWrap: { width: Math.max(160, b.w) } })
+        .setOrigin(0.5, 0)
+        .setDepth(b.y + b.h / 2 + 1);
+      // the walkable line is the front wall: everything above it is roof and facade
+      this.colliders.add(this.add.rectangle(b.x, b.y + b.h * 0.12, b.w * 0.86, b.h * 0.7, 0, 0));
+      this.neonGlow(b.x, b.y - b.h * 0.25, Math.max(60, b.w * 0.45));
+      void img;
+      return;
+    }
     const g = this.add.graphics().setDepth(b.y + b.h / 2 - 1);
     const x0 = b.x - b.w / 2;
     const y0 = b.y - b.h / 2;
@@ -375,9 +491,8 @@ export class HubScene extends Phaser.Scene {
         const sp = (n.folk ? 50 : 35) * (dt / 1000);
         n.spr.x += (dx / d) * sp;
         n.spr.y += (dy / d) * sp;
-        n.spr.setFlipX(dx < 0);
-        n.spr.setFrame(Math.floor(now / 160) % 2 ? 1 : 2);
-      } else n.spr.setFrame(0);
+        animateWalker(n.spr, dx, dy, true, now);
+      } else animateWalker(n.spr, 0, 0, false, now);
       n.spr.setDepth(n.spr.y);
       n.plate.setPosition(n.spr.x, n.spr.y - 36);
       if (n.bubble?.active) n.bubble.setPosition(n.spr.x, n.spr.y - 52);
@@ -988,16 +1103,11 @@ export class HubScene extends Phaser.Scene {
         body.velocity.x += (tx - body.velocity.x) * Math.min(1, dt / 260);
         body.velocity.y += (ty - body.velocity.y) * Math.min(1, dt / 260);
       } else body.setVelocity(tx, ty);
-      if (Math.hypot(mv.x, mv.y) > 0.1) {
+      const moving = Math.hypot(mv.x, mv.y) > 0.1;
+      animateWalker(this.av, mv.x, mv.y, moving, time);
+      if (moving) {
         this.idleMs = 0;
-        this.walkT += dt;
-        if (this.walkT > 120) {
-          this.walkT = 0;
-          this.av.setFrame(this.av.frame.name === "1" ? 2 : 1);
-        }
-        if (Math.abs(mv.x) > 0.1) this.av.setFlipX(mv.x < 0);
       } else {
-        this.av.setFrame(0);
         this.idleMs += dt;
         if (this.idleMs > 90000) {
           this.idleMs = 0;
