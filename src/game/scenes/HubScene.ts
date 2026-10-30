@@ -283,6 +283,13 @@ export class HubScene extends Phaser.Scene {
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: "Report to the Town Hall." });
+    // announce side quests that have just opened up
+    for (const c of currentArcSteps(s)) {
+      const k = `arc_announced_${c.arc.id}`;
+      if (s.flags[k] || s.flags[`${c.arc.id}_done`]) continue;
+      s.flags[k] = true;
+      G.emit("toast", { title: c.arc.player === "ALL" ? `NEW SIDE QUEST: ${c.arc.title}` : `YOUR STORY: ${c.arc.title}`, text: c.step.text });
+    }
     // one visit, not three: roll straight on into this chapter's Town Hall meeting(s)
     if (this.chainMeetings) {
       this.chainMeetings = false;

@@ -82,6 +82,8 @@ export const BOSS_TEXT: Record<string, BossText> = {
       say("POLSON", "It's my house."),
       say("POLSON", "Right. Celebration. Papa Gino's. Just you wait. Just you wait till you have your first slice. I need to see your reaction."),
       say("POLSON", "And then the gym. Get trim. Travelling. It's a huge end to an era!!!"),
+      say("POLSON", "Come round mine when you're back in town. Take me to the gym. Intense workout. I mean it this time."),
+      dir("NEW SIDE QUEST UNLOCKED: Polson Gets Fit. Pick him up from Polson Road."),
     ],
     taunts: ["I MIGHT NEED THAT!", "DON'T TOUCH MY TRINKETS!", "THAT'S NOT RUBBISH, THAT'S A COLLECTION!", "NOTHING GOES!", "IT'S SENTIMENTAL!", "MOULD IS A FLAVOUR!", "IT'S NOT A HEADACHE!", "NO PARACETAMOL!", "I'M ABSORBING YOUR ENERGIES!", "THAT'S EDEN'S!", "SHE MIGHT NEED THAT!", "PUT IT BACK, IT'S EDEN'S!", "HE'S NOT ALLOWED TO MOVE THAT!"],
   },

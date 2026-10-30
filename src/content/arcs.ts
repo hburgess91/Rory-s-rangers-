@@ -27,6 +27,8 @@ export interface Arc {
   player: PlayableId | "ALL";
   /** Earliest chapter it appears in (default 1). */
   minChapter?: number;
+  /** Also needs this flag in its first chapter (from the next chapter on it's always open). */
+  requires?: string;
   title: string;
   blurb: string;
   steps: ArcStep[];
@@ -615,7 +617,8 @@ export const ARCS: Arc[] = [
   {
     id: "arc_polson_fit",
     player: "ALL",
-    minChapter: 3,
+    minChapter: 2,
+    requires: "ch2_clear",
     title: "Polson Gets Fit",
     blurb: "Polson has asked you to take him to the gym for 'an intense workout'.",
     reward: { coins: 200, desc: "Polson's gym membership, which you are paying for." },
@@ -839,6 +842,239 @@ export const ARCS: Arc[] = [
             dir("Mikey leaves the group's cover photo as it is: a skateboarder in kneepads. A monument."),
             say("MIKEY", "Right. Viral video next. Quarter million views. Then I'll have to stay out of Southampton for a while."),
           ],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_wake_polson",
+    player: "ALL",
+    minChapter: 2,
+    title: "Operation Wake Up Polson",
+    blurb: "Polson has been asleep since Tuesday. Mikey has named it an operation. Wake him, then prove you know him.",
+    reward: { coins: 180, desc: "Polson is awake. For now. +180 Krezzcoin." },
+    steps: [
+      {
+        id: "wake",
+        text: "Operation Wake Up Polson. Go round to Polson Road.",
+        at: "POLSON_ROAD",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("Polson's front door. Mikey is already here, in a hi-vis tabard that says OPERATION WAKE UP POLSON."),
+            say("MIKEY", "He's been asleep since Tuesday. He silently went upstairs and fell asleep. Classic."),
+            dir("You knock. Nothing. You knock again. From inside, very faintly: 'mork'."),
+            say("MIKEY", "Operation wake up Polson. Phase one: noise."),
+            dir("Mikey plays 'Do The Crocodile' through a Bluetooth speaker pressed against the letterbox."),
+            say("POLSON", "(from upstairs) WHAT. WHAT IS IT. IS IT THE PLAYSTATION. HAVE THEY NICKED MY PLAYSTATION."),
+            dir("Polson opens the door. He then closes it. He then slams it ten times to check it's locked. You are both outside."),
+            say("MIKEY", "It's fucking locked Polson."),
+            say("POLSON", "Just checking."),
+          ],
+        },
+      },
+      {
+        id: "bingo",
+        text: "Polson Bingo at the Krezz Arms. Prove you know the man.",
+        at: "PUB",
+        step: {
+          kind: "quiz",
+          need: 3,
+          intro: [dir("The Krezz Arms. Mikey has printed bingo cards. Every square is a Polson habit."), say("MIKEY", "Polson Bingo. Four squares. Get three and you're a true friend. Get less and you're basically Eden.")],
+          questions: [
+            { q: "What does Polson do 10 to 15 times every time he leaves the house?", options: ["Slams the door to check it's locked", "Says goodbye to the hamster", "Checks the weather"], correct: 0, wrong: "No. He slams the door. Every time. Ten to fifteen times." },
+            { q: "Polson paid £60 extra on the Eurostar. What did he call Standard Premier?", options: ["Economy plus", "First class", "A mistake"], correct: 1, wrong: "First class. He called it first class. That's how tiers work Polson." },
+            { q: "Where does Polson tip the leftover food?", options: ["The bin", "The food waste caddy", "'The grinder' (there is no grinder)"], correct: 2, wrong: "The grinder. There has never been a grinder." },
+            { q: "One night away. What does Polson pack it in?", options: ["A small overnight bag", "The big suitcase", "A Tesco bag for life"], correct: 1, wrong: "The big suitcase. Always. 'Options.'" },
+          ],
+          success: [say("MIKEY", "HOUSE. You know him. God help you."), say("POLSON", "(arriving) What's this? Is this about me? Lovely.")],
+          fail: [say("MIKEY", "Basically Eden. Go again.")],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_koeman",
+    player: "ALL",
+    minChapter: 3,
+    title: "The Koeman Papers",
+    blurb: "Kreblis has a theory. The departed Saints manager was rigging results. There are 'leaked emails'. Find them, then post the timeline.",
+    reward: { coins: 220, desc: "The Koeman Papers are published. Pompey v Saints will never recover. +220 Krezzcoin." },
+    steps: [
+      {
+        id: "brief",
+        text: "Kreblis has a theory. Hear it out at the Archive.",
+        at: "ARCHIVE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The Archive reading room. Kreblis has pinned a single printout to the wall and drawn a red circle on it in Sharpie. There is nothing in the circle."),
+            say("KREBLIS", "Call it the Koeman Papers."),
+            say("KREBLIS", "A ridiculous timeline of events. Culminating in Koeman's return. Every result rigged. Every substitution a message."),
+            say("DRONGUS", "(ping) Welll wWell wELL."),
+            say("KREBLIS", "The emails are out there. Five of them. Scattered round Krelford. Needs some paint once we've got them. Underline, circle etc."),
+          ],
+        },
+      },
+      {
+        id: "emails",
+        text: "Find the five 'leaked Koeman emails' around Krelford.",
+        at: "FIELD",
+        step: {
+          kind: "collect",
+          label: "Koeman email",
+          pickup: [say("KREBLIS", "Another one. Look at the timestamp. LOOK at it."), dir("It's a Tesco receipt. Kreblis has circled the date.")],
+          spots: [
+            { x: 600, y: 980, name: "email (Tesco receipt)" },
+            { x: 1480, y: 1100, name: "email (betting slip)" },
+            { x: 2120, y: 980, name: "email (napkin)" },
+            { x: 540, y: 1520, name: "email (Saints programme, 2014)" },
+            { x: 2000, y: 1700, name: "email (actually an email)" },
+          ],
+        },
+      },
+      {
+        id: "post",
+        text: "Post the Koeman Papers in the Pompey v Saints group (laptop at home). Total sincerity. Never break.",
+        at: "HOME",
+        step: {
+          kind: "minigame",
+          mode: "facebook",
+          intro: [say("KREBLIS", "Like the whole point of trolling Pompey v Saints is that it's impossible to have an actual argument seriously."), say("KREBLIS", "Bad spelling. Total sincerity. Never break.")],
+          success: [say("KREBLIS", "Four hundred comments. Someone's made a documentary pitch. You heard it here first."), dir("The Koeman Papers are now accepted fact in three separate Facebook groups.")],
+          fail: [say("KREBLIS", "Too obvious. They need to think we mean it. Again.")],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_hotel_chaz",
+    player: "ALL",
+    minChapter: 3,
+    title: "Hotel Chaz",
+    blurb: "You need somewhere to crash. Polson has a sofa bed. Polson does not have a blanket.",
+    reward: { coins: 150, desc: "Polson owns a blanket. History. +150 Krezzcoin." },
+    steps: [
+      {
+        id: "stay",
+        text: "Crash at Hotel Chaz (Polson Road).",
+        at: "POLSON_ROAD",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("Polson's living room, post-Hoard. There is a floor now. On the floor: a sofa bed. It makes a noise like a dying accordion when you sit on it."),
+            say("POLSON", "Welcome to Hotel Chaz. Breakfast is three pastries and half a French stick."),
+            say("MIKEY", "Who eats three pastries and half a French stick for breakfast."),
+            say("POLSON", "Champions."),
+            dir("You ask for a blanket. Polson looks at you like you've asked for a kidney."),
+            say("POLSON", "A blanket?"),
+            say("MIKEY", "He doesn't even know where to buy a blanket."),
+            dir("You rest at Hotel Chaz. You feel every spring individually. You lose 10 HP. You gain a story.", { set: { hotel_chaz_stayed: true } }),
+          ],
+        },
+      },
+      {
+        id: "blanket",
+        text: "Buy Polson a blanket (and a pillow) at the bank's homeware concession. 40 Krezzcoin.",
+        at: "BANK",
+        step: {
+          kind: "pay",
+          cost: 40,
+          intro: [say("KREZMAR", "The bank does homeware now. Don't ask. Blanket and pillow, forty Krezzcoin. I'll waive the interest. Once.")],
+          success: [say("POLSON", "A blanket. For the sofa bed. In my house."), say("POLSON", "It's a huge end to an era!!!"), dir("He puts the blanket on himself, not the sofa bed, and falls asleep.")],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_vegas",
+    player: "ALL",
+    minChapter: 4,
+    title: "Has Kreblis Booked Vegas Yet",
+    blurb: "Kreblis is a groomsman at Drongus's Vegas wedding. He has not booked. Drongus checks fortnightly. Get it booked.",
+    reward: { coins: 200, desc: "Kreblis is booked. Probably. +200 Krezzcoin." },
+    steps: [
+      {
+        id: "check",
+        text: "Drongus's fortnightly check-in: ask Kreblis if he's booked Vegas (Krezz Arms).",
+        at: "PUB",
+        step: {
+          kind: "dialogue",
+          lines: [
+            say("DRONGUS", "(ping) My fortnightly check-in to see if you've booked Vegas yet."),
+            say("KREBLIS", "Not yet man."),
+            say("DRONGUS", "(ping) It's in four months."),
+            say("KREBLIS", "Time is a construct. Also flights go down. Nuffin cum free in this werld I tel ya tht 4 free!!"),
+            dir("You are going to have to book it for him."),
+          ],
+        },
+      },
+      {
+        id: "book",
+        text: "Book Kreblis's flight at the bank (80 Krezzcoin). He'll pay you back. He will not pay you back.",
+        at: "BANK",
+        step: {
+          kind: "pay",
+          cost: 80,
+          intro: [say("KREZMAR", "Krelford to Vegas, one adult, one 'business guy'. Eighty. He's never paying you back, you know that."), say("KREBLIS", "Can I get a window seat? I go straight up to people and ask to sit in the window seat.")],
+          success: [say("KREBLIS", "Booked. Wow. I feel like I've done this myself."), say("DRONGUS", "(ping) HE'S BOOKED?? 🎉 First time anyone's done anything I asked in this chat")],
+        },
+      },
+      {
+        id: "airport",
+        text: "Show Kreblis his booking confirmation (Krezz Arms) before he loses it.",
+        at: "PUB",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The Krezz Arms. Kreblis looks at the booking confirmation on your phone like it's a menu in another language."),
+            say("KREBLIS", "Have just seen that the Vegas flight is cancelled? I think that's what it said anyway. Not sure. Not an expert."),
+            dir("The Vegas flight is not cancelled. It's the one under it."),
+            say("KREBLIS", "Right. Well. Procrastination paid off big time. Again."),
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "arc_50p",
+    player: "ALL",
+    minChapter: 5,
+    title: "The 50p Crusade",
+    blurb: "The corner shop charged Mikey an illegal 50p card surcharge. He wants justice. He wants his 50p back.",
+    reward: { coins: 250, desc: "Justice for 50p. Mikey got his 50p back. You got 250. +250 Krezzcoin." },
+    steps: [
+      {
+        id: "evidence",
+        text: "Mikey needs a witness. Meet him outside the Krelford Constabulary.",
+        at: "POLICE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            say("MIKEY", "Mate. They added fifty pence to my card. For using a card. It's illegal. I've checked."),
+            say("MIKEY", "I went back and filmed the charge sheet. As evidence."),
+            dir("The desk sergeant looks at Mikey's phone for a long time. It is a video of a laminated sign that says '50p CARD CHARGE UNDER £5'."),
+            say("SERGEANT", "Sir, this is a corner shop."),
+            say("MIKEY", "I just wanted my 50p back 🤣"),
+            say("MIKEY", "I'm reporting it to the Krelford Transport Authority too. They sell Oyster top-ups. It's in their terms."),
+          ],
+        },
+      },
+      {
+        id: "tribunal",
+        text: "Take the 50p case to the Town Hall. Democracy in action.",
+        at: "TOWN_HALL",
+        step: {
+          kind: "quiz",
+          need: 2,
+          intro: [dir("The Town Hall, out of session. Mikey has booked it for the afternoon with a form he designed himself."), say("MIKEY", "Right. Cross-examine me. I'm ready.")],
+          questions: [
+            { q: "How much did the corner shop overcharge Mikey?", options: ["£5", "50p", "His dignity"], correct: 1, wrong: "50p. It's always been about the 50p." },
+            { q: "What did Mikey film as evidence?", options: ["The shopkeeper", "The charge sheet", "Himself crying"], correct: 1, wrong: "The charge sheet. Laminated. In landscape." },
+            { q: "Who is making money here?!", options: ["The shop", "Mikey", "Nobody. Who is making money here?!"], correct: 2, wrong: "Nobody. Who is making money here?!" },
+          ],
+          success: [dir("The shop refunds 50p. Mikey holds it up to the light like a medal."), say("MIKEY", "Classic Nevitt. Justice is served. Luv a gud redemshun ark.")],
+          fail: [say("MIKEY", "Ignorant! Again. From the top.")],
         },
       },
     ],

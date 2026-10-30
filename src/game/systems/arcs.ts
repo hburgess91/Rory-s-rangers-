@@ -18,6 +18,7 @@ export function stepDone(s: GameState, a: Arc, st: ArcStep): boolean {
 
 export function arcAvailable(s: GameState, a?: Arc): boolean {
   if (!s.flags.met_emergency) return false;
+  if (a?.requires && !s.flags[a.requires] && !(a.minChapter && s.chapter > a.minChapter)) return false;
   return !a || s.chapter >= (a.minChapter ?? 1);
 }
 
