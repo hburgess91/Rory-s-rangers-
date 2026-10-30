@@ -20,6 +20,7 @@ import { narrativeActor } from "../systems/narrative";
 import { arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
 import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
+import { Beatup } from "./hub/Beatup";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
@@ -179,6 +180,7 @@ export class HubScene extends Phaser.Scene {
   private cops: Phaser.GameObjects.Sprite[] = [];
   private pgSign: Phaser.GameObjects.Text | null = null;
   private spawnedSpots = new Set<string>();
+  beatup: Beatup | null = null;
   private photoMarks: { ring: Phaser.GameObjects.Arc; done: () => boolean }[] = [];
   private walkT = 0;
   private nextChatter = 0;
@@ -218,6 +220,8 @@ export class HubScene extends Phaser.Scene {
     this.physics.add.collider(this.av, this.colliders);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.startFollow(this.av, true, 0.12, 0.12);
+    this.beatup = new Beatup(this, BUILDINGS.filter((b) => b.door).map((b) => ({ x: b.door!.x, y: b.door!.y + 30, name: b.name })));
+    this.events.once("shutdown", () => this.beatup?.destroy());
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#000000cc", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(5000).setVisible(false);
     this.arrow = this.add.text(0, 0, "➤", { fontFamily: FONT, fontSize: "26px", color: "#ffd23f" }).setOrigin(0.5).setDepth(5000).setShadow(2, 2, "#000", 0);
     this.spawnNpcs();
@@ -1681,6 +1685,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setDepth(this.av.y + 1);
     this.updateNpcs(time, dt);
     this.updatePlayground(time, dt);
+    this.beatup?.update(time, dt);
     if (!this.busy && this.controls.attackHeld()) {
       const m = this.npcs.find((n) => n.follower);
       if (m && Phaser.Math.Distance.Between(m.spr.x, m.spr.y, this.av.x, this.av.y) < 70) this.hitMikey(m, true);
@@ -1709,7 +1714,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     // objective arrow
     const st = currentStep();
-    const target = st?.target ? this.targetPos(st.target) : null;
+    const target = this.beatup?.target() ?? (st?.target ? this.targetPos(st.target) : null);
     if (target && !this.busy) {
       const d = Phaser.Math.Distance.Between(this.av.x, this.av.y, target.x, target.y);
       if (d > 120) {

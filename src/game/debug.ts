@@ -48,6 +48,7 @@ export function installDebug(game: Phaser.Game) {
       if (d?.player) d.player.wonk = 100;
     },
     state: () => G.s,
+    beatup: (victim?: string) => (game.scene.getScene("Hub") as any)?.beatup?.start(victim),
     scene: (k: string) => game.scene.getScene(k),
     tp: (x: number, y: number) => {
       const h = game.scene.getScene("Hub") as any;
