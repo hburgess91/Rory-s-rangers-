@@ -38,10 +38,11 @@ export const MUSIC_FILES: Record<string, string> = {
   crazy: "audio/crazy_for_krelworld.mp3",
   bbp: "audio/bbp.mp3",
   twitcher: "audio/twitcher.mp3",
+  ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["anthem", "bbp", "twitcher"]);
+const ONE_SHOT = new Set(["anthem", "bbp", "twitcher", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
 
 type Wave = OscillatorType;
 
@@ -355,10 +356,11 @@ export class Synth {
     return this.el && !this.el.paused ? this.elId : "";
   }
 
-  private playFile(id: string, force: boolean) {
+  private playFile(id: string, force: boolean, startFrac = 0) {
     if (!force && this.elId === id && this.el && !this.el.ended) return;
     this.stopFile();
     const el = new Audio(MUSIC_FILES[id]);
+    if (startFrac > 0) el.addEventListener("loadedmetadata", () => (el.currentTime = el.duration * startFrac), { once: true });
     el.loop = !ONE_SHOT.has(id);
     el.volume = Math.min(1, this.vol.master * this.vol.music);
     this.el = el;
@@ -375,11 +377,11 @@ export class Synth {
     this.elId = "";
   }
 
-  music(id: string, force = false) {
+  music(id: string, force = false, startFrac = 0) {
     if (MUSIC_FILES[id]) {
       this.trackId = "";
       this.track = null;
-      this.playFile(id, force);
+      this.playFile(id, force, startFrac);
       return;
     }
     this.stopFile();

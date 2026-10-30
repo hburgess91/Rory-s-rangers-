@@ -17,6 +17,7 @@ import { MenuScene } from "./game/scenes/MenuScene";
 import { EndingScene } from "./game/scenes/EndingScene";
 import { VignetteScene } from "./game/scenes/VignetteScene";
 import { MinigameScene } from "./game/scenes/MinigameScene";
+import { VenueScene } from "./game/scenes/VenueScene";
 import { installDebug } from "./game/debug";
 
 const game = new Phaser.Game({
@@ -48,6 +49,7 @@ const game = new Phaser.Game({
     ExileScene,
     VignetteScene,
     MinigameScene,
+    VenueScene,
     MenuScene,
     EndingScene,
   ],

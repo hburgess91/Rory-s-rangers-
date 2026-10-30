@@ -15,6 +15,8 @@ import { dir, ping, say } from "../../content/dsl";
 import type { Line } from "../../data/types";
 
 export class PubScene extends Phaser.Scene {
+  /** SanMik & SanChz play the back room most nights. */
+  private sanmikOn = true;
   private box!: DialogueBox;
   private menu!: Phaser.GameObjects.Container;
   private table!: Phaser.GameObjects.Container;
@@ -26,6 +28,7 @@ export class PubScene extends Phaser.Scene {
   }
 
   create() {
+    this.sanmikOn = Math.random() < 0.7;
     this.busy = false;
     this.cameras.main.fadeIn(300);
     const pubBg = this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
@@ -64,6 +67,7 @@ export class PubScene extends Phaser.Scene {
     items.push(["🛍 Buy a Fizzy Bongo to take away (12 Krezzcoin)", () => this.buy()]);
     items.push(["📺 Watch the pub telly", () => this.tv()]);
     items.push(["📜 Read the menu", () => this.readMenu()]);
+    if (this.sanmikOn) items.push(["🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
     if (s.player !== "KREBON" && !s.flags.krebon_gone && s.flags.met_emergency) items.push(["🎸 Watch Twitcher Mutiny (Krebon's band) in the back room", () => switchTo(this, "Minigame", { mode: "gig", returnAt: "PUB" })]);
     items.push([synth.playingFile() === "crazy" ? "🎵 Jukebox: stop the song" : "🎵 Jukebox: 'Krazy For The Krelworld' (2 Krezzcoin)", () => this.jukebox()]);
     if (canTurnIn(s, "PUB")) items.push(["✨ Open Krezmond's treasure", () => this.turnIn()]);
