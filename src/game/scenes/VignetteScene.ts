@@ -7,6 +7,7 @@ import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
+import { animateWalker } from "../gfx/HD";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
 export class VignetteScene extends Phaser.Scene {
@@ -218,9 +219,35 @@ export class VignetteScene extends Phaser.Scene {
     this.children.list.filter((o) => o instanceof Phaser.GameObjects.Text && (o as Phaser.GameObjects.Text).text === "THE ULTIMATE SENSATION").forEach((o) => o.destroy());
     await this.wait(1800);
     luke.setAlpha(1).setScale(3).setTint(0x9a9aaa);
-    this.time.addEvent({ delay: 300, repeat: 10, callback: () => luke.setFrame(luke.frame.name === "1" ? 2 : 1) });
+    // Boggor Cranstil has been waiting in the shadows by the door
+    const boggorKey = this.textures.exists("spr_BOGGOR") ? "spr_BOGGOR" : "spr_FOLK2";
+    const boggor = this.add.sprite(600, 420, boggorKey, 0).setScale(3).setDepth(9).setAlpha(0);
+    if (boggorKey === "spr_FOLK2") boggor.setTint(0x8a7a6a);
+    this.tween({ targets: boggor, alpha: 1, duration: 800 });
+    const walk = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(luke, 1, 0, true, this.time.now) });
     await this.tween({ targets: luke, x: 700, duration: 3200 });
+    walk.remove();
+    animateWalker(luke, 0, 1, false, this.time.now);
+    luke.setData("facing", "west");
+    animateWalker(luke, 0, 0, false, this.time.now);
     await this.talk([
+      dir("Someone is standing by the door. A hunched shape in a stained cardigan. He has been there the whole time."),
+      say("BOGGOR CRANSTIL", "Heh heh…"),
+      say("BOGGOR CRANSTIL", "Now it's Boggor's time for some lovely bread and butter pudding…"),
+      say("BOGGOR CRANSTIL", "Nice to see I'm not the only one with this particular… taste."),
+    ]);
+    const bwalk = this.time.addEvent({ delay: 110, loop: true, callback: () => animateWalker(boggor, -1, 0, true, this.time.now) });
+    await this.tween({ targets: boggor, x: 480, y: 400, duration: 1600 });
+    bwalk.remove();
+    await this.tween({ targets: boggor, alpha: 0, duration: 500 });
+    boggor.destroy();
+    await this.wait(700);
+    const m = this.add.text(480, 330, "…mmm.", { fontFamily: FONT, fontSize: "16px", color: "#ffe4ec", fontStyle: "italic", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(30);
+    this.tween({ targets: m, y: 300, alpha: 0, duration: 1600 });
+    await this.wait(1000);
+    await this.talk([
+      say("CRONGUS", "…what did he mean by that."),
+      say("CRONGUS", "Doesn't matter. Nobody saw. Nobody saw anything."),
       dir("Lil' Crongus emerges. He has aged nine years. There is custard on his shoes. There is something that is not custard on his shoes."),
       say("CRONGUS", "…"),
       say("CRONGUS", "I can never come back from that."),
