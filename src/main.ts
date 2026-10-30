@@ -20,6 +20,7 @@ import { MinigameScene } from "./game/scenes/MinigameScene";
 import { VenueScene } from "./game/scenes/VenueScene";
 import { ClubScene } from "./game/scenes/ClubScene";
 import { installDebug } from "./game/debug";
+import { installCrashGuard } from "./game/crashGuard";
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -58,3 +59,4 @@ const game = new Phaser.Game({
 });
 
 installDebug(game);
+installCrashGuard(game);
