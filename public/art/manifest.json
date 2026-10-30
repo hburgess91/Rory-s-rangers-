@@ -126,6 +126,9 @@
   "bld_BAN_TRIBUNAL": {
    "file": "buildings/BAN_TRIBUNAL.png"
   },
+  "bld_BOGGOR": {
+   "file": "buildings/BOGGOR.png"
+  },
   "bld_BONKY_TEMPLE": {
    "file": "buildings/BONKY_TEMPLE.png"
   },
@@ -164,6 +167,84 @@
   },
   "bld_WILDERN": {
    "file": "buildings/WILDERN.png"
+  },
+  "hd_billboard": {
+   "file": "props/d_billboard.png"
+  },
+  "hd_busstop": {
+   "file": "props/d_busstop.png"
+  },
+  "hd_camera": {
+   "file": "props/d_camera.png"
+  },
+  "hd_candy": {
+   "file": "props/d_candy.png"
+  },
+  "hd_car": {
+   "file": "props/d_car.png"
+  },
+  "hd_climber": {
+   "file": "props/d_climber.png"
+  },
+  "hd_crates": {
+   "file": "props/d_crates.png"
+  },
+  "hd_fence": {
+   "file": "props/d_fence.png"
+  },
+  "hd_flowerbed": {
+   "file": "props/d_flowerbed.png"
+  },
+  "hd_foodtruck": {
+   "file": "props/d_foodtruck.png"
+  },
+  "hd_fountain": {
+   "file": "props/d_fountain.png"
+  },
+  "hd_hedge": {
+   "file": "props/d_hedge.png"
+  },
+  "hd_neonsign": {
+   "file": "props/d_neonsign.png"
+  },
+  "hd_newsstand": {
+   "file": "props/d_newsstand.png"
+  },
+  "hd_phonebooth": {
+   "file": "props/d_phonebooth.png"
+  },
+  "hd_picnic": {
+   "file": "props/d_picnic.png"
+  },
+  "hd_pot": {
+   "file": "props/d_pot.png"
+  },
+  "hd_roundabout": {
+   "file": "props/d_roundabout.png"
+  },
+  "hd_sandpit": {
+   "file": "props/d_sandpit.png"
+  },
+  "hd_scooter": {
+   "file": "props/d_scooter.png"
+  },
+  "hd_seesaw": {
+   "file": "props/d_seesaw.png"
+  },
+  "hd_slide": {
+   "file": "props/d_slide.png"
+  },
+  "hd_stall": {
+   "file": "props/d_stall.png"
+  },
+  "hd_statue": {
+   "file": "props/d_statue.png"
+  },
+  "hd_swings": {
+   "file": "props/d_swings.png"
+  },
+  "hd_vendingbike": {
+   "file": "props/d_vendingbike.png"
   },
   "hd_bench": {
    "file": "props/p_bench.png"
@@ -254,6 +335,9 @@
   },
   "tile_pier": {
    "file": "tiles/tile_pier.png"
+  },
+  "tile_meadow": {
+   "file": "tiles/tile_meadow.png"
   }
  }
 }
