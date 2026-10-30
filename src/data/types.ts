@@ -156,6 +156,10 @@ export interface GameState {
   krezz: number;
   bottles: number;
   bongos: number;
+  /** Owned ranged weapons -> ammo left. */
+  guns?: Record<string, number>;
+  /** Gun in hand (undefined = fists). */
+  gun?: string;
   intoxication: number;
   banRisk: number;
   banCount: number;

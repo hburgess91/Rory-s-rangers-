@@ -10,6 +10,7 @@ import type { CombatWorld } from "./types";
 import type { Controls } from "./Controls";
 import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
+import { currentGun, cycleGun, fitTo } from "./Guns";
 
 export interface Turret {
   spr: Phaser.GameObjects.Sprite;
@@ -68,6 +69,9 @@ export class Player {
   private walkT = 0;
   private lastBark = 0;
   label: Phaser.GameObjects.Text;
+  /** The gun drawn in the player's hand (hidden when using fists). */
+  gunSpr: Phaser.GameObjects.Image | null = null;
+  private gunKick = 0;
 
   constructor(world: CombatWorld, x: number, y: number) {
     this.world = world;
@@ -222,6 +226,11 @@ export class Player {
     }
     // inputs
     if (c.dodge()) this.tryDodge(now, mv);
+    if (c.swap()) {
+      const nm = cycleGun();
+      synth.play("pickup");
+      this.world.floatText(this.x, this.y - 44, nm === "FISTS" ? (this.def.attack === "melee" ? "FISTS" : "OWN WEAPON") : nm.toUpperCase(), "#67e8f9", 13);
+    }
     if (c.attackHeld()) {
       this.attackHeldTime += dt;
       this.tryAttack(now, moving);
@@ -247,6 +256,83 @@ export class Player {
     }
     this.recentDamage = this.recentDamage.filter((r) => now - r.t < 10000);
     this.label.setPosition(this.x, this.y - 36);
+    this.updateGunSprite(dt);
+  }
+
+  private updateGunSprite(dt: number) {
+    const g = currentGun();
+    if (!g || !this.world.sc.textures.exists(g.tex)) {
+      this.gunSpr?.setVisible(false);
+      return;
+    }
+    if (!this.gunSpr) this.gunSpr = this.world.sc.add.image(this.x, this.y, g.tex).setDepth(501);
+    if (this.gunSpr.texture.key !== g.tex) this.gunSpr.setTexture(g.tex);
+    fitTo(this.gunSpr, g.id === "rocket" || g.id === "rail" ? 40 : g.id === "shotgun" ? 36 : 26);
+    this.gunKick = Math.max(0, this.gunKick - dt * 0.05);
+    const left = Math.cos(this.aim) < 0;
+    const r = 14 - this.gunKick;
+    this.gunSpr
+      .setVisible(this.spr.visible && !this.isHidden())
+      .setPosition(this.x + Math.cos(this.aim) * r, this.y + 4 + Math.sin(this.aim) * r)
+      .setRotation(this.aim)
+      .setFlipY(left)
+      .setDepth(Math.sin(this.aim) < -0.3 ? 499 : 501);
+  }
+
+  /** Fire the gun in hand. Returns false when there's no gun or no ammo (falls back to the normal attack). */
+  private fireGun(now: number): boolean {
+    const g = currentGun();
+    const s = G.s;
+    if (!g || !s.guns) return false;
+    if ((s.guns[g.id] ?? 0) <= 0) {
+      s.gun = undefined;
+      this.world.floatText(this.x, this.y - 44, `OUT OF AMMO — ${this.def.attack === "melee" ? "FISTS" : "OWN WEAPON"}`, "#ff6666", 13);
+      synth.play("tap_fail");
+      this.attackCd = now + 300;
+      return true;
+    }
+    s.guns[g.id]--;
+    this.attackCd = now + g.cd * (now < this.burstUntil ? 0.75 : 1);
+    this.attackAnimUntil = now + 90;
+    this.gunKick = g.id === "rocket" || g.id === "shotgun" ? 10 : 5;
+    const mx = this.x + Math.cos(this.aim) * 26;
+    const my = this.y + 4 + Math.sin(this.aim) * 26;
+    const flash = this.world.sc.add.circle(mx, my, 5, g.color === 0xffffff ? 0xffd23f : g.color, 0.9).setDepth(602);
+    this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    const blast = (x: number, y: number) => {
+      synth.play("explode");
+      this.world.shake(140, 0.006);
+      this.world.burst(x, y, 0xff6ec7, 14);
+      this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: 0xff6ec7, knock: g.knock ?? 200 });
+    };
+    for (let i = 0; i < g.pellets; i++) {
+      const spread = g.pellets > 1 ? (i / (g.pellets - 1) - 0.5) * g.spread + (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * g.spread;
+      const crit = Math.random() < 0.06;
+      const d = this.dmg(g.dmg, now) * (crit ? 2 : 1);
+      this.world.shoot(mx, my, {
+        owner: "player",
+        damage: g.blast ? 0 : d,
+        crit,
+        speed: g.speed * (g.pellets > 1 ? 0.9 + Math.random() * 0.2 : 1),
+        angle: this.aim + spread,
+        color: g.color,
+        texture: g.shotTex && this.world.sc.textures.exists(g.shotTex) ? g.shotTex : undefined,
+        life: (g.range / g.speed) * 1000,
+        pierce: g.pierce ?? 0,
+        knock: g.knock,
+        scale: g.id === "rail" ? 1.6 : g.shotTex ? 0.65 : 1,
+        onHit: g.blast ? blast : undefined,
+        onEnd: g.blast ? blast : undefined,
+      });
+    }
+    if (g.id === "rail") {
+      const beam = this.world.sc.add.rectangle(mx, my, g.range, 3, g.color, 0.7).setOrigin(0, 0.5).setRotation(this.aim).setDepth(598);
+      this.world.sc.tweens.add({ targets: beam, alpha: 0, scaleY: 4, duration: 180, onComplete: () => beam.destroy() });
+    }
+    synth.play(g.id === "rocket" ? "lob" : `gun_${g.id}`);
+    if (g.id === "shotgun" || g.id === "rocket") this.world.shake(70, 0.003);
+    if (s.guns[g.id] === 0) this.world.floatText(this.x, this.y - 44, "LAST ONE", "#ffd23f", 12);
+    return true;
   }
 
   private tryDodge(now: number, mv: { x: number; y: number }) {
@@ -295,6 +381,7 @@ export class Player {
 
   private tryAttack(now: number, moving: boolean) {
     if (now < this.attackCd || now < this.dodgeUntil) return;
+    if (!this.headbuttMode && this.fireGun(now)) return;
     let rate = this.def.attackRate ?? 300;
     if (this.id === "MIKEY" && moving) rate *= 0.7;
     if (now < this.burstUntil) rate *= 0.75;
@@ -699,6 +786,7 @@ export class Player {
   }
 
   destroy() {
+    this.gunSpr?.destroy();
     this.turrets.forEach((t) => t.spr.destroy());
     this.decoy?.destroy();
     this.label.destroy();

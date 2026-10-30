@@ -3178,6 +3178,12 @@
    "file": "props/fx_paper.png",
    "hd": 0.6667
   },
+  "hd__rocket": {
+   "file": "props/fx_rocket.png"
+  },
+  "fx_rocket": {
+   "file": "props/fx_rocket.png"
+  },
   "hd__turret": {
    "file": "props/fx_turret.png"
   },
@@ -3208,6 +3214,12 @@
   },
   "gen_tap": {
    "file": "props/gen_tap.png"
+  },
+  "hd_ammo": {
+   "file": "props/p_ammo.png"
+  },
+  "p_ammo": {
+   "file": "props/p_ammo.png"
   },
   "hd_anvil": {
    "file": "props/p_anvil.png"
@@ -3309,6 +3321,12 @@
   },
   "p_gate": {
    "file": "props/p_gate.png"
+  },
+  "hd_gun_crate": {
+   "file": "props/p_gun_crate.png"
+  },
+  "p_gun_crate": {
+   "file": "props/p_gun_crate.png"
   },
   "hd_kreltower": {
    "file": "props/p_kreltower.png"
@@ -3478,6 +3496,36 @@
   "p_wonking": {
    "file": "props/p_wonking.png",
    "hd": 0.5479
+  },
+  "hd_wpn_pistol": {
+   "file": "props/p_wpn_pistol.png"
+  },
+  "p_wpn_pistol": {
+   "file": "props/p_wpn_pistol.png"
+  },
+  "hd_wpn_rail": {
+   "file": "props/p_wpn_rail.png"
+  },
+  "p_wpn_rail": {
+   "file": "props/p_wpn_rail.png"
+  },
+  "hd_wpn_rocket": {
+   "file": "props/p_wpn_rocket.png"
+  },
+  "p_wpn_rocket": {
+   "file": "props/p_wpn_rocket.png"
+  },
+  "hd_wpn_shotgun": {
+   "file": "props/p_wpn_shotgun.png"
+  },
+  "p_wpn_shotgun": {
+   "file": "props/p_wpn_shotgun.png"
+  },
+  "hd_wpn_smg": {
+   "file": "props/p_wpn_smg.png"
+  },
+  "p_wpn_smg": {
+   "file": "props/p_wpn_smg.png"
   },
   "hd_llar_industrial": {
    "file": "props/pillar_industrial.png"

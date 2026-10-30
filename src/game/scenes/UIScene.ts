@@ -1,3 +1,4 @@
+import { currentGun, ownedGuns } from "../combat/Guns";
 import Phaser from "phaser";
 import { G } from "../G";
 import { maxHp, maxKrezz, maxBottles, intoxLabel } from "../systems/stats";
@@ -178,6 +179,9 @@ export class UIScene extends Phaser.Scene {
     this.statT.setText(
       [
         `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)${s.flags.rock_points ? `   🤘 ${s.flags.rock_points}` : ""}`,
+        ...(ownedGuns(s).length
+          ? [currentGun(s) ? `🔫 ${currentGun(s)!.name} ${s.guns![s.gun!]}/${currentGun(s)!.maxAmmo}  (X swap)` : `🔫 ${CHARACTERS[s.player].attack === "melee" ? "Fists" : "Own weapon"} · ${ownedGuns(s).length} gun${ownedGuns(s).length > 1 ? "s" : ""}  (X swap)`]
+          : []),
         `${intoxLabel(s.intoxication)}${s.intoxication > 5 ? ` (${Math.round(s.intoxication)}%)` : ""}  ·  Drongus: ${resentmentLabel(s.drongusResentment)}`,
       ].join("\n"),
     );

@@ -36,11 +36,14 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 | Pussy juice (heal) | Q | D-pad left |
 | Fizzy Bongo (buff, gets you drunk) | B | D-pad right |
 | Krezz Burst (full Wonk meter) | R / L | LB |
+| Swap fists / found guns | X (touch: GUN) | D-pad up |
 | Interact / advance dialogue | E / Space / click | X |
 | Skip dialogue (stops at choices) | Tab | |
 | Pause / menu | Esc | Start |
 
 ## What's in it
+
+- **Guns.** Weapon crates turn up in cleared dungeon rooms (the first one is guaranteed): Wonk Pistol, Crobley Uzi, Bongo Boomstick, Wiki Railgun and The Marital Aid (pink rubber rockets). Enemies drop ammo; when a gun runs dry you go back to your own attack.
 
 - **Nine playable characters** (Flenky, Krezmar, Kreblis, Krezwonk, Scrombus, Krebon, Lil' Crongus,
   Gronny G, Mikey), each with stats, a signature ability, a passive, a 3-tier upgrade branch,

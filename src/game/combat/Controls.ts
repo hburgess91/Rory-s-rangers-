@@ -18,7 +18,7 @@ export class Controls {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const kb = scene.input.keyboard!;
-    this.keys = kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,Q,B,R,F,SHIFT,ESC,J,K,L,TAB") as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,Q,B,R,F,SHIFT,ESC,J,K,L,TAB,X") as Record<string, Phaser.Input.Keyboard.Key>;
     kb.addCapture("SPACE,TAB,UP,DOWN,LEFT,RIGHT");
     scene.input.mouse?.disableContextMenu();
   }
@@ -103,7 +103,7 @@ export class Controls {
 
   /** After a dialogue closes, ignore keys that are still held until they are released. */
   swallow() {
-    for (const n of ["interact", "dodge", "special", "burst", "bottle", "bongo", "pause"]) this.pressedOnce.add(n);
+    for (const n of ["interact", "dodge", "special", "burst", "bottle", "bongo", "pause", "swap"]) this.pressedOnce.add(n);
     TOUCH.edges.clear();
   }
 
@@ -127,6 +127,11 @@ export class Controls {
   burst(): boolean {
     const p = this.pad();
     return this.edge("burst", this.keys.R.isDown || this.keys.L.isDown || !!(p && p.L1));
+  }
+  /** Swap between fists and found guns. */
+  swap(): boolean {
+    const p = this.pad();
+    return this.edge("swap", this.keys.X.isDown || !!(p && p.up));
   }
   interact(): boolean {
     const p = this.pad();

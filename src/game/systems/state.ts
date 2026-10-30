@@ -79,6 +79,7 @@ export function newGameState(player: PlayableId, ngPlus = 0, meta?: MetaState): 
     krezz: 40,
     bottles: 2,
     bongos: 1,
+    guns: {},
     intoxication: 0,
     banRisk: 0,
     banCount: 0,
@@ -125,6 +126,8 @@ export function migrateState(raw: any): GameState | null {
   s.kills = { ...(raw.kills || {}) };
   s.tvWatched = Array.isArray(raw.tvWatched) ? raw.tvWatched : [];
   s.archiveUnlocked = Array.isArray(raw.archiveUnlocked) ? raw.archiveUnlocked : [];
+  s.guns = raw.guns && typeof raw.guns === "object" ? Object.fromEntries(Object.entries(raw.guns).filter(([, v]) => typeof v === "number" && isFinite(v as number))) as Record<string, number> : {};
+  if (typeof s.gun !== "string" || !(s.gun in s.guns)) s.gun = undefined;
   s.discovered = Array.isArray(raw.discovered) ? raw.discovered.slice(-2000) : [];
   s.chapter = clampInt(raw.chapter, 1, 7, 1);
   if (s.phase !== "hub" && s.phase !== "dungeon" && s.phase !== "ended") s.phase = "hub";

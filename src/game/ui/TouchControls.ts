@@ -70,6 +70,7 @@ export class TouchControls {
       btn(700, 490, 24, "PJ", "bottle", false, 0xffb6c1);
       btn(640, 500, 24, "🍺", "bongo", false, 0xe0a35a);
       btn(930, 260, 26, "BURST", "burst", false, 0xff8c00);
+      btn(700, 410, 26, "GUN", "swap", false, 0x67e8f9);
     } else {
       btn(860, 450, 44, "E", "interact");
     }

@@ -31,6 +31,9 @@ export interface ShotOpts {
   slow?: number;
   crit?: boolean;
   onHit?: (x: number, y: number) => void;
+  /** Called when the shot runs out of range or leaves the room. */
+  onEnd?: (x: number, y: number) => void;
+  knock?: number;
 }
 
 /** What entities need from the combat scene. Implemented by DungeonScene. */

@@ -216,6 +216,21 @@ export class Synth {
       case "shoot":
         this.tone(880, 0.06, "square", 0.12, 0, 0.5);
         break;
+      case "gun_pistol":
+        this.burst(0.08, 0.35, 0, 3000, undefined, 0.6);
+        this.tone(520, 0.07, "square", 0.15, 0, 0.4);
+        break;
+      case "gun_smg":
+        this.burst(0.05, 0.22, 0, 4000, undefined, 0.7);
+        break;
+      case "gun_shotgun":
+        this.burst(0.3, 0.6, 0, 900, undefined, 0.4);
+        this.tone(120, 0.18, "sawtooth", 0.25, 0, 0.4);
+        break;
+      case "gun_rail":
+        this.tone(1800, 0.35, "sawtooth", 0.18, 0, 0.1);
+        this.burst(0.2, 0.3, 0, 6000, undefined, 0.5);
+        break;
       case "lob":
         this.tone(300, 0.2, "triangle", 0.2, 0, 2);
         break;

@@ -15,6 +15,7 @@ import { enemyDamageMult, enemyHpMult, maxHp, bump, maxBottles } from "../system
 import { activeMods } from "../../data/historicalRevisions";
 import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban";
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
+import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir } from "../../content/dsl";
@@ -33,7 +34,7 @@ interface Shot {
 
 interface Pickup {
   spr: Phaser.GameObjects.Image;
-  kind: "coin" | "krezz" | "heal" | "crobley" | "quest" | "bottle" | "bongo";
+  kind: "coin" | "krezz" | "heal" | "crobley" | "quest" | "bottle" | "bongo" | "ammo";
   value: number;
   onCollect?: () => void;
 }
@@ -450,7 +451,52 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     synth.play("ding");
     for (let i = 0; i < 6; i++) this.dropPickup(this.player.x + (Math.random() - 0.5) * 140, this.player.y - 40 + (Math.random() - 0.5) * 80, "coin", 3);
     coolBanRisk(G.s, 15);
+    this.maybeGunCrate();
     this.checkExit();
+  }
+
+  /** Weapon crates: the first cleared room always has one until you own a gun, then about one room in three. */
+  private maybeGunCrate() {
+    const s = G.s;
+    const first = !ownedGuns(s).length;
+    if (!first && Math.random() > 0.33) return;
+    const x = this.bounds.centerX + (Math.random() - 0.5) * 120;
+    const y = this.bounds.centerY + 40;
+    const tex = this.textures.exists("p_gun_crate") ? "p_gun_crate" : "p_bin";
+    const crate = fitTo(this.add.image(x, y, tex), 46).setDepth(14);
+    const glow = this.add.circle(x, y + 10, 30, 0x67e8f9, 0.18).setDepth(13);
+    this.tweens.add({ targets: glow, alpha: 0.05, scale: 1.3, yoyo: true, repeat: -1, duration: 700 });
+    this.tweens.add({ targets: crate, y: y - 4, yoyo: true, repeat: -1, duration: 900, ease: "Sine.easeInOut" });
+    let opened = false;
+    this.toast(first ? "WEAPON CRATE" : "WEAPON CRATE", first ? "Something glowing dropped in. Walk over and press E." : "A weapons crate appeared. Press E to open it.");
+    this.interactables.push({
+      x,
+      y,
+      r: 60,
+      label: "Open the weapons crate",
+      enabled: () => !opened,
+      use: () => {
+        opened = true;
+        synth.play("door");
+        this.tweens.killTweensOf([crate, glow]);
+        glow.destroy();
+        this.tweens.add({ targets: crate, alpha: 0, scaleX: crate.scaleX * 1.4, scaleY: crate.scaleY * 0.6, duration: 260, onComplete: () => crate.destroy() });
+        const r = rollCrate(s);
+        if (r.gun) {
+          const icon = fitTo(this.add.image(x, y - 10, r.gun.tex), 44).setDepth(700);
+          this.tweens.add({ targets: icon, y: y - 70, duration: 600, ease: "Back.easeOut" });
+          this.tweens.add({ targets: icon, alpha: 0, delay: 1600, duration: 400, onComplete: () => icon.destroy() });
+          synth.play("cheer");
+          this.toast(`NEW GUN: ${r.gun.name.toUpperCase()}`, `${r.gun.blurb} Now in your hand. ${ownedGuns(s).length === 1 ? "X / GUN button swaps back to fists. Enemies drop ammo." : "X / GUN cycles weapons."}`);
+        } else if (r.ammoFor) {
+          this.floatText(x, y - 40, `+${r.amount} ${r.ammoFor.name.toUpperCase()} AMMO`, "#67e8f9", 14);
+          synth.play("pickup");
+        } else {
+          this.floatText(x, y - 40, "Empty. Someone's had it.", "#ffffff", 13);
+          for (let i = 0; i < 4; i++) this.dropPickup(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 40, "coin", 4);
+        }
+      },
+    });
   }
 
   private checkExit() {
@@ -1044,6 +1090,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (Math.random() < 0.06) this.dropPickup(e.x, e.y, "heal", 12);
       if (mods.crobleys && Math.random() < 0.12) this.dropPickup(e.x, e.y, "crobley", 1);
       if (Math.random() < 0.02) this.dropPickup(e.x, e.y, "bongo", 1);
+      if (ownedGuns().length && Math.random() < (e.isBoss ? 1 : 0.11)) this.dropPickup(e.x + 10, e.y, "ammo", 1);
       if (mods.splitChance && !e.minion && Math.random() < mods.splitChance) {
         const w = this.spawnEnemy(e.def.id, e.x + 20, e.y, { noDrops: true, minion: true });
         if (w) {
@@ -1201,8 +1248,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   dropPickup(x: number, y: number, kind: Pickup["kind"], value: number) {
-    const tex = { coin: "p_coin", krezz: "p_krezz", heal: "p_bottle", crobley: "p_crobley", quest: "p_scroll", bottle: "p_bottle", bongo: "p_bongo" }[kind];
-    const spr = this.add.image(x, y, tex).setScale(2).setDepth(15);
+    const tex = { coin: "p_coin", krezz: "p_krezz", heal: "p_bottle", crobley: "p_crobley", quest: "p_scroll", bottle: "p_bottle", bongo: "p_bongo", ammo: "p_ammo" }[kind];
+    const spr = this.add.image(x, y, this.textures.exists(tex) ? tex : "p_coin").setScale(2).setDepth(15);
+    if (kind === "ammo") fitTo(spr, 26);
     this.tweens.add({ targets: spr, y: y - 8, yoyo: true, duration: 220 });
     this.pickups.push({ spr, kind, value });
   }
@@ -1313,6 +1361,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       sh.spr.y += (sh.vy * dt * k) / 1000;
       sh.life -= dt * k;
       if (sh.life <= 0 || !Phaser.Geom.Rectangle.Contains(this.bounds, sh.spr.x, sh.spr.y)) {
+        sh.o.onEnd?.(sh.spr.x, sh.spr.y);
         this.killShot(sh);
         continue;
       }
@@ -1330,7 +1379,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
           if (e.dead || sh.hit.has(e.uid)) continue;
           if (Phaser.Math.Distance.Between(e.x, e.y, sh.spr.x, sh.spr.y) < e.radius + 6) {
             sh.hit.add(e.uid);
-            this.damageEnemy(e, sh.o.damage, { crit: sh.o.crit, knock: 60, angle: Math.atan2(sh.vy, sh.vx), slow: sh.o.slow });
+            this.damageEnemy(e, sh.o.damage, { crit: sh.o.crit, knock: sh.o.knock ?? 60, angle: Math.atan2(sh.vy, sh.vx), slow: sh.o.slow });
             sh.o.onHit?.(sh.spr.x, sh.spr.y);
             if ((sh.o.ricochet ?? 0) > 0) {
               sh.o.ricochet!--;
@@ -1440,6 +1489,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.floatText(this.player.x, this.player.y - 30, "+1 FIZZY BONGO", "#e0a35a", 13);
         synth.play("bongo");
         break;
+      case "ammo": {
+        const a = giveAmmo(s, pk.value);
+        if (a) this.floatText(this.player.x, this.player.y - 30, `+${a.amount} ${a.gun.name.toUpperCase()} AMMO`, "#67e8f9", 13);
+        else this.floatText(this.player.x, this.player.y - 30, "AMMO FULL", "#67e8f9", 12);
+        synth.play("pickup");
+        break;
+      }
       case "quest":
         pk.onCollect?.();
         break;
