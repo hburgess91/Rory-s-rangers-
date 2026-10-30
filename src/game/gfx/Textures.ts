@@ -365,7 +365,7 @@ const SPEAKER_SPRITES: Record<string, string> = {
   SANCHZ: "spr_SANCHZ",
   KROZNO: "boss_krozno",
   "RUSSELL BRAND": "boss_brand",
-  "GRUMBO, THE BLUES TROLL": "boss_troll",
+  "DEREK GRUMBO": "boss_troll",
   "CARPET KEV": "boss_flatmate",
   "BRICK KOLBANE": "boss_rival",
   "THE CUDDLE CRONSTER": "boss_cronster",
@@ -687,7 +687,7 @@ export function generateBosses(scene: Phaser.Scene) {
     px(ctx, ox + 12, 2, 8, 1, 0xfacc15);
   });
   human("boss_brand", { skin: 0xf1c7a5, hair: 0x111111, hairStyle: "long", beard: 0x111111, glasses: "none", top: 0xf4f4f0, topDetail: 0xf1c7a5, bottom: 0xf4f4f0, shoes: 0xf1c7a5, accent: 0x111111, bulk: 1 });
-  human("boss_troll", { skin: 0x7d8f6a, hair: null, hairStyle: "bald", beard: 0x1a1a1a, glasses: "none", top: 0x5a3a20, topDetail: 0x3b2a1a, bottom: 0x2b2b38, shoes: 0x3b2a1a, bulk: 2 }, (ctx, f, ox) => {
+  human("boss_troll", { skin: 0xe8b896, hair: null, hairStyle: "bald", beard: 0x1a1a1a, glasses: "none", top: 0x5a3a20, topDetail: 0x3b2a1a, bottom: 0x2b2b38, shoes: 0x3b2a1a, bulk: 2 }, (ctx, f, ox) => {
     // sunburst Les Paul
     px(ctx, ox + 6, 26 + (f % 2), 12, 10, 0xb45309);
     px(ctx, ox + 8, 28 + (f % 2), 8, 6, 0xfbbf24);

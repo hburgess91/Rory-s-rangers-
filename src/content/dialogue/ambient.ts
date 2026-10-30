@@ -74,9 +74,9 @@ export const BARKS: Record<string, Bark[]> = {
     b("The Mk II is my child. My terrible, reaching-around child.", { chapterAtLeast: 3 }),
   ],
   KREZMAR: [
-    b("Blues night at the Krezz Arms. There's a troll on guitar. Massive. Bald. Stubble.", { chapterAtLeast: 2, chapterAtMost: 3 }),
-    b("That troll's Les Paul is worth more than the Krelfund. I've checked.", { chapterAtLeast: 3, chapterAtMost: 4 }),
-    b("I headbutted a troll. I'd do it again. Free bongos for life now.", { chapterAtLeast: 5, chapterAtMost: 6 }),
+    b("Blues night at the Krezz Arms. There's a bloke on guitar called Derek Grumbo. Bald. Stubble. Ugliest man I've ever seen.", { chapterAtLeast: 2, chapterAtMost: 3 }),
+    b("Derek Grumbo's Les Paul is worth more than the Krelfund. I've checked.", { chapterAtLeast: 3, chapterAtMost: 4 }),
+    b("I headbutted Derek Grumbo. I'd do it again. Free bongos for life now.", { chapterAtLeast: 5, chapterAtMost: 6 }),
     C("He's got a point."),
     C("But anyone horn horn?"),
     C("I know it's early…"),

@@ -37,7 +37,7 @@ const PROFILES: Record<string, Profile> = {
   PHEZON: { pitch: 1.9, rate: 1.2 },
   KROZNO: { pitch: 0.6, rate: 0.95 },
   "RUSSELL BRAND": { pitch: 1.1, rate: 1.3 },
-  "GRUMBO, THE BLUES TROLL": { pitch: 0.3, rate: 0.8 },
+  "DEREK GRUMBO": { pitch: 0.4, rate: 0.8 },
 };
 
 const FEMALE_HINT = /female|woman|samantha|victoria|karen|moira|tessa|serena|kate|susan|hazel|libby|sonia|zira|fiona|martha|amy|emma|olivia|ava|allison|siri.*female/i;
