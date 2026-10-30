@@ -8,6 +8,8 @@ import { FONT, title } from "../ui/theme";
 import { dir, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
 import { animateWalker, backdrop } from "../gfx/HD";
+import { CHARACTERS } from "../../data/characters";
+import { flap, fall, randomZone } from "../combat/Wonk";
 import { maybeFinishArc } from "../systems/arcs";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
@@ -28,6 +30,8 @@ export class VignetteScene extends Phaser.Scene {
       kreltower_fall: () => this.kreltower(false),
       kreltower_saved: () => this.kreltower(true),
       pudding: () => this.pudding(),
+      pudding_spy: () => this.pudding(G.s.player),
+      pudding_raid: () => this.puddingRaid(),
       flatmate: () => this.flatmate(),
       rival: () => this.rival(),
       press_conference: () => this.pressConference(),
@@ -188,7 +192,10 @@ export class VignetteScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- BREAD AND BUTTER PUDDING
 
-  private async pudding() {
+  /** `spy` = the player is somebody else, watching Lulon from the bushes. */
+  private async pudding(spy?: string) {
+    const watcherId = spy ?? (G.s.flags.pudding_follower as string) ?? PLAYABLE_ORDER.filter((id) => id !== "CRONGUS")[Math.floor(Math.random() * 8)];
+    if (!spy) G.s.flags.pudding_follower = watcherId;
     const skyP = this.sky(0x0a0a1a, 0x1a1a2e);
     const g = this.add.graphics();
     g.fillStyle(0x2a2a2a, 1).fillRect(300, 170, 360, 260);
@@ -207,6 +214,17 @@ export class VignetteScene extends Phaser.Scene {
       g.clear();
     }
     const luke = this.add.sprite(120, 420, "spr_CRONGUS", 0).setScale(3).setDepth(10);
+    // someone is in the bushes
+    const watcher = this.add.sprite(-30, 450, `spr_${watcherId}`, 0).setScale(2.6).setDepth(12).setAlpha(spy ? 1 : 0.0);
+    const bush = this.add.ellipse(20, 470, 150, 70, 0x1f3d1f).setDepth(13).setStrokeStyle(3, 0x0f200f);
+    const wName = CHARACTERS[watcherId]?.name ?? watcherId;
+    if (spy) {
+      this.tween({ targets: watcher, x: 30, duration: 900 });
+      await this.talk([
+        dir("You're in a bush outside the abandoned building. Lil' Crongus is walking up to the door, looking over his shoulder every three steps."),
+        say(spy, "There he goes. Up to some sick shit. Stay low."),
+      ]);
+    }
     await this.talk([dir("The abandoned building. A faint smell of custard. And something underneath the custard that the custard is trying to cover up.")]);
     this.time.addEvent({ delay: 140, repeat: 14, callback: () => animateWalker(luke, 1, 0, true, this.time.now) });
     await this.tween({ targets: luke, x: 480, duration: 2000 });
@@ -215,7 +233,7 @@ export class VignetteScene extends Phaser.Scene {
     door.setFillStyle(0x000000);
     await this.wait(1600);
     synth.music("bbp", true);
-    const moans = ["mmmm", "MMMMMM", "mmmmmmmm…", "oh", "OHHH", "mmmMMMMM", "…mmm", "MMMMMMMMMMM"];
+    const moans = ["mmmm", "mm fuck yes", "MMMMMM", "MMM FUCK YES", "mmmmmmmm…", "oh", "fuck yes…", "OHHH", "mmmMMMMM", "…mmm", "MM. FUCK. YES.", "MMMMMMMMMMM"];
     for (let i = 0; i < 14; i++) {
       this.time.delayedCall(i * 380, () => {
         const t = this.add.text(320 + Math.random() * 320, 180 + Math.random() * 220, moans[i % moans.length], { fontFamily: FONT, fontSize: `${14 + (i % 4) * 5}px`, color: "#ffe4ec", fontStyle: "italic", stroke: "#000", strokeThickness: 3 }).setDepth(30);
@@ -226,6 +244,10 @@ export class VignetteScene extends Phaser.Scene {
       });
     }
     await this.wait(14 * 380 + 800);
+    // the wonk
+    if (spy) {
+      await this.talk([dir("From inside: a slow, rhythmic creaking. Then a faster one."), say(spy, "Oh no. He's wonking. He's wonking in there. Over the pudding.")]);
+    } else await this.puddingWonk();
     this.cameras.main.shake(1200, 0.03);
     this.caption("THE ULTIMATE SENSATION", "#ffe4ec", 30);
     await this.wait(1600);
@@ -271,7 +293,166 @@ export class VignetteScene extends Phaser.Scene {
       say("CRONGUS", "*puts phone face down*"),
       dir("You have found the bread and butter pudding. You will never speak of it. You will think about it every single day."),
     ]);
+    if (spy) {
+      await this.talk([say(spy, "Got it all on video. Every 'mm fuck yes'."), say(spy, "The Krelford Gazette is going to pay me so much for this.")]);
+    } else {
+      watcher.setAlpha(1).setX(30);
+      this.tween({ targets: watcher, x: -60, duration: 1400 });
+      await this.talk([dir(`In the bush by the gate, a phone camera light clicks off. ${wName} was there the whole time. ${wName} saw everything.`), dir("You didn't notice. You never notice.")]);
+    }
+    bush.destroy();
     synth.stopMusic();
+  }
+
+  /** Inside the pudding house: a short wonk, flappy-style, to the moans. */
+  private async puddingWonk() {
+    const z = randomZone();
+    const g0 = { gauge: 0, vel: 0 };
+    let inZone = 0;
+    const need = Math.min(1500, z.need * 0.7);
+    const ui = this.add.container(0, 0).setDepth(60);
+    ui.add(this.add.rectangle(480, 270, 960, 540, 0x1a0010, 0.6));
+    ui.add(this.add.text(480, 80, "WONK IT (OVER THE PUDDING)", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 7 }).setOrigin(0.5));
+    ui.add(this.add.text(480, 116, "Tap / SPACE to flap it up. Keep it in the zone. Mm fuck yes.", { fontFamily: FONT, fontSize: "14px", color: "#ffffff" }).setOrigin(0.5));
+    const GX = 700;
+    const GY = 150;
+    const GH = 300;
+    ui.add(this.add.rectangle(GX, GY + GH / 2, 50, GH + 6, 0x000000, 0.8).setStrokeStyle(3, 0xffffff, 0.8));
+    ui.add(this.add.rectangle(GX, GY + GH * (1 - (z.lo + z.hi) / 2), 50, GH * (z.hi - z.lo), 0x22c55e, 0.4));
+    const fillR = this.add.rectangle(GX, GY + GH, 40, 0, 0xff4fa3).setOrigin(0.5, 1);
+    ui.add(fillR);
+    const censor = this.add.rectangle(380, 330, 200, 60, 0x000000);
+    ui.add([this.add.sprite(380, 290, "spr_CRONGUS", 0).setScale(4), censor, this.add.text(380, 330, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5)]);
+    const status = this.add.text(380, 420, "", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffe4ec", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
+    ui.add(status);
+    const press = () => flap(g0);
+    this.input.keyboard?.on("keydown-SPACE", press);
+    this.input.on("pointerdown", press);
+    let t = 0;
+    let result = "under" as "perfect" | "over" | "under";
+    await new Promise<void>((res) => {
+      const ev = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          t += 16;
+          fall(g0, 16);
+          if (g0.gauge >= z.lo && g0.gauge <= z.hi) inZone += 16;
+          fillR.setSize(40, GH * g0.gauge);
+          fillR.setFillStyle(g0.gauge > z.hi ? 0xef4444 : g0.gauge >= z.lo ? 0x22c55e : 0xff4fa3);
+          status.setText(g0.gauge > z.hi ? "TOO MUCH" : g0.gauge >= z.lo ? "mm fuck yes" : "mmmm…");
+          if (g0.gauge >= 0.97) result = "over";
+          else if (inZone >= need) result = "perfect";
+          if (result !== "under" || t > 7000) {
+            ev.remove();
+            res();
+          }
+        },
+      });
+    });
+    this.input.keyboard?.off("keydown-SPACE", press);
+    this.input.off("pointerdown", press);
+    ui.destroy();
+    this.caption(result === "perfect" ? "MM. FUCK. YES." : result === "over" ? "TOO EARLY. INTO THE PUDDING." : "NOTHING. NOT EVEN FOR THE PUDDING.", "#ffe4ec", 30);
+    await this.wait(1400);
+  }
+
+  // ---------------------------------------------------------------- THE PUDDING RAID
+
+  private async puddingRaid() {
+    const leakerId = (G.s.player === "CRONGUS" ? (G.s.flags.pudding_follower as string) : G.s.player) ?? "KREBLIS";
+    const leaker = CHARACTERS[leakerId]?.name ?? leakerId;
+    if (!backdrop(this, "bg_press", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1e2a44);
+    synth.music("ominous");
+    const paper = this.add.container(480, 270).setDepth(200);
+    paper.add(this.add.rectangle(0, 0, 760, 400, 0xf4ecd8).setStrokeStyle(4, 0x1f1f1f));
+    paper.add(this.add.text(0, -165, "THE KRELFORD GAZETTE", { fontFamily: "Georgia, serif", fontSize: "30px", color: "#111", fontStyle: "bold" }).setOrigin(0.5));
+    paper.add(this.add.rectangle(0, -140, 700, 3, 0x111111));
+    paper.add(this.add.text(0, -80, "CHILDREN'S MINISTER IN\nPUDDING HOUSE SHAME", { fontFamily: "Georgia, serif", fontSize: "32px", color: "#7f1d1d", fontStyle: "bold", align: "center" }).setOrigin(0.5));
+    paper.add(this.add.text(0, 30, "\u201cmm fuck yes\u201d — exclusive footage inside", { fontFamily: "Georgia, serif", fontSize: "20px", color: "#111", fontStyle: "italic" }).setOrigin(0.5));
+    paper.add(this.add.text(0, 110, `Footage supplied by a source close to the minister (${leaker})`, { fontFamily: "Georgia, serif", fontSize: "15px", color: "#444" }).setOrigin(0.5));
+    paper.setScale(0.2).setAngle(-540);
+    await this.tween({ targets: paper, scale: 1, angle: 0, duration: 700, ease: "Back.easeOut" });
+    synth.play("smash");
+    await this.talk([dir(`${leaker} has leaked the pudding footage. It is on the front page. It is on every front page.`)]);
+    await this.tween({ targets: paper, y: 800, angle: 12, duration: 500, ease: "Quad.easeIn" });
+    paper.destroy();
+    this.add.text(480, 60, "KRELFORD CONSTABULARY · EMERGENCY PRESS CONFERENCE", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", backgroundColor: "#1e3a8acc", padding: { x: 10, y: 4 } }).setOrigin(0.5);
+    this.add.rectangle(480, 330, 120, 90, 0x5a3a20).setDepth(20);
+    const swigKey = this.textures.exists("npc_swig") ? "npc_swig" : "spr_FOLK1";
+    this.add.sprite(480, 280, swigKey, 0).setScale(3).setDepth(15);
+    for (let i = 0; i < 8; i++) this.add.sprite(120 + i * 100, 470 + (i % 2) * 14, `spr_FOLK${i % 4}`, 0).setScale(2.6).setDepth(30 + i);
+    const flashes = this.time.addEvent({ delay: 900, loop: true, callback: () => { if (Math.random() < 0.5) this.cameras.main.flash(80, 255, 255, 255); synth.play("pop"); } });
+    await this.talk([
+      say("SERGEANT SWIG", "Thank you all for coming. I'll keep this brief."),
+      say("SERGEANT SWIG", "We have reviewed the footage. All of it. Twice, by accident."),
+      say("SERGEANT SWIG", "Luke Shears is a sick cunt."),
+      dir("The room erupts. A journalist faints into another journalist."),
+      say("JOURNALIST", "Sergeant, what are you going to do about the pudding house?"),
+      say("SERGEANT SWIG", "Conventional policing has failed. I have authorised the army."),
+    ]);
+    flashes.remove();
+    // ---- the tanks
+    this.children.removeAll(true);
+    this.cameras.main.flash(300, 255, 255, 255);
+    if (!backdrop(this, "bg_abandoned", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x222233);
+    const house = this.add.rectangle(480, 300, 420, 300, 0x000000, 0).setDepth(1);
+    synth.music("boss", true);
+    const tanks = [0, 1, 2].map((i) => {
+      const t = this.textures.exists("p_tank") ? this.add.image(-200 - i * 220, 440 + i * 22, "p_tank").setScale(1.3) : this.add.rectangle(-200 - i * 220, 440 + i * 22, 140, 60, 0x4b5320).setStrokeStyle(3, 0x000000);
+      t.setDepth(50 + i);
+      return t;
+    });
+    this.caption("OPERATION CUSTARD STORM", "#ffd23f", 30);
+    await Promise.all(tanks.map((t, i) => this.tween({ targets: t, x: 120 + i * 170, duration: 2600, ease: "Sine.out" })));
+    const boom = (x: number, y: number) => {
+      for (let k = 0; k < 3; k++) {
+        const c = this.add.circle(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 60, 10, [0xffd23f, 0xff7a1a, 0xffffff][k], 0.95).setDepth(70);
+        this.tween({ targets: c, radius: 70 + Math.random() * 50, alpha: 0, duration: 600 + k * 150 });
+      }
+      synth.play("explode");
+      this.cameras.main.shake(300, 0.02);
+    };
+    for (let volley = 0; volley < 4; volley++) {
+      for (const t of tanks) {
+        const sx = (t as any).x + 70;
+        const sy = (t as any).y - 20;
+        const shell = this.add.circle(sx, sy, 6, 0xffffff).setDepth(60);
+        this.tween({ targets: t, x: (t as any).x - 12, duration: 80, yoyo: true });
+        const tx = 380 + Math.random() * 200;
+        const ty = 200 + Math.random() * 180;
+        await this.tween({ targets: shell, x: tx, y: ty, duration: 260 });
+        shell.destroy();
+        boom(tx, ty);
+      }
+      await this.wait(250);
+    }
+    // the house comes down
+    this.cameras.main.shake(1600, 0.035);
+    const rubble = this.add.graphics().setDepth(40);
+    rubble.fillStyle(0x1a1a1a, 1);
+    for (let i = 0; i < 26; i++) rubble.fillRect(300 + Math.random() * 360, 330 + Math.random() * 110, 20 + Math.random() * 50, 10 + Math.random() * 30);
+    const dark = this.add.rectangle(480, 250, 460, 300, 0x0a0a0a, 0).setDepth(39);
+    await this.tween({ targets: dark, fillAlpha: 0.92, duration: 900 });
+    for (let i = 0; i < 12; i++) {
+      const smoke = this.add.circle(320 + Math.random() * 320, 380, 20 + Math.random() * 20, 0x777777, 0.6).setDepth(45);
+      this.tween({ targets: smoke, y: 120, radius: 70, alpha: 0, duration: 2600 + Math.random() * 1200, delay: i * 120 });
+    }
+    house.destroy();
+    this.caption("THE PUDDING HOUSE HAS BEEN DESTROYED", "#ffe4ec", 28);
+    await this.wait(1800);
+    synth.stopMusic();
+    const lukeX = this.add.sprite(860, 450, "spr_CRONGUS", 0).setScale(3).setDepth(80);
+    lukeX.setAlpha(0);
+    await this.tween({ targets: lukeX, alpha: 1, duration: 600 });
+    await this.talk([
+      dir("A small, dusty figure watches from the edge of the rubble. There is custard on his shoes."),
+      say("CRONGUS", "…"),
+      say("CRONGUS", G.s.player === "CRONGUS" ? `${leaker}. You absolute snake.` : `${leaker}. You absolute snake. I saw you in the bush.`),
+      say("CRONGUS", "Doesn't matter. I know a guy who does it in a caravan."),
+      dir("Somewhere on the edge of Krelford, a caravan's suspension creaks. Lightly. Then rhythmically."),
+    ]);
+    G.s.flags.pudding_house_destroyed = true;
   }
 
   // ---------------------------------------------------------------- ROBBO

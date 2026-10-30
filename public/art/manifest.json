@@ -4651,6 +4651,9 @@
   },
   "p_croc": {
    "file": "props/p_croc.png"
+  },
+  "p_tank": {
+   "file": "props/p_tank.png"
   }
  },
  "sheets": {

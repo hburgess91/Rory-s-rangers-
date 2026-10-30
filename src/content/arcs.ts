@@ -29,6 +29,8 @@ export interface Arc {
   minChapter?: number;
   /** Also needs this flag in its first chapter (from the next chapter on it's always open). */
   requires?: string;
+  /** Shared quests only: hidden for this character (they have their own version). */
+  notPlayer?: PlayableId;
   title: string;
   blurb: string;
   steps: ArcStep[];
@@ -212,6 +214,12 @@ export const ARCS: Arc[] = [
           success: [say("KREBLIS", "Right. Fine. Filed under nothing."), dir("He believes you. For now. You are, from this day, a man with a secret. Every time someone says 'pudding' in the group chat, your soul leaves your body slightly.")],
           fail: [say("KREBLIS", "I'm filing this. I'm filing it under STRANGE."), dir("He doesn't know. Not yet. Try again: compose yourself.")],
         },
+      },
+      {
+        id: "raid",
+        text: "Somebody followed you to the abandoned building. It's in the papers. The police want a word (Krelford Constabulary).",
+        at: "POLICE",
+        step: { kind: "vignette", id: "pudding_raid", intro: [dir("Your phone has 214 notifications. The top one is a link to the Krelford Gazette. You do not click it. You don't need to.")] },
       },
     ],
   },
@@ -1120,6 +1128,61 @@ export const ARCS: Arc[] = [
     ],
   },
   {
+    id: "arc_pudding_spy",
+    player: "ALL",
+    notPlayer: "CRONGUS",
+    minChapter: 2,
+    title: "Some Sick Shit",
+    blurb: "Lil' Crongus has been sneaking off to the abandoned building. The FGM War Room says he's up to 'some sick shit'. Follow him.",
+    reward: { coins: 250, desc: "The pudding house is rubble. Lulon has a caravan now. +250 Krezzcoin." },
+    steps: [
+      {
+        id: "brief",
+        text: "Briefing in the FGM War Room (under the Archive): Lulon is up to something.",
+        at: "ARCHIVE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The FGM War Room. Mikey has a CCTV still on the big screen: Lil' Crongus, at night, looking over his shoulder, outside the abandoned building. He is holding a spoon."),
+            say("MIKEY", "Lulon. Three nights in a row. Same building. Comes out walking like he's seen God and didn't like it."),
+            say("KREBLIS", "Ministry of Strange Occurrences assessment: he is up to some sick shit."),
+            say("MIKEY", "Some sick shit. Officially."),
+            say("KREZWONK", "I foresaw this. In the dream there was custard. Too much custard."),
+            say("MIKEY", "Follow him. Stay in the bushes. Film everything. Divide and conquer."),
+          ],
+        },
+      },
+      {
+        id: "follow",
+        text: "Follow Lil' Crongus to the abandoned building, south of town. Stay in the bushes.",
+        at: "ABANDONED",
+        step: { kind: "vignette", id: "pudding_spy", intro: [dir("You crouch in a bush by the gate of the abandoned building. It smells of custard. You hear footsteps.")] },
+      },
+      {
+        id: "leak",
+        text: "Leak the footage to the press (laptop at home).",
+        at: "HOME",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("Your laptop. One email to the Krelford Gazette newsdesk. Subject line: 'CHILDREN'S MINISTER. PUDDING. YOU NEED TO SEE THIS'."),
+            dir("Attachment: pudding_FINAL.mp4 (4 min 12s). You watch it back once to check it uploaded. You will never be the same."),
+            dir("Reply, eleven seconds later: 'Front page. How much do you want.'"),
+            say("DRONGUS", "(ping) why is Lulon trending"),
+            say("DRONGUS", "(ping) what is bread and butter pudding"),
+            say("DRONGUS", "(ping) I'm going to need someone to explain this to me in the group chat"),
+          ],
+        },
+      },
+      {
+        id: "raid",
+        text: "The Constabulary has called an emergency press conference (Krelford Constabulary).",
+        at: "POLICE",
+        step: { kind: "vignette", id: "pudding_raid", intro: [dir("Outside the Constabulary: satellite vans, a crowd, and three tanks idling on double yellow lines.")] },
+      },
+    ],
+  },
+  {
     id: "arc_krebon",
     player: "KREBON",
     title: "Reprieve",
@@ -1171,5 +1234,5 @@ export function arcFor(player: PlayableId): Arc | undefined {
 
 /** The player's own story first, then the shared ones. */
 export function arcsFor(player: PlayableId): Arc[] {
-  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL")];
+  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)];
 }

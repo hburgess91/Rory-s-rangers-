@@ -1233,7 +1233,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "FIXER_UPPER":
         return "Look at the fixer-upper";
       case "ABANDONED":
-        return s.flags.arc_crongus_done ? "The Abandoned Building (you think about it every day)" : "The Abandoned Building";
+        return s.flags.pudding_house_destroyed ? "The smouldering remains of the pudding house" : s.flags.arc_crongus_done ? "The Abandoned Building (you think about it every day)" : "The Abandoned Building";
       case "OLD_FLAT":
         return "Your old flat";
       case "POLICE":
