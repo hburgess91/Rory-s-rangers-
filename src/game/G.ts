@@ -24,6 +24,8 @@ class GameContext {
     timerEnd: 0,
     /** Fart meter 0-100 (carried between rooms of one dungeon). */
     fart: 0,
+    /** Town time (ms) until the next chance of a posse beat-up. */
+    beatupIn: undefined as number | undefined,
   };
 
   constructor() {

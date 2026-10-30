@@ -76,7 +76,6 @@ export class Beatup {
   private h: any;
   private doors: { x: number; y: number; name: string }[];
   state: "idle" | "hunt" | "fight" = "idle";
-  private nextCheck = 0;
   private mates: Mate[] = [];
   private hidden: any[] = [];
   private victim: { id: string; name: string; full: string; spr: Phaser.GameObjects.Sprite; plate: Phaser.GameObjects.Text } | null = null;
@@ -105,7 +104,8 @@ export class Beatup {
     this.h = h;
     this.doors = doors;
     // first one comes along after a bit of wandering, then every few minutes (sometimes)
-    this.nextCheck = h.time.now + 50000 + Math.random() * 40000;
+    // counted in time actually spent walking around town, so it survives going in and out of buildings
+    if (G.rt.beatupIn === undefined) G.rt.beatupIn = 240000 + Math.random() * 120000;
   }
 
   /** Where the town arrow should point while hunting. */
@@ -114,19 +114,21 @@ export class Beatup {
   }
 
   update(now: number, dt: number) {
-    if (this.state === "idle") return this.maybeStart(now);
+    if (this.state === "idle") return this.maybeStart(dt);
     if (this.state === "hunt") return this.updateHunt(now, dt);
     if (this.state === "fight") return this.updateFight(now);
   }
 
   // ------------------------------------------------------------------ start
 
-  private maybeStart(now: number) {
+  private maybeStart(dt: number) {
     const h = this.h;
-    if (now < this.nextCheck) return;
-    this.nextCheck = now + 40000;
+    if (h.busy) return;
+    G.rt.beatupIn = (G.rt.beatupIn ?? 240000) - dt;
+    if (G.rt.beatupIn > 0) return;
+    G.rt.beatupIn = 45000;
     const s = G.s;
-    if (h.busy || !s.flags.prologue_done || now < h.pg?.chaseUntil || h.cops?.length) return;
+    if (h.busy || !s.flags.prologue_done || h.time.now < h.pg?.chaseUntil || h.cops?.length) return;
     if (Math.random() > 0.5) return;
     this.start();
   }
@@ -498,7 +500,7 @@ export class Beatup {
     }
     this.hidden = [];
     this.state = "idle";
-    this.nextCheck = h.time.now + 180000 + Math.random() * 120000;
+    G.rt.beatupIn = 300000 + Math.random() * 180000;
   }
 
   /** Called when the town scene shuts down mid-event. */
