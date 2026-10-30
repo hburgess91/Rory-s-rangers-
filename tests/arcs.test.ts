@@ -5,7 +5,7 @@ import { BOSS_TEXT } from "../src/content/bosses";
 import { newGameState } from "../src/game/systems/state";
 import { currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
 
-const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD"];
+const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE"];
 const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv"];
 const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook"];
 
@@ -83,7 +83,7 @@ describe("shared side quests", () => {
     s.chapter = 1;
     expect(currentArcSteps(s).length).toBe(0);
     s.chapter = 3;
-    expect(currentArcSteps(s).map((c) => c.arc.id).sort()).toEqual(["arc_cronster", "arc_polson_fit"]);
+    expect(currentArcSteps(s).map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_cronster", "arc_polson_fit"]);
   });
   it("collect steps finish when every token is picked up", () => {
     const s = newGameState("MIKEY");

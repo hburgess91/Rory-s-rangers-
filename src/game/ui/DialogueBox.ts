@@ -22,6 +22,19 @@ export interface PlayOptions {
 const W = 960;
 const H = 540;
 
+const REGISTER_JIBES = [
+  "Oh. It's the pedo.",
+  "Get away from me, you sicko.",
+  "Keep your distance, nonce.",
+  "I've seen the register. Everyone's seen the register.",
+  "Ugh. It's you. The pervert.",
+  "Hands where I can see them, pedo.",
+  "My mum said not to talk to you. She's right.",
+  "Oh great, the sex offender's here.",
+  "Stay six feet away, sicko. Twelve.",
+  "Don't make it weird. Well. Weirder.",
+];
+
 export class DialogueBox {
   private scene: Phaser.Scene;
   private root: Phaser.GameObjects.Container;
@@ -310,6 +323,11 @@ export class DialogueBox {
     this.root.setVisible(true);
     const queue = [...lines];
     const s = G.s;
+    // On the register: whoever speaks to you first opens with what they think of you.
+    if (s.flags.on_register) {
+      const i = queue.findIndex((l) => !l.dir && !l.notify && l.s !== "NARRATOR" && l.s !== s.player && !!l.t && evalCond(l.cond, s));
+      if (i >= 0) queue.splice(i, 0, { s: queue[i].s, t: REGISTER_JIBES[Math.floor(Math.random() * REGISTER_JIBES.length)], tag: "new" });
+    }
     while (queue.length && !this.destroyed) {
       const raw = queue.shift()!;
       if (!evalCond(raw.cond, s)) continue;

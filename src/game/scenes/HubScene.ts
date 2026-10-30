@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
-import { FONT, hexStr } from "../ui/theme";
+import { FONT, hexStr, button } from "../ui/theme";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { BARKS } from "../../content/dialogue/ambient";
 import { NPC_TALK, type TalkSet } from "../../content/dialogue/npc";
@@ -53,6 +53,7 @@ const BUILDINGS: Building[] = [
   { id: "BOOTH", name: "THE BOOTH", x: 940, y: 680, w: 150, h: 110, wall: 0x6d28d9, roof: 0x111827, door: { x: 940, y: 735 } },
   { id: "ABANDONED", name: "ABANDONED BUILDING", x: 1000, y: 1660, w: 220, h: 140, wall: 0x2a2a2a, roof: 0x111111, door: { x: 1000, y: 1730 } },
   { id: "POLICE", name: "KRELFORD CONSTABULARY", x: 1700, y: 1670, w: 240, h: 130, wall: 0x1e3a8a, roof: 0x111827, door: { x: 1700, y: 1735 } },
+  { id: "BOGGOR_HOUSE", name: "BOGGOR CRANSTIL'S HOUSE", x: 300, y: 250, w: 224, h: 176, wall: 0x2a2433, roof: 0x111111, door: { x: 300, y: 338 } },
   { id: "OLD_FLAT", name: "YOUR OLD FLAT", x: 700, y: 1650, w: 200, h: 130, wall: 0x9a8a7a, roof: 0x5a3a2a, door: { x: 700, y: 1715 } },
 ];
 
@@ -61,6 +62,17 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
 ];
+
+/** The playground (Boggor's view). Kids, sweeties, screaming. */
+const PLAYGROUND = { x: 120, y: 480, w: 360, h: 190, cx: 300, cy: 575 };
+const PLAY_EQUIP: [string, number, number][] = [
+  ["hd_swings", 190, 560],
+  ["hd_slide", 300, 510],
+  ["hd_climber", 410, 560],
+  ["hd_roundabout", 230, 640],
+  ["hd_seesaw", 370, 645],
+];
+const KID_SHOUTS = ["PEDO! PEDO!", "PEDO!!!", "MUM! PEDO!", "STRANGER DANGER!", "PEDOOOO!", "GET AWAY PEDO!", "I'M TELLING!"];
 
 const NPC_SPOTS: Record<string, { x: number; y: number }> = {
   KREZWONK: { x: 1790, y: 580 },
@@ -128,6 +140,9 @@ export class HubScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.Text;
   private arrow!: Phaser.GameObjects.Text;
   private busy = false;
+  private kids: { spr: Phaser.GameObjects.Sprite; tx: number; ty: number; next: number }[] = [];
+  private pg = { distractedUntil: 0, candyAt: { x: 0, y: 0 }, alarmAt: 0, cooldownUntil: 0, chaseUntil: 0 };
+  private cops: Phaser.GameObjects.Sprite[] = [];
   private walkT = 0;
   private nextChatter = 0;
   private idleMs = 0;
@@ -148,6 +163,9 @@ export class HubScene extends Phaser.Scene {
     this.interactables = [];
     this.busy = false;
     this.anchorsSpr = {};
+    this.kids = [];
+    this.cops = [];
+    this.pg = { distractedUntil: 0, candyAt: { x: 0, y: 0 }, alarmAt: 0, cooldownUntil: 0, chaseUntil: 0 };
     this.cameras.main.fadeIn(350);
     this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
     this.hd = this.textures.exists("bld_TOWN_HALL");
@@ -278,6 +296,7 @@ export class HubScene extends Phaser.Scene {
       if (this.hd && this.textures.exists("hd_gate")) this.add.image(gt.x, gt.y - 20, "hd_gate").setDepth(gt.y + 30);
       else this.add.rectangle(gt.x, gt.y, 60, 60, 0xffd23f, 0.15).setStrokeStyle(2, 0xffd23f).setDepth(1);
     }
+    this.drawPlayground();
     // trees
     const rnd = new Phaser.Math.RandomDataGenerator(["krelford"]);
     for (let i = 0; i < 70; i++) {
@@ -440,6 +459,7 @@ export class HubScene extends Phaser.Scene {
   }
 
   private nearBuilding(x: number, y: number, pad: number) {
+    if (x > PLAYGROUND.x - pad && x < PLAYGROUND.x + PLAYGROUND.w + pad && y > PLAYGROUND.y - pad && y < PLAYGROUND.y + PLAYGROUND.h + pad) return true;
     return BUILDINGS.some((b) => x > b.x - b.w / 2 - pad && x < b.x + b.w / 2 + pad && y > b.y - b.h / 2 - pad && y < b.y + b.h / 2 + pad);
   }
 
@@ -660,6 +680,229 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  // ------------------------------------------------------------- the playground
+
+  private drawPlayground() {
+    const P = PLAYGROUND;
+    const g = this.add.graphics().setDepth(1);
+    g.fillStyle(0x7a3b5a, 1).fillRoundedRect(P.x, P.y, P.w, P.h, 18);
+    g.fillStyle(0x8f4a6b, 1);
+    for (let i = 0; i < 40; i++) g.fillCircle(P.x + 14 + ((i * 53) % (P.w - 28)), P.y + 14 + ((i * 37) % (P.h - 28)), 3);
+    g.lineStyle(4, 0xffd23f, 1).strokeRoundedRect(P.x, P.y, P.w, P.h, 18);
+    this.add.text(P.cx, P.y + P.h + 8, "KRELFORD PLAYGROUND · NO ADULTS UNLESS ACCOMPANYING A CHILD", { fontFamily: FONT, fontSize: "10px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(P.y + P.h + 2);
+    for (const [k, x, y] of PLAY_EQUIP) {
+      if (this.textures.exists(k)) this.add.image(x, y + 10, k).setOrigin(0.5, 1).setDepth(y + 10);
+      else this.add.rectangle(x, y - 10, 60, 40, 0xff6bb0).setStrokeStyle(3, 0x5ad1ff).setDepth(y);
+    }
+    for (let i = 0; i < 3; i++) {
+      const key = this.textures.exists(`spr_KID${i}`) ? `spr_KID${i}` : `spr_FOLK${i}`;
+      const x = P.x + 60 + i * 110;
+      const spr = this.add.sprite(x, P.cy, key, 0).setScale(key.startsWith("spr_KID") ? 2 : 1.4).setDepth(P.cy);
+      this.kids.push({ spr, tx: x, ty: P.cy, next: 0 });
+    }
+    // sweetie throwing spots on the fence
+    for (const [x, y] of [
+      [P.cx, P.y + P.h + 30],
+      [P.x + P.w + 30, P.cy],
+    ]) {
+      this.interactables.push({
+        x,
+        y,
+        r: 60,
+        enabled: () => ((G.s.flags.boggor_candy as number) ?? 0) > 0,
+        label: () => `Throw a sweetie into the playground (${G.s.flags.boggor_candy} left)`,
+        use: () => this.throwCandy(),
+      });
+    }
+  }
+
+  private kidsDistracted() {
+    return this.time.now < this.pg.distractedUntil;
+  }
+
+  private throwCandy() {
+    const n = ((G.s.flags.boggor_candy as number) ?? 0) - 1;
+    G.s.flags.boggor_candy = Math.max(0, n);
+    const P = PLAYGROUND;
+    const tx = P.x + 40 + Math.random() * (P.w - 80);
+    const ty = P.y + 30 + Math.random() * (P.h - 60);
+    const c = this.add.image(this.av.x, this.av.y - 20, this.textures.exists("hd_candy") ? "hd_candy" : "p_coin").setDepth(5000);
+    this.tweens.add({ targets: c, x: tx, y: ty, duration: 600, ease: "Quad.out", onComplete: () => this.tweens.add({ targets: c, alpha: 0, delay: 12000, duration: 400, onComplete: () => c.destroy() }) });
+    this.tweens.add({ targets: c, angle: 720, duration: 600 });
+    synth.play("lob");
+    this.pg.distractedUntil = this.time.now + 15000;
+    this.pg.candyAt = { x: tx, y: ty };
+    this.pg.alarmAt = 0;
+    for (const k of this.kids) this.kidBubble(k.spr, ["SWEETIES!", "MINE!", "CANDY!!", "NO MINE!"][Math.floor(Math.random() * 4)], "#ffd23f");
+    G.emit("toast", { title: "DISTRACTED", text: "The kids are fighting over a sweetie. ~15 seconds. Get your photos." });
+  }
+
+  private kidBubble(spr: Phaser.GameObjects.Sprite, text: string, color = "#ff3b3b") {
+    const t = this.add.text(spr.x, spr.y - 44, text, { fontFamily: FONT, fontSize: "12px", color, fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5, 1).setDepth(5000);
+    this.tweens.add({ targets: t, y: t.y - 18, alpha: 0, delay: 600, duration: 1200, onComplete: () => t.destroy() });
+  }
+
+  private nearPlayground(x: number, y: number, m = 40) {
+    const P = PLAYGROUND;
+    return x > P.x - m && x < P.x + P.w + m && y > P.y - m && y < P.y + P.h + m;
+  }
+
+  /** Kids scream, police come. Called when the kids spot an adult. */
+  private raiseAlarm() {
+    const now = this.time.now;
+    if (this.pg.alarmAt || now < this.pg.chaseUntil || now < this.pg.cooldownUntil) return;
+    this.pg.alarmAt = now + 2200;
+    synth.play("alarm");
+    this.kids.forEach((k, i) => this.time.delayedCall(i * 250, () => this.kidBubble(k.spr, KID_SHOUTS[(i + Math.floor(now / 1000)) % KID_SHOUTS.length])));
+    this.time.delayedCall(900, () => this.kids.forEach((k) => this.kidBubble(k.spr, "PEDO! PEDO!")));
+  }
+
+  private startChase() {
+    const now = this.time.now;
+    this.pg.alarmAt = 0;
+    this.pg.chaseUntil = now + 22000;
+    G.emit("toast", { title: "999", text: "Someone has called the police. RUN. Lose them for 22 seconds." });
+    synth.play("whistle");
+    const key = this.textures.exists("spr_COP") ? "spr_COP" : "spr_FOLK1";
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + Math.random();
+      const cop = this.add.sprite(this.av.x + Math.cos(a) * 620, this.av.y + Math.sin(a) * 420, key, 0).setScale(2).setDepth(this.av.y);
+      if (key === "spr_FOLK1") cop.setTint(0x6699ff);
+      cop.setData("speed", 150 + i * 18);
+      this.cops.push(cop);
+    }
+  }
+
+  private endChase(caught: boolean) {
+    for (const c of this.cops) c.destroy();
+    this.cops = [];
+    this.pg.chaseUntil = 0;
+    this.pg.cooldownUntil = this.time.now + 20000;
+    if (caught) this.registerScene();
+    else G.emit("toast", { title: "ESCAPED", text: "You lost them. Somewhere, a child is still shouting 'PEDO'." });
+  }
+
+  private updatePlayground(now: number, dt: number) {
+    const P = PLAYGROUND;
+    const distracted = this.kidsDistracted();
+    for (const k of this.kids) {
+      if (distracted) {
+        k.tx = this.pg.candyAt.x + (Math.random() - 0.5) * 30;
+        k.ty = this.pg.candyAt.y + (Math.random() - 0.5) * 20;
+      } else if (now > k.next) {
+        k.next = now + 1500 + Math.random() * 2500;
+        k.tx = P.x + 30 + Math.random() * (P.w - 60);
+        k.ty = P.y + 30 + Math.random() * (P.h - 60);
+      }
+      const dx = k.tx - k.spr.x;
+      const dy = k.ty - k.spr.y;
+      const d = Math.hypot(dx, dy);
+      const moving = d > 4;
+      if (moving) {
+        const sp = (distracted ? 120 : 60) * (dt / 1000);
+        k.spr.x += (dx / d) * Math.min(sp, d);
+        k.spr.y += (dy / d) * Math.min(sp, d);
+      }
+      animateWalker(k.spr, dx, dy, moving, now);
+      k.spr.setDepth(k.spr.y);
+    }
+    if (this.busy) return;
+    // the kids notice any adult who gets close while they're not busy with sweeties
+    if (!distracted && this.nearPlayground(this.av.x, this.av.y)) this.raiseAlarm();
+    if (this.pg.alarmAt && now > this.pg.alarmAt) this.startChase();
+    if (this.cops.length) {
+      for (const c of this.cops) {
+        const dx = this.av.x - c.x;
+        const dy = this.av.y - c.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const sp = (c.getData("speed") as number) * (dt / 1000);
+        c.x += (dx / d) * sp;
+        c.y += (dy / d) * sp;
+        animateWalker(c, dx, dy, true, now);
+        c.setDepth(c.y);
+        if (d < 26) return this.endChase(true);
+      }
+      if (now > this.pg.chaseUntil) this.endChase(false);
+    }
+  }
+
+  /** Caught. Charged. Must click the button. */
+  private registerScene() {
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    synth.play("banhammer");
+    const root = this.add.container(0, 0).setScrollFactor(0).setDepth(9000);
+    root.add(this.add.rectangle(480, 270, 960, 540, 0x0a0a12, 0.85));
+    root.add(this.add.rectangle(480, 260, 620, 330, 0x1e3a8a, 1).setStrokeStyle(4, 0xffd23f));
+    root.add(this.add.text(480, 130, "KRELFORD CONSTABULARY", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5));
+    root.add(
+      this.add
+        .text(480, 225, `SUSPECT: ${CHARACTERS[G.s.player].name}
+CHARGE: Being a pedo
+EVIDENCE: "the kids said so"
+ARRESTING OFFICER: Sgt. Grimbolus Swig (mouth full of chocolate)
+
+You are required by law to sign the Sex Offenders Register.`, {
+          fontFamily: FONT,
+          fontSize: "15px",
+          color: "#ffffff",
+          align: "center",
+          lineSpacing: 5,
+        })
+        .setOrigin(0.5),
+    );
+    const sign = () => {
+      G.s.flags.on_register = true;
+      G.s.flags.register_count = ((G.s.flags.register_count as number) ?? 0) + 1;
+      G.save();
+      synth.play("archive");
+      root.destroy();
+      const police = BUILDINGS.find((b) => b.id === "POLICE");
+      if (police?.door) this.av.setPosition(police.door.x, police.door.y + 40);
+      this.busy = false;
+      this.talk([
+        say("SERGEANT SWIG", "Signed, sealed, registered. Welcome to the list, sicko."),
+        dir("You are now on the Sex Offenders Register. Everyone in Krelford has read it. Everyone in Krelford will mention it."),
+        dir("Word is the Supreme Leader can make paperwork disappear. For a price. Try the Town Hall."),
+      ]);
+    };
+    // drawn in screen space; the click is checked against the button's screen rectangle
+    const btn = button(this, 480, 360, "✍ SIGN THE REGISTER", () => undefined, { w: 300, h: 46, color: 0x7c2d12 });
+    root.add(btn);
+    root.setScrollFactor(0, 0, true);
+    btn.setScrollFactor(0, 0, true);
+    const onUp = (pt: Phaser.Input.Pointer) => {
+      if (Math.abs(pt.x - 480) < 150 && Math.abs(pt.y - 360) < 23) {
+        this.input.off("pointerup", onUp);
+        sign();
+      }
+    };
+    this.input.on("pointerup", onUp);
+  }
+
+  /** Drongus will take you off the register. For a fee. */
+  private async registerBribe() {
+    const s = G.s;
+    const cost = 250;
+    delete s.flags.bribe_pick;
+    await this.talk([
+      ping("DRONGUS", "I hear you're on the register"),
+      ping("DRONGUS", "Terrible business. Terrible"),
+      ping("DRONGUS", `I could make it go away. ${cost} Krezzcoin. Cash. Don't tell Kreblis`),
+      { s: "NARRATOR", t: `Bribe the Supreme Leader ${cost} Krezzcoin? (you have ${s.coins})`, dir: true, choice: [{ label: `Pay ${cost}`, set: { bribe_pick: 1 } }, { label: "Stay on the register", set: { bribe_pick: 0 } }] },
+    ]);
+    if (s.flags.bribe_pick !== 1) return;
+    if (s.coins < cost) {
+      await this.talk([ping("DRONGUS", "That's not 250. That's not even close. Pedo")]);
+      return;
+    }
+    s.coins -= cost;
+    delete s.flags.on_register;
+    synth.play("coin");
+    await this.talk([ping("DRONGUS", "Done. Register's been 'updated'. You were never on it. Nobody was ever on it"), ping("DRONGUS", "Also please react to my song"), dir("You are no longer on the register. People will still look at you funny. They always did.")]);
+    G.save();
+  }
+
   /** Glowing pickups for any open "collect" side-quest step. */
   private spawnCollectibles() {
     for (const c of currentArcSteps(G.s)) {
@@ -669,7 +912,7 @@ export class HubScene extends Phaser.Scene {
         const f = spotFlag(c.arc, c.step, i);
         if (G.s.flags[f]) return;
         const glow = this.add.circle(sp.x, sp.y, 20, 0xf9a8d4, 0.25).setDepth(sp.y - 1);
-        const img = this.add.image(sp.x, sp.y, "p_token").setScale(2).setDepth(sp.y);
+        const img = k.guard ? this.add.image(sp.x, sp.y - 30, this.textures.exists("hd_camera") ? "hd_camera" : "p_tv").setScale(this.textures.exists("hd_camera") ? 1 : 1.2).setDepth(5000) : this.add.image(sp.x, sp.y, "p_token").setScale(2).setDepth(sp.y);
         this.tweens.add({ targets: img, y: sp.y - 6, yoyo: true, repeat: -1, duration: 600 });
         this.interactables.push({
           x: sp.x,
@@ -678,8 +921,14 @@ export class HubScene extends Phaser.Scene {
           label: () => `Pick up: ${k.label} (${sp.name})`,
           enabled: () => !G.s.flags[f],
           use: async () => {
+            if (k.guard === "playground" && !this.kidsDistracted()) {
+              this.raiseAlarm();
+              G.emit("toast", { title: "SPOTTED", text: "Distract the kids with a sweetie first." });
+              return;
+            }
             G.s.flags[f] = true;
-            synth.play("pickup");
+            synth.play(k.guard ? "select" : "pickup");
+            if (k.guard) this.cameras.main.flash(120, 255, 255, 255);
             img.destroy();
             glow.destroy();
             const got = k.spots.filter((_, j) => G.s.flags[spotFlag(c.arc, c.step, j)]).length;
@@ -730,6 +979,8 @@ export class HubScene extends Phaser.Scene {
         return "Your old flat";
       case "POLICE":
         return "Enter Krelford Constabulary";
+      case "BOGGOR_HOUSE":
+        return "Knock on the dark house";
       case "AIRPORT":
         return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
@@ -782,6 +1033,17 @@ export class HubScene extends Phaser.Scene {
             : [dir("Boarded windows. A faint smell of custard. Something inside is breathing slowly and contentedly. You decide you're not ready.")],
         );
         return;
+      case "BOGGOR_HOUSE":
+        if (s.flags.arcstep_arc_boggor_meet && !s.flags.arc_boggor_done && !((s.flags.boggor_candy as number) > 0)) {
+          await this.talk([say("BOGGOR CRANSTIL", "Out of sweeties already? Greedy little things, aren't they. Here. Five more. Heh heh heh.", { set: { boggor_candy: 5 } })]);
+          return;
+        }
+        await this.talk(
+          s.flags.arc_boggor_done
+            ? [dir("The curtains twitch. From inside: 'lovely jubbly…'. The door stays shut.")]
+            : [dir("The curtains twitch. Nobody answers. A garden gnome stares at you. You don't remember it facing this way.")],
+        );
+        return;
       case "POLICE":
         await this.talk(
           s.flags.cronster_caught
@@ -818,7 +1080,8 @@ export class HubScene extends Phaser.Scene {
         } else if (a.kind === "fact") this.go("KrazyFact", {});
         else {
           const q = canTurnIn(s, "TOWN_HALL");
-          if (q) await this.turnIn(q);
+          if (s.flags.on_register) await this.registerBribe();
+          else if (q) await this.turnIn(q);
           else await this.talk([dir("The Town Hall is in recess. The horseshoe table is sticky. A cleaner is scrubbing the word 'HOSTILE' off the minutes.")]);
         }
         return;
@@ -1199,6 +1462,7 @@ export class HubScene extends Phaser.Scene {
     }
     this.av.setDepth(this.av.y + 1);
     this.updateNpcs(time, dt);
+    this.updatePlayground(time, dt);
     this.tryChatter(time);
     // interact
     let best: HubInteract | null = null;

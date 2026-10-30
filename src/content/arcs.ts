@@ -12,7 +12,7 @@ export type ArcStepKind =
   | { kind: "vignette"; intro: Line[]; id: string }
   | { kind: "pay"; intro: Line[]; cost: number; success: Line[] }
   /** Pick up glowing items around Krelford. Not tied to a building (use at: "FIELD"). */
-  | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[] };
+  | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[]; guard?: "playground" };
 
 export interface ArcStep {
   id: string;
@@ -403,7 +403,7 @@ export const ARCS: Arc[] = [
           label: "Cuddle token",
           pickup: [dir("A chocolate cuddle token. 'Sweet hugs, sweeter squeezes.' It smells incredible. You do not eat it. You think about eating it.")],
           spots: [
-            { x: 300, y: 600, name: "dark choccy" },
+            { x: 480, y: 1050, name: "dark choccy" },
             { x: 1560, y: 980, name: "mint choccy" },
             { x: 2200, y: 1050, name: "caramel choccy" },
             { x: 420, y: 1440, name: "ruby choccy" },
@@ -454,6 +454,67 @@ export const ARCS: Arc[] = [
         text: "Polson says he's at the gym. Check the FGM War Room surveillance feed (under the Archive).",
         at: "ARCHIVE",
         step: { kind: "vignette", id: "polson_cctv", intro: [dir("A message from Polson: 'At the gym again 💪 might be a while'."), dir("Mikey's FGM War Room has a camera on everything. You pull up the Polson Towers feed. Just to check.")] },
+      },
+    ],
+  },
+  {
+    id: "arc_boggor",
+    player: "ALL",
+    minChapter: 2,
+    title: "Supple Structures",
+    blurb: "Boggor Cranstil, the hunched old man in the dark house by the playground, wants photographs of the playground equipment.",
+    reward: { coins: 250, desc: "A signed copy of 'Supple Structures: A Photographic Journey' by B. Cranstil. It's mostly slides." },
+    steps: [
+      {
+        id: "meet",
+        text: "Visit Boggor Cranstil's dark house by the playground.",
+        at: "BOGGOR_HOUSE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("A dark house. Curtains drawn. The door opens before you knock. A hunched old man in a stained cardigan is already standing there. He has been standing there for some time."),
+            say("BOGGOR CRANSTIL", "Ahh. A visitor. Come in, come in. Mind the gnome. He bites. Heh heh heh."),
+            say("BOGGOR CRANSTIL", "I'm Boggor. Boggor Cranstil. I've lived next to that playground for forty-one years. Forty-one years of watching it."),
+            say("BOGGOR CRANSTIL", "The slide. The climbing frame. The swings. Oh, the swings. I love the supple structures. The way they bend in the sun. The galvanised steel. The give in the rubber matting."),
+            dir("You: …the equipment?"),
+            say("BOGGOR CRANSTIL", "The equipment, yes. What else? Heh heh heh."),
+            say("BOGGOR CRANSTIL", "I'm making a book of photographs. 'Supple Structures'. But every time I go near with my camera, the little ones start screaming. Terrible lungs on them."),
+            say("BOGGOR CRANSTIL", "You take the pictures for ol' Boggor. Three photographs. The swings, the slide, the climbing frame. No children in them. They ruin the lines."),
+            say("BOGGOR CRANSTIL", "Here. Sweeties. Throw them in and the little horrors go after them like pigeons. Then snap snap snap. Heh heh heh.", { set: { boggor_candy: 5 } }),
+            dir("You receive: Boggor's camera. You receive: 5 sweeties (they are slightly warm). Throw sweeties into the playground to distract the kids, then photograph the equipment while they're busy. Get too close without distracting them and they WILL scream."),
+          ],
+        },
+      },
+      {
+        id: "photos",
+        text: "Photograph the swings, the slide and the climbing frame. Distract the kids with sweeties first.",
+        at: "FIELD",
+        step: {
+          kind: "collect",
+          label: "Photograph",
+          guard: "playground",
+          pickup: [dir("*click* A beautiful shot. Not a child in frame. The galvanised steel glistens. Boggor will weep.")],
+          spots: [
+            { x: 190, y: 580, name: "the swings" },
+            { x: 300, y: 530, name: "the slide" },
+            { x: 410, y: 580, name: "the climbing frame" },
+          ],
+        },
+      },
+      {
+        id: "handin",
+        text: "Bring the photographs back to Boggor Cranstil.",
+        at: "BOGGOR_HOUSE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("You hand over the photographs. Boggor holds them very close to his glasses. He breathes through his mouth."),
+            say("BOGGOR CRANSTIL", "Oh lovely… lovely jubbly indeed."),
+            say("BOGGOR CRANSTIL", "Look at the camber on that slide. Look at the tension in those swing chains. Supple. So supple."),
+            say("BOGGOR CRANSTIL", "You've done ol' Boggor a great kindness. Here. For your trouble. And a signed copy. Heh heh heh."),
+            dir("Boggor closes the door. Behind it, faintly, you hear him whisper 'galvanised' to himself several times."),
+          ],
+        },
       },
     ],
   },
