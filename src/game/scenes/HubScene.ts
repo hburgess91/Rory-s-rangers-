@@ -61,6 +61,7 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "POLSON_ROAD", name: "→ POLSON TOWERS", x: 2500, y: 1010 },
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
+  { id: "PORTAL", name: "??? THE SYMBOL OF WAHOOGAH", x: 90, y: 1250 },
 ];
 
 /** The playground (Boggor's view). Kids, sweeties, screaming. */
@@ -84,6 +85,7 @@ const NPC_SPOTS: Record<string, { x: number; y: number }> = {
   GRONNY: { x: 1140, y: 880 },
   FLENKY: { x: 800, y: 560 },
   MIKEY: { x: 430, y: 980 },
+  BENN: { x: 980, y: 1090 },
   POLSON: { x: 2330, y: 1000 },
   EDEN: { x: 2390, y: 1060 },
 };
@@ -217,6 +219,10 @@ export class HubScene extends Phaser.Scene {
       ]);
       G.save();
     }
+    if (from === "swap") {
+      G.emit("toast", { title: "CARRYING ON", text: `You are now ${CHARACTERS[s.player].name}. Benn's ${s.flags.rock_points ?? 0} rockstar points came with you.` });
+      await this.talk([dir("You wake up at the edge of town, next to a faded symbol and a pile of underwear. You don't remember how you got here. You feel inexplicably like a rockstar.")]);
+    }
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: "Report to the Town Hall." });
@@ -292,6 +298,10 @@ export class HubScene extends Phaser.Scene {
     }
     // gates
     for (const gt of GATES) {
+      if (gt.id === "PORTAL") {
+        this.drawPortal(gt.x, gt.y);
+        continue;
+      }
       this.add.text(gt.x, gt.y - 40, gt.name, { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", backgroundColor: "#000000aa", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(gt.y);
       if (this.hd && this.textures.exists("hd_gate")) this.add.image(gt.x, gt.y - 20, "hd_gate").setDepth(gt.y + 30);
       else this.add.rectangle(gt.x, gt.y, 60, 60, 0xffd23f, 0.15).setStrokeStyle(2, 0xffd23f).setDepth(1);
@@ -537,6 +547,7 @@ export class HubScene extends Phaser.Scene {
     for (const id of [...PLAYABLE_ORDER, "POLSON", "EDEN"]) {
       if (id === s.player) continue;
       if ((id === "POLSON" || id === "EDEN") && s.chapter < 3) continue;
+      if (id === "BENN" && s.flags.benn_gone) continue;
       this.addNpc(id, NPC_SPOTS[id]);
     }
     // Proctus fills the player's spot
@@ -681,6 +692,19 @@ export class HubScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------- the playground
+
+  private drawPortal(x: number, y: number) {
+    const gone = !!G.s.flags.benn_gone;
+    if (this.textures.exists("hd_portal")) {
+      const p = this.add.image(x, y + 30, "hd_portal").setOrigin(0.5, 1).setDepth(y + 30).setAlpha(gone ? 0.25 : 1);
+      if (!gone) this.tweens.add({ targets: p, scaleX: { from: 0.96, to: 1.04 }, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    } else {
+      const c = this.add.ellipse(x, y - 20, 70, 100, 0x9b59ff, gone ? 0.1 : 0.5).setStrokeStyle(3, 0xffd23f).setDepth(y);
+      if (!gone) this.tweens.add({ targets: c, angle: 360, duration: 6000, repeat: -1 });
+    }
+    if (!gone) this.neonGlow(x, y - 30, 70, 0x9b59ff);
+    this.add.text(x, y + 40, gone ? "(the symbol has faded)" : "??? THE SYMBOL OF WAHOOGAH", { fontFamily: FONT, fontSize: "11px", color: "#e9d5ff", backgroundColor: "#1a1033cc", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(y + 41);
+  }
 
   private drawPlayground() {
     const P = PLAYGROUND;
@@ -981,6 +1005,8 @@ You are required by law to sign the Sex Offenders Register.`, {
         return "Enter Krelford Constabulary";
       case "BOGGOR_HOUSE":
         return "Knock on the dark house";
+      case "PORTAL":
+        return G.s.flags.benn_gone ? "The faded symbol of Wahoogah" : "The symbol of Wahoogah";
       case "AIRPORT":
         return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
@@ -1031,6 +1057,15 @@ You are required by law to sign the Sex Offenders Register.`, {
           s.flags.arc_crongus_done
             ? [dir("The door is boarded up again. From inside, faintly: 'mmmm'."), say(s.player, "…no. No. Keep walking.")]
             : [dir("Boarded windows. A faint smell of custard. Something inside is breathing slowly and contentedly. You decide you're not ready.")],
+        );
+        return;
+      case "PORTAL":
+        await this.talk(
+          s.flags.benn_gone
+            ? [dir("The symbol has faded. A postcard is stuck to the grass, addressed to 'Krelworld (the Waluigi version)'. It just says: 'Reprieve'.")]
+            : s.player === "BENN"
+              ? [dir("The symbol hums at you. Not yet. There's a gig to play first."), say("BENN", "I know. I know. One more gig.")]
+              : [dir("A shimmering symbol hangs in the air at the edge of town. It hums. It is clearly not for you."), dir("Somewhere in the hum, very faintly, someone is tuning an acoustic guitar.")],
         );
         return;
       case "BOGGOR_HOUSE":

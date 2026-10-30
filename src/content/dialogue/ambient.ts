@@ -261,6 +261,28 @@ export const BARKS: Record<string, Bark[]> = {
     b("My parents are still together. I know. I KNOW."),
     b("Ban Tribunal. Exile Appeals. My office. I'm banned from it.", { flag: "ban_tribunal_open" }),
   ],
+  BENN: [
+    C("I'm already regretting signing on to this gig."),
+    C("Die fearless. What other option is there"),
+    C("Total war"),
+    C("Fart= F.art = Fucking Art yeah?"),
+    C("My paradigm has just phlegmed backwards into the multiverze dude whoa lemme catch up"),
+    C("Arses!"),
+    C("That's 100% my doing"),
+    C("200%"),
+    C("And climbing"),
+    C("Wahoogahn Waltz is a keeper"),
+    b("Twitcher Mutiny. Krezz Arms. Be there or be in Kreddle."),
+    b("Polson's back on the T boosters. He's on the verge of iconic."),
+    b("Can a man destroy himself by overdosing on protein? Asking for Polson."),
+    b("I'd fight anyone who survived a wrangling with Eden."),
+    b("I've never seen a man demolish a creme brulee in two minutes flat."),
+    b("Be all the gay in the world, and the world will gay with you."),
+    b("Tiocfaidh ár lá, etc."),
+    b("The symbol of Wahoogah. You've seen it too, haven't you."),
+    b("Reprieve. It's not a sad song. It's a reprieve."),
+    b("I'll be there if I can get free. Probably. Fairweather, they call me."),
+  ],
   MIKEY: [
     C("I think he's bluffing anyway."),
     C("Feelin russhen 2day."),
@@ -357,6 +379,7 @@ export const BARKS: Record<string, Bark[]> = {
 
 /** Combat quips the player character shouts. 15+ each. */
 export const PLAYER_BARKS: Record<string, string[]> = {
+  BENN: ["Total war!", "Die fearless!", "Power chord!", "One two three four!", "Reprieve!", "Wahoogah!", "Fart! F. Art!", "Arses!", "Hail satan at last!", "Encore!", "200% and climbing!", "Open E!", "Twitcher Mutiny!", "Feedback!", "Fairweather forecast: violent!"],
   FLENKY: ["I'll go first!", "Today's the day!!!", "Ninja backflip!", "Just your opinion mate!!!", "Banned! You're banned!", "You're out the group!", "Knocked you out, one punch!", "Get a couple pints down you!", "And I mean it!", "Pls die.", "Can't help it!", "Nibble on THAT crobley!", "Scrotto Jumblin coming through!", "Remove from group!", "Let's all be honest lads!"],
   KREZMAR: ["Krez loan approved!", "Mmmmmm!", "Group wank? No? Group fight then.", "Crude krezz incoming!", "Extra points for that!", "Interest applies!", "He's got a point. It's this flask.", "Krambulance!", "I'm gunna krezz!", "Welcome to hell mate!", "Buy low, sell high!", "Horn horn!", "Krezzcoin's pumping!", "Kredge of my seat!", "Fizzy bongo break? After this."],
   KREBLIS: ["Breaking news!", "Fuuuuuuuuuuuck!", "Krelmergency!", "Strange occurrence!", "Out the other ear!", "Bro wtf!", "History will judge you!", "Threat level purple!", "Antarctica 2.0!", "I've phoned the real police!", "Kreltower breached!", "Filed under strange!", "Ohhhh!", "For the content!", "Invade Kreddle!"],

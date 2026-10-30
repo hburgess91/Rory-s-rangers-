@@ -518,6 +518,50 @@ export const ARCS: Arc[] = [
       },
     ],
   },
+  {
+    id: "arc_benn",
+    player: "BENN",
+    title: "Reprieve",
+    blurb: "One last gig with Twitcher Mutiny. Then find the symbol of Wahoogah, and go home.",
+    reward: { coins: 300, desc: "Benn goes home to Wahooga. Someone else carries on, with his Krezzcoin and his rockstar points." },
+    steps: [
+      {
+        id: "booked",
+        text: "Twitcher Mutiny are booked at the Krezz Arms. Get down there.",
+        at: "PUB",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The Krezz Arms back room. A stage made of four pallets. A banner, hand-painted, slightly wrong: 'TWICHER MUTINY'."),
+            say("BENN", "I'm already regretting signing on to this gig."),
+            say("BENN", "If I can help it, I'll be with you lot and skull deep before the night is out."),
+            say("KREZMAR", "Is this the one where you play the sad sea song?"),
+            say("BENN", "It's called Reprieve. And it's not sad. It's a reprieve. It's in the name."),
+            say("GRONNY", "Fair enough."),
+            dir("Everyone is here. Even Drongus has sent a message saying he is 'watching via livestream', which does not exist."),
+          ],
+        },
+      },
+      {
+        id: "gig",
+        text: "Play the gig. Be a rockstar. Catch what the crowd throws.",
+        at: "PUB",
+        step: {
+          kind: "minigame",
+          mode: "gig",
+          intro: [say("BENN", "One, two, three, four…"), dir("Move left and right across the stage. Tap / SPACE to prance. Catch the bras and thongs. Prancing while you catch them is worth double.")],
+          success: [say("BENN", "Thank you Krelford. You've been a strange and moist crowd."), dir("Somewhere in the crowd, Polson is crying. He says it's the smoke machine. There is no smoke machine.")],
+          fail: [say("BENN", "Bit of a quiet one. Wahooga crowds are louder. Again?")],
+        },
+      },
+      {
+        id: "portal",
+        text: "Something is calling you from the west edge of town. The symbol of Wahoogah.",
+        at: "PORTAL",
+        step: { kind: "vignette", id: "wahooga", intro: [dir("At the very edge of Krelford, where the grass gives up, the air is folding. A symbol hangs in it. You've seen it before. On a call. Nobody asked what it was."), say("BENN", "The symbol of Wahoogah.")] },
+      },
+    ],
+  },
 ];
 
 export function arcFor(player: PlayableId): Arc | undefined {

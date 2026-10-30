@@ -357,6 +357,7 @@ export class Player {
           if (s.upgrades.kw3 && this.omenCount % 6 === 0) crit = true;
         }
         const tex = this.id === "KREBLIS" ? "fx_paper" : "fx_bullet";
+        if (this.id === "BENN" && Math.random() < 0.5) this.world.floatText(this.x, this.y - 30, Math.random() < 0.5 ? "♪" : "♫", "#ffd23f", 12);
         const speed = this.id === "MIKEY" ? 520 : 420;
         const life = ((this.def.range ?? 300) / speed) * 1000;
         const spread = this.id === "MIKEY" ? (Math.random() - 0.5) * 0.12 : 0;
@@ -548,6 +549,20 @@ export class Player {
           this.decoyUntil = now + 4000;
         }
         this.world.floatText(this.x, this.y - 40, "*lurks*", "#17c6c0", 14);
+        break;
+      }
+      case "power_chord": {
+        const plays = s.upgrades.bn3 ? 2 : 1;
+        const r = s.upgrades.bn2 ? 196 : 140;
+        for (let h = 0; h < plays; h++) {
+          this.world.sc.time.delayedCall(h * 420, () => {
+            synth.play("explode");
+            this.world.aoe(this.x, this.y, r, d * 2, { knock: 420, label: "♪", color: 0xc9a46a });
+            this.world.shake(220, 0.012);
+            for (let i = 0; i < 8; i++) this.world.floatText(this.x + Math.cos((i / 8) * Math.PI * 2) * r * 0.7, this.y + Math.sin((i / 8) * Math.PI * 2) * r * 0.7, i % 2 ? "♪" : "♫", "#ffd23f", 18);
+          });
+        }
+        if (s.upgrades.bn1) G.s.hp = Math.min(maxHp(G.s), G.s.hp + 10);
         break;
       }
       case "runescape_slam": {

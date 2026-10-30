@@ -67,6 +67,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "He tagged me in it. @LIL' CRONGUS. I was going to reply. I was. I was lurking first."), dir("Lurking, it turns out, looks exactly like ignoring from the outside.")],
       GRONNY: [say("GRONNY", "I posted the leaf blower. It got a react. His song didn't."), dir("It's minus six. You're in shorts. You feel, for the first time in your life, slightly cold.")],
       MIKEY: [say("MIKEY", "I thought he was bluffing. He's always bluffing. FGM rule one."), dir("He wasn't bluffing. The Nuclear Option, it turns out, was his all along.")],
+      BENN: [say("BENN", "I'm already regretting signing on to this gig. If I can help it, I'll be with you lot before the night is out."), dir("Fairweather Benn has arrived in Krelford. Nobody is sure for how long. Nobody is ever sure for how long.")],
     },
     outro: [],
   },
@@ -96,6 +97,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "Operation Wake Up Polson. I proposed it once. It was rejected. This is my redemption arc."), dir("You've never had an arc before. It feels nice.")],
       GRONNY: [say("GRONNY", "Polson's turning his phone off. He's getting very anxious and upset but he's with me if anyone needs him."), dir("You've said this exact sentence before, word for word, in 2022. It still applies.")],
       MIKEY: [say("MIKEY", "Operation Fragmar. My operation. My friend request. This time in the right order."), dir("EXPANDED ROUTE UNLOCKED: As the original operative, you'll get access to the Fragmar Prime route inside the Reaction Network.", { set: { mikey_route: true } })],
+      BENN: [say("BENN", "My paradigm has just phlegmed backwards into the multiverze dude, whoa, lemme catch up."), dir("You have not caught up. You may never catch up.")],
     },
     outro: [
       dir("Town Hall. The giant reaction display on the wall flickers back on. One by one, the reaction icons light up: 👍 ❤️ 😂 😡."),
@@ -133,6 +135,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "As Children's Minister, I'm recusing myself from this entire building."), dir("You go in anyway. Someone has to. It's apparently you.")],
       GRONNY: [say("GRONNY", "Big Bertha's in the basement. I'm getting her out. Whatever it takes."), dir("PERSONAL OBJECTIVE: Find Big Bertha in the Ministry basement.", { set: { bertha_hunt: true } })],
       MIKEY: [say("MIKEY", "Never been to the Ministry of Boner Control. Heard things. Mostly from Drongus."), dir("You resolve not to touch anything. You will touch everything.")],
+      BENN: [say("BENN", "Fart. F. Art. Fucking art, yeah?"), dir("The Ministry's pipes groan in agreement.")],
     },
     outro: [
       dir("Town Hall. The pipes in the walls begin to hum. Every vending machine in Krelford blinks back on with a little psychedelic jingle."),
@@ -169,6 +172,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "They've got a children's wing. I've been formally invited. I'm formally declining by killing everyone."), dir("Children's Minister, ministering.")],
       GRONNY: [say("GRONNY", "Banned for wearing shorts. Appealing in shorts."), dir("The appeal will be heard by the Banhammer. The Banhammer does not care about shorts. It cares about bans.")],
       MIKEY: [say("MIKEY", "The Nuclear Option. They've built a shrine to it. And it's got Drongus's name on it. Of course it does."), dir("The Archive was right. You hate that the Archive was right.")],
+      BENN: [say("BENN", "Total war."), dir("You came to the Temple for a gig. There is no gig. There is only war.")],
     },
     outro: [
       dir("Town Hall. The Bonky Cult's banners come down. On every one, someone has scrawled 'pls' in a different hand."),
@@ -206,6 +210,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "A child died, Krezwonk said. In the lore. As Children's Minister I'm going to find out which one."), dir("Children's Minister, investigating.")],
       GRONNY: [say("GRONNY", "Prison's cold. Good. Shorts weather."), dir("For the first time in the campaign, you're dressed for the occasion.")],
       MIKEY: [say("MIKEY", "Prison? Easier than Fragmar."), dir("Everything is easier than Fragmar.")],
+      BENN: [say("BENN", "Die fearless. What other option is there."), dir("Krezteua d'If has excellent acoustics. You make a mental note.")],
     },
     outro: [
       dir("Town Hall. The Archive terminals stop flickering. Every record now agrees on one thing: Krezmond was betrayed. By how many is still disputed. Everyone has agreed to dispute it forever."),
@@ -243,6 +248,7 @@ export const CHAPTERS: ChapterDef[] = [
       CRONGUS: [say("CRONGUS", "He tagged me in every post. @LIL' CRONGUS. Every one."), dir("You never once replied. Time to reply.")],
       GRONNY: [say("GRONNY", "He's still got my trousers."), dir("Final objective, revised: react to the song. Recover Krez-ousers.")],
       MIKEY: [say("MIKEY", "FGM ULTRA. One last op. Classification: extremely petty."), dir("As it should be.")],
+      BENN: [say("BENN", "Be all the gay in the world, and the world will gay with you. I think it was Thin Lizzy who said that."), dir("It was not Thin Lizzy.")],
     },
     outro: [],
   },

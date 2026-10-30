@@ -8,6 +8,7 @@ import { FONT, title } from "../ui/theme";
 import { dir, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
 import { animateWalker, backdrop } from "../gfx/HD";
+import { maybeFinishArc } from "../systems/arcs";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
 export class VignetteScene extends Phaser.Scene {
@@ -32,12 +33,14 @@ export class VignetteScene extends Phaser.Scene {
       press_conference: () => this.pressConference(),
       polson_gym: () => this.polsonGym(),
       polson_cctv: () => this.polsonCctv(),
+      wahooga: () => this.wahooga(),
     };
     await (run[data.id] ?? (async () => undefined))();
     G.s.flags[`vig_${data.id}`] = true;
     G.save();
     this.cameras.main.fadeOut(500);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" }));
+    const next = data.id === "wahooga" ? () => switchTo(this, "CharSelect", { swap: true }) : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, next);
   }
 
   private wait(ms: number) {
@@ -572,6 +575,51 @@ export class VignetteScene extends Phaser.Scene {
       dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Eden will definitely want it."),
     ]);
     synth.stopMusic();
+  }
+
+
+  // ---------------------------------------------------------------- WAHOOGA (Benn goes home)
+
+  private async wahooga() {
+    if (!backdrop(this, "bg_wahooga", { depth: -10 })) this.sky(0x2a1050, 0x9b59ff);
+    const portal = this.textures.exists("hd_portal") ? this.add.image(640, 420, "hd_portal").setOrigin(0.5, 1).setScale(2).setDepth(5) : this.add.ellipse(640, 330, 140, 200, 0x9b59ff, 0.6).setDepth(5);
+    this.tweens.add({ targets: portal, scaleX: (portal.scaleX || 1) * 1.05, duration: 900, yoyo: true, repeat: -1 });
+    const glow = this.add.circle(640, 320, 140, 0x9b59ff, 0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(4);
+    this.tweens.add({ targets: glow, alpha: 0.45, duration: 700, yoyo: true, repeat: -1 });
+    const benn = this.add.sprite(160, 400, this.textures.exists("spr_BENN") ? "spr_BENN" : "spr_FOLK3", 0).setScale(3).setDepth(10);
+    synth.music("ominous");
+    const walk = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(benn, 1, 0, true, this.time.now) });
+    await this.tween({ targets: benn, x: 440, duration: 2600 });
+    walk.remove();
+    benn.setData("facing", "east");
+    animateWalker(benn, 0, 0, false, this.time.now);
+    const pts = (G.s.flags.rock_points as number) ?? 0;
+    await this.talk([
+      say("BENN", "The symbol of Wahoogah."),
+      say("BENN", "My paradigm has just phlegmed backwards into the multiverze, dude. Whoa. Lemme catch up."),
+      dir("Through the symbol: a universe almost exactly like this one, except everything is very slightly more fun, and every pub has a stage."),
+      ping("KREBLIS", "Fairweather Benn strikes again"),
+      ping("DRONGUS", "Benn's leaving ?? He was barely here"),
+      ping("DRONGUS", "Did he react to my song before he went"),
+      say("BENN", "Die fearless. What other option is there."),
+      say("BENN", `Look after the ${pts} rockstar points. And the underwear. Especially the underwear.`),
+    ]);
+    const walk2 = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(benn, 1, 0, true, this.time.now) });
+    await this.tween({ targets: benn, x: 640, y: 390, duration: 1400 });
+    walk2.remove();
+    synth.play("burst");
+    this.cameras.main.flash(600, 200, 150, 255);
+    await this.tween({ targets: benn, scale: 0.2, alpha: 0, angle: 720, duration: 900, ease: "Quad.in" });
+    this.caption("WAHOOGA", "#e9d5ff", 44);
+    this.cameras.main.shake(500, 0.01);
+    await this.wait(1600);
+    synth.stopMusic();
+    await this.talk([
+      dir("Fairweather Benn has left Krelworld. He is home."),
+      dir("The rest of the lore still needs saving. Choose who carries on. They keep your progress, your Krezzcoin, and the rockstar points."),
+    ]);
+    const r = maybeFinishArc(G.s);
+    if (r) await this.talk([dir(r)]);
   }
 
 }

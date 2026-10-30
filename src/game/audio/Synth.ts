@@ -37,10 +37,11 @@ export const MUSIC_FILES: Record<string, string> = {
   anthem: "audio/anthem.mp3",
   crazy: "audio/crazy_for_krelworld.mp3",
   bbp: "audio/bbp.mp3",
+  twitcher: "audio/twitcher.mp3",
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["anthem", "bbp"]);
+const ONE_SHOT = new Set(["anthem", "bbp", "twitcher"]);
 
 type Wave = OscillatorType;
 
@@ -343,6 +344,13 @@ export class Synth {
   }
 
   /** Is a recorded song currently playing? */
+  /** Position and length (seconds) of the recorded track that's playing, if known. */
+  fileProgress(): { t: number; d: number; ended: boolean } {
+    const e = this.el;
+    if (!e) return { t: 0, d: 0, ended: true };
+    return { t: e.currentTime, d: Number.isFinite(e.duration) ? e.duration : 0, ended: e.ended };
+  }
+
   playingFile(): string {
     return this.el && !this.el.paused ? this.elId : "";
   }

@@ -7,10 +7,15 @@ import { startNewRun, switchTo } from "../Flow";
 import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
 import { G } from "../G";
+import { maxHp } from "../systems/stats";
+
+const COLS = 4;
 
 export class CharSelectScene extends Phaser.Scene {
   private sel = 0;
   private ngPlus = 0;
+  /** After Benn leaves for Wahooga: pick who carries on the same run. */
+  private swap = false;
   private detail!: Phaser.GameObjects.Container;
   private cards: Phaser.GameObjects.Rectangle[] = [];
 
@@ -18,8 +23,9 @@ export class CharSelectScene extends Phaser.Scene {
     super("CharSelect");
   }
 
-  init(data: { ngPlus?: number }) {
+  init(data: { ngPlus?: number; swap?: boolean }) {
     this.ngPlus = data?.ngPlus ?? 0;
+    this.swap = !!data?.swap;
     this.sel = 0;
     this.cards = [];
   }
@@ -28,23 +34,24 @@ export class CharSelectScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale;
     const csBg = this.add.rectangle(0, 0, W, H, 0x10101e).setOrigin(0);
     if (backdrop(this, "bg_charselect", { dim: 0.45, depth: -10 })) csBg.setVisible(false);
-    title(this, W / 2, 30, this.ngPlus ? "NEW KREZ+ · CHOOSE YOUR DEGENERATE" : "CHOOSE YOUR DEGENERATE", 26);
-    label(this, W / 2, 52, "Whoever you pick, Proctus Krelmor will cover their ministry. Badly.", 13, "#9aa0b4").setOrigin(0.5, 0);
+    title(this, W / 2, 30, this.swap ? "BENN HAS GONE TO WAHOOGA · WHO CARRIES ON?" : this.ngPlus ? "NEW KREZ+ · CHOOSE YOUR DEGENERATE" : "CHOOSE YOUR DEGENERATE", 26);
+    label(this, W / 2, 52, this.swap ? `Your progress, your Krezzcoin and your ${G.s.flags.rock_points ?? 0} rockstar points carry over.` : "Whoever you pick, Proctus Krelmor will cover their ministry. Badly.", 13, "#9aa0b4").setOrigin(0.5, 0);
 
     PLAYABLE_ORDER.forEach((id, i) => {
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const x = 30 + col * 150;
-      const y = 80 + row * 146;
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = 18 + col * 116;
+      const y = 76 + row * 148;
       const def = CHARACTERS[id];
       const done = G.meta.completedWith.includes(id);
-      const card = this.add.rectangle(x, y, 140, 136, 0x1b1e33).setOrigin(0).setStrokeStyle(2, def.color).setInteractive({ useHandCursor: true });
+      const gone = this.swap && id === "BENN";
+      const card = this.add.rectangle(x, y, 110, 140, gone ? 0x0e0f18 : 0x1b1e33).setOrigin(0).setStrokeStyle(2, def.color).setInteractive({ useHandCursor: true });
       const pk = portraitKey(this, id);
-      if (pk) this.add.image(x + 70, y + 50, pk).setDisplaySize(80, 80);
-      this.add.sprite(x + 118, y + 92, `spr_${id}`, 0).setScale(1.5);
-      this.add.text(x + 70, y + 98, def.name, { fontFamily: FONT, fontSize: "13px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 132 } }).setOrigin(0.5, 0);
-      this.add.text(x + 70, y + 117, def.realName ?? "", { fontFamily: FONT, fontSize: "10px", color: "#8a8fa0" }).setOrigin(0.5, 0);
-      if (done) this.add.text(x + 6, y + 4, "✓ COMPLETED", { fontFamily: FONT, fontSize: "9px", color: "#5ad35a" });
+      if (pk) this.add.image(x + 55, y + 42, pk).setDisplaySize(64, 64);
+      this.add.sprite(x + 92, y + 82, `spr_${id}`, 0).setScale(1.2);
+      this.add.text(x + 55, y + 96, def.name, { fontFamily: FONT, fontSize: "11px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 104 } }).setOrigin(0.5, 0);
+      this.add.text(x + 55, y + 124, def.realName ?? "", { fontFamily: FONT, fontSize: "9px", color: "#8a8fa0" }).setOrigin(0.5, 0);
+      if (done) this.add.text(x + 4, y + 3, "✓", { fontFamily: FONT, fontSize: "11px", color: "#5ad35a" });
       card.on("pointerover", () => this.select(i));
       card.on("pointerdown", () => this.select(i));
       this.cards.push(card);
@@ -54,10 +61,11 @@ export class CharSelectScene extends Phaser.Scene {
     this.select(0);
 
     const kb = this.input.keyboard!;
-    kb.on("keydown-LEFT", () => this.select((this.sel + 8) % 9));
-    kb.on("keydown-RIGHT", () => this.select((this.sel + 1) % 9));
-    kb.on("keydown-UP", () => this.select((this.sel + 6) % 9));
-    kb.on("keydown-DOWN", () => this.select((this.sel + 3) % 9));
+    const N = PLAYABLE_ORDER.length;
+    kb.on("keydown-LEFT", () => this.select((this.sel + N - 1) % N));
+    kb.on("keydown-RIGHT", () => this.select((this.sel + 1) % N));
+    kb.on("keydown-UP", () => this.select((this.sel + N - COLS) % N));
+    kb.on("keydown-DOWN", () => this.select((this.sel + COLS) % N));
     kb.on("keydown-A", () => this.select((this.sel + 8) % 9));
     kb.on("keydown-D", () => this.select((this.sel + 1) % 9));
     kb.on("keydown-W", () => this.select((this.sel + 6) % 9));
@@ -99,12 +107,24 @@ export class CharSelectScene extends Phaser.Scene {
     add(this.add.text(X + 16, 388, `If unselected: ${d.ministry}`, { fontFamily: FONT, fontSize: "12px", color: "#9aa0b4", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 406, `Proctus covers as: ${d.proctusTitle}. ${d.proctusQuirk}`, { fontFamily: FONT, fontSize: "11px", color: "#9aa0a6", fontStyle: "italic", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 434, `"${d.selectQuote}"`, { fontFamily: FONT, fontSize: "15px", color: "#ff6fa8", fontStyle: "italic" }));
-    add(button(this, X + 340, 474, "PLAY AS " + d.name.split(" ")[0], () => this.confirm(), { w: 200, h: 34, size: 14 }));
+    const away = this.swap && id === "BENN";
+    add(button(this, X + 340, 474, away ? "GONE TO WAHOOGA" : this.swap ? "CARRY ON AS " + d.name.split(" ")[0] : "PLAY AS " + d.name.split(" ")[0], () => this.confirm(), { w: 220, h: 34, size: 13, disabled: away }));
   }
 
   private confirm() {
     synth.unlock();
     synth.play("pop");
+    if (this.swap) {
+      const id = PLAYABLE_ORDER[this.sel] as PlayableId;
+      if (id === "BENN") return;
+      const s = G.s;
+      s.player = id;
+      s.flags.benn_gone = true;
+      s.hp = maxHp(s);
+      G.save();
+      switchTo(this, "Hub", { at: "PORTAL", from: "swap" });
+      return;
+    }
     startNewRun(this, PLAYABLE_ORDER[this.sel] as PlayableId, this.ngPlus);
   }
 }

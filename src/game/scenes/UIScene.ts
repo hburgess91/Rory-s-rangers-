@@ -177,7 +177,7 @@ export class UIScene extends Phaser.Scene {
     this.kzT.setText(kzS);
     this.statT.setText(
       [
-        `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)`,
+        `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)${s.flags.rock_points ? `   🤘 ${s.flags.rock_points}` : ""}`,
         `${intoxLabel(s.intoxication)}${s.intoxication > 5 ? ` (${Math.round(s.intoxication)}%)` : ""}  ·  Drongus: ${resentmentLabel(s.drongusResentment)}`,
       ].join("\n"),
     );

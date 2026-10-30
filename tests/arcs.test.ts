@@ -5,9 +5,9 @@ import { BOSS_TEXT } from "../src/content/bosses";
 import { newGameState } from "../src/game/systems/state";
 import { currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
 
-const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE"];
-const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv"];
-const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook"];
+const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE", "PORTAL"];
+const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv", "wahooga"];
+const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig"];
 
 describe("character side stories", () => {
   it("every arc step points at real places, fights, minigames and cutscenes", () => {
@@ -35,7 +35,7 @@ describe("character side stories", () => {
   });
 
   it("covers the six requested characters", () => {
-    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["CRONGUS", "FLENKY", "GRONNY", "KREBLIS", "KREZMAR", "KREZWONK", "SCROMBUS"]);
+    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["BENN", "CRONGUS", "FLENKY", "GRONNY", "KREBLIS", "KREZMAR", "KREZWONK", "SCROMBUS"]);
     expect(ARCS.filter((a) => a.player === "ALL").length).toBeGreaterThanOrEqual(2);
   });
 

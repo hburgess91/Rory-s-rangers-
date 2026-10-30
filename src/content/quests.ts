@@ -209,6 +209,24 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     reward: { coins: 300, desc: "+30 max HP. Shorts remain on." },
   },
   {
+    id: "pq_benn",
+    player: "BENN",
+    title: "The Lost Setlist",
+    blurb: "Twitcher Mutiny can't play without the setlist, the capo and the lucky plectrum. They are, inexplicably, in dungeons.",
+    pickups: [
+      { id: "setlist", label: "The Setlist (written on a Krezz Arms beer mat)", where: { dungeon: "wildern", room: 1 } },
+      { id: "capo", label: "The Capo (still clamped to a dinner tray)", where: { dungeon: "polson_towers", room: 2 } },
+      { id: "plectrum", label: "The Lucky Plectrum (inside a pipe gremlin)", where: { dungeon: "ministry", room: 1 } },
+    ],
+    turnIn: {
+      at: "PUB",
+      speaker: "BENN",
+      text: "Hand the gear to the band",
+      lines: [say("BENN", "Setlist. Capo. Plectrum. We're a band again."), say("BENN", "The setlist just says 'Reprieve' eleven times. That's the set.")],
+    },
+    reward: { coins: 300, desc: "Power Chord costs 10 less Krezz." },
+  },
+  {
     id: "pq_mikey",
     player: "MIKEY",
     title: "Fragmar Prime",
@@ -255,5 +273,6 @@ export const MINISTRY_QUESTS: MinistryQuest[] = [
   { id: "mq_krunch", ministry: "KREBON", title: "Krunch Quota", desc: "Defeat 60 enemies. Krunch is Krunch.", counter: "kills_total", target: 60, reward: 170 },
   { id: "mq_portfolio", ministry: "GRONNY", title: "Portfolio Development", desc: "Drink 5 Fizzy Bongos. For the portfolio. Which is empty.", counter: "bongos_drunk", target: 5, reward: 120 },
   { id: "mq_exile", ministry: "FLENKY", title: "Know Your Rights", desc: "Get banned once and talk your way back in. The Tribunal needs case studies.", counter: "readmissions", target: 1, reward: 150 },
+  { id: "mq_gig", ministry: "BENN", title: "Crowd Control", desc: "Defeat 40 enemies. Twitcher Mutiny need a quieter crowd.", counter: "kills_total", target: 40, reward: 140 },
   { id: "mq_fgm", ministry: "MIKEY", title: "FGM Media Studies", desc: "Watch 3 KrelTV programmes. For intelligence purposes.", counter: "tv_watched", target: 3, reward: 120 },
 ];

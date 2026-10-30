@@ -10,6 +10,7 @@ export const PLAYABLE_IDS = [
   "CRONGUS",
   "GRONNY",
   "MIKEY",
+  "BENN",
 ] as const;
 
 export type PlayableId = (typeof PLAYABLE_IDS)[number];

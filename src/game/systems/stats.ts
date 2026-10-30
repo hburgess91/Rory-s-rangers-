@@ -42,6 +42,7 @@ export function damageMult(s: GameState): number {
   m *= activeMods(s).playerDamageMult;
   m *= reactionDamageMult(s);
   if (s.flags.arc_flenky_done) m *= 1.1;
+  if (s.player === "BENN" && s.hp >= maxHp(s)) m *= 1.25;
   if (s.flags.arc_krezwonk_done) m *= 1.08;
   return m;
 }

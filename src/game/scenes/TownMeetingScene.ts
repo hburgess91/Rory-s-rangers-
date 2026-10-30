@@ -126,7 +126,8 @@ export class TownMeetingScene extends Phaser.Scene {
       }
       return [...ids];
     }
-    const list: string[] = [...PLAYABLE_ORDER];
+    // Fairweather Benn doesn't do meetings (unless you're playing him)
+    const list: string[] = PLAYABLE_ORDER.filter((id) => id !== "BENN" || G.s.player === "BENN");
     list.splice(list.indexOf(G.s.player) + 1, 0, "PROCTUS");
     for (const a of m.attendees ?? []) if (!list.includes(a as string)) list.push(a as string);
     return list;
