@@ -4051,6 +4051,12 @@
   "fx_rocket": {
    "file": "props/fx_rocket.png"
   },
+  "hd__splat_white": {
+   "file": "props/fx_splat_white.png"
+  },
+  "fx_splat_white": {
+   "file": "props/fx_splat_white.png"
+  },
   "hd__turret": {
    "file": "props/fx_turret.png"
   },

@@ -173,7 +173,7 @@ export class UIScene extends Phaser.Scene {
       g.fillRect(170, 52, 86, 9);
       g.fillStyle(full && Math.floor(time / 150) % 2 ? 0xffffff : UI.wonk, 1);
       g.fillRect(171, 53, 84 * (wonk / 100), 7);
-      this.wonkT.setText(full ? `${labels[2]} FULL — PRESS R` : `${labels[2]} METER`).setVisible(true);
+      this.wonkT.setText(full ? `${labels[2]} FULL — R: WONK YOUR THANG` : `${labels[2]} METER`).setVisible(true);
       // fart meter: four potency segments
       const fm = fartMeter();
       const lv = fartLevel();

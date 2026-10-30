@@ -247,6 +247,13 @@ export class Synth {
     lfo.stop(t + dur + 0.05);
   }
 
+  /** A wet little tick per mash, rising in pitch with the gauge. */
+  wonkTick(g: number) {
+    if (!this.ctx) return;
+    this.burst(0.05, 0.22, 0, 900 + g * 1800, undefined, 2.5);
+    this.tone(180 + g * 420, 0.05, "sine", 0.12, 0, 1.2);
+  }
+
   /** Farts by potency: the higher the level, the longer and more ridiculous. */
   fart(level: number) {
     if (!this.ctx) return;
@@ -331,6 +338,17 @@ export class Synth {
       case "flush":
         this.burst(1.4, 0.35, 0, 700, undefined, 0.5);
         this.burst(0.8, 0.2, 0.5, 300, undefined, 0.5);
+        break;
+      case "trombone":
+        this.tone(392, 0.32, "sawtooth", 0.16, 0);
+        this.tone(370, 0.32, "sawtooth", 0.16, 0.34);
+        this.tone(349, 0.32, "sawtooth", 0.16, 0.68);
+        this.tone(330, 0.9, "sawtooth", 0.16, 1.02, 0.92);
+        break;
+      case "jet":
+        this.tone(200, 1.3, "sawtooth", 0.18, 0, 3.5);
+        this.burst(1.5, 0.45, 0, 2500, undefined, 0.6);
+        this.burst(0.25, 0.5, 0.05, 600, undefined, 1.2);
         break;
       case "splat":
         this.burst(0.16, 0.45, 0, 420, undefined, 1.4);

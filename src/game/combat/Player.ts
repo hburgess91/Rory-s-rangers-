@@ -12,6 +12,7 @@ import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { currentGun, cycleGun, fitTo } from "./Guns";
 import { releaseFart } from "./Farts";
+import { startWonk } from "./Wonk";
 
 export interface Turret {
   spr: Phaser.GameObjects.Sprite;
@@ -784,6 +785,8 @@ export class Player {
     s.intoxication = Math.max(0, s.intoxication - 10);
     synth.play("gulp");
     this.world.floatText(this.x, this.y - 30, "+45 (national drink)", "#ffb6c1", 13);
+    // the national drink gets you wonky
+    this.world.addWonk(30);
     this.world.sc.events.emit("player-heal");
   }
 
@@ -814,17 +817,7 @@ export class Player {
       return;
     }
     this.wonk = 0;
-    this.burstUntil = now + 1400;
-    synth.play("burst");
-    this.world.shake(500, 0.02);
-    const r = 220 * activeMods(G.s).burstRadiusMult;
-    this.world.floatText(this.x, this.y - 60, "WONK IT 'TIL YOU KREZ!", "#ffd23f", 22);
-    this.world.sc.events.emit("krezz-burst", r);
-    for (let i = 0; i < 3; i++) {
-      this.world.sc.time.delayedCall(i * 300, () => {
-        this.world.aoe(this.x, this.y, r, this.dmg(this.def.damage ?? 10, now) * 4, { knock: 300, color: 0xffd23f, crit: true, noWonk: true });
-      });
-    }
+    startWonk(this, now);
   }
 
   /** Returns true if the hit was taken. */

@@ -1240,7 +1240,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.player.wonk = Math.min(100, this.player.wonk + n * mult);
     if (before < 100 && this.player.wonk >= 100) {
       synth.play("wonk");
-      this.floatText(this.player.x, this.player.y - 50, "WONK FULL — PRESS R", "#ff8c00", 15);
+      this.floatText(this.player.x, this.player.y - 50, "WONK FULL — R: WONK YOUR THANG", "#ff8c00", 15);
     }
   }
 

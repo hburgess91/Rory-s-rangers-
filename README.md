@@ -35,7 +35,7 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 | Dodge (i-frames) | Space / Shift | B / RB |
 | Pussy juice (heal) | Q | D-pad left |
 | Fizzy Bongo (buff, gets you drunk) | B | D-pad right |
-| Krezz Burst (full Wonk meter) | R / L | LB |
+| Wonk Your Thang (full Wonk meter; mash to stay in the Krezz Zone) | R / L | LB |
 | Swap fists / found guns | X (touch: GUN) | D-pad up |
 | Fart (meter fills from hits; 4 potency levels) | G (touch: 💨) | D-pad down |
 | Interact / advance dialogue | E / Space / click | X |
@@ -43,6 +43,8 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 | Pause / menu | Esc | Start |
 
 ## What's in it
+
+- **Wonk Your Thang.** Fill the Wonk meter (hits, perfect dodges, and every Pussy Juice you drink), press R, then mash to keep the gauge in the KREZZ ZONE. Get it right for a screen-splattering white jet stream that shreds bosses; overshoot or fall short and you over- or under-wonk.
 
 - **Fart attacks.** Landing hits fills a four-level fart meter: Fairy Fart, Baked Beans, Cabbage, and the IBS Attack (a full-room final smash with gas clouds and diarrhoea everywhere). Each character has their own twist.
 
