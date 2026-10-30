@@ -10,6 +10,7 @@ import { animateWalker, backdrop } from "../gfx/HD";
 import { bump, maxBottles } from "../systems/stats";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
+import { SANMIK_SONGS } from "./VenueScene";
 
 /**
  * THE WONKY POLE: a cabaret club. Dancers dance (costumes on), the lads leer, and you can call a
@@ -34,6 +35,11 @@ const LEER_BY: Record<string, string[]> = {
   GRONNY: ["Waa waa wee waa.", "Mmm. Lovely day for it.", "Buying gf!"],
   MIKEY: ["Can I sit with you lot?", "Mmm. She's... can I have her? Can I join?"],
 };
+
+const BAND_INTRO = [
+  dir("LIVE TONIGHT: SANMIK & SANCHZ. Afro wig, white sunglasses, drawn-on goatee, gold shell suit. They have been booked as \"atmosphere\"."),
+  say("SANMIK", "This one's for the ladies. And Gronny."),
+];
 
 const ZONE_LO = 0.7;
 const ZONE_HI = 0.88;
@@ -68,6 +74,11 @@ export class ClubScene extends Phaser.Scene {
   private nextSwap = 0;
   private onBreak = false;
   private spots: Phaser.GameObjects.Arc[] = [];
+  /** SanMik & SanChz, when they're the live act tonight. */
+  private band: { spr: Phaser.GameObjects.Sprite; x: number }[] = [];
+  private songIdx = -1;
+  private between = false;
+  private banner: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super("Club");
@@ -122,7 +133,13 @@ export class ClubScene extends Phaser.Scene {
     this.box = new DialogueBox(this, 2000, 0.2);
     if (!this.scene.isActive("UI")) this.scene.launch("UI", { mode: "hub" });
     else this.scene.get("UI").events.emit("mode", "hub");
-    synth.music("pub", true);
+    // some nights SanMik & SanChz are the live act (always the first time you visit since they got the gig)
+    this.band = [];
+    this.songIdx = -1;
+    this.between = false;
+    this.banner = null;
+    if (!s.flags.club_sanmik_seen || Math.random() < 0.6) this.startBand(!s.flags.club_sanmik_seen);
+    else synth.music("pub", true);
     bump(s, "club_visits");
     this.time.delayedCall(500, () => {
       if (s.flags.club_seen) return;
@@ -130,9 +147,37 @@ export class ClubScene extends Phaser.Scene {
       this.talk([
         dir("THE WONKY POLE. It smells of cherry vape and Lynx Africa. On stage, a dancer in an extremely sparkly costume is doing a routine with a lot of spinning."),
         dir("The entire chat is already here, in the front row, at 2pm on a weekday."),
+        ...(this.band.length ? BAND_INTRO : []),
         dir("Tip the dancer at the stage, get a drink at the bar, or go to the WONK-OFF TABLE if you're feeling competitive. The EXIT is at the bottom."),
       ]);
     });
+  }
+
+  private startBand(first: boolean) {
+    const s = G.s;
+    const mk = (key: string, fallback: string, x: number, tint: number) => {
+      const spr = this.add.sprite(x, 335, this.textures.exists(key) ? key : fallback, 0).setScale(2.6).setDepth(335);
+      if (!this.textures.exists(key)) spr.setTint(tint);
+      this.band.push({ spr, x });
+    };
+    mk("spr_SANMIK", "spr_MIKEY", 215, 0xb0c4ff);
+    mk("spr_SANCHZ", "spr_POLSON", 650, 0xffe08a);
+    this.banner = this.add.text(480, 92, "", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#1a0b24cc", padding: { x: 8, y: 3 } }).setOrigin(0.5).setDepth(200);
+    this.playSong(Math.floor(Math.random() * SANMIK_SONGS.length), 0.2 + Math.random() * 0.4);
+    if (first) {
+      s.flags.club_sanmik_seen = true;
+      // on a first-ever visit this is folded into the club's own intro instead
+      if (s.flags.club_seen) this.time.delayedCall(500, () => !this.busy && this.talk(BAND_INTRO));
+    }
+  }
+
+  private playSong(idx: number, startFrac = 0) {
+    this.songIdx = idx;
+    this.between = false;
+    const song = SANMIK_SONGS[idx];
+    synth.music(song.id, true, startFrac);
+    this.banner?.setText(`♪ LIVE: SanMik & SanChz — "${song.title}"`);
+    if (!startFrac) synth.play("cheer");
   }
 
   private dancerTex() {
@@ -159,7 +204,8 @@ export class ClubScene extends Phaser.Scene {
   private leer(n = 1) {
     for (let i = 0; i < n && this.patrons.length; i++) {
       const p = this.patrons[Math.floor(Math.random() * this.patrons.length)];
-      const pool = [...LEER, ...(LEER_BY[p.id] ?? []), ...(LEER_BY[p.id] ?? [])];
+      const band = this.band.length ? ["TUNE!", "SANMIK!!", "Mmm. And the music's good too.", "She's mine. SanMik can have the other one.", "PEENER 4EVA"] : [];
+      const pool = [...LEER, ...(LEER_BY[p.id] ?? []), ...(LEER_BY[p.id] ?? []), ...band];
       this.time.delayedCall(i * 300, () => this.bubble(p.spr, pool[Math.floor(Math.random() * pool.length)]));
     }
   }
@@ -176,6 +222,21 @@ export class ClubScene extends Phaser.Scene {
       this.dancer.setFlipX(Math.floor(t / 1.9) % 2 === 1);
       if (Math.random() < 0.004) this.tweens.add({ targets: this.dancer, angle: 360, duration: 500, onComplete: () => this.dancer.setAngle(0) });
       if (time > this.nextSwap && !this.busy) this.swapDancer();
+    }
+    // the band
+    this.band.forEach((b, i) => {
+      const t = time / 1000 + i * 0.8;
+      b.spr.x = b.x + Math.sin(t * 2) * 22;
+      b.spr.y = 335 - Math.abs(Math.sin(t * 5.5)) * 9;
+      animateWalker(b.spr, Math.cos(t * 2), 0, true, time);
+    });
+    if (this.band.length && !this.between && this.songIdx >= 0 && synth.fileProgress().ended) {
+      this.between = true;
+      synth.play("cheer");
+      this.banner?.setText("♪ \"Cheers Wonky Pole. This next one's about a hot tub.\"");
+      let next = Math.floor(Math.random() * SANMIK_SONGS.length);
+      if (next === this.songIdx) next = (next + 1) % SANMIK_SONGS.length;
+      this.time.delayedCall(2500, () => this.playSong(next));
     }
     // the lads bob about and leer
     this.patrons.forEach((p, i) => {
@@ -299,6 +360,7 @@ export class ClubScene extends Phaser.Scene {
     this.onBreak = true;
     this.tweens.add({ targets: this.dancer, x: 1020, duration: 900 });
     this.spots.forEach((l) => this.tweens.add({ targets: l, alpha: 0.03, duration: 600 }));
+    if (this.band.length) this.bubble(this.band[0].spr, "(still playing) This one's for the wonkers.", 2200, "#e0e7ff");
     if (this.patrons.some((p) => p.id === "MIKEY")) this.bubble(this.patrons.find((p) => p.id === "MIKEY")!.spr, "Can I join the wonk-off?", 1800);
     await new Promise((r) => this.time.delayedCall(900, r));
     this.busy = true;
@@ -465,6 +527,7 @@ export class ClubScene extends Phaser.Scene {
         say("BIG DEREK", "..."),
         say("BIG DEREK", "OUT. ALL OF YOU. OUT. YOU'RE BARRED."),
         say(this.dancerName(), "(from the back) I was gone for four minutes."),
+        ...(this.band.length ? [say("SANMIK", "(still playing) Goodnight Wonky Pole! We're here till Thursday!")] : []),
         dir(won ? `You are the undisputed WONK-OFF CHAMPION. The lads carry you out on their shoulders, at arm's length. +${reward} Krezzcoin (side bets).` : `You are thrown out with everyone else. +${reward} Krezzcoin (found on the floor; you don't ask).`),
         dir("You're barred from The Wonky Pole for a few minutes."),
       ]);
