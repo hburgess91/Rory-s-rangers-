@@ -36,7 +36,7 @@ export const CHAPTERS: ChapterDef[] = [
       { id: "s_meeting", text: "Attend the Emergency Reaction Session at the Town Hall", done: { flag: "met_emergency" }, target: "TOWN_HALL" },
       { id: "s_archive", text: "Visit the Historical Archive (the cabinet wants precedent)", done: { flag: "founding_seen" }, target: "ARCHIVE" },
       { id: "s_dungeon", text: "Enter Wildern Academy and unblock the Great Tap", done: { flag: "ch1_clear" }, target: "WILDERN" },
-      { id: "s_report", text: "Report to the Town Hall. A Krazy Fact is required.", done: { flag: "ch1_fact" }, target: "TOWN_HALL" },
+      { id: "s_report", text: "Report back to the Town Hall", done: { flag: "ch1_fact" }, target: "TOWN_HALL" },
     ],
     intro: [
       dir("NOW."),
@@ -106,6 +106,8 @@ export const CHAPTERS: ChapterDef[] = [
       ping("DRONGUS", "And you didn't even invite me"),
       say("SCROMBUS", "The pumps, though. The pussy juice pressure's still falling. Something's wrong at the Ministry of Boner Control.", { role: true, proctus: "The pumps are falling! At the Ministry of... the one with the name!" }),
       say("KREZWONK", "Before that. A Krazy Fact. The record demands one.", { role: true, proctus: "A Krazy Fact! I've got one! Proctus is six foot four! No? Fine. You do it." }),
+      dir("In the wreckage: another scrap of map. 'TEMPLE OF THE LOGS — PIECE 2 OF 5'."),
+      say("KREZWONK", "Five days left on the countdown."),
     ],
   },
   {
@@ -143,6 +145,8 @@ export const CHAPTERS: ChapterDef[] = [
       ping("DRONGUS", "Did anyone say anything nice about it before they killed it"),
       ping("DRONGUS", "No ? Welcome to my world"),
       say("KREZWONK", "The Bonky Cult's moving next. I've seen the hammer in a dream. It had my name on it. And yours.", { role: true, proctus: "I've seen a hammer in a dream! It said Proctus on it! Is that bad? It felt bad." }),
+      dir("In the wreckage: another scrap of map. 'TEMPLE OF THE LOGS — PIECE 3 OF 5'."),
+      say("KREZWONK", "Four days left. The pieces are starting to line up."),
     ],
   },
   {
@@ -180,6 +184,8 @@ export const CHAPTERS: ChapterDef[] = [
       ping("DRONGUS", "I just set a nickname once. Bonky Bonkit. January 2024. They took it too far."),
       ping("DRONGUS", "That's the problem with lore. You make it and then people DO things with it."),
       say("KREZWONK", "Krezteua d'If has reopened. The past is coming loose. Krebon's past specifically.", { role: true, proctus: "Krezteua d'If! I've been there! For six years! This morning!" }),
+      dir("In the wreckage: another scrap of map. 'TEMPLE OF THE LOGS — PIECE 4 OF 5'."),
+      say("KREZWONK", "Two days left. One piece to go."),
     ],
   },
   {
@@ -216,6 +222,8 @@ export const CHAPTERS: ChapterDef[] = [
       ping("DRONGUS", "FINE."),
       ping("DRONGUS", "Come up then. All of you. Come to the Citadel. Let's see what you've got."),
       ping("DRONGUS", "Bring your thumbs."),
+      dir("In the wreckage: another scrap of map. 'TEMPLE OF THE LOGS — PIECE 5 OF 5'."),
+      say("KREZWONK", "All five. The Temple of the Logs is inside the Citadel, at the top, behind the song."),
     ],
   },
   {

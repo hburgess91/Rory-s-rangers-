@@ -10,7 +10,7 @@ import type { CombatWorld } from "./types";
 import type { Controls } from "./Controls";
 import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
-import { currentGun, cycleGun, fitTo } from "./Guns";
+import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS } from "./Guns";
 import { releaseFart } from "./Farts";
 import { startWonk } from "./Wonk";
 
@@ -126,6 +126,7 @@ export class Player {
     if (now < this.bongoUntil) d *= 1.15;
     if (now < this.machineBuffUntil) d *= 1.25;
     if (G.s.flags.pq_done_pq_krebon && G.s.hp < maxHp(G.s) / 2) d *= 1.2;
+    d *= 1 + 0.08 * (G.s.upgrades.pk_dmg ?? 0);
     return d;
   }
 
@@ -159,7 +160,7 @@ export class Player {
       this.stillTime += dt;
       this.movingTime = 0;
     }
-    let speed = (this.def.speed ?? 200) * (G.s.flags.arc_crongus_done ? 1.15 : 1);
+    let speed = (this.def.speed ?? 200) * (G.s.flags.arc_crongus_done ? 1.15 : 1) * (1 + 0.07 * (G.s.upgrades.pk_spd ?? 0));
     if (now < this.bongoUntil) speed *= 0.95;
     const wobble = s.intoxication > 40 ? Math.sin(now / 300) * (s.intoxication / 100) * 0.5 : 0;
     if (now < this.grappledUntil) {
@@ -298,20 +299,30 @@ export class Player {
       .setDepth(Math.sin(this.aim) < -0.3 ? 499 : 501);
   }
 
+
+  /** Out of ammo: move on to the next gun that still has some, or back to your own attack. */
+  private switchFromEmpty(id: string) {
+    const s = G.s;
+    if (s.gun !== id || (s.guns?.[id] ?? 0) > 0) return;
+    const next = nextLoadedGun(s, id);
+    s.gun = next ?? undefined;
+    this.world.floatText(this.x, this.y - 44, next ? `OUT OF AMMO — ${GUNS[next].name.toUpperCase()}` : `OUT OF AMMO — ${this.def.attack === "melee" ? "FISTS" : "OWN WEAPON"}`, next ? "#ffd23f" : "#ff6666", 13);
+    synth.play(next ? "select" : "tap_fail");
+  }
+
   /** Fire the gun in hand. Returns false when there's no gun or no ammo (falls back to the normal attack). */
   private fireGun(now: number): boolean {
     const g = currentGun();
     const s = G.s;
     if (!g || !s.guns) return false;
     if ((s.guns[g.id] ?? 0) <= 0) {
-      s.gun = undefined;
-      this.world.floatText(this.x, this.y - 44, `OUT OF AMMO — ${this.def.attack === "melee" ? "FISTS" : "OWN WEAPON"}`, "#ff6666", 13);
-      synth.play("tap_fail");
+      this.switchFromEmpty(g.id);
       this.attackCd = now + 300;
       return true;
     }
     s.guns[g.id]--;
-    this.attackCd = now + g.cd * (now < this.burstUntil ? 0.75 : 1);
+    if (s.guns[g.id] <= 0) this.world.sc.time.delayedCall(Math.min(400, g.cd), () => this.switchFromEmpty(g.id));
+    this.attackCd = now + g.cd * (now < this.burstUntil ? 0.75 : 1) * (1 - 0.1 * (s.upgrades.pk_rof ?? 0));
     this.attackAnimUntil = now + 90;
     this.gunKick = g.id === "rocket" || g.id === "shotgun" ? 10 : 5;
     const mx = this.x + Math.cos(this.aim) * 26;
@@ -369,8 +380,22 @@ export class Player {
     const dur = this.id === "FLENKY" && G.s.upgrades.fl1 ? 230 : 170;
     this.dodgeUntil = now + dur;
     this.iframesUntil = now + dur + 90;
-    this.dodgeCd = now + 650 * mods.dodgeCooldownMult;
+    this.dodgeCd = now + 650 * mods.dodgeCooldownMult * (1 - 0.15 * (G.s.upgrades.pk_dodge ?? 0));
     this.perfectArmed = true;
+    // Central Bank moves
+    if (G.s.upgrades.mv_charge) {
+      for (let i = 1; i <= 3; i++) this.world.sc.time.delayedCall((dur / 3) * i, () => this.world.aoe(this.x, this.y, 46, this.dmg(14, this.world.now()), { knock: 340, angle: this.dodgeAngle, noWonk: true, label: "SHOULDER" }));
+    }
+    if (G.s.upgrades.mv_fart) {
+      const fx = this.x;
+      const fy = this.y;
+      const cloud = this.world.sc.add.circle(fx, fy, 30, 0x9acd32, 0.35).setDepth(5);
+      let n = 0;
+      const ev2 = this.world.sc.time.addEvent({ delay: 300, loop: true, callback: () => {
+        this.world.aoe(fx, fy, 38, 6, { noWonk: true, slow: 0.5, label: "" });
+        if (++n > 10) { ev2.remove(); cloud.destroy(); }
+      } });
+    }
     synth.play("dodge");
     this.world.sc.events.emit("player-dodge");
     if (this.id === "CRONGUS" && G.s.upgrades.cr3) {
@@ -791,6 +816,10 @@ export class Player {
     s.intoxication = Math.max(0, s.intoxication - 10);
     synth.play("gulp");
     this.world.floatText(this.x, this.y - 30, "+45 (national drink)", "#ffb6c1", 13);
+    if (s.upgrades.mv_lastorders) {
+      this.world.aoe(this.x, this.y, 130, this.dmg(28, now), { knock: 420, noWonk: true, color: 0xffb6c1, label: "LAST ORDERS" });
+      this.world.shake(160, 0.008);
+    }
     // the national drink gets you wonky
     this.world.addWonk(30);
     this.world.sc.events.emit("player-heal");

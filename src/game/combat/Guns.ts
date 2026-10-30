@@ -26,6 +26,8 @@ export interface GunDef {
   /** Ammo in a crate / found box. */
   pickup: number;
   minChapter: number;
+  /** Only sold at the Central Bank (never in crates). Price in Krezzcoin. */
+  shop?: number;
 }
 
 export const GUNS: Record<string, GunDef> = {
@@ -49,8 +51,31 @@ export const GUNS: Record<string, GunDef> = {
     id: "rocket", name: "The Marital Aid", blurb: "Fires pink rubber rockets. Vibrates on impact. Then explodes.",
     tex: "p_wpn_rocket", dmg: 34, cd: 1000, speed: 360, pellets: 1, spread: 0, range: 520, blast: 85, knock: 260, color: 0xffffff, shotTex: "fx_rocket", maxAmmo: 12, pickup: 3, minChapter: 4,
   },
+  // ---- Central Bank exclusives
+  gatling: {
+    id: "gatling", name: "The Gronny Gatling", blurb: "Fair enough. Fair enough. Fair enough. Fair enough.",
+    tex: "p_wpn_smg", dmg: 5, cd: 45, speed: 680, pellets: 1, spread: 0.24, range: 380, color: 0xffd23f, maxAmmo: 600, pickup: 150, minChapter: 1, shop: 420,
+  },
+  sniper: {
+    id: "sniper", name: "Polson's Long Lens", blurb: "Originally bought to look at his own house from the other side of town.",
+    tex: "p_wpn_rail", dmg: 75, cd: 1100, speed: 1500, pellets: 1, spread: 0, range: 950, pierce: 3, knock: 220, color: 0xf5f5f5, maxAmmo: 24, pickup: 6, minChapter: 1, shop: 480,
+  },
+  flamer: {
+    id: "flamer", name: "Fizzy Bongo Flamethrower", blurb: "It's a bongo. On fire. Pointed at people.",
+    tex: "p_wpn_shotgun", dmg: 4, cd: 70, speed: 380, pellets: 4, spread: 0.5, range: 170, color: 0xff7a1a, maxAmmo: 320, pickup: 80, minChapter: 1, shop: 560,
+  },
+  bfk: {
+    id: "bfk", name: "The BFK (Big Fucking Krezzer)", blurb: "Do not fire indoors. Everything in Krelworld is indoors.",
+    tex: "p_wpn_rocket", dmg: 95, cd: 1600, speed: 300, pellets: 1, spread: 0, range: 560, blast: 150, knock: 420, color: 0xc084fc, shotTex: "fx_rocket", maxAmmo: 6, pickup: 2, minChapter: 1, shop: 900,
+  },
 };
-export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket"];
+
+export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk"];
+
+/** Max ammo after the Bigger Pockets perk. */
+export function gunMax(g: GunDef, s: GameState = G.s): number {
+  return Math.round(g.maxAmmo * (1 + 0.25 * (s.upgrades?.pk_ammo ?? 0)));
+}
 
 export function ownedGuns(s: GameState = G.s): string[] {
   return GUN_ORDER.filter((id) => s.guns && id in s.guns);
@@ -58,6 +83,18 @@ export function ownedGuns(s: GameState = G.s): string[] {
 
 export function currentGun(s: GameState = G.s): GunDef | null {
   return s.gun && s.guns && s.gun in s.guns ? GUNS[s.gun] : null;
+}
+
+/** The next owned gun (after `from`, wrapping round) that still has ammo, or null. */
+export function nextLoadedGun(s: GameState = G.s, from?: string): string | null {
+  const owned = ownedGuns(s);
+  if (!owned.length) return null;
+  const start = from ? owned.indexOf(from) : -1;
+  for (let k = 1; k <= owned.length; k++) {
+    const id = owned[(start + k + owned.length) % owned.length];
+    if (id !== from && (s.guns![id] ?? 0) > 0) return id;
+  }
+  return null;
 }
 
 /** Cycle fists -> each owned gun with ammo -> fists. Returns the new label. */
@@ -71,7 +108,7 @@ export function cycleGun(s: GameState = G.s): string {
 /** Give a gun the player doesn't have yet (or ammo if they have them all). */
 export function rollCrate(s: GameState = G.s): { gun?: GunDef; ammoFor?: GunDef; amount: number } {
   s.guns = s.guns ?? {};
-  const missing = GUN_ORDER.filter((id) => !(id in s.guns!) && GUNS[id].minChapter <= s.chapter);
+  const missing = GUN_ORDER.filter((id) => !(id in s.guns!) && !GUNS[id].shop && GUNS[id].minChapter <= s.chapter);
   if (missing.length) {
     // first ever crate is always the pistol
     const id = !ownedGuns(s).length ? "pistol" : missing[Math.floor(Math.random() * missing.length)];
@@ -86,12 +123,12 @@ export function rollCrate(s: GameState = G.s): { gun?: GunDef; ammoFor?: GunDef;
 
 /** Ammo for a random owned gun (biased to the one in hand). `mult` scales the amount. */
 export function giveAmmo(s: GameState = G.s, mult = 1): { gun: GunDef; amount: number } | null {
-  const owned = ownedGuns(s).filter((id) => s.guns![id] < GUNS[id].maxAmmo);
+  const owned = ownedGuns(s).filter((id) => s.guns![id] < gunMax(GUNS[id], s));
   if (!owned.length) return null;
   const id = s.gun && owned.includes(s.gun) && Math.random() < 0.6 ? s.gun : owned[Math.floor(Math.random() * owned.length)];
   const g = GUNS[id];
   const amount = Math.max(1, Math.round(g.pickup * mult));
-  s.guns![id] = Math.min(g.maxAmmo, s.guns![id] + amount);
+  s.guns![id] = Math.min(gunMax(g, s), s.guns![id] + amount);
   return { gun: g, amount };
 }
 

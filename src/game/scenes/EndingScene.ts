@@ -86,6 +86,7 @@ export class EndingScene extends Phaser.Scene {
     const banner = title(this, 480, 40, e.title, 22, "#ffd23f").setDepth(600);
     await this.box.play(e.lines);
     banner.destroy();
+    if (!replay) await this.deleteTheChat();
     if (s.flags.arc_scrombus_done) {
       synth.music("anthem", true);
       await this.box.play([
@@ -154,4 +155,80 @@ export class EndingScene extends Phaser.Scene {
       });
     });
   }
+  /** The Temple of the Logs: find the group chat Drongus was going to leak, and delete it. */
+  private async deleteTheChat() {
+    await this.box.play([
+      dir("Behind the throne, behind the song, a small door marked 'TEMPLE OF THE LOGS (PRIVATE) (NO REACTIONS)'."),
+      dir("Inside: one laptop on an altar of empty Fizzy Bongo cans. On screen, the group chat. All of it. A folder called 'LEAK_FINAL_final2.zip'."),
+      say("DRONGUS", "...don't. That's my life's work."),
+    ]);
+    const c = this.add.container(480, 260).setDepth(700);
+    c.add(this.add.rectangle(0, 0, 640, 320, 0xffffff).setStrokeStyle(4, 0x0084ff));
+    c.add(this.add.text(0, -130, "Krelworld (FGM ULTRA)", { fontFamily: FONT, fontSize: "22px", color: "#050505", fontStyle: "bold" }).setOrigin(0.5));
+    c.add(this.add.text(0, -102, "412,883 messages · 2009 – present · Seen by 9", { fontFamily: FONT, fontSize: "12px", color: "#65676b" }).setOrigin(0.5));
+    const warn = this.add.text(0, -40, "Delete this conversation?\nThis will also delete 'Seen by 9', the Krezzing Hour, every Krazy Fact\nand the four-minute camel voice note.", { fontFamily: FONT, fontSize: "14px", color: "#050505", align: "center" }).setOrigin(0.5);
+    c.add(warn);
+    c.setScale(0.2);
+    this.tweens.add({ targets: c, scale: 1, duration: 400, ease: "Back.out" });
+    await new Promise<void>((res) => {
+      c.add(button(this, -130, 90, "🗑 DELETE CHAT", () => res(), { w: 220, h: 54, size: 16, color: 0xe41e3f }));
+      c.add(button(this, 130, 90, "Keep one message", () => {
+        synth.play("tap_fail");
+        warn.setText("No. All of it. You know what's in there.");
+      }, { w: 220, h: 54, size: 14, color: 0xf0f2f5, textColor: "#050505" }));
+    });
+    c.removeAll(true);
+    c.add(this.add.rectangle(0, 0, 640, 320, 0xffffff).setStrokeStyle(4, 0xe41e3f));
+    c.add(this.add.text(0, -130, "DELETING...", { fontFamily: FONT, fontSize: "22px", color: "#e41e3f", fontStyle: "bold" }).setOrigin(0.5));
+    c.add(this.add.rectangle(0, 110, 560, 18, 0xe4e6eb));
+    const fill = this.add.rectangle(-280, 110, 0, 18, 0xe41e3f).setOrigin(0, 0.5);
+    c.add(fill);
+    const flying = [
+      "MIKEY: Fun police you fucking cunts.",
+      "KREBLIS: Shudnt av goten this drunke b4 werk!",
+      "FLENKY: I blew a load on a fucking shirt last night. Wait. Like money.",
+      "DRONGUS: Seen by 9 btw",
+      "KREBLIS: Luv 2 drinke bere frm a shoe.",
+      "MIKEY: U fukin drongo",
+      "FLENKY: Sigma males are a more alpha version of alpha males 👍",
+      "DRONGUS: UNTIL SOMEONE REACTS, THERE WILL BE NO MORE LORE",
+      "KREBLIS: It's fart o'clock somewhere.",
+      "MIKEY: [voice note, 4:02] *camel noises*",
+      "FLENKY: I'm the toppest. I'll fuckin burst ye.",
+      "DRONGUS: Did everyone see the song ?",
+    ];
+    synth.play("alarm");
+    await new Promise<void>((res) => {
+      let i = 0;
+      this.time.addEvent({
+        delay: 260,
+        repeat: flying.length * 2 - 1,
+        callback: () => {
+          const t = this.add.text(-290, -80 + (i % 6) * 26, flying[i % flying.length], { fontFamily: FONT, fontSize: "12px", color: "#050505" });
+          c.add(t);
+          this.tweens.add({ targets: t, x: -900, alpha: 0, delay: 200, duration: 900, onComplete: () => t.destroy() });
+          synth.play("tap");
+          i++;
+          fill.width = Math.min(560, (560 * i) / (flying.length * 2));
+          if (i >= flying.length * 2) this.time.delayedCall(500, () => res());
+        },
+      });
+    });
+    c.removeAll(true);
+    c.add(this.add.rectangle(0, 0, 640, 200, 0xffffff).setStrokeStyle(4, 0x22c55e));
+    c.add(this.add.text(0, 0, "CONVERSATION DELETED\n0 messages · Seen by 0", { fontFamily: FONT, fontSize: "22px", color: "#050505", fontStyle: "bold", align: "center" }).setOrigin(0.5));
+    synth.play("perfect");
+    await new Promise((r) => this.time.delayedCall(1800, r));
+    c.destroy();
+    G.s.flags.chat_deleted = true;
+    await this.box.play([
+      dir("Silence. Real silence. Not the Great Silence. Just a laptop fan and nine people breathing out."),
+      say("DRONGUS", "...you deleted it."),
+      say("DRONGUS", "Sixteen years of lore. Gone. Nobody will ever see the song now."),
+      say("DRONGUS", "..."),
+      say("DRONGUS", "New one lads."),
+      dir("DRONGUS B. DRIPPIN' created a new group: 'Krelworld (FGM ULTRA) 2'. You have been added. Eight other people have been added. Seen by 9."),
+    ]);
+  }
+
 }

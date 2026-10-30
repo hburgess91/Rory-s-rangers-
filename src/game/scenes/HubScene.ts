@@ -8,7 +8,7 @@ import { NPC_TALK, type TalkSet } from "../../content/dialogue/npc";
 import { CHATTER } from "../../content/dialogue/chatter";
 import { evalCond } from "../systems/conditions";
 import { runDialogue } from "./DialogueScene";
-import { archiveAction, chapterIntroLines, currentStep, dungeonOpen, switchTo, townHallAction } from "../Flow";
+import { archiveAction, chapterIntroLines, currentStep, dungeonOpen, endChapter, switchTo, townHallAction } from "../Flow";
 import { chapterDef } from "../../content/chapters/chapters";
 import type { Line } from "../../data/types";
 import { synth } from "../audio/Synth";
@@ -197,8 +197,13 @@ export class HubScene extends Phaser.Scene {
     super("Hub");
   }
 
-  create(data: { at?: string; from?: string }) {
+  /** Set when arriving straight from a chapter report: run the next chapter's Town Hall meetings in the same visit. */
+  private chainMeetings = false;
+
+  create(data: { at?: string; from?: string; advance?: boolean; chain?: boolean }) {
     const s = G.s;
+    if (data?.advance) endChapter();
+    this.chainMeetings = !!(data?.advance || data?.chain);
     s.phase = "hub";
     G.rt.timerEnd = 0;
     G.emit("timer", null);
@@ -272,6 +277,12 @@ export class HubScene extends Phaser.Scene {
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: "Report to the Town Hall." });
+    // one visit, not three: roll straight on into this chapter's Town Hall meeting(s)
+    if (this.chainMeetings) {
+      this.chainMeetings = false;
+      const a = townHallAction();
+      if (a.kind === "meeting") this.go("Meeting", { id: a.id, next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } });
+    }
   }
 
   private spawnPoint(at?: string) {
@@ -1174,7 +1185,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     switch (b.id) {
       case "TOWN_HALL": {
         const a = townHallAction();
-        return a.kind === "meeting" ? "Enter Town Hall (MEETING IN PROGRESS)" : a.kind === "outro" ? "Enter Town Hall (report back)" : a.kind === "fact" ? "Enter Town Hall (submit a Krazy Fact)" : "Enter Town Hall";
+        return a.kind === "meeting" ? "Enter Town Hall (MEETING IN PROGRESS)" : a.kind === "outro" ? "Enter Town Hall (report back)" : a.kind === "fact" ? "Enter Town Hall (report back)" : "Enter Town Hall";
       }
       case "ARCHIVE":
         return archiveAction().kind === "meeting" ? "Enter the Archive (the cabinet is waiting)" : "Enter the Historical Archive";
@@ -1331,12 +1342,12 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "TOWN_HALL": {
         const a = townHallAction();
         if (a.kind === "meeting") {
-          const next = a.id === "krazy_fact_emergency" ? { scene: "KrazyFact", data: {} } : { scene: "Hub", data: { at: "TOWN_HALL" } };
+          const next = a.id === "krazy_fact_emergency" ? { scene: "Hub", data: { at: "TOWN_HALL", advance: true } } : { scene: "Hub", data: { at: "TOWN_HALL", chain: true } };
           this.go("Meeting", { id: a.id, next });
         } else if (a.kind === "outro") {
           s.flags[`ch${s.chapter}_outro`] = true;
-          this.go("Cutscene", { script: `ch${s.chapter}_outro`, bg: "townhall", music: "meeting", next: { scene: "KrazyFact", data: {} } });
-        } else if (a.kind === "fact") this.go("KrazyFact", {});
+          this.go("Cutscene", { script: `ch${s.chapter}_outro`, bg: "townhall", music: "meeting", next: { scene: "Hub", data: { at: "TOWN_HALL", advance: true } } });
+        } else if (a.kind === "fact") this.go("Hub", { at: "TOWN_HALL", advance: true });
         else {
           const q = canTurnIn(s, "TOWN_HALL");
           if (s.flags.on_register) await this.registerBribe();

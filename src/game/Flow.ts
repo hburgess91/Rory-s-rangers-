@@ -1,3 +1,4 @@
+import { offerFacts, adoptFact } from "../data/historicalRevisions";
 import Phaser from "phaser";
 import type { Line, PlayableId } from "../data/types";
 import { G } from "./G";
@@ -99,6 +100,18 @@ export function dungeonOpen(): { open: boolean; why?: string } {
   }
   if (s.flags[`ch${s.chapter}_clear`]) return { open: false, why: "Already cleared. Report to the Town Hall." };
   return { open: true };
+}
+
+/** End of chapter: the cabinet enters a Krazy Fact into the record on your behalf, then the next chapter starts. */
+export function endChapter() {
+  const s = G.s;
+  if (s.flags[`ch${s.chapter}_fact`]) return;
+  const f = offerFacts(s, 1)[0];
+  if (f && adoptFact(s, f.id)) {
+    G.emit("toast", { title: "KRAZY FACT ENTERED INTO THE RECORD", text: `"${f.fact}" ${f.effect}` });
+    G.drongus("krazy_fact");
+  }
+  advanceChapter();
 }
 
 /** Called after a Krazy Fact is adopted at the end of a chapter. */

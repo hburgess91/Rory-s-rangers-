@@ -1,5 +1,18 @@
+import type { Line, SpeakerId } from "../../data/types";
 import type { MeetingScript } from "../../data/types";
 import { canon, dir, ping, react, say } from "../dsl";
+
+/** Drongus's countdown to leaking the group chat: a "taster" screenshot of real messages, then the room's horror. */
+export function leakPreview(when: string, quotes: [SpeakerId, string][], after: Line[]): Line[] {
+  return [
+    ping("DRONGUS", `LEAK COUNTDOWN: ${when}`),
+    ping("DRONGUS", "Here's a little preview of what the public's getting 👀"),
+    dir("The podium screen fills with a screenshot. The group chat. Real messages. Timestamps and everything.", { sfx: "notify" }),
+    ...quotes.map(([sp, t]) => say(sp, t)),
+    dir("SCREENSHOT ENDS. Nobody looks at anybody."),
+    ...after,
+  ];
+}
 
 export const FRAGMAR_BRIEFING: MeetingScript = {
   id: "fragmar_briefing",
@@ -65,6 +78,14 @@ export const FRAGMAR_BRIEFING: MeetingScript = {
       SEEN: [say("POLSON", "Seen. Classic. I'll take it as a yes anyway.")],
     }, "POLSON"),
     dir("Polson Towers is outside town on Polson Road. Nobody has been past the hallway since spring. The Reaction Network router is in there somewhere."),
+    ...leakPreview("6 DAYS", [
+      ["MIKEY", "I tried being a good person for a while but it just ain't me. I'm a cunt."],
+      ["KREBLIS", "Shudnt av goten this drunke b4 werk!"],
+      ["FLENKY", "I blew a load on a fucking shirt last night. Wait. Like money."],
+    ], [
+      say("FLENKY", "To clarify. I did NOT."),
+      say("KREZWONK", "The router's under Polson's hoard. If his network's down, so is the leak. Buy us time, get the next piece of the map."),
+    ]),
     say("KREZMAR", "Bring bongos. And bin bags. Mainly bin bags."),
   ],
   onComplete: { fragmar_briefed: true },
@@ -84,6 +105,14 @@ export const NATIONAL_BEVERAGE_COMMITTEE: MeetingScript = {
   ],
   beats: [
     dir("The table has jugs on it. Nobody is drinking from the jugs. Everyone remembers what Scrombus said about the water dispenser."),
+    ...leakPreview("5 DAYS", [
+      ["MIKEY", "Fun police you fucking cunts."],
+      ["KREBLIS", "O u fink ur al tht do ya?? Sounds lyke ur cumin on2 me 😡"],
+      ["FLENKY", "DONT FUCKING FUNCTIONAL ME. IM LOSING IT."],
+    ], [
+      say("SCROMBUS", "That's the National Beverage Committee's reputation gone. Five days. Five days and every journalist in Krelford reads that.", { role: true, proctus: "That's our reputation gone! I didn't know we had one!" }),
+      say("KREZWONK", "Every road to his temple runs through his lore. The Ministry is the next one. We keep going.", { role: true, proctus: "The temple! We keep going! Towards it! Probably!" }),
+    ]),
     say("SCROMBUS", "Pipeline report. The Ministry of Boner Control has gone dark. The main pumping station is offline. Pussy juice pressure across Krelford is down forty percent.", { role: true, proctus: "Pipeline report! The juice is... down. Forty percent. Of something. I've been given a graph and it's upside down." }),
     say("KREBLIS", "Citizens are rationing. People are queuing at the Tap with eggcups.", { role: true, proctus: "People are using eggcups! Strange occurrence! I've filed it twice." }),
     say("KREBLIS", "A man in Krelford South tried to extract it from a melon. He's in the Krambulance now.", { role: true, proctus: "A man tried to get it from a melon. That's not strange. I'd try that." }),
@@ -170,6 +199,16 @@ export const FLENKY_CONSTITUTIONAL_CRISIS: MeetingScript = {
   ],
   beats: [
     dir("Flenky's chair is empty. A small sign on it reads 'BANNED'. Under that, in different handwriting: 'pls'."),
+    ...leakPreview("4 DAYS", [
+      ["MIKEY", "My only regret was that I didn't call him a cunt."],
+      ["KREBLIS", "Tucker Carlson is dead. Oh no, sorry. He quit."],
+      ["MIKEY", "U fukin drongo."],
+      ["FLENKY", "Woah man. Big nasty they call me."],
+    ], [
+      say("KREBLIS", "Four days. They're going to find out about the shoe.", { role: true, proctus: "Four days! What's the shoe? Nobody will tell me about the shoe!" }),
+      say("MIKEY", "The drongo one's fine. That one's just true."),
+      say("FLENKY", "Can somebody let me in so I can be horrified properly."),
+    ]),
     say("FLENKY", "I'm here. I'm right here. I'm standing in the corridor. Can I come in?", { variants: { FLENKY: "(You are, once again, standing in the corridor. You are banned. You don't know what for. You never know what for.)" } }),
     say("KREBLIS", "Order. The Bonky Cult has started issuing bans on the Supreme Leader's behalf. Arbitrary rules. Random removals. Citizens are being exiled for standing still.", { role: true, proctus: "Order! People are being banned for standing still! I've been standing still this entire meeting! Oh no." }),
     say("KREZWONK", "This isn't new. This is the oldest institution in Krelworld. Older than the cabinet. Older than the Tap.", { role: true, proctus: "This is ancient! Older than the Tap! Older than me! Which isn't saying much, I was appointed Tuesday." }),
@@ -224,6 +263,16 @@ export const KREBON_QUESTION: MeetingScript = {
   ],
   beats: [
     dir("Krebon's seat is in shadow. It is always in shadow. There's no window behind it. Nobody knows where the shadow comes from."),
+    ...leakPreview("2 DAYS", [
+      ["KREBLIS", "My legit life goal is to run a crooked business."],
+      ["MIKEY", "Did you notice I spelt my name wrong deliberately so I haven't actually agreed to anything?"],
+      ["FLENKY", "I'm the toppest. I'll fuckin burst ye."],
+      ["KREBLIS", "It's fart o'clock somewhere."],
+    ], [
+      say("KREBON", "Let it leak. I'm not in there.", { role: true, proctus: "Let it leak! I'm not in there! I've checked! Twice!" }),
+      say("KREZWONK", "You sent four thousand messages about Krezmond.", { role: true, proctus: "You sent four thousand messages about Krezmond! It says so on the card!" }),
+      say("KREBON", "...Delete it.", { role: true, proctus: "...Delete it. Delete it all. Including the card." }),
+    ]),
     canon("who_is_krebon", { s: "DRONGUS", notify: true }),
     say("KREBLIS", "That came through an hour ago. From the Citadel. He's still asking. Two years later.", { role: true, proctus: "That message came through an hour ago! From Drongus! He's still asking who Krebon is! So am I!" }),
     say("KREBON", "I'm right here.", {
@@ -264,6 +313,15 @@ export const FINAL_READING: MeetingScript = {
   ],
   beats: [
     dir("Half the Town Hall has been deleted. Not destroyed. Deleted. There are grey 'This page does not exist' boxes where the windows were. The horseshoe table is now a 'U' with citation-needed tags."),
+    ...leakPreview("TONIGHT. MIDNIGHT.", [
+      ["KREBLIS", "Fuuuuuuuuuuuuuuckkkk."],
+      ["MIKEY", "Megabus mor lyk megafuss."],
+      ["FLENKY", "Shut it. NERD!"],
+      ["KREBLIS", "Shudnt av goten this drunke b4 werk!"],
+    ], [
+      ping("DRONGUS", "Unless someone reacts to the song. Then I might reconsider. MIGHT."),
+      say("SCROMBUS", "That's every piece of the map. The Temple of the Logs is inside the Citadel. Top floor. Behind the song.", { role: true, proctus: "We have the whole map! The temple's at the top! I can't read maps! Somebody hold it the right way up!" }),
+    ]),
     say("KREBLIS", "Final report. The Reaction Network is back online. Every reaction in Krelworld is working again. Except one.", { role: true, proctus: "Final report! Reactions work again! Except one! I've tested them all on my lunch!" }),
     say("SCROMBUS", "The song. The Krezzing Hour is sealed inside the Citadel. You can't react to it from out here. Someone has to go in. Face to face. Thumb to thang.", { role: true, proctus: "The song is inside the big building! Someone must go in! Thumb to... I'm not reading the rest." }),
     say("KREZWONK", "I've had the final prophecy. It's very short. It just says: 'New one lads.'", { role: true, proctus: "My final prophecy is... *reads* 'New one lads.' I don't understand it. I'm hoping I never do." }),

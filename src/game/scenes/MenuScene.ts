@@ -5,6 +5,7 @@ import { switchTo, currentStep } from "../Flow";
 import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { GENERIC_UPGRADES, upgradeCost, maxHp, counter } from "../systems/stats";
+import { GUNS, GUN_ORDER, gunMax } from "../combat/Guns";
 import { arcsFor, arcAvailable, currentArcSteps, stepDone } from "../systems/arcs";
 import { personalQuest, pickupsCollected, MINISTRY_QUESTS, ministryQuestState, ministryProgress } from "../systems/quests";
 import { factById } from "../../data/historicalRevisions";
@@ -15,7 +16,21 @@ import { say } from "../../content/dsl";
 type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests";
 
 /** Overlay menus: pause, settings, bank (upgrades), ban tribunal, quests, death. */
+const BANK_PERKS = [
+  { id: "pk_spd", name: "Fresh Trainers", desc: "+7% movement speed per level. Krunch-approved. Smell of new.", cost: 140, max: 3 },
+  { id: "pk_dmg", name: "Krunch Gym Membership", desc: "+8% damage from everything per level. You don't go. You just have it.", cost: 160, max: 3 },
+  { id: "pk_rof", name: "Itchy Trigger Finger", desc: "Guns fire 10% faster per level.", cost: 150, max: 3 },
+  { id: "pk_ammo", name: "Bigger Pockets", desc: "+25% max ammo for every gun per level. Krez-ousers with cargo pockets.", cost: 180, max: 2 },
+  { id: "pk_dodge", name: "Ninja Backflip Lessons", desc: "Dodge cooldown -15% per level. Taught by Flenky. Got out just in time.", cost: 170, max: 2 },
+];
+const BANK_MOVES = [
+  { id: "mv_charge", name: "Pub Shove", desc: "Your dodge becomes a shoulder charge: damages and flings anything you barrel through.", cost: 320 },
+  { id: "mv_fart", name: "Fart Propulsion", desc: "Every dodge leaves a lingering fart cloud that hurts and slows enemies.", cost: 280 },
+  { id: "mv_lastorders", name: "Last Orders", desc: "Drinking pussy juice (Q) sends out a shockwave that knocks everything around you flying.", cost: 360 },
+];
+
 export class MenuScene extends Phaser.Scene {
+  private bankTab: "upgrades" | "armoury" | "perks" | "moves" = "upgrades";
   private mode: Mode = "pause";
   private caller = "";
   private data0: any = {};
@@ -131,31 +146,66 @@ export class MenuScene extends Phaser.Scene {
       case "bank": {
         if (!s) break;
         const minister = narrativeActor("KREZMAR", s.player);
-        add(title(this, 480, 64, "CENTRAL BANK OF KRELWORLD", 24, "#86efac"));
-        add(this.add.text(480, 90, `${CHARACTERS[minister as string]?.name}${minister === "PROCTUS" ? ` (${CHARACTERS[s.player].proctusTitle})` : ", Minister of Money and Loans"} · You have ${s.coins} Krezzcoin`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5));
-        let y = 120;
-        for (const u of GENERIC_UPGRADES) {
-          const lvl = s.upgrades[u.id] ?? 0;
-          const cost = upgradeCost(s, lvl);
-          const maxed = lvl >= u.max;
-          add(this.add.text(170, y, `${u.name} (${lvl}/${u.max})`, { fontFamily: FONT, fontSize: "14px", color: "#ffffff" }));
-          add(this.add.text(170, y + 18, u.desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4" }));
-          add(button(this, 720, y + 14, maxed ? "MAXED" : `BUY ${cost}`, () => this.buy(u.id, cost), { w: 140, h: 30, size: 13, disabled: maxed || s.coins < cost }));
-          y += 46;
-        }
-        const def = CHARACTERS[s.player];
-        add(this.add.text(170, y + 6, `${def.name} — PERSONAL BRANCH`, { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", fontStyle: "bold" }));
-        y += 28;
-        def.branch?.forEach((b, i) => {
-          const owned = !!s.upgrades[b.id];
-          const prevOk = i === 0 || !!s.upgrades[def.branch![i - 1].id];
-          const cost = Math.round(b.cost * (s.player === "KREZMAR" ? 0.9 : 1));
-          add(this.add.text(170, y, `${b.name}`, { fontFamily: FONT, fontSize: "14px", color: owned ? "#5ad35a" : "#ffffff" }));
-          add(this.add.text(170, y + 18, b.desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 460 } }));
-          add(button(this, 720, y + 14, owned ? "OWNED" : prevOk ? `BUY ${cost}` : "LOCKED", () => this.buyBranch(b.id, cost), { w: 140, h: 30, size: 13, disabled: owned || !prevOk || s.coins < cost }));
+        add(title(this, 480, 52, "CENTRAL BANK OF KRELWORLD", 24, "#86efac"));
+        add(this.add.text(480, 78, `${CHARACTERS[minister as string]?.name}${minister === "PROCTUS" ? ` (${CHARACTERS[s.player].proctusTitle})` : ", Minister of Money and Loans"} · You have ${s.coins} Krezzcoin`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5));
+        const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "MOVES"]];
+        tabs.forEach(([k, label], i) => add(button(this, 255 + i * 150, 106, label, () => { this.bankTab = k; this.render("bank"); }, { w: 140, h: 28, size: 13, color: this.bankTab === k ? 0x22c55e : undefined })));
+        let y = 136;
+        const row = (name: string, desc: string, btn: string, disabled: boolean, fn: () => void, col = "#ffffff") => {
+          add(this.add.text(150, y, name, { fontFamily: FONT, fontSize: "14px", color: col }));
+          add(this.add.text(150, y + 18, desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 500 } }));
+          add(button(this, 760, y + 14, btn, fn, { w: 150, h: 30, size: 13, disabled }));
           y += 44;
-        });
-        add(button(this, 480, 476, "LEAVE THE BANK", () => this.close(), { w: 220 }));
+        };
+        if (this.bankTab === "upgrades") {
+          for (const u of GENERIC_UPGRADES) {
+            const lvl = s.upgrades[u.id] ?? 0;
+            const cost = upgradeCost(s, lvl);
+            const maxed = lvl >= u.max;
+            row(`${u.name} (${lvl}/${u.max})`, u.desc, maxed ? "MAXED" : `BUY ${cost}`, maxed || s.coins < cost, () => this.buy(u.id, cost));
+          }
+          const def = CHARACTERS[s.player];
+          add(this.add.text(150, y + 2, `${def.name} — PERSONAL BRANCH`, { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", fontStyle: "bold" }));
+          y += 24;
+          def.branch?.forEach((b, i) => {
+            const owned = !!s.upgrades[b.id];
+            const prevOk = i === 0 || !!s.upgrades[def.branch![i - 1].id];
+            const cost = Math.round(b.cost * (s.player === "KREZMAR" ? 0.9 : 1));
+            row(b.name, b.desc, owned ? "OWNED" : prevOk ? `BUY ${cost}` : "LOCKED", owned || !prevOk || s.coins < cost, () => this.buyBranch(b.id, cost), owned ? "#5ad35a" : "#ffffff");
+          });
+        } else if (this.bankTab === "armoury") {
+          s.guns = s.guns ?? {};
+          for (const id of GUN_ORDER) {
+            const g = GUNS[id];
+            const owned = id in s.guns;
+            if (g.shop) {
+              if (!owned) row(`${g.name}  ·  BANK EXCLUSIVE`, g.blurb, `BUY ${g.shop}`, s.coins < g.shop, () => this.buyGun(id), "#ffd23f");
+              else {
+                const cost = Math.round(g.shop * 0.12);
+                const full = s.guns[id] >= gunMax(g, s);
+                row(`${g.name}  (${s.guns[id]}/${gunMax(g, s)})`, "Ammo: +" + g.pickup, full ? "FULL" : `AMMO ${cost}`, full || s.coins < cost, () => this.buyAmmo(id, cost), "#5ad35a");
+              }
+            } else if (owned) {
+              const cost = Math.max(15, Math.round(g.pickup * 1.2));
+              const full = s.guns[id] >= gunMax(g, s);
+              row(`${g.name}  (${s.guns[id]}/${gunMax(g, s)})`, "Ammo: +" + g.pickup, full ? "FULL" : `AMMO ${cost}`, full || s.coins < cost, () => this.buyAmmo(id, cost));
+            }
+          }
+          if (y < 440) add(this.add.text(480, y + 6, "Crate guns (pistol, Uzi, Boomstick, Railgun, Marital Aid) are found in dungeons. Their ammo is sold here once you own them.", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5, 0));
+        } else if (this.bankTab === "perks") {
+          for (const p of BANK_PERKS) {
+            const lvl = s.upgrades[p.id] ?? 0;
+            const cost = p.cost * (lvl + 1);
+            const maxed = lvl >= p.max;
+            row(`${p.name} (${lvl}/${p.max})`, p.desc, maxed ? "MAXED" : `BUY ${cost}`, maxed || s.coins < cost, () => this.buy(p.id, cost));
+          }
+        } else {
+          for (const m of BANK_MOVES) {
+            const owned = !!s.upgrades[m.id];
+            row(m.name, m.desc, owned ? "OWNED" : `BUY ${m.cost}`, owned || s.coins < m.cost, () => this.buyBranch(m.id, m.cost), owned ? "#5ad35a" : "#ffffff");
+          }
+        }
+        add(button(this, 480, 500, "LEAVE THE BANK", () => this.close(), { w: 220 }));
         break;
       }
       case "tribunal": {
@@ -188,6 +238,31 @@ export class MenuScene extends Phaser.Scene {
     s.coins -= cost;
     s.upgrades[id] = (s.upgrades[id] ?? 0) + 1;
     if (id === "hp") s.hp = Math.min(maxHp(s), s.hp + 15);
+    synth.play("coin");
+    G.save();
+    this.render("bank");
+  }
+
+  private buyGun(id: string) {
+    const s = G.s;
+    const g = GUNS[id];
+    if (!g.shop || s.coins < g.shop) return;
+    s.coins -= g.shop;
+    s.guns = s.guns ?? {};
+    s.guns[id] = g.pickup * 2;
+    s.gun = id;
+    synth.play("ding");
+    G.emit("toast", { title: "CENTRAL BANK", text: `${g.name} acquired. Equipped. X to swap weapons.` });
+    G.save();
+    this.render("bank");
+  }
+
+  private buyAmmo(id: string, cost: number) {
+    const s = G.s;
+    const g = GUNS[id];
+    if (!s.guns || !(id in s.guns) || s.coins < cost) return;
+    s.coins -= cost;
+    s.guns[id] = Math.min(gunMax(g, s), s.guns[id] + g.pickup);
     synth.play("coin");
     G.save();
     this.render("bank");
