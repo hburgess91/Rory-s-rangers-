@@ -56,8 +56,176 @@
     ]
    }
   },
+  "spr_KREBLIS": {
+   "file": "chars/KREBLIS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
   "spr_KREZMAR": {
    "file": "chars/KREZMAR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KREZWONK": {
+   "file": "chars/KREZWONK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SCROMBUS": {
+   "file": "chars/SCROMBUS.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -438,12 +606,6 @@
   "tv_townhall_cam": {
    "file": "backdrops/tv_townhall_cam.png"
   },
-  "tile_road": {
-   "file": "tiles/tile_road.png"
-  },
-  "tile_grass": {
-   "file": "tiles/tile_grass.png"
-  },
   "tile_cobble": {
    "file": "tiles/tile_cobble.png"
   },
@@ -455,6 +617,12 @@
   },
   "tile_meadow": {
    "file": "tiles/tile_meadow.png"
+  },
+  "tile_grass": {
+   "file": "tiles/tile_grass.png"
+  },
+  "tile_road": {
+   "file": "tiles/tile_road.png"
   }
  }
 }

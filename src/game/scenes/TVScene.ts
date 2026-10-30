@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { charMeta } from "../gfx/HD";
 import { ALL_EPISODES, CHANNELS, setKeyFor } from "../../content/television/channels";
 import { beatDuration, type TVBeat, type TVEpisode } from "../systems/tv";
 import { G } from "../G";
@@ -548,6 +549,10 @@ export class TVScene extends Phaser.Scene {
   }
 
   private actorTex(name: string): string | null {
+    // PixelLab TV cast (spr_TV_<NAME>) first
+    const up = name.toUpperCase() === "KRELBERT AND RONSON" ? "KRELBERT" : name.toUpperCase();
+    const tvKey = `spr_TV_${up.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`;
+    if (this.textures.exists(tvKey)) return tvKey;
     const c = CAST[name.toUpperCase()];
     if (typeof c === "string") return c;
     if (c) return `tv_${name.toUpperCase()}`;
@@ -571,9 +576,10 @@ export class TVScene extends Phaser.Scene {
     const tex = this.actorTex(key);
     if (!tex || this.setKey === "nyc_skyline") return null;
     const count = Object.keys(this.actors).length;
-    const extra = !CAST[key];
+    const extra = !CAST[key] || tex.startsWith("spr_TV_");
     const x = extra ? SX + 110 + (count % 3) * 170 : SX + 150 + count * 250;
-    const spr = this.add.sprite(x, SY + 280, tex, 0).setScale((this.textures.getFrame(tex, 0)?.height ?? 24) > 30 ? 2.5 : 5);
+    const hdArt = !!charMeta(this, tex);
+    const spr = this.add.sprite(x, SY + 280, tex, 0).setScale(hdArt ? 4.4 : (this.textures.getFrame(tex, 0)?.height ?? 24) > 30 ? 2.5 : 5);
     this.stage.add(spr);
     const a = { spr, name: key };
     this.actors[key] = a;
