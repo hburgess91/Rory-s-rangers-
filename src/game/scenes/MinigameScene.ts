@@ -9,6 +9,8 @@ import { dir, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
 import { animateWalker, backdrop } from "../gfx/HD";
+import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { TOUCH } from "../ui/TouchControls";
 
 const MIKEY_BARKS = [
   "Mikey here.",
@@ -64,6 +66,7 @@ export class MinigameScene extends Phaser.Scene {
       burpees: () => this.burpees(),
       facebook: () => this.fbTroll(),
       modulator: () => this.fbTroll("mikey"),
+      crocodile: () => this.crocodile(),
       gig: () => (G.s.player === "KREBON" ? this.gig() : this.gigWatch()),
     };
     (modes[this.mode] ?? (() => this.finish(false)))();
@@ -1036,6 +1039,249 @@ export class MinigameScene extends Phaser.Scene {
         if ((pr.d && pr.ended) || (!pr.d && elapsed > 180)) done();
       },
     });
+  }
+
+  // ---------------------------------------------------------------- DO THE CROCODILE (SanMik, "Jerk My Gherk")
+
+  private crocodile() {
+    const BPM = 89;
+    const BEAT = 60 / BPM;
+    const PHASE = 0.017;
+    const SPEED = 260; // px per second along the lane
+    const HIT_X = 150;
+    if (!backdrop(this, "bg_gig", { dim: 0.35, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x10241a);
+    title(this, 480, 22, "DO THE CROCODILE", 26, "#86efac").setDepth(200);
+    this.add.text(480, 46, "SanMik ft. the entire cabinet · ← / A = LEFT HAND · → / D = RIGHT HAND · ↑ / W / SPACE = CHOMP", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(200);
+    // ---- the dancers: everyone, in a line, extremely serious
+    const me = G.s.player;
+    const crew = [...PLAYABLE_ORDER.filter((id) => id !== me), "POLSON", "PROCTUS"].filter((id) => this.textures.exists(`spr_${id}`));
+    type Dancer = { spr: Phaser.GameObjects.Sprite; skin: number; l: number; r: number; you: boolean };
+    const dancers: Dancer[] = [];
+    const back = crew.slice(0, 10);
+    back.forEach((id, i) => {
+      const x = 90 + i * (780 / Math.max(1, back.length - 1));
+      const spr = this.add.sprite(x, 300 + (i % 2) * 18, `spr_${id}`, 0).setScale(2.2).setDepth(20 + (i % 2));
+      dancers.push({ spr, skin: CHARACTERS[id]?.look?.skin ?? 0xf0b095, l: 0, r: 0, you: false });
+    });
+    const meSpr = this.add.sprite(480, 410, `spr_${me}`, 0).setScale(3).setDepth(40);
+    dancers.push({ spr: meSpr, skin: CHARACTERS[me]?.look?.skin ?? 0xf0b095, l: 0, r: 0, you: true });
+    this.add.text(480, 448, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
+    const arms = this.add.graphics().setDepth(45);
+    // arm pose: 0 = down by your side, 1 = jaws open overhead, 2 = CHOMP (jaws shut)
+    const drawArms = () => {
+      arms.clear();
+      for (const d of dancers) {
+        const h = d.spr.displayHeight;
+        const top = d.spr.y - h / 2;
+        const sx = d.spr.x;
+        const arm = (side: -1 | 1, pose: number) => {
+          if (pose <= 0.02) return; // arms down: the sprite's own arms
+          const shoulderX = sx + side * h * 0.13;
+          const shoulderY = top + h * 0.34;
+          // jaw: straight up, opening apart as `pose` nears 1, snapping shut at 2
+          const open = pose >= 2 ? 0 : Math.min(1, pose);
+          const ang = -Math.PI / 2 + side * (0.08 + open * 0.6);
+          const len = h * 0.55 * Math.min(1, pose);
+          const ex = shoulderX + Math.cos(ang) * len;
+          const ey = shoulderY + Math.sin(ang) * len;
+          arms.lineStyle(h * 0.11, 0x000000, 1).lineBetween(shoulderX, shoulderY, ex, ey);
+          arms.lineStyle(h * 0.075, d.skin, 1).lineBetween(shoulderX, shoulderY, ex, ey);
+          arms.fillStyle(d.skin, 1).fillCircle(ex, ey, h * 0.05);
+          if (pose >= 1.5) arms.fillStyle(0xffffff, 1).fillTriangle(ex - 3, ey + 2, ex + 3, ey + 2, ex, ey + 7);
+        };
+        arm(-1, d.l);
+        arm(1, d.r);
+      }
+    };
+    const move = (who: Dancer[], kind: "L" | "R" | "C") => {
+      for (const d of who) {
+        const target = { l: kind === "R" ? 0 : kind === "C" ? 2 : 1, r: kind === "L" ? 0 : kind === "C" ? 2 : 1 };
+        d.l = target.l === 2 ? 1 : target.l;
+        d.r = target.r === 2 ? 1 : target.r;
+        this.tweens.add({ targets: d, l: target.l, r: target.r, duration: kind === "C" ? 90 : 120, delay: kind === "C" ? 80 : 0 });
+        this.tweens.add({ targets: d, l: 0, r: 0, delay: 360, duration: 180 });
+        this.tweens.add({ targets: d.spr, y: d.spr.y - 6, duration: 90, yoyo: true });
+      }
+    };
+    // ---- the chart, from the song's real structure (89 BPM, quiet intro, two breakdowns)
+    type Note = { t: number; k: "L" | "R" | "C"; img: Phaser.GameObjects.Container; done: boolean; line?: boolean };
+    const notes: Note[] = [];
+    const quiet = new Set([28, 29, 54, 55]);
+    const pattern: ("L" | "R" | "C")[] = ["L", "R", "L", "C", "R", "L", "R", "C"];
+    let pi = 0;
+    for (let beat = 16; beat < 69 * 4; beat++) {
+      const bar = Math.floor(beat / 4);
+      if (quiet.has(bar)) continue;
+      if (bar < 12 && beat % 2) continue; // gentle start: every other beat
+      if (bar >= 56 || beat % 2 === 0 || bar >= 30) {
+        const t = PHASE + beat * BEAT;
+        if (t > 186) break;
+        const k = pattern[pi++ % pattern.length];
+        const c = this.add.container(-200, 120).setDepth(150);
+        const col = k === "C" ? 0x22c55e : k === "L" ? 0x38bdf8 : 0xf472b6;
+        c.add(this.add.circle(0, 0, 20, col).setStrokeStyle(3, 0xffffff));
+        c.add(this.add.text(0, 0, k === "C" ? "▲" : k === "L" ? "◀" : "▶", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+        notes.push({ t, k, img: c, done: false });
+      }
+    }
+    this.add.rectangle(480, 120, 960, 54, 0x000000, 0.55).setDepth(140);
+    this.add.circle(HIT_X, 120, 24).setStrokeStyle(4, 0xffd23f).setDepth(145);
+    const lyric = this.add.text(480, 200, "", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#86efac", stroke: "#000", strokeThickness: 6 }).setOrigin(0.5).setDepth(160);
+    const lyrics = ["YOU TAKE YOUR LEFT HAND", "AND GO LIKE THIS", "DO THE CROCODILE", "(very seriously)"];
+    synth.music("crocodile", true);
+    const start = this.time.now;
+    let hits = 0;
+    let perfect = 0;
+    let missed = 0;
+    let combo = 0;
+    let best = 0;
+    const songT = () => {
+      const pr = synth.fileProgress();
+      return pr.d ? pr.t : (this.time.now - start) / 1000;
+    };
+    const judge = (k: "L" | "R" | "C") => {
+      if (this.ended || this.box.active) return;
+      const t = songT();
+      const n = notes.find((x) => !x.done && Math.abs(x.t - t) < 0.28);
+      if (!n) {
+        move([dancers[dancers.length - 1]], k);
+        return;
+      }
+      n.done = true;
+      const err = Math.abs(n.t - t);
+      if (n.k !== k) {
+        missed++;
+        combo = 0;
+        move([dancers[dancers.length - 1]], k);
+        this.pop(480, 360, ["WRONG HAND", "MATE.", "THAT'S A TOAD", "SERIOUSLY?"][Math.floor(Math.random() * 4)], "#ff6b6b", 18);
+        n.img.destroy();
+        return;
+      }
+      hits++;
+      combo++;
+      best = Math.max(best, combo);
+      if (err < 0.1) perfect++;
+      move([dancers[dancers.length - 1]], k);
+      synth.play(k === "C" ? "punch" : "tap");
+      this.pop(HIT_X, 80, err < 0.1 ? "PERFECT" : "GOOD", err < 0.1 ? "#ffd23f" : "#ffffff", 16);
+      this.tweens.add({ targets: n.img, scale: 1.6, alpha: 0, duration: 200, onComplete: () => n.img.destroy() });
+    };
+    const kb = this.input.keyboard;
+    kb?.on("keydown-LEFT", () => judge("L"));
+    kb?.on("keydown-A", () => judge("L"));
+    kb?.on("keydown-RIGHT", () => judge("R"));
+    kb?.on("keydown-D", () => judge("R"));
+    for (const k of ["UP", "W", "SPACE"]) kb?.on(`keydown-${k}`, () => judge("C"));
+    // three big pads for touch / mouse
+    ([["◀ LEFT", "L", 200, 0x38bdf8], ["▲ CHOMP", "C", 480, 0x22c55e], ["RIGHT ▶", "R", 760, 0xf472b6]] as const).forEach(([lbl, k, x, col]) => {
+      const pad = this.add.rectangle(x, 506, 250, 54, col, 0.35).setStrokeStyle(2, col).setDepth(200).setInteractive();
+      this.add.text(x, 506, lbl, { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(201);
+      pad.on("pointerdown", () => judge(k));
+    });
+    this.hud.setY(452).setDepth(210);
+    const leave = this.add.text(940, 14, "[ LEAVE ]", { fontFamily: FONT, fontSize: "13px", color: "#86efac", backgroundColor: "#000000aa", padding: { x: 6, y: 3 } }).setOrigin(1, 0).setDepth(300).setInteractive({ useHandCursor: true }).setVisible(false);
+    const done = async () => {
+      if (this.ended) return;
+      const total = hits + missed + notes.filter((n) => !n.done && n.t < songT()).length;
+      const acc = total ? hits / total : 0;
+      synth.stopMusic();
+      await this.crocRelease(acc >= 0.5);
+      this.finish(acc >= 0.5, [dir(`Crocodiles done: ${hits} (${perfect} perfect) · best combo ${best} · ${Math.round(acc * 100)}% in sync with the cabinet.`)]);
+    };
+    leave.on("pointerdown", () => void done());
+    this.time.addEvent({
+      delay: 16,
+      loop: true,
+      callback: () => {
+        if (this.ended) return;
+        const t = songT();
+        const line = dancers.slice(0, -1);
+        for (const n of notes) {
+          // the cabinet hits every move exactly on the beat, whether you do or not
+          if (!n.line && t >= n.t) {
+            n.line = true;
+            move(line, n.k);
+          }
+          if (n.done) continue;
+          n.img.x = HIT_X + (n.t - t) * SPEED;
+          if (n.t - t < -0.3) {
+            n.done = true;
+            missed++;
+            combo = 0;
+            n.img.destroy();
+          }
+        }
+        // the rest of the line keeps time on every beat even when you don't (they're professionals)
+        const beatNow = Math.floor((t - PHASE) / BEAT);
+        if (beatNow !== (this as any)._lastBeat) {
+          (this as any)._lastBeat = beatNow;
+          const bar = Math.floor(beatNow / 4);
+          if (beatNow >= 16 && !quiet.has(bar)) lyric.setText(lyrics[Math.floor(bar / 2) % lyrics.length]);
+          else lyric.setText(beatNow < 16 ? "get ready. be serious." : "");
+        }
+        drawArms();
+        if (t > 30) leave.setVisible(true);
+        this.hud.setText(`🐊 ${hits}   COMBO ${combo}   MISSED ${missed}`);
+        const pr = synth.fileProgress();
+        if ((pr.d && pr.ended) || t > 189) void done();
+      },
+    });
+  }
+
+  /** The song summons crocodiles. They head for the playground. */
+  private async crocRelease(won: boolean) {
+    this.add.rectangle(480, 270, 960, 540, 0x3f6b3a).setDepth(500);
+    this.add.rectangle(480, 470, 960, 140, 0x8b6b3a).setDepth(501);
+    this.add.text(760, 300, "KRELFORD PLAYGROUND", { fontFamily: FONT, fontSize: "14px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(502);
+    const kids = [0, 1, 2, 3, 4].map((i) => {
+      const key = this.textures.exists(`spr_KID${i}`) ? `spr_KID${i}` : this.textures.exists(`spr_FOLK${i}`) ? `spr_FOLK${i}` : `spr_${G.s.player}`;
+      return this.add.sprite(640 + i * 60, 400 + (i % 2) * 20, key, 0).setScale(2).setDepth(510);
+    });
+    await this.box.play([
+      dir(won ? "The song ends. Nine grown men lower their arms in perfect unison. Somewhere in Krelford, a drain cover lifts." : "The song ends. Nobody was in time. It doesn't matter. Somewhere in Krelford, a drain cover lifts."),
+      dir("You have done the Crocodile. The Crocodile has heard you."),
+    ]);
+    const key = this.textures.exists("p_croc") ? "p_croc" : null;
+    const crocs = [0, 1, 2].map((i) => {
+      const c = key ? this.add.image(-120 - i * 140, 410 + i * 18, key).setScale(1.2) : this.add.text(-120 - i * 140, 410 + i * 18, "🐊", { fontSize: "72px" }).setOrigin(0.5);
+      c.setDepth(520);
+      (c as any).setFlipX?.(true);
+      this.tweens.add({ targets: c, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 160 });
+      return c;
+    });
+    synth.play("roar");
+    await new Promise<void>((res) => {
+      crocs.forEach((c, i) => this.tweens.add({ targets: c, x: 600 + i * 90, duration: 2400, ease: "Sine.in", onComplete: i === 2 ? () => res() : undefined }));
+    });
+    // CHOMP
+    kids.forEach((k, i) =>
+      this.time.delayedCall(i * 180, () => {
+        synth.play("punch_big");
+        this.pop(k.x, k.y - 50, "CHOMP", "#ff6b6b", 22);
+        this.tweens.add({ targets: k, scale: 0, duration: 120 });
+      }),
+    );
+    await new Promise((r) => this.time.delayedCall(1300, r));
+    crocs.forEach((c) => this.tweens.add({ targets: c, scaleY: c.scaleY * 1.35, duration: 300, yoyo: true, repeat: 2 }));
+    await this.box.play([
+      say("KREBLIS", "Breaking news. Crocodiles at large in Krelford. They've eaten the entire playground."),
+      say("CRONGUS", "As Children's Minister I'd like to say: that's actually my fault, I did the left hand."),
+      dir("A muffled voice from inside the biggest crocodile: 'THIS IS SO UNFAIR. I'M TELLING.'"),
+    ]);
+    // spat back out, unharmed, furious
+    crocs.forEach((c) => this.tweens.add({ targets: c, x: c.x - 40, duration: 120, yoyo: true }));
+    synth.play("splat");
+    kids.forEach((k, i) => this.time.delayedCall(i * 120, () => {
+      this.tweens.add({ targets: k, scale: 2, duration: 160 });
+      this.pop(k.x, k.y - 50, ["PTOO", "MUM!", "AGAIN!", "PEDO!", "UNFAIR"][i % 5], "#ffffff", 16);
+    }));
+    await new Promise((r) => this.time.delayedCall(1200, r));
+    await this.box.play([
+      dir("The crocodiles spit them all back out. Damp. Unharmed. Livid. One of them asks to go again."),
+      say("MIKEY", "The sixth SanMik album. Two songs. Body count: zero. Technically."),
+      dir("The crocodiles now live in the Krelford Playground. They have been added to the register."),
+    ]);
+    G.s.flags.crocs_loose = true;
   }
 
 }

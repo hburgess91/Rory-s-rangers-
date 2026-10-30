@@ -1080,6 +1080,46 @@ export const ARCS: Arc[] = [
     ],
   },
   {
+    id: "arc_crocodile",
+    player: "ALL",
+    minChapter: 2,
+    title: "Do The Crocodile",
+    blurb: "SanMik's sixth album is two songs long. The launch party is tonight. The whole cabinet has rehearsed the dance. Very seriously.",
+    reward: { coins: 200, desc: "The Crocodile has been done. Crocodiles now live in the playground. +200 Krezzcoin." },
+    steps: [
+      {
+        id: "launch",
+        text: "SanMik's single launch. Mikey's at the Town Hall rehearsing the cabinet.",
+        at: "TOWN_HALL",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The Town Hall. The horseshoe table has been pushed against the wall. Nine grown men stand in a line, arms by their sides, faces like a funeral."),
+            say("MIKEY", "Right. The sixth SanMik album. Two songs. That counts. The lead single: 'Do The Crocodile'."),
+            say("MIKEY", "You take your left hand. And go like this."),
+            dir("Mikey raises his left arm above his head and bends it into a jaw. He holds eye contact with you the entire time."),
+            say("SCROMBUS", "Is there a reason we're doing this?"),
+            say("MIKEY", "Lots More animal sounds in next SanMik album. What sound does a crocodile make?"),
+            say("KREZWONK", "I have foreseen the dance. Something terrible follows it."),
+            say("MIKEY", "Launch party's in the Krezz Arms back room. Nobody smiles. Nobody. It's a serious song."),
+          ],
+        },
+      },
+      {
+        id: "dance",
+        text: "Do The Crocodile at the launch party (Krezz Arms back room). Stay in sync with the cabinet.",
+        at: "PUB",
+        step: {
+          kind: "minigame",
+          mode: "crocodile",
+          intro: [dir("The Krezz Arms back room. A banner: 'SANMIK — DO THE CROCODILE — LAUNCH PARTY (NO SMILING)'. The cabinet takes its positions."), say("MIKEY", "YOU TAKE YOUR LEFT HAND. AND GO LIKE THIS.")],
+          success: [say("MIKEY", "That's going straight on Spotify. Projected earnings: four pence."), say("DRONGUS", "(ping) Did someone release crocodiles into Krelford ?? Is this lore ?? Did nobody think to tell me ??")],
+          fail: [say("MIKEY", "Out of sync. The crocodiles came anyway. Again, but properly.")],
+        },
+      },
+    ],
+  },
+  {
     id: "arc_krebon",
     player: "KREBON",
     title: "Reprieve",

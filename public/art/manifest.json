@@ -4648,6 +4648,9 @@
   },
   "tile_road": {
    "file": "tiles/tile_road.png"
+  },
+  "p_croc": {
+   "file": "props/p_croc.png"
   }
  },
  "sheets": {

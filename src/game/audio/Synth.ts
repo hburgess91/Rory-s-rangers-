@@ -40,11 +40,12 @@ export const MUSIC_FILES: Record<string, string> = {
   crazy: "audio/crazy_for_krelworld.mp3",
   bbp: "audio/bbp.mp3",
   twitcher: "audio/twitcher.mp3",
+  crocodile: "audio/crocodile.mp3",
   ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["anthem", "bbp", "twitcher", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
+const ONE_SHOT = new Set(["anthem", "bbp", "twitcher", "crocodile", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
 
 type Wave = OscillatorType;
 
