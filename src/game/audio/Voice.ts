@@ -79,7 +79,7 @@ let voicesCache: SpeechSynthesisVoice[] = [];
 function voices() {
   if (!("speechSynthesis" in window)) return [];
   if (!voicesCache.length) {
-    const all = window.speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+    const all = window.speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang) && !NOVELTY.test(v.name + " " + v.voiceURI));
     // British first, then other English
     voicesCache = [...all.filter((v) => /GB|UK/i.test(v.lang + v.name)), ...all.filter((v) => !/GB|UK/i.test(v.lang + v.name))];
   }
@@ -88,6 +88,9 @@ function voices() {
 if (typeof window !== "undefined" && "speechSynthesis" in window) {
   window.speechSynthesis.onvoiceschanged = () => (voicesCache = []);
 }
+
+// Apple's novelty voices that sing or laugh instead of talking.
+const NOVELTY = /\b(Bad News|Good News|Bahh|Bells|Cellos|Organ|Pipe ?Organ|Jester|Hysterical|Deranged|Superstar)\b/i;
 
 function hash(s: string) {
   let h = 0;
