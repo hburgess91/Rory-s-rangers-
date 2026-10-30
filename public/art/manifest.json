@@ -168,6 +168,60 @@
   "bld_WILDERN": {
    "file": "buildings/WILDERN.png"
   },
+  "bg_abandoned": {
+   "file": "backdrops/bg_abandoned.png"
+  },
+  "bg_archive": {
+   "file": "backdrops/bg_archive.png"
+  },
+  "bg_booth": {
+   "file": "backdrops/bg_booth.png"
+  },
+  "bg_charselect": {
+   "file": "backdrops/bg_charselect.png"
+  },
+  "bg_citadel": {
+   "file": "backdrops/bg_citadel.png"
+  },
+  "bg_city": {
+   "file": "backdrops/bg_city.png"
+  },
+  "bg_ending": {
+   "file": "backdrops/bg_ending.png"
+  },
+  "bg_exile": {
+   "file": "backdrops/bg_exile.png"
+  },
+  "bg_fgm": {
+   "file": "backdrops/bg_fgm.png"
+  },
+  "bg_fixer": {
+   "file": "backdrops/bg_fixer.png"
+  },
+  "bg_flat": {
+   "file": "backdrops/bg_flat.png"
+  },
+  "bg_gym": {
+   "file": "backdrops/bg_gym.png"
+  },
+  "bg_press": {
+   "file": "backdrops/bg_press.png"
+  },
+  "bg_pub": {
+   "file": "backdrops/bg_pub.png"
+  },
+  "bg_restaurant": {
+   "file": "backdrops/bg_restaurant.png"
+  },
+  "bg_runescape": {
+   "file": "backdrops/bg_runescape.png"
+  },
+  "bg_title": {
+   "file": "backdrops/bg_title.png"
+  },
+  "bg_townhall": {
+   "file": "backdrops/bg_townhall.png"
+  },
   "hd_billboard": {
    "file": "props/d_billboard.png"
   },
@@ -320,6 +374,69 @@
   "p_vending": {
    "file": "props/p_vending.png",
    "hd": 0.4762
+  },
+  "tv_archive": {
+   "file": "backdrops/tv_archive.png"
+  },
+  "tv_boardroom": {
+   "file": "backdrops/tv_boardroom.png"
+  },
+  "tv_bunker": {
+   "file": "backdrops/tv_bunker.png"
+  },
+  "tv_cave": {
+   "file": "backdrops/tv_cave.png"
+  },
+  "tv_cell": {
+   "file": "backdrops/tv_cell.png"
+  },
+  "tv_cellar": {
+   "file": "backdrops/tv_cellar.png"
+  },
+  "tv_cockpit": {
+   "file": "backdrops/tv_cockpit.png"
+  },
+  "tv_default": {
+   "file": "backdrops/tv_default.png"
+  },
+  "tv_emergency": {
+   "file": "backdrops/tv_emergency.png"
+  },
+  "tv_forest": {
+   "file": "backdrops/tv_forest.png"
+  },
+  "tv_livingroom": {
+   "file": "backdrops/tv_livingroom.png"
+  },
+  "tv_newsdesk": {
+   "file": "backdrops/tv_newsdesk.png"
+  },
+  "tv_nyc_skyline": {
+   "file": "backdrops/tv_nyc_skyline.png"
+  },
+  "tv_office_night": {
+   "file": "backdrops/tv_office_night.png"
+  },
+  "tv_pitch": {
+   "file": "backdrops/tv_pitch.png"
+  },
+  "tv_polson_ext": {
+   "file": "backdrops/tv_polson_ext.png"
+  },
+  "tv_press": {
+   "file": "backdrops/tv_press.png"
+  },
+  "tv_pubbar": {
+   "file": "backdrops/tv_pubbar.png"
+  },
+  "tv_shopping": {
+   "file": "backdrops/tv_shopping.png"
+  },
+  "tv_street_day": {
+   "file": "backdrops/tv_street_day.png"
+  },
+  "tv_townhall_cam": {
+   "file": "backdrops/tv_townhall_cam.png"
   },
   "tile_road": {
    "file": "tiles/tile_road.png"
