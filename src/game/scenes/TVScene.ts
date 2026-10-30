@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { charMeta } from "../gfx/HD";
+import { voice } from "../audio/Voice";
 import { ALL_EPISODES, CHANNELS, setKeyFor } from "../../content/television/channels";
 import { beatDuration, type TVBeat, type TVEpisode } from "../systems/tv";
 import { G } from "../G";
@@ -297,6 +298,7 @@ export class TVScene extends Phaser.Scene {
         this.card.setText("");
         const a = this.ensureActor(b.character);
         this.subs.setText(this.showSubs ? `${b.character}: ${b.text}` : "").setVisible(this.showSubs);
+        voice.say(b.character, b.text);
         if (a) {
           this.mouthTimer = this.time.addEvent({ delay: 130, loop: true, callback: () => a.spr.setFrame(a.spr.frame.name === "3" ? 0 : 3) });
           if (b.emotion === "crying") a.spr.setTint(0xaaccff);

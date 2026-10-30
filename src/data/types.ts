@@ -179,6 +179,9 @@ export interface Settings {
   shake: boolean;
   crt: boolean;
   textSpeed: number;
+  /** Text-to-speech for dialogue and TV (browser voices). */
+  voices?: boolean;
+  voiceVolume?: number;
 }
 
 export interface MetaState {

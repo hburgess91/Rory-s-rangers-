@@ -78,9 +78,11 @@ export class MenuScene extends Phaser.Scene {
         row(180, "Music volume", () => pct(set.music), () => (set.music = clamp(set.music - 0.1)), () => (set.music = clamp(set.music + 0.1)));
         row(230, "SFX volume", () => pct(set.sfx), () => (set.sfx = clamp(set.sfx - 0.1)), () => (set.sfx = clamp(set.sfx + 0.1)));
         row(280, "Text speed", () => `${set.textSpeed.toFixed(1)}x`, () => (set.textSpeed = Math.max(0.5, set.textSpeed - 0.5)), () => (set.textSpeed = Math.min(4, set.textSpeed + 0.5)));
-        row(330, "Screen shake", () => (set.shake ? "ON" : "OFF"), () => (set.shake = !set.shake), () => (set.shake = !set.shake));
-        row(380, "CRT effect (KrelTV)", () => (set.crt ? "ON" : "OFF"), () => (set.crt = !set.crt), () => (set.crt = !set.crt));
-        add(button(this, 480, 450, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 200 }));
+        row(325, "Screen shake", () => (set.shake ? "ON" : "OFF"), () => (set.shake = !set.shake), () => (set.shake = !set.shake));
+        row(370, "CRT effect (KrelTV)", () => (set.crt ? "ON" : "OFF"), () => (set.crt = !set.crt), () => (set.crt = !set.crt));
+        row(410, "Character voices", () => (set.voices !== false ? "ON" : "OFF"), () => (set.voices = set.voices === false), () => (set.voices = set.voices === false));
+        row(450, "Voice volume", () => pct(set.voiceVolume ?? 0.8), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) - 0.1)), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) + 0.1)));
+        add(button(this, 480, 500, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 200 }));
         break;
       }
       case "quests": {

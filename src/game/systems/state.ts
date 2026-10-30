@@ -102,6 +102,8 @@ export const defaultSettings = (): Settings => ({
   shake: true,
   crt: true,
   textSpeed: 1,
+  voices: true,
+  voiceVolume: 0.8,
 });
 
 export function newMeta(): MetaState {

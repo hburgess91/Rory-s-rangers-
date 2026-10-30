@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { ChoiceOption, Line, ReactionChoice } from "../../data/types";
 import { REACTION_EMOJI } from "../../data/types";
 import { G } from "../G";
+import { voice } from "../audio/Voice";
 import { resolveLine, type ResolvedLine } from "../systems/narrative";
 import { evalCond } from "../systems/conditions";
 import { portraitKey } from "../gfx/Textures";
@@ -109,6 +110,7 @@ export class DialogueBox {
   }
 
   destroy() {
+    voice.stop();
     if (this.destroyed) return;
     this.destroyed = true;
     window.removeEventListener("keydown", this.keyHandler);
@@ -372,6 +374,8 @@ export class DialogueBox {
 
   private renderLine(rl: ResolvedLine, opts: PlayOptions) {
     opts.onLine?.(rl);
+    if (!rl.dir && rl.s !== "NARRATOR" && rl.t) voice.say(String(rl.s), rl.t);
+    else voice.stop();
     if (rl.notify) {
       opts.onSpeaker?.(rl.s, rl);
       this.showNotify(rl);
