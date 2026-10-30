@@ -3790,12 +3790,6 @@
    "frameHeight": 160,
    "hd": 0.5
   },
-  "boss_troll.old": {
-   "file": "combat/boss_troll.old.png",
-   "frameWidth": 96,
-   "frameHeight": 144,
-   "hd": 0.5
-  },
   "boss_troll": {
    "file": "combat/boss_troll.png",
    "frameWidth": 96,
