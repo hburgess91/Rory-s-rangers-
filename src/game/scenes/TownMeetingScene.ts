@@ -58,7 +58,7 @@ export class TownMeetingScene extends Phaser.Scene {
     const box = new DialogueBox(this, 1000, 0.12);
     this.time.delayedCall(1900, () => {
       box
-        .play(m.beats, {
+        .play(G.s.flags.krebon_gone && G.s.player !== "KREBON" && !m.historical && m.beats.some((b) => b.s === "KREBON") ? [{ s: "NARRATOR", t: "Krebon has popped back from Wahooga for this meeting. He will be gone again by the end of it. Fairweather.", dir: true }, ...m.beats] : m.beats, {
           historical: m.historical,
           onSpeaker: (sp) => this.highlight(sp),
           onLine: (l) => this.onLine(l.t, l.notify, l.s),
@@ -126,8 +126,7 @@ export class TownMeetingScene extends Phaser.Scene {
       }
       return [...ids];
     }
-    // Fairweather Benn doesn't do meetings (unless you're playing him)
-    const list: string[] = PLAYABLE_ORDER.filter((id) => id !== "BENN" || G.s.player === "BENN");
+    const list: string[] = [...PLAYABLE_ORDER, "MIKEY"];
     list.splice(list.indexOf(G.s.player) + 1, 0, "PROCTUS");
     for (const a of m.attendees ?? []) if (!list.includes(a as string)) list.push(a as string);
     return list;

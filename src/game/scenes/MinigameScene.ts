@@ -63,7 +63,7 @@ export class MinigameScene extends Phaser.Scene {
       runescape: () => this.runescape(),
       burpees: () => this.burpees(),
       facebook: () => this.fbTroll(),
-      gig: () => this.gig(),
+      gig: () => (G.s.player === "KREBON" ? this.gig() : this.gigWatch()),
     };
     (modes[this.mode] ?? (() => this.finish(false)))();
   }
@@ -645,7 +645,7 @@ export class MinigameScene extends Phaser.Scene {
     }
     if (this.textures.exists("hd_drummer")) this.add.image(250, 300, "hd_drummer").setDepth(4);
     if (this.textures.exists("hd_bassist")) this.add.image(720, 296, "hd_bassist").setDepth(4);
-    const benn = this.add.sprite(480, 310, this.textures.exists("spr_BENN") ? "spr_BENN" : `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const benn = this.add.sprite(480, 310, "spr_KREBON", 0).setScale(3).setDepth(10);
     // the crowd: everyone came
     const crowdIds = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "KREBON", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1", "FOLK2"];
     const crowd = crowdIds
@@ -700,7 +700,7 @@ export class MinigameScene extends Phaser.Scene {
       this.tweens.add({ targets: img, angle: 540, duration: dur });
       items.push({ img, landAt, x, kind, done: false });
       if (Math.random() < 0.25) {
-        const shout = ["TUNE!", "BENN I LOVE YOU", "PLAY WONDERWALL", "GET YOUR WAHOOGA OUT", "REACT TO MY SONG", "ENCORE!", "FAIRWEATHER!", "TOTAL WAR!"][Math.floor(Math.random() * 8)];
+        const shout = ["TUNE!", "KREBON I LOVE YOU", "PLAY WONDERWALL", "GET YOUR WAHOOGA OUT", "REACT TO MY SONG", "ENCORE!", "FAIRWEATHER!", "TOTAL WAR!"][Math.floor(Math.random() * 8)];
         this.pop(thrower.x, thrower.y - 50, shout, "#ffffff", 13);
       }
     };
@@ -763,6 +763,118 @@ export class MinigameScene extends Phaser.Scene {
         const left = Math.max(0, len - (pr.d ? pr.t : elapsed));
         this.hud.setText(`🤘 ${points}   CAUGHT ${caught}   COMBO ${combo}   ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")} left`);
         if ((pr.d && pr.ended) || (!pr.d && elapsed > 180)) finishGig();
+      },
+    });
+  }
+
+
+  /** Not playing as Krebon: you're in the crowd at his gig, throwing underwear at the stage. */
+  private gigWatch() {
+    if (!backdrop(this, "bg_gig", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1a1033);
+    this.add.rectangle(480, 352, 860, 16, 0x3b2a1a).setDepth(2);
+    const lights = [0, 1, 2, 3, 4, 5].map((i) => this.add.circle(120 + i * 144, 70, 70, [0xff2e88, 0x5ad1ff, 0xffd23f][i % 3], 0.16).setBlendMode(Phaser.BlendModes.ADD).setDepth(3));
+    if (this.textures.exists("hd_drummer")) this.add.image(250, 300, "hd_drummer").setDepth(4);
+    if (this.textures.exists("hd_bassist")) this.add.image(720, 296, "hd_bassist").setDepth(4);
+    const krebon = this.add.sprite(480, 310, "spr_KREBON", 0).setScale(3).setDepth(10);
+    const others = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1"].filter((id) => id !== G.s.player && this.textures.exists(`spr_${id}`));
+    const crowd = others.map((id, i) => this.add.sprite(40 + i * 64, 478 + (i % 2) * 20, `spr_${id}`, 0).setScale(2).setDepth(20 + (i % 2)));
+    const me = this.add.sprite(480, 440, `spr_${G.s.player}`, 0).setScale(2.4).setDepth(40);
+    this.add.text(480, 404, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
+    title(this, 480, 26, "TWITCHER MUTINY · KREBON LIVE AT THE KREZZ ARMS", 21, "#ffd23f").setDepth(200);
+    this.add.text(480, 52, "You're in the crowd. Move with A/D or ← → (or drag) · SPACE / tap to throw. Krebon catches anything that lands near him.", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", stroke: "#000", strokeThickness: 3, align: "center", wordWrap: { width: 900 } }).setOrigin(0.5).setDepth(200);
+    synth.music("twitcher", true);
+    const start = this.time.now;
+    let points = 0;
+    let thrown = 0;
+    let caught = 0;
+    let target = 480;
+    let pranceUntil = 0;
+    let holdX: number | null = null;
+    let lastThrow = 0;
+    const keys = this.input.keyboard?.addKeys("A,D,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key> | undefined;
+    const throwUnderwear = () => {
+      if (this.ended || this.box.active || this.time.now - lastThrow < 350) return;
+      lastThrow = this.time.now;
+      thrown++;
+      const kind = Math.random() < 0.5 ? "bra" : "thong";
+      const key = this.textures.exists(`hd_${kind}`) ? `hd_${kind}` : "p_coin";
+      const x = me.x;
+      const img = this.add.image(me.x, me.y - 30, key).setDepth(60);
+      synth.play("lob");
+      this.tweens.add({ targets: img, y: { from: me.y - 30, to: 140 }, duration: 380, ease: "Quad.out" });
+      this.tweens.add({ targets: img, y: 300, delay: 380, duration: 380, ease: "Quad.in" });
+      this.tweens.add({ targets: img, angle: 540, duration: 760 });
+      this.time.delayedCall(760, () => {
+        if (this.ended) return;
+        if (Math.abs(krebon.x - x) < 52) {
+          caught++;
+          const prancing = this.time.now < pranceUntil;
+          const gain = (kind === "thong" ? 15 : 10) * (prancing ? 2 : 1);
+          points += gain;
+          synth.play("coin");
+          this.pop(krebon.x, 230, `KREBON CAUGHT IT! +${gain}`, "#ff6bb0", 18);
+          img.destroy();
+        } else {
+          this.tweens.add({ targets: img, alpha: 0, duration: 700, onComplete: () => img.destroy() });
+        }
+      });
+    };
+    this.input.keyboard?.on("keydown-SPACE", throwUnderwear);
+    this.input.on("pointerdown", (pt: Phaser.Input.Pointer) => {
+      if (pt.y < 380) throwUnderwear();
+      else holdX = pt.x;
+    });
+    this.input.on("pointermove", (pt: Phaser.Input.Pointer) => {
+      if (pt.isDown && pt.y >= 380) holdX = pt.x;
+    });
+    this.input.on("pointerup", () => (holdX = null));
+    const endBtn = this.add.text(940, 22, "[ LEAVE GIG ]", { fontFamily: FONT, fontSize: "13px", color: "#ff6bb0", backgroundColor: "#000000aa", padding: { x: 6, y: 3 } }).setOrigin(1, 0).setDepth(300).setVisible(false).setInteractive({ useHandCursor: true });
+    const done = () => {
+      if (this.ended) return;
+      synth.stopMusic();
+      G.s.flags.rock_points = ((G.s.flags.rock_points as number) ?? 0) + points;
+      G.s.flags.saw_gig = true;
+      this.finish(true, [
+        dir(`You threw ${thrown} items of underwear. Krebon caught ${caught}. Rockstar points: +${points}.`),
+        say("KREBON", "Thank you Krelford. You've been a strange and moist crowd."),
+        dir("Polson is crying. He says it's the smoke machine. There is no smoke machine."),
+      ]);
+    };
+    endBtn.on("pointerdown", done);
+    this.time.addEvent({
+      delay: 16,
+      loop: true,
+      callback: () => {
+        if (this.ended) return;
+        const now = this.time.now;
+        // Krebon performs: wanders the stage and prances
+        if (Math.abs(target - krebon.x) < 6 || Math.random() < 0.004) target = 140 + Math.random() * 680;
+        const dir0 = Math.sign(target - krebon.x);
+        if (now >= pranceUntil) {
+          krebon.x += dir0 * 0.18 * 16;
+          animateWalker(krebon, dir0, 0, dir0 !== 0, now);
+          if (Math.random() < 0.006) {
+            pranceUntil = now + 700;
+            this.tweens.add({ targets: krebon, y: 280, angle: 360, duration: 340, onComplete: () => krebon.setAngle(0) });
+            this.tweens.add({ targets: krebon, y: 310, delay: 340, duration: 260, ease: "Bounce.out" });
+          }
+        }
+        // you
+        let mv = 0;
+        if (keys?.A.isDown || keys?.LEFT.isDown) mv = -1;
+        if (keys?.D.isDown || keys?.RIGHT.isDown) mv = 1;
+        if (holdX !== null && Math.abs(holdX - me.x) > 10) mv = holdX < me.x ? -1 : 1;
+        me.x = Phaser.Math.Clamp(me.x + mv * 0.3 * 16, 60, 900);
+        animateWalker(me, mv, 0, mv !== 0, now);
+        crowd.forEach((c, i) => c.setY(478 + (i % 2) * 20 - Math.max(0, Math.sin(now / 160 + i)) * 10));
+        lights.forEach((l, i) => l.setAlpha(0.1 + Math.max(0, Math.sin(now / 300 + i)) * 0.18));
+        const pr = synth.fileProgress();
+        const elapsed = (now - start) / 1000;
+        if (elapsed > 30) endBtn.setVisible(true);
+        const len = pr.d || 180;
+        const left = Math.max(0, len - (pr.d ? pr.t : elapsed));
+        this.hud.setText(`🤘 ${points}   THROWN ${thrown}   CAUGHT ${caught}   ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")} left`);
+        if ((pr.d && pr.ended) || (!pr.d && elapsed > 180)) done();
       },
     });
   }

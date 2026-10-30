@@ -64,10 +64,14 @@ export class PubScene extends Phaser.Scene {
     items.push(["🛍 Buy a Fizzy Bongo to take away (12 Krezzcoin)", () => this.buy()]);
     items.push(["📺 Watch the pub telly", () => this.tv()]);
     items.push(["📜 Read the menu", () => this.readMenu()]);
+    if (s.player !== "KREBON" && !s.flags.krebon_gone && s.flags.met_emergency) items.push(["🎸 Watch Twitcher Mutiny (Krebon's band) in the back room", () => switchTo(this, "Minigame", { mode: "gig", returnAt: "PUB" })]);
     items.push([synth.playingFile() === "crazy" ? "🎵 Jukebox: stop the song" : "🎵 Jukebox: 'Krazy For The Krelworld' (2 Krezzcoin)", () => this.jukebox()]);
     if (canTurnIn(s, "PUB")) items.push(["✨ Open Krezmond's treasure", () => this.turnIn()]);
     items.push(["🚪 Leave", () => switchTo(this, "Hub", { at: "PUB" })]);
-    items.forEach(([t, fn], i) => this.menu.add(button(this, 480, 180 + i * 36, t, () => !this.busy && fn(), { w: 760, h: 32, size: 13 })));
+    // fit every option between y=130 and y=500
+    const step = Math.min(36, 370 / Math.max(1, items.length - 1));
+    const top = items.length * step > 330 ? 128 : 180;
+    items.forEach(([t, fn], i) => this.menu.add(button(this, 480, top + i * step, t, () => !this.busy && fn(), { w: 760, h: Math.max(22, step - 4), size: step < 30 ? 11 : 13 })));
   }
 
   private async jukebox() {

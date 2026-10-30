@@ -12,7 +12,7 @@ import { archiveAction, chapterIntroLines, currentStep, dungeonOpen, switchTo, t
 import { chapterDef } from "../../content/chapters/chapters";
 import type { Line } from "../../data/types";
 import { synth } from "../audio/Synth";
-import { maxBottles, maxHp } from "../systems/stats";
+import { bump, maxBottles, maxHp } from "../systems/stats";
 import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, ministryQuestFor, ministryQuestState, acceptMinistry, completeMinistry, ministryProgress } from "../systems/quests";
 import { dir, ping, say } from "../../content/dsl";
@@ -85,9 +85,20 @@ const NPC_SPOTS: Record<string, { x: number; y: number }> = {
   GRONNY: { x: 1140, y: 880 },
   FLENKY: { x: 800, y: 560 },
   MIKEY: { x: 430, y: 980 },
-  BENN: { x: 980, y: 1090 },
   POLSON: { x: 2330, y: 1000 },
   EDEN: { x: 2390, y: 1060 },
+};
+
+/** Where each character hangs out while doing their side story (when you're not them). */
+const ARC_SPOTS: Record<string, { x: number; y: number }> = {
+  FLENKY: { x: 900, y: 1420 },
+  KREZWONK: { x: 2300, y: 745 },
+  KREBLIS: { x: 2420, y: 760 },
+  SCROMBUS: { x: 2300, y: 1440 },
+  KREZMAR: { x: 640, y: 975 },
+  GRONNY: { x: 780, y: 1755 },
+  CRONGUS: { x: 1100, y: 1765 },
+  KREBON: { x: 500, y: 975 },
 };
 
 const ANCHORS: Record<string, { x: number; y: number }> = {
@@ -122,7 +133,28 @@ interface Npc {
   bubble?: Phaser.GameObjects.Text;
   folk?: boolean;
   plate: Phaser.GameObjects.Text;
+  /** Mikey: follows you around begging to join the group. */
+  follower?: { hits: number; koUntil: number; nextWhine: number; lastHit: number };
 }
+
+const MIKEY_WHINES = [
+  "Can I join the group?",
+  "Lads? Lads. Can I come?",
+  "What are we doing? Can I do it too?",
+  "I've made a new group chat. It's just me. Join it?",
+  "Add me back pls",
+  "Mikey here. Still here.",
+  "Is this a group thing? I'm in a group. Your group.",
+  "I'll be quiet. I won't say anything. Can I come?",
+  "Feelin russhen 2day. Feelin lonely 2day.",
+  "Why does everyone keep walking faster",
+  "I accidentally added you to something. Accept it?",
+  "Can someone react to my message pls",
+  "I'll pay for the bongos. Next time. Can I come?",
+  "Wait for me!!",
+  "I've got a mobility scooter now. Can't use it. Can I come?",
+];
+const MIKEY_HURT = ["OW", "OOF", "That's fair", "Fair play", "I deserved that", "Is that a yes?", "Lads??", "Ow. Can I still come?", "Hahaha. Ow."];
 
 interface HubInteract {
   x: number;
@@ -220,7 +252,7 @@ export class HubScene extends Phaser.Scene {
       G.save();
     }
     if (from === "swap") {
-      G.emit("toast", { title: "CARRYING ON", text: `You are now ${CHARACTERS[s.player].name}. Benn's ${s.flags.rock_points ?? 0} rockstar points came with you.` });
+      G.emit("toast", { title: "CARRYING ON", text: `You are now ${CHARACTERS[s.player].name}. Krebon's ${s.flags.rock_points ?? 0} rockstar points came with you.` });
       await this.talk([dir("You wake up at the edge of town, next to a faded symbol and a pile of underwear. You don't remember how you got here. You feel inexplicably like a rockstar.")]);
     }
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
@@ -547,8 +579,20 @@ export class HubScene extends Phaser.Scene {
     for (const id of [...PLAYABLE_ORDER, "POLSON", "EDEN"]) {
       if (id === s.player) continue;
       if ((id === "POLSON" || id === "EDEN") && s.chapter < 3) continue;
-      if (id === "BENN" && s.flags.benn_gone) continue;
-      this.addNpc(id, NPC_SPOTS[id]);
+      if (id === "KREBON" && s.flags.krebon_gone) continue;
+      // from chapter 2 the others are out doing their own side stories
+      this.addNpc(id, (s.chapter >= 2 && ARC_SPOTS[id]) || NPC_SPOTS[id]);
+    }
+    // Mikey: not playable. Follows you everywhere asking to join the group.
+    if (s.player !== "MIKEY") {
+      this.addNpc("MIKEY", { x: (NPC_SPOTS.MIKEY?.x ?? 430), y: (NPC_SPOTS.MIKEY?.y ?? 980) });
+      const m = this.npcs[this.npcs.length - 1];
+      m.follower = { hits: 0, koUntil: 0, nextWhine: this.time.now + 4000, lastHit: 0 };
+      const it = this.interactables.find((i) => (i as any).__npc === m);
+      if (it) {
+        it.label = () => (m.follower!.koUntil > this.time.now ? "Mikey is unconscious (talk to him anyway)" : "Shove Mikey");
+        it.use = () => (m.follower!.koUntil > this.time.now ? this.talkTo(m) : this.hitMikey(m, false));
+      }
     }
     // Proctus fills the player's spot
     this.addNpc("PROCTUS", NPC_SPOTS[s.player] ?? { x: 1300, y: 640 });
@@ -583,6 +627,66 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  private updateMikey(n: Npc, now: number, dt: number) {
+    const f = n.follower!;
+    const spr = n.spr;
+    const ko = now < f.koUntil;
+    if (ko) {
+      spr.setAngle(90);
+      if (Math.floor(now / 900) % 3 === 0 && !n.bubble?.active) this.bubble(n, "💤", 800);
+    } else {
+      if (spr.angle !== 0) {
+        spr.setAngle(0);
+        this.bubble(n, "I forgive you. Can I join now?", 2600);
+      }
+      const dx = this.av.x - spr.x;
+      const dy = this.av.y - spr.y;
+      const d = Math.hypot(dx, dy);
+      const moving = d > 64 && !this.busy;
+      if (moving) {
+        const sp = (d > 400 ? 230 : 150) * (dt / 1000);
+        spr.x += (dx / d) * sp;
+        spr.y += (dy / d) * sp;
+      }
+      animateWalker(spr, dx, dy, moving, now);
+      if (now > f.nextWhine && d < 360 && !this.busy) {
+        f.nextWhine = now + 5500 + Math.random() * 4000;
+        this.bubble(n, MIKEY_WHINES[Math.floor(Math.random() * MIKEY_WHINES.length)]);
+      }
+    }
+    spr.setDepth(spr.y);
+    n.plate.setPosition(spr.x, spr.y - 36);
+    if (n.bubble?.active) n.bubble.setPosition(spr.x, spr.y - 52);
+  }
+
+  /** Shove (E) or punch (attack). Four hits and he's out cold for a bit. */
+  private hitMikey(n: Npc, punch: boolean) {
+    const f = n.follower!;
+    const now = this.time.now;
+    if (now < f.koUntil || now - f.lastHit < 300) return;
+    f.lastHit = now;
+    f.hits += punch ? 2 : 1;
+    const a = Math.atan2(n.spr.y - this.av.y, n.spr.x - this.av.x);
+    const dist = punch ? 90 : 150;
+    this.tweens.add({ targets: n.spr, x: n.spr.x + Math.cos(a) * dist, y: n.spr.y + Math.sin(a) * dist, duration: 260, ease: "Quad.out" });
+    n.spr.setTintFill(0xffffff);
+    this.time.delayedCall(90, () => n.spr.clearTint());
+    synth.play(punch ? "crit" : "hit");
+    this.cameras.main.shake(120, 0.006);
+    const t = this.add.text(n.spr.x, n.spr.y - 40, punch ? "POW!" : "SHOVE!", { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(5000);
+    this.tweens.add({ targets: t, y: t.y - 30, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+    if (f.hits >= 4) {
+      f.hits = 0;
+      f.koUntil = now + 40000;
+      bump(G.s, "mikey_kos");
+      this.bubble(n, "…(knocked out)…", 2200);
+      G.emit("toast", { title: "MIKEY: KNOCKED OUT", text: "Peace and quiet. For about 40 seconds." });
+    } else {
+      f.nextWhine = now + 1500;
+      this.bubble(n, MIKEY_HURT[Math.floor(Math.random() * MIKEY_HURT.length)], 1600);
+    }
+  }
+
   private bubble(n: Npc, text: string, ms = 2600) {
     n.bubble?.destroy();
     n.bubble = this.add.text(n.spr.x, n.spr.y - 52, text, { fontFamily: FONT, fontSize: "11px", color: "#050505", backgroundColor: "#ffffff", padding: { x: 5, y: 3 }, wordWrap: { width: 200 }, align: "center" }).setOrigin(0.5, 1).setDepth(4500);
@@ -592,6 +696,10 @@ export class HubScene extends Phaser.Scene {
 
   private updateNpcs(now: number, dt: number) {
     for (const n of this.npcs) {
+      if (n.follower) {
+        this.updateMikey(n, now, dt);
+        continue;
+      }
       if (now > n.nextMove && !this.busy) {
         n.nextMove = now + 2500 + Math.random() * 4000;
         const r = n.folk ? 160 : 50;
@@ -694,7 +802,7 @@ export class HubScene extends Phaser.Scene {
   // ------------------------------------------------------------- the playground
 
   private drawPortal(x: number, y: number) {
-    const gone = !!G.s.flags.benn_gone;
+    const gone = !!G.s.flags.krebon_gone;
     if (this.textures.exists("hd_portal")) {
       const p = this.add.image(x, y + 30, "hd_portal").setOrigin(0.5, 1).setDepth(y + 30).setAlpha(gone ? 0.25 : 1);
       if (!gone) this.tweens.add({ targets: p, scaleX: { from: 0.96, to: 1.04 }, duration: 1400, yoyo: true, repeat: -1, ease: "Sine.inOut" });
@@ -1006,7 +1114,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "BOGGOR_HOUSE":
         return "Knock on the dark house";
       case "PORTAL":
-        return G.s.flags.benn_gone ? "The faded symbol of Wahoogah" : "The symbol of Wahoogah";
+        return G.s.flags.krebon_gone ? "The faded symbol of Wahoogah" : "The symbol of Wahoogah";
       case "AIRPORT":
         return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
@@ -1044,12 +1152,24 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.go("Minigame", { mode: "bully", returnAt: "BOOTH" });
         return;
       case "UNIVERSITY":
+        if (s.player !== "FLENKY" && s.chapter >= 4) {
+          await this.talk([dir("Krelford University. A poster: 'BJJ OPEN — RESULT: J. JENKINS def. R. BRAND (rear naked choke, R. Brand still talking)'. Someone has drawn a heart on it. Probably Mollor.")]);
+          return;
+        }
         await this.talk([dir("Krelford University. A student is protesting outside the philosophy department with a sign that reads 'IS THE LORE REAL?'. Inside, a lecture on 'Seen By 9: Phenomenology of Being Ignored' is oversubscribed.")]);
         return;
       case "GYM":
+        if (s.player !== "KREZWONK" && s.chapter >= 4) {
+          await this.talk([dir("Krunch Gym. There's a Brick Kolbane-shaped dent in the floor by the squat rack. Krezwonk has put a small plaque next to it: 'FORESEEN'."), dir("Kreblis is in the corner doing burpees. He says he's immortal now. He looks terrible.")]);
+          return;
+        }
         await this.talk([dir("Krunch Gym. Smells of pre-workout and regret. Somebody has written 'RE-RACK YOUR WEIGHTS' on the wall, and somebody else has written 'NO' underneath."), say("FOLK1", "Do you even wonk, bro?")]);
         return;
       case "FIXER_UPPER":
+        if (s.player !== "SCROMBUS" && s.chapter >= 4) {
+          await this.talk([dir("The fixer-upper has been fully renovated. A sign: 'SOLD — 4.8M — Scrombus Property Holdings (soon: Scrombus Holdings) (soon: Supreme Leader Scrombus)'.")]);
+          return;
+        }
         await this.talk(s.flags.arc_scrombus_done ? [dir("SOLD. A blue plaque reads: 'Ben Scrombus flipped this. Krelworld was next.'")] : [dir("A crumbling terrace. 'FOR SALE (AS SEEN)'. There is a hole where the bathroom should be, and a bathroom where the hole should be.")]);
         return;
       case "ABANDONED":
@@ -1061,10 +1181,10 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       case "PORTAL":
         await this.talk(
-          s.flags.benn_gone
+          s.flags.krebon_gone
             ? [dir("The symbol has faded. A postcard is stuck to the grass, addressed to 'Krelworld (the Waluigi version)'. It just says: 'Reprieve'.")]
-            : s.player === "BENN"
-              ? [dir("The symbol hums at you. Not yet. There's a gig to play first."), say("BENN", "I know. I know. One more gig.")]
+            : s.player === "KREBON"
+              ? [dir("The symbol hums at you. Not yet. There's a gig to play first."), say("KREBON", "I know. I know. One more gig.")]
               : [dir("A shimmering symbol hangs in the air at the edge of town. It hums. It is clearly not for you."), dir("Somewhere in the hum, very faintly, someone is tuning an acoustic guitar.")],
         );
         return;
@@ -1087,6 +1207,10 @@ You are required by law to sign the Sex Offenders Register.`, {
         );
         return;
       case "OLD_FLAT":
+        if (s.player !== "GRONNY" && s.chapter >= 4) {
+          await this.talk([dir("Your old flat has a brand new carpet. A note pinned to the door: 'Carpet avenged. — G'. There is a leaf blower on the step.")]);
+          return;
+        }
         await this.talk([dir("Your old flat. Someone's new tenancy agreement is pinned to the door. It specifically mentions the carpet. In bold. Underlined.")]);
         return;
       case "AIRPORT": {
@@ -1498,6 +1622,10 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setDepth(this.av.y + 1);
     this.updateNpcs(time, dt);
     this.updatePlayground(time, dt);
+    if (!this.busy && this.controls.attackHeld()) {
+      const m = this.npcs.find((n) => n.follower);
+      if (m && Phaser.Math.Distance.Between(m.spr.x, m.spr.y, this.av.x, this.av.y) < 70) this.hitMikey(m, true);
+    }
     this.tryChatter(time);
     // interact
     let best: HubInteract | null = null;

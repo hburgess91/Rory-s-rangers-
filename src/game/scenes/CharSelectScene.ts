@@ -34,7 +34,7 @@ export class CharSelectScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale;
     const csBg = this.add.rectangle(0, 0, W, H, 0x10101e).setOrigin(0);
     if (backdrop(this, "bg_charselect", { dim: 0.45, depth: -10 })) csBg.setVisible(false);
-    title(this, W / 2, 30, this.swap ? "BENN HAS GONE TO WAHOOGA · WHO CARRIES ON?" : this.ngPlus ? "NEW KREZ+ · CHOOSE YOUR DEGENERATE" : "CHOOSE YOUR DEGENERATE", 26);
+    title(this, W / 2, 30, this.swap ? "KREBON HAS GONE TO WAHOOGA · WHO CARRIES ON?" : this.ngPlus ? "NEW KREZ+ · CHOOSE YOUR DEGENERATE" : "CHOOSE YOUR DEGENERATE", 26);
     label(this, W / 2, 52, this.swap ? `Your progress, your Krezzcoin and your ${G.s.flags.rock_points ?? 0} rockstar points carry over.` : "Whoever you pick, Proctus Krelmor will cover their ministry. Badly.", 13, "#9aa0b4").setOrigin(0.5, 0);
 
     PLAYABLE_ORDER.forEach((id, i) => {
@@ -44,7 +44,7 @@ export class CharSelectScene extends Phaser.Scene {
       const y = 76 + row * 148;
       const def = CHARACTERS[id];
       const done = G.meta.completedWith.includes(id);
-      const gone = this.swap && id === "BENN";
+      const gone = this.swap && id === "KREBON";
       const card = this.add.rectangle(x, y, 110, 140, gone ? 0x0e0f18 : 0x1b1e33).setOrigin(0).setStrokeStyle(2, def.color).setInteractive({ useHandCursor: true });
       const pk = portraitKey(this, id);
       if (pk) this.add.image(x + 55, y + 42, pk).setDisplaySize(64, 64);
@@ -107,7 +107,7 @@ export class CharSelectScene extends Phaser.Scene {
     add(this.add.text(X + 16, 388, `If unselected: ${d.ministry}`, { fontFamily: FONT, fontSize: "12px", color: "#9aa0b4", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 406, `Proctus covers as: ${d.proctusTitle}. ${d.proctusQuirk}`, { fontFamily: FONT, fontSize: "11px", color: "#9aa0a6", fontStyle: "italic", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 434, `"${d.selectQuote}"`, { fontFamily: FONT, fontSize: "15px", color: "#ff6fa8", fontStyle: "italic" }));
-    const away = this.swap && id === "BENN";
+    const away = this.swap && id === "KREBON";
     add(button(this, X + 340, 474, away ? "GONE TO WAHOOGA" : this.swap ? "CARRY ON AS " + d.name.split(" ")[0] : "PLAY AS " + d.name.split(" ")[0], () => this.confirm(), { w: 220, h: 34, size: 13, disabled: away }));
   }
 
@@ -116,10 +116,10 @@ export class CharSelectScene extends Phaser.Scene {
     synth.play("pop");
     if (this.swap) {
       const id = PLAYABLE_ORDER[this.sel] as PlayableId;
-      if (id === "BENN") return;
+      if (id === "KREBON") return;
       const s = G.s;
       s.player = id;
-      s.flags.benn_gone = true;
+      s.flags.krebon_gone = true;
       s.hp = maxHp(s);
       G.save();
       switchTo(this, "Hub", { at: "PORTAL", from: "swap" });

@@ -586,7 +586,7 @@ export class VignetteScene extends Phaser.Scene {
     this.tweens.add({ targets: portal, scaleX: (portal.scaleX || 1) * 1.05, duration: 900, yoyo: true, repeat: -1 });
     const glow = this.add.circle(640, 320, 140, 0x9b59ff, 0.2).setBlendMode(Phaser.BlendModes.ADD).setDepth(4);
     this.tweens.add({ targets: glow, alpha: 0.45, duration: 700, yoyo: true, repeat: -1 });
-    const benn = this.add.sprite(160, 400, this.textures.exists("spr_BENN") ? "spr_BENN" : "spr_FOLK3", 0).setScale(3).setDepth(10);
+    const benn = this.add.sprite(160, 400, "spr_KREBON", 0).setScale(3).setDepth(10);
     synth.music("ominous");
     const walk = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(benn, 1, 0, true, this.time.now) });
     await this.tween({ targets: benn, x: 440, duration: 2600 });
@@ -595,14 +595,14 @@ export class VignetteScene extends Phaser.Scene {
     animateWalker(benn, 0, 0, false, this.time.now);
     const pts = (G.s.flags.rock_points as number) ?? 0;
     await this.talk([
-      say("BENN", "The symbol of Wahoogah."),
-      say("BENN", "My paradigm has just phlegmed backwards into the multiverze, dude. Whoa. Lemme catch up."),
+      say("KREBON", "The symbol of Wahoogah."),
+      say("KREBON", "My paradigm has just phlegmed backwards into the multiverze, dude. Whoa. Lemme catch up."),
       dir("Through the symbol: a universe almost exactly like this one, except everything is very slightly more fun, and every pub has a stage."),
       ping("KREBLIS", "Fairweather Benn strikes again"),
-      ping("DRONGUS", "Benn's leaving ?? He was barely here"),
+      ping("DRONGUS", "Krebon's leaving ?? He was barely here"),
       ping("DRONGUS", "Did he react to my song before he went"),
-      say("BENN", "Die fearless. What other option is there."),
-      say("BENN", `Look after the ${pts} rockstar points. And the underwear. Especially the underwear.`),
+      say("KREBON", "Die fearless. What other option is there."),
+      say("KREBON", `Look after the ${pts} rockstar points. And the underwear. Especially the underwear.`),
     ]);
     const walk2 = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(benn, 1, 0, true, this.time.now) });
     await this.tween({ targets: benn, x: 640, y: 390, duration: 1400 });
@@ -615,7 +615,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(1600);
     synth.stopMusic();
     await this.talk([
-      dir("Fairweather Benn has left Krelworld. He is home."),
+      dir("Krebon (Fairweather Benn, the Fenian Orgill) has left Krelworld. He is home."),
       dir("The rest of the lore still needs saving. Choose who carries on. They keep your progress, your Krezzcoin, and the rockstar points."),
     ]);
     const r = maybeFinishArc(G.s);

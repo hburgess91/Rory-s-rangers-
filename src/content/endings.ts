@@ -82,8 +82,6 @@ export const ENDINGS: Record<"LIKE" | "LOVE" | "LAUGH" | "SEEN", { title: string
 
 /** Unique epilogue card per player character. Shown after the ending. */
 export const EPILOGUES: Record<PlayableId, string> = {
-  BENN:
-    "FAIRWEATHER BENN played one more gig with Twitcher Mutiny, then stepped back through the symbol of Wahoogah to his home universe. Postcards arrive occasionally. They are addressed to 'Krelworld (the Waluigi version)'. One just says 'Reprieve'.",
   FLENKY:
     "FLENKY JENKY was unbanned by the Tribunal, permanently, until further notice. He was banned again the following Tuesday for 'standing near the corridor'. He describes it as the best four hours of his life. He has been readmitted. For now.",
   KREZMAR:

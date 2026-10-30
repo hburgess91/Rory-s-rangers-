@@ -20,17 +20,6 @@ const crisis: Cond = { resentmentAtLeast: 55 };
 
 /** One line per (NPC, player) pair so every NPC acknowledges who you are. */
 const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
-  BENN: {
-    FLENKY: "Jenko. I'd fight anyone who survived a wrangling with Eden. Not you though. You'd get banned mid-fight.",
-    KREZMAR: "Charlie. Max's Brasserie miss you. The entire staff. And the owner's wife.",
-    KREBLIS: "Dave. If I get a hundred quid in collective donations I'll slap Polson with a wet cloth at dinner. Spread the word.",
-    KREZWONK: "Mart. Moborsh. Whatever we're calling you this week. Come to the gig.",
-    SCROMBUS: "Ben. Other Ben. Lesser Ben. I'm joking. Mostly. Come to the gig.",
-    KREBON: "Krebon. You'd like Wahooga. Nobody asks who you are there. They just hand you a drink.",
-    CRONGUS: "Lulon. You look like you've seen something. Or eaten something. Don't tell me.",
-    GRONNY: "Rory. Yeorge. Shorts in October. Respect.",
-    MIKEY: "Mikey. I'll put you on the guest list. Spell your name for me. Actually don't.",
-  },
   SCROMBUS: {
     FLENKY: "Flenky. Are you allowed in here? Genuinely asking. I'm keeping a spreadsheet.",
     KREZMAR: "Krez. You've got crumbs on your lapel. Krezpy kream drongnut crumbs.",
@@ -40,7 +29,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon. The Children's Minister. Have you met a child yet?",
     GRONNY: "Gronny. Your knees are blue. It's minus six. Put some Krez-ousers on.",
     MIKEY: "Mikey. FGM legend. I've read about you in the Archive. Mostly footnotes.",
-    BENN: "Benn. Fairweather Benn. You've turned up. Do I add you to the spreadsheet or is this a one-off?",
   },
   KREZMAR: {
     FLENKY: "Jenko!!!!!!! You're not banned! Hang on. Let me check. You are.",
@@ -51,7 +39,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon Shelgor 😭😭😭",
     GRONNY: "Gronny! Gut-Stank Gronston! The legend in the shorts!",
     MIKEY: "Mikey! Old FGM crew! Fancy a fizzy bongo for old times?",
-    BENN: "Benn! Max's Brasserie still talks about Charlie's creme brulee. Still. Talks about it.",
   },
   KREBLIS: {
     FLENKY: "Jenko wtf bro this chat is public!",
@@ -62,7 +49,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon. Breaking news: you've been quiet. Suspiciously quiet.",
     GRONNY: "Gronny. Your trousers. Strange occurrence. Filed.",
     MIKEY: "Mikey. Remember when we didn't know what the Mork voice was? Simpler times.",
-    BENN: "Benn. Strange occurrence: you, here, in Krelford, for more than one evening.",
   },
   KREZWONK: {
     FLENKY: "I prophesied you'd be banned today. You haven't been yet. The day's young.",
@@ -73,7 +59,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon. I've seen your future. You're lurking in it.",
     GRONNY: "Gronny. I foresee shorts. Always shorts.",
     MIKEY: "Mikey. The Nuclear Option wasn't yours. The Archive told me. I told the Archive.",
-    BENN: "Benn. I foresee a portal. I won't say more. I'm not allowed to say more.",
   },
   KREBON: {
     FLENKY: "Flenky. You'd betray me. Everyone would. You'd just do it first.",
@@ -84,7 +69,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon. Things got dark. You'd have liked it.",
     GRONNY: "Gronny. Respect. A man in shorts fears nothing.",
     MIKEY: "Mikey. FGM. I wasn't in it. I was in a prison.",
-    BENN: "Benn. Cost/benefit of turning up: high cost, high benefit. Like me.",
   },
   CRONGUS: {
     FLENKY: "Fucking Jenkins. Lmao.",
@@ -95,7 +79,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     KREBON: "Krebon. I'm not scared of you. I'm lurking near you.",
     GRONNY: "Gronny. Are we both bald? Ministerial solidarity.",
     MIKEY: "Mikey. You're gonna get rinsed in the Mikey chat. Which is your own chat.",
-    BENN: "Benn! Twitcher Mutiny! I've got the tote bag. Don't tell anyone.",
   },
   GRONNY: {
     FLENKY: "Enough with this shit Jenkins.",
@@ -106,7 +89,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     KREBON: "Krebon. Big man. Respect.",
     CRONGUS: "Lulon. Bald brothers.",
     MIKEY: "Mikey. Old times. Fizzy bongos.",
-    BENN: "Benn. Fair enough.",
   },
   FLENKY: {
     KREZMAR: "Krez. Put in a word for me at the Tribunal.",
@@ -117,7 +99,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Lulon. Let's hope she doesn't, you said. She did.",
     GRONNY: "Gronny. Enough with this shit Jenkins, you said. Fair.",
     MIKEY: "Mikey! FGM! Any reply yet?",
-    BENN: "BENNNN! Are you still in the band? Am I still banned? Both? Neither? Let's all be honest.",
   },
   MIKEY: {
     FLENKY: "Jenko. You're banned. I don't make the rules. I just enjoy them.",
@@ -128,7 +109,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     KREBON: "Krebon. Cost/benefit? Fragmar was all benefit.",
     CRONGUS: "Lulon. Operation Wake Up Polson? Revival?",
     GRONNY: "Gronny! Trousers! Where are they!",
-    BENN: "Benn. Can you get us on the guest list? FGM ULTRA plus one. The one is me.",
   },
   PROCTUS: {
     FLENKY: "Ah! The Exile Appeals Officer! Or are you the exile? Or is that me? I've appealed eleven times today.",
@@ -140,7 +120,6 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     CRONGUS: "Children's Minister! That's me now! Is that a child? Is everyone a child? I'm not cleared for this.",
     GRONNY: "I've been given a portfolio by mistake. I keep opening it. It's empty. I keep opening it.",
     MIKEY: "I'm the FGM operative now! I was there! At the... the thing! With the cheese!",
-    BENN: "Minister for Live Music! That's me now! I've got a tambourine. I've learned one chord. It isn't a real chord.",
   },
 };
 
@@ -152,16 +131,6 @@ function playerSpecificSets(speaker: string): TalkSet[] {
 }
 
 export const NPC_TALK: Record<string, TalkSet[]> = {
-  BENN: [
-    ...playerSpecificSets("BENN"),
-    T(10, ch(1), [say("BENN", "I'm already regretting signing on to this gig. Twitcher Mutiny, Krezz Arms. You coming?")]),
-    T(10, ch(2), [say("BENN", "Polson Towers? I told Polson the T boosters would make him shit himself loudly in public. He's thriving.")]),
-    T(10, ch(3), [say("BENN", "Fart. F. Art. Fucking art, yeah? The Ministry gets it.")]),
-    T(10, ch(4), [say("BENN", "Total war.")]),
-    T(10, ch(5), [say("BENN", "Die fearless. What other option is there.")]),
-    T(10, ch(6), [say("BENN", "Be all the gay in the world, and the world will gay with you. Thin Lizzy. Probably.")]),
-    T(30, { flag: "benn_gone" }, [say("BENN", "…")], "benn_gone_never"),
-  ],
   SCROMBUS: [
     ...playerSpecificSets("SCROMBUS"),
     T(36, { ngPlus: true }, [say("SCROMBUS", "Déjà vu. I've installed this machine before. Nobody said anything about it then either.")], "ng_SCROMBUS"),
@@ -293,9 +262,6 @@ export const NPC_TALK: Record<string, TalkSet[]> = {
   ],
   PROCTUS: [
     ...playerSpecificSets("PROCTUS"),
-    T(15, { player: "BENN" }, [say("PROCTUS", "I'm doing the gigs now. I booked Twitcher Mutiny. The booking was for 1997."), say("PROCTUS", "We played anyway. Two people came. One was me.")], "pr_benn_1"),
-    T(15, { player: "BENN" }, [say("PROCTUS", "Inter-Dimensional Affairs is going brilliantly. I've opened a portal. It's a cupboard. I'm in it now.")], "pr_benn_2"),
-    T(15, { player: "BENN" }, [say("PROCTUS", "I've written a song. It's called 'Reprieve 2'. It's the same song but I'm crying.")], "pr_benn_3"),
     T(36, { ngPlus: true }, [say("PROCTUS", "I'm still acting. In a whole new playthrough. Nobody has told me to stop.")], "ng_PROCTUS"),
     // Three variants per ministerial role he might be covering.
     T(15, { player: "KREZWONK" }, [say("PROCTUS", "Prophecy: you will talk to me now. Prophecy: fulfilled. I'm two for two today."), say("PROCTUS", "I also prophesied I'd drop my lunch. I don't have lunch.")]),
