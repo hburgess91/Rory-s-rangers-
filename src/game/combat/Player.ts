@@ -204,7 +204,7 @@ export class Player {
       this.walkT += dt;
       if (this.walkT > 120) {
         this.walkT = 0;
-        this.spr.setFrame(this.spr.frame.name === "1" ? 2 : 1);
+        this.spr.setFrame(String(this.spr.frame.name) === "1" ? 2 : 1);
       }
     } else this.spr.setFrame(0);
     // visibility (lurk)

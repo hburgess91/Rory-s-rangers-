@@ -22,6 +22,8 @@ export interface CharMeta {
 export interface ArtManifest {
   chars: Record<string, { file: string } & CharMeta>;
   images: Record<string, { file: string; hd?: number }>;
+  /** Animated sheets that replace procedural combat sprites (enemies, bosses). */
+  sheets?: Record<string, { file: string; frameWidth: number; frameHeight: number; hd?: number }>;
 }
 
 const hdOf = (o: { texture?: Phaser.Textures.Texture }) => (o.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;

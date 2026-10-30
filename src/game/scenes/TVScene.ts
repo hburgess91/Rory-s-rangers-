@@ -283,7 +283,7 @@ export class TVScene extends Phaser.Scene {
 
   private applyBeat(b: TVBeat) {
     this.mouthTimer?.remove();
-    for (const a of Object.values(this.actors)) if (a.spr.frame.name === "3") a.spr.setFrame(0);
+    for (const a of Object.values(this.actors)) if (String(a.spr.frame.name) === "3") a.spr.setFrame(0);
     if (b.type !== "speaker" && b.type !== "direction") this.subs.setText("");
     switch (b.type) {
       case "titleCard":
@@ -300,7 +300,7 @@ export class TVScene extends Phaser.Scene {
         this.subs.setText(this.showSubs ? `${b.character}: ${b.text}` : "").setVisible(this.showSubs);
         voice.say(b.character, b.text);
         if (a) {
-          this.mouthTimer = this.time.addEvent({ delay: 130, loop: true, callback: () => a.spr.setFrame(a.spr.frame.name === "3" ? 0 : 3) });
+          this.mouthTimer = this.time.addEvent({ delay: 130, loop: true, callback: () => a.spr.setFrame(String(a.spr.frame.name) === "3" ? 0 : 3) });
           if (b.emotion === "crying") a.spr.setTint(0xaaccff);
           else if (a.spr.getData("pose") !== "asleep") a.spr.clearTint();
         }

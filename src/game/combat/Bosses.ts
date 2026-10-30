@@ -38,7 +38,8 @@ export abstract class Boss extends Enemy {
     this.isBoss = true;
     this.setScale(2);
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setSize(w * 0.7, h * 0.6).setOffset(w * 0.15, h * 0.3);
+    const k = this.frame.width / w; // >1 for PixelLab art drawn at display size
+    body.setSize(w * 0.7 * k, h * 0.6 * k).setOffset(w * 0.15 * k, h * 0.3 * k);
     body.setCollideWorldBounds(true);
     body.pushable = false;
     this.setDepth(450);
@@ -59,7 +60,7 @@ export abstract class Boss extends Enemy {
     this.anim += dt;
     if (this.anim > 300) {
       this.anim = 0;
-      this.setFrame(this.frame.name === "0" ? 1 : 0);
+      this.setFrame(String(this.frame.name) === "0" ? 1 : 0);
     }
     if (now < this.flashUntil) this.setTintFill(0xffffff);
     else if (this.shielded) this.setTint(0x88aaff);
@@ -496,7 +497,8 @@ export class DrongusBoss extends Boss {
       // THE FINAL WONKING: becomes the Lorelord
       this.setTexture("boss_lorelord", 0).setScale(2.4);
       const body = this.body as Phaser.Physics.Arcade.Body;
-      body.setSize(40, 50).setOffset(12, 20);
+      const k = this.frame.width / 64;
+      body.setSize(40 * k, 50 * k).setOffset(12 * k, 20 * k);
       this.shielded = true;
       this.shieldTimer = now + 30000;
       this.world.toast("KREZZ SHIELD", "He has absorbed the national Krezz reserves. Build your Wonk and hit him with a KREZZ BURST (R) to break the shield.");

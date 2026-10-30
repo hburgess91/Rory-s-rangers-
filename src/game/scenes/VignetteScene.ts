@@ -554,7 +554,7 @@ export class VignetteScene extends Phaser.Scene {
     this.add.text(710, 380, "(empty treadmill)", { fontFamily: FONT, fontSize: "14px", color: "#6b7280" }).setOrigin(0.5);
     this.add.image(250, 380, "p_fridge").setScale(2);
     synth.music("ominous");
-    this.time.addEvent({ delay: 500, loop: true, callback: () => pol.setFrame(pol.frame.name === "3" ? 0 : 3) });
+    this.time.addEvent({ delay: 500, loop: true, callback: () => pol.setFrame(String(pol.frame.name) === "3" ? 0 : 3) });
     await this.talk([
       dir("14:00. Polson's message: 'At the gym 💪'. CAM 1: Polson is on the sofa. CAM 2: Polson is not at the gym."),
       ping("POLSON", "Leg day today. Brutal."),

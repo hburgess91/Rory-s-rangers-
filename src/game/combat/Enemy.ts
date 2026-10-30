@@ -46,7 +46,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     world.sc.physics.add.existing(this);
     this.setScale(2);
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setCircle(def.size * 0.4, def.size * 0.1, def.size * 0.1);
+    // hitbox in world terms stays the same whatever the art size (PixelLab art is drawn larger)
+    const fw = this.frame.width;
+    const r = def.size * 0.4 * (fw / def.size);
+    body.setCircle(r, fw / 2 - r, this.frame.height / 2 - r);
     body.setCollideWorldBounds(true);
     this.orbitDir = Math.random() < 0.5 ? 1 : -1;
     this.nextAttack = world.now() + 800 + Math.random() * 900;
@@ -68,7 +71,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.animT += dt;
     if (this.animT > 220) {
       this.animT = 0;
-      this.setFrame(this.frame.name === "0" ? 1 : 0);
+      this.setFrame(String(this.frame.name) === "0" ? 1 : 0);
     }
     if (now < this.flashUntil) this.setTintFill(0xffffff);
     else if (now < this.markedUntil) this.setTint(0xd8b4fe);

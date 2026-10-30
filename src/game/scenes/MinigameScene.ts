@@ -386,7 +386,7 @@ export class MinigameScene extends Phaser.Scene {
       const before = levelOf(xp);
       xp = Math.min(target, xp + gain);
       synth.play("hit");
-      me.setFrame(me.frame.name === "3" ? 0 : 3);
+      me.setFrame(String(me.frame.name) === "3" ? 0 : 3);
       this.tweens.add({ targets: tree, angle: { from: -3, to: 3 }, yoyo: true, duration: 60 });
       if (Math.random() < 0.5) this.pop(560 + (Math.random() - 0.5) * 100, 220, `+${gain.toLocaleString()} xp`, "#ffffff", 13);
       const after = levelOf(xp);

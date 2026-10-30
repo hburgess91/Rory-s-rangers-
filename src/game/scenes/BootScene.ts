@@ -20,6 +20,7 @@ export class BootScene extends Phaser.Scene {
     this.load.on("filecomplete-json-artmanifest", (_k: string, _t: string, m: ArtManifest) => {
       for (const [key, c] of Object.entries(m.chars ?? {})) this.load.spritesheet(key, `art/${c.file}`, { frameWidth: c.frame, frameHeight: c.frame });
       for (const [key, im] of Object.entries(m.images ?? {})) this.load.image(key, `art/${im.file}`);
+      for (const [key, sh] of Object.entries(m.sheets ?? {})) this.load.spritesheet(key, `art/${sh.file}`, { frameWidth: sh.frameWidth, frameHeight: sh.frameHeight });
     });
     const t = this.add.text(480, 270, "LOADING LORE…", { fontFamily: "monospace", fontSize: "20px", color: "#ffd23f" }).setOrigin(0.5);
     this.load.on("progress", (p: number) => t.setText(`LOADING LORE… ${Math.round(p * 100)}%`));
@@ -35,7 +36,7 @@ export class BootScene extends Phaser.Scene {
       // old character code uses setScale(2) for 16x24 sprites; draw the new sheets at native size there
       tex.customData = { ...tex.customData, hd: 0.5, char: c };
     }
-    for (const [key, im] of Object.entries(m?.images ?? {})) {
+    for (const [key, im] of Object.entries({ ...(m?.images ?? {}), ...(m?.sheets ?? {}) })) {
       if (im.hd && this.textures.exists(key)) {
         const tex = this.textures.get(key);
         tex.customData = { ...tex.customData, hd: im.hd };
