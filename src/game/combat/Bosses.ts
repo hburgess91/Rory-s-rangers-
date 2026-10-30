@@ -941,10 +941,18 @@ export class HoardBoss extends Boss {
     // it shuffles after you, slowly, shedding stuff
     this.moveToward(p.x, p.y, (this.phase === 2 ? 55 : this.phase ? 42 : 30) * this.world.enemyTimeScale);
     if (now < this.nextPattern) return;
-    const n = this.phase === 2 ? 5 : 4;
+    const n = this.phase === 2 ? 6 : 5;
     const pick = this.patternIdx++ % n;
     this.taunt();
-    if (pick === 0) {
+    if (pick === 4) {
+      // the Salem souvenir: a witch-museum broom buried in the heap. Not a headache. Energies.
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "IT'S NOT A HEADACHE!", "#c084fc", 18);
+      this.world.floatText(p.x, p.y - 50, "ENERGIES ABSORBED", "#c084fc", 13);
+      this.ring(this.phase ? 14 : 10, 90, 9, 0xa855f7, 0);
+      this.world.sc.time.delayedCall(450, () => { if (this.active) this.ring(this.phase ? 14 : 10, 120, 9, 0xa855f7, 0.5); });
+      this.world.sc.time.delayedCall(1100, () => { if (this.active) this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "DID I NOT JUST TELL YOU?!", "#c084fc", 16); });
+      this.nextPattern = now + 2400;
+    } else if (pick === 0) {
       // stuffed toys pour out of it
       for (let i = 0; i < (this.phase ? 5 : 3); i++) this.world.spawnEnemy("plushie", this.x + (Math.random() - 0.5) * 120, this.y + 40, { minion: true });
       this.nextPattern = now + 2400;
@@ -962,7 +970,7 @@ export class HoardBoss extends Boss {
     } else if (pick === 3) {
       for (let i = 0; i < 2; i++) this.world.spawnEnemy(this.phase ? "mould_pizza" : "mould", this.x + (i ? 80 : -80), this.y + 30, { minion: true });
       this.nextPattern = now + 2300;
-    } else {
+    } else if (pick === 5) {
       // avalanche: the whole heap slides at you
       this.world.enemyLine(this.x, this.y, Math.atan2(p.y - this.y, p.x - this.x), 700, 70, 22, 900);
       this.nextPattern = now + 2200;
