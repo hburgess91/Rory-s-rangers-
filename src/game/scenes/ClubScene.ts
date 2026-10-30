@@ -79,6 +79,13 @@ export class ClubScene extends Phaser.Scene {
   private songIdx = -1;
   private between = false;
   private banner: Phaser.GameObjects.Text | null = null;
+  // brawling
+  private hits = new Map<Phaser.GameObjects.Sprite, number>();
+  private ko = new Set<Phaser.GameObjects.Sprite>();
+  private brawl = 0;
+  private lastSwing = 0;
+  private derek: { spr: Phaser.GameObjects.Sprite; hits: number; down: boolean } | null = null;
+  private musicStopped = false;
 
   constructor() {
     super("Club");
@@ -135,6 +142,11 @@ export class ClubScene extends Phaser.Scene {
     else this.scene.get("UI").events.emit("mode", "hub");
     // some nights SanMik & SanChz are the live act (always the first time you visit since they got the gig)
     this.band = [];
+    this.hits = new Map();
+    this.ko = new Set();
+    this.brawl = 0;
+    this.derek = null;
+    this.musicStopped = false;
     this.songIdx = -1;
     this.between = false;
     this.banner = null;
@@ -203,7 +215,9 @@ export class ClubScene extends Phaser.Scene {
 
   private leer(n = 1) {
     for (let i = 0; i < n && this.patrons.length; i++) {
-      const p = this.patrons[Math.floor(Math.random() * this.patrons.length)];
+      const up = this.patrons.filter((q) => !this.ko.has(q.spr));
+      if (!up.length) return;
+      const p = up[Math.floor(Math.random() * up.length)];
       const band = this.band.length ? ["TUNE!", "SANMIK!!", "Mmm. And the music's good too.", "She's mine. SanMik can have the other one.", "PEENER 4EVA"] : [];
       const pool = [...LEER, ...(LEER_BY[p.id] ?? []), ...(LEER_BY[p.id] ?? []), ...band];
       this.time.delayedCall(i * 300, () => this.bubble(p.spr, pool[Math.floor(Math.random() * pool.length)]));
@@ -225,12 +239,13 @@ export class ClubScene extends Phaser.Scene {
     }
     // the band
     this.band.forEach((b, i) => {
+      if (this.ko.has(b.spr) || this.musicStopped) return;
       const t = time / 1000 + i * 0.8;
       b.spr.x = b.x + Math.sin(t * 2) * 22;
       b.spr.y = 335 - Math.abs(Math.sin(t * 5.5)) * 9;
       animateWalker(b.spr, Math.cos(t * 2), 0, true, time);
     });
-    if (this.band.length && !this.between && this.songIdx >= 0 && synth.fileProgress().ended) {
+    if (this.band.length && !this.musicStopped && !this.between && this.songIdx >= 0 && synth.fileProgress().ended) {
       this.between = true;
       synth.play("cheer");
       this.banner?.setText("♪ \"Cheers Wonky Pole. This next one's about a hot tub.\"");
@@ -240,7 +255,7 @@ export class ClubScene extends Phaser.Scene {
     }
     // the lads bob about and leer
     this.patrons.forEach((p, i) => {
-      if (!this.busy) p.spr.y += Math.sin(time / 300 + i) * 0.08;
+      if (!this.busy && !this.ko.has(p.spr)) p.spr.y += Math.sin(time / 300 + i) * 0.08;
     });
     if (time > this.nextLeer && !this.busy && !this.onBreak) {
       this.nextLeer = time + 1600 + Math.random() * 1800;
@@ -268,6 +283,8 @@ export class ClubScene extends Phaser.Scene {
     } else if (atBar) {
       label = "E: Order a Pussy Juice (10 Krezzcoin)";
       act = () => this.bar();
+    } else if (atTable && this.derek && !this.derek.down) {
+      label = "Big Derek is right there. Not now.";
     } else if (atTable) {
       label = "E: Call a WONK-OFF";
       act = () => this.wonkOff();
@@ -275,14 +292,186 @@ export class ClubScene extends Phaser.Scene {
       label = "E: Leave";
       act = () => this.leave();
     }
-    if (act) {
+    // anyone in reach can be hit (ATTACK always; E too when there's nothing else to do here)
+    const target = this.nearestTarget();
+    if (!act && target) {
+      label = `E / ATTACK: hit ${target.name}`;
+      act = () => this.hitTarget(target);
+    }
+    if (target && this.controls.attackHeld() && time - this.lastSwing > 280) this.hitTarget(target);
+    if (label) {
       this.prompt.setText(label).setPosition(this.me.x, this.me.y - 50).setVisible(true);
-      if (this.controls.interact()) act();
+      if (this.controls.interact() && act) act();
     } else {
       this.prompt.setVisible(false);
       this.controls.interact();
     }
+    this.updateDerek(dt);
     if (this.controls.pause()) this.leave();
+  }
+
+  // ------------------------------------------------------------------ BRAWL
+
+  private nearestTarget(): { name: string; spr: Phaser.GameObjects.Sprite; kind: "lad" | "band" | "dancer" | "derek" } | null {
+    const all: { name: string; spr: Phaser.GameObjects.Sprite; kind: "lad" | "band" | "dancer" | "derek" }[] = [];
+    for (const p of this.patrons) all.push({ name: CHARACTERS[p.id]?.name ?? p.id, spr: p.spr, kind: "lad" });
+    this.band.forEach((b, i) => all.push({ name: i ? "SANCHZ" : "SANMIK", spr: b.spr, kind: "band" }));
+    if (!this.onBreak) all.push({ name: this.dancerName(), spr: this.dancer, kind: "dancer" });
+    if (this.derek && !this.derek.down) all.push({ name: "BIG DEREK", spr: this.derek.spr, kind: "derek" });
+    // when Derek's on you, he's the one you're swinging at
+    const dk = this.derek;
+    if (dk && !dk.down && Phaser.Math.Distance.Between(dk.spr.x, dk.spr.y, this.me.x, this.me.y) < 95) return { name: "BIG DEREK", spr: dk.spr, kind: "derek" };
+    let best = null;
+    let bd = 78;
+    for (const a of all) {
+      if (this.ko.has(a.spr)) continue;
+      const d = Phaser.Math.Distance.Between(a.spr.x, a.spr.y, this.me.x, this.me.y);
+      if (d < bd) {
+        bd = d;
+        best = a;
+      }
+    }
+    return best;
+  }
+
+  private pow(x: number, y: number, text: string, color = "#ffd23f", size = 18) {
+    const t = this.add.text(x, y, text, { fontFamily: "Impact, sans-serif", fontSize: `${size}px`, color, stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(1600).setAngle((Math.random() - 0.5) * 20).setScale(0.4);
+    this.tweens.add({ targets: t, scale: 1, duration: 110, ease: "Back.out" });
+    this.tweens.add({ targets: t, y: y - 28, alpha: 0, delay: 350, duration: 450, onComplete: () => t.destroy() });
+  }
+
+  private hitTarget(t: { name: string; spr: Phaser.GameObjects.Sprite; kind: "lad" | "band" | "dancer" | "derek" }) {
+    const now = this.time.now;
+    if (now - this.lastSwing < 280 || this.busy) return;
+    this.lastSwing = now;
+    const spr = t.spr;
+    const a = Math.atan2(spr.y - this.me.y, spr.x - this.me.x);
+    // lunge
+    const mx = this.me.x;
+    const my = this.me.y;
+    this.tweens.add({ targets: this.me, x: mx + Math.cos(a) * 14, y: my + Math.sin(a) * 8, duration: 60, yoyo: true, onComplete: () => this.me.setPosition(mx, my) });
+    if (t.kind === "dancer") {
+      // she is not having it
+      synth.play("punch_big");
+      this.cameras.main.shake(160, 0.01);
+      this.pow(spr.x, spr.y - 60, "BLOCKED", "#f9a8d4", 20);
+      this.bubble(spr, ["Not a chance, babe.", "Touch me again and Derek's coming.", "DEREK!", "Absolutely not."][Math.floor(Math.random() * 4)], 1500, "#ffd1e8");
+      this.time.delayedCall(140, () => {
+        this.pow(this.me.x, this.me.y - 50, "BOOT!", "#ff6bb0", 22);
+        synth.play("punch");
+        this.tweens.add({ targets: this.me, y: Math.min(520, this.me.y + 110), x: this.me.x + Math.cos(a) * -60, duration: 280, ease: "Quad.out" });
+        this.me.setTintFill(0xffffff);
+        this.time.delayedCall(80, () => this.me.clearTint());
+      });
+      this.brawl += 2;
+      this.callDerek();
+      return;
+    }
+    const n = (this.hits.get(spr) ?? 0) + 1;
+    this.hits.set(spr, n);
+    this.brawl++;
+    synth.play(n % 3 === 0 ? "punch_big" : "punch");
+    this.cameras.main.shake(100, 0.006);
+    spr.setTintFill(0xffffff);
+    this.time.delayedCall(80, () => spr.active && spr.clearTint());
+    this.pow(spr.x + (Math.random() - 0.5) * 30, spr.y - 56, ["POW!", "WHAM!", "BIFF!", "SMACK!", "BOSH!"][Math.floor(Math.random() * 5)]);
+    for (let i = 0; i < 6; i++) {
+      const c = this.add.circle(spr.x, spr.y - 10, 3, i % 2 ? 0xffffff : 0xffd23f).setDepth(1500);
+      this.tweens.add({ targets: c, x: c.x + (Math.random() - 0.5) * 70, y: c.y + (Math.random() - 0.5) * 50, alpha: 0, duration: 300, onComplete: () => c.destroy() });
+    }
+    if (t.kind === "derek") return this.hitDerek(a);
+    const x0 = spr.x;
+    const y0 = spr.y;
+    if (t.kind === "lad") this.tweens.add({ targets: spr, x: x0 + Math.cos(a) * 26, y: y0 + Math.sin(a) * 12, duration: 90, yoyo: true, onComplete: () => !this.ko.has(spr) && spr.setPosition(x0, y0) });
+    if (t.kind === "band" && !this.musicStopped && this.band.length) {
+      this.musicStopped = true;
+      synth.stopMusic();
+      synth.play("tap_fail");
+      this.banner?.setText("♪ THE MUSIC HAS STOPPED. Someone has attacked SanMik & SanChz.");
+    }
+    const hurt =
+      t.kind === "band"
+        ? ["MY WIG!", "We're mid-verse!", "Not the goatee!", "That's assault AND it's off-beat!"]
+        : ["OI!", "What was that for?!", "I was only looking!", "She's still mine!", "Not in front of her!", "That's not fair!", "Mate!", "Ow! My pint!"];
+    if (n >= 4) {
+      this.ko.add(spr);
+      spr.setAngle(90);
+      this.pow(spr.x, spr.y - 40, "K.O.", "#ffffff", 22);
+      this.bubble(spr, "💤", 2200);
+      synth.play("death");
+    } else this.bubble(spr, hurt[Math.floor(Math.random() * hurt.length)], 1300, "#ffe4e4");
+    // the rest of the room reacts
+    const watchers = this.patrons.filter((p) => p.spr !== spr && !this.ko.has(p.spr));
+    if (watchers.length && Math.random() < 0.5) {
+      const w = watchers[Math.floor(Math.random() * watchers.length)];
+      this.bubble(w.spr, ["FIGHT! FIGHT! FIGHT!", "Get him!", "Mate, calm down", "Do me next! Actually don't.", "She's watching! Look hard!"][Math.floor(Math.random() * 5)], 1300);
+    }
+    if (this.ko.size >= 1 || this.brawl >= 6) this.callDerek();
+  }
+
+  private callDerek() {
+    if (this.derek || this.busy) return;
+    const spr = this.add.sprite(1000, 470, this.textures.exists("spr_TV_BOUNCER") ? "spr_TV_BOUNCER" : "spr_FOLK1", 0).setScale(3.2).setDepth(470);
+    this.derek = { spr, hits: 0, down: false };
+    synth.play("door");
+    synth.play("roar");
+    this.bubble(spr, "RIGHT. WHO'S KICKING OFF.", 2000, "#fecaca");
+    this.add.text(480, 120, "BIG DEREK IS COMING · Knock him out (10 hits) before he grabs you", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#7f1d1dcc", padding: { x: 8, y: 3 } }).setOrigin(0.5).setDepth(1700).setName("derekBanner");
+  }
+
+  private updateDerek(dt: number) {
+    const d = this.derek;
+    if (!d || d.down || this.busy) return;
+    if (this.tweens.isTweening(d.spr)) return;
+    const dx = this.me.x - d.spr.x;
+    const dy = this.me.y - d.spr.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 34) return this.thrownOut();
+    const sp = 62 * (dt / 1000);
+    d.spr.x += (dx / dist) * sp;
+    d.spr.y += (dy / dist) * sp;
+    d.spr.setDepth(d.spr.y);
+  }
+
+  private hitDerek(a: number) {
+    const d = this.derek!;
+    d.hits++;
+    this.tweens.add({ targets: d.spr, x: d.spr.x + Math.cos(a) * 40, y: d.spr.y + Math.sin(a) * 16, duration: 140, ease: "Quad.out" });
+    if (d.hits === 5) this.bubble(d.spr, "...that tickled.", 1400, "#fecaca");
+    if (d.hits < 10) return;
+    d.down = true;
+    d.spr.setAngle(90);
+    this.cameras.main.shake(400, 0.014);
+    this.cameras.main.flash(120, 255, 255, 255);
+    synth.play("explode");
+    synth.play("cheer");
+    this.pow(d.spr.x, d.spr.y - 60, "BIG DEREK IS DOWN", "#ffd23f", 30);
+    (this.children.getByName("derekBanner") as Phaser.GameObjects.Text | null)?.destroy();
+    const s = G.s;
+    const first = !s.flags.derek_beaten;
+    if (first) {
+      s.flags.derek_beaten = true;
+      s.coins += 40;
+    }
+    bump(s, "derek_kos");
+    for (const p of this.patrons.filter((q) => !this.ko.has(q.spr))) this.bubble(p.spr, ["LEGEND!", "YOU KILLED DEREK!", "He's not dead. Probably.", "Drinks are free now, right?"][Math.floor(Math.random() * 4)], 1800, "#fff7c2");
+    this.time.delayedCall(800, () => this.talk([dir(`Big Derek is asleep on the carpet. The Wonky Pole is, for now, yours.${first ? " +40 Krezzcoin from his bumbag." : ""}`), say(this.dancerName(), "...honestly? Fair play.")]));
+  }
+
+  private async thrownOut() {
+    const s = G.s;
+    this.busy = true;
+    synth.play("punch_big");
+    this.cameras.main.shake(300, 0.012);
+    this.tweens.add({ targets: this.me, y: 540, angle: 180, duration: 400 });
+    this.busy = false;
+    await this.talk([say("BIG DEREK", "OUT."), dir("Big Derek picks you up by the back of your collar and carries you out like a bin bag. You're barred for a few minutes.")]);
+    s.flags.club_banned_until = s.playtimeMs + 240000;
+    this.busy = true;
+    synth.stopMusic();
+    G.save();
+    this.cameras.main.fadeOut(300);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
   }
 
   private swapDancer() {
@@ -349,7 +538,11 @@ export class ClubScene extends Phaser.Scene {
   private async wonkOff() {
     const s = G.s;
     const me = s.player;
-    const crew = Phaser.Utils.Array.Shuffle(this.patrons.filter((p) => p.id !== "MIKEY").slice()).slice(0, 4);
+    const crew = Phaser.Utils.Array.Shuffle(this.patrons.filter((p) => p.id !== "MIKEY" && !this.ko.has(p.spr)).slice()).slice(0, 4);
+    if (!crew.length) {
+      await this.talk([dir("Everyone you'd wonk-off against is unconscious. You've won by default. It doesn't feel like winning.")]);
+      return;
+    }
     const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
     await this.talk([
       say(me, "Lads. Wonk-off. Right now."),
