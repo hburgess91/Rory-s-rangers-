@@ -3,6 +3,7 @@ import { TCC_EP07 } from "./thickCummingCock/episode07";
 import { CREATION_MYTH } from "./extra/creationMyth";
 import { EASTENDERS_KREZZ } from "./extra/eastenders";
 import { BEEP_SHOW } from "./extra/beepShow";
+import { KREWS_EPISODES } from "./extra/krews";
 
 // Everything on KrelTV. Episodes are data; most are written in the screenplay format
 // (see parseScreenplay) so new ones can be pasted in.
@@ -321,7 +322,7 @@ VJ: Absolute tune. Our studio has decided not to react to it as a mark of respec
   { unlockFlag: "met_emergency", unlockHint: "Premieres after the Emergency Reaction Session" },
 );
 
-export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW];
+export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES];
 
 export const CHANNELS: string[] = [
   "KRELFORD NEWS AT SIX",
@@ -334,6 +335,7 @@ export const CHANNELS: string[] = [
   "KMTV (KRELWORLD MUSIC TELEVISION)",
   "BBK ONE",
   "CHANNEL KREZ",
+  "GB KREWS 24",
 ];
 
 /** Which set a shot uses. The TV renderer draws these procedurally. */
@@ -359,5 +361,11 @@ export function setKeyFor(set: string): string {
   if (s.includes("FOREST")) return "forest";
   if (s.includes("NYC") || s.includes("NEW YORK") || s === "nyc_skyline".toUpperCase()) return "nyc_skyline";
   if (s.includes("OFFICE")) return "office_night";
+  if (s.includes("COURT")) return "courtroom";
+  if (s.includes("CHURCH") || s.includes("FUNERAL")) return "church";
+  if (s.includes("GROCERY") || s.includes("SUPERMARKET")) return "supermarket";
+  if (s.includes("ANTARCTICA") || s.includes("SOUTH POLE")) return "antarctica";
+  if (s.includes("CHILDREN'S TV") || s.includes("KIDS")) return "kids_studio";
+  if (s.includes("MERGED UNIVERSE")) return "smash";
   return set.toLowerCase();
 }

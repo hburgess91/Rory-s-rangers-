@@ -3,6 +3,8 @@
 
 export const AUDIO_FILES: Record<string, string> = {
   // e.g. mork_voice: "audio/mork_voice.ogg"  (drop the file in public/audio)
+  /** Studio-audience laugh track (sitcom canned laughter). Played in varied slices by "laugh"/"biglaugh". */
+  laugh_track: "audio/laugh_track.mp3",
 };
 
 /** Recorded music (public/audio). Ids not listed here fall back to the synthesised tracks. */
@@ -188,8 +190,31 @@ export class Synth {
     s.stop(t + dur + 0.02);
   }
 
+  /** Play part of a loaded recording with a fade-out. */
+  clip(id: string, offset: number, dur: number, vol = 1, rate = 1) {
+    const buf = this.files[id];
+    if (!this.ctx || !buf) return false;
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    const g = this.ctx.createGain();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    const len = Math.min(dur, buf.duration - offset);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.08);
+    g.gain.setValueAtTime(vol, t + Math.max(0.1, len - 0.9));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    src.connect(g);
+    g.connect(this.sfxGain);
+    src.start(t, offset, len + 0.05);
+    return true;
+  }
+
   play(id: string) {
     if (!this.ctx) return;
+    // canned laughter: a random slice of the real laugh track (the big one plays most of it)
+    if (id === "laugh" && this.clip("laugh_track", Math.random() * 1.6, 2.8 + Math.random() * 0.8, 1.1, 0.96 + Math.random() * 0.08)) return;
+    if (id === "biglaugh" && this.clip("laugh_track", 0, 6.4, 1.3)) return;
     if (this.files[id]) {
       const s = this.ctx.createBufferSource();
       s.buffer = this.files[id];

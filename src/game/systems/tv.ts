@@ -6,7 +6,7 @@ export type TVBeat =
   | { type: "direction"; action: string }
   | { type: "sfx"; id: string }
   | { type: "music"; id: string; mode: "start" | "stop" | "fade" }
-  | { type: "audience"; cue: "laugh" | "cheer" | "gasp" | "whistle" }
+  | { type: "audience"; cue: "laugh" | "biglaugh" | "cheer" | "gasp" | "whistle" }
   | { type: "titleCard"; text: string }
   | { type: "transition"; mode: "cut" | "smashCut" | "fade" }
   | { type: "prop"; id: string; on: boolean }
@@ -26,11 +26,13 @@ export interface TVEpisode {
   beats: TVBeat[];
 }
 
-const AUDIENCE_CUES: Record<string, "laugh" | "cheer" | "gasp" | "whistle"> = {
+const AUDIENCE_CUES: Record<string, "laugh" | "biglaugh" | "cheer" | "gasp" | "whistle"> = {
   LAUGHTER: "laugh",
   LAUGH: "laugh",
   "CANNED LAUGHTER": "laugh",
-  "LAUGHTER CRESCENDO": "laugh",
+  "LAUGHTER CRESCENDO": "biglaugh",
+  "BIG LAUGH": "biglaugh",
+  "LAUGH TRACK": "laugh",
   CHEERING: "cheer",
   CHEERS: "cheer",
   APPLAUSE: "cheer",
@@ -85,7 +87,13 @@ export function parseScreenplay(text: string): TVBeat[] {
         const [, id, on] = inner.split(/\s+/);
         beats.push({ type: "prop", id, on: on !== "off" });
       } else if (upper.startsWith("BLOCK ")) {
-        const [, who, to, pose] = inner.split(/\s+/);
+        // names can be several words: [BLOCK JUROR NUMBER 2 right]
+        const parts = inner.split(/\s+/).slice(1);
+        const POS = ["left", "right", "center", "lap", "offscreen", "enter"];
+        const at = parts.findIndex((w) => POS.includes(w.toLowerCase()));
+        const who = (at > 0 ? parts.slice(0, at) : parts.slice(0, 1)).join(" ");
+        const to = at > 0 ? parts[at].toLowerCase() : parts[1];
+        const pose = at > 0 ? parts[at + 1] : parts[2];
         beats.push({ type: "blocking", character: who, to: (to as any) || "center", pose });
       } else if (AUDIENCE_CUES[upper]) beats.push({ type: "audience", cue: AUDIENCE_CUES[upper] });
       else beats.push({ type: "direction", action: inner });
@@ -159,7 +167,8 @@ export function beatDuration(b: TVBeat): number {
     case "shot":
       return b.duration ?? 0.6;
     case "audience":
-      return 1.6;
+      // let the canned laughter breathe before the next line, like a real sitcom
+      return b.cue === "biglaugh" ? 4.2 : b.cue === "laugh" ? 2.4 : 1.6;
     case "transition":
       return b.mode === "smashCut" ? 0.15 : 0.7;
     default:

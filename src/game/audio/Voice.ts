@@ -9,6 +9,20 @@ interface Profile {
 }
 
 const PROFILES: Record<string, Profile> = {
+  "ESTATE SPOKESPERSON": { pitch: 0.8, rate: 0.85 },
+  CHANCELLOR: { pitch: 1.15, rate: 1.1 },
+  "DR. JAMESON": { pitch: 1.3, rate: 1.2 },
+  "JEREMY CORBYN": { pitch: 0.85, rate: 0.9 },
+  "COOKIE MONSTER": { pitch: 0.3, rate: 0.85 },
+  "JUDGE KRELMOR": { pitch: 0.55, rate: 0.8 },
+  "BARRY SNODGRASS": { pitch: 1.1, rate: 1.25 },
+  "BENDY KRENDY": { pitch: 0.9, rate: 1 },
+  VICAR: { pitch: 1.2, rate: 1 },
+  "SUSAN NIPWOOD": { pitch: 1.6, rate: 0.6, female: true },
+  MARY: { pitch: 1.2, rate: 1.05, female: true },
+  JOHN: { pitch: 0.95, rate: 1 },
+  PROSECUTOR: { pitch: 1, rate: 1, female: true },
+  "JUROR NUMBER 2": { pitch: 0.7, rate: 0.75 },
   DRONGUS: { pitch: 0.6, rate: 0.85 },
   FLENKY: { pitch: 1.15, rate: 1.15 },
   KREZMAR: { pitch: 0.95, rate: 1.05 },

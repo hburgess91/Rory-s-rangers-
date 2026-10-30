@@ -311,9 +311,9 @@ export class TVScene extends Phaser.Scene {
         this.subs.setText(this.showSubs ? `(${b.action})` : "").setVisible(this.showSubs);
         break;
       case "audience": {
-        const map = { laugh: "[LAUGHTER]", cheer: "[CHEERING]", gasp: "[GASP]", whistle: "[WHISTLES]" } as const;
+        const map = { laugh: "[LAUGHTER]", biglaugh: "[UPROARIOUS LAUGHTER]", cheer: "[CHEERING]", gasp: "[GASP]", whistle: "[WHISTLES]" } as const;
         this.caption.setText(map[b.cue]);
-        this.time.delayedCall(1400, () => this.caption.setText(""));
+        this.time.delayedCall(b.cue === "biglaugh" ? 3800 : 2000, () => this.caption.setText(""));
         synth.play(b.cue);
         break;
       }
@@ -371,7 +371,7 @@ export class TVScene extends Phaser.Scene {
     this.stage.removeAll(true);
     // PixelLab set (generated at 280x212, drawn at 2x inside the CRT)
     const known = ["newsdesk", "polson_ext", "townhall_cam", "pitch", "shopping", "emergency", "archive", "forest", "nyc_skyline", "office_night", "cave", "livingroom", "pubbar", "cellar", "press", "cockpit", "bunker", "boardroom", "cell", "street_day"];
-    const artKey = `tv_${known.includes(key) ? key : "default"}`;
+    const artKey = known.includes(key) || this.textures.exists(`tv_${key}`) ? `tv_${key}` : "tv_default";
     if (this.textures.exists(artKey)) {
       const img = this.add.image(SX + SW / 2, SY + SH / 2, artKey);
       const src = this.textures.get(artKey).getSourceImage();
@@ -583,6 +583,11 @@ export class TVScene extends Phaser.Scene {
     const hdArt = !!charMeta(this, tex);
     const spr = this.add.sprite(x, SY + 280, tex, 0).setScale(hdArt ? 4.4 : (this.textures.getFrame(tex, 0)?.height ?? 24) > 30 ? 2.5 : 5);
     this.stage.add(spr);
+    if (key === "SUSAN NIPWOOD") {
+      // she's a ghost
+      spr.setAlpha(0.6);
+      this.tweens.add({ targets: spr, y: spr.y - 10, alpha: 0.4, yoyo: true, repeat: -1, duration: 1400, ease: "Sine.easeInOut" });
+    }
     const a = { spr, name: key };
     this.actors[key] = a;
     return a;
