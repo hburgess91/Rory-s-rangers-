@@ -299,15 +299,15 @@ INT. COURTROOM - DAY
 [BLOCK JUROR NUMBER 2 right]
 PROSECUTOR: Ladies and gentlemen of the jury, we have evidence that the defendant has been filming women use public restrooms.
 (The prosecutor plays a video on the courtroom TV. The screen faces away from us.)
-JUROR NUMBER 2: (Involuntarily moaning in pleasure)
+JUROR NUMBER 2: (Involuntarily moaning in pleasure) Mmmm... uhh... uhh... yeahhh...
 PROSECUTOR: As you can see, the defendant is filming this woman without her knowledge or consent.
-JUROR NUMBER 2: (Moaning louder)
+JUROR NUMBER 2: (Moaning louder) Mmmmm! Uhh! Uhh! Yeahhhh!
 PROSECUTOR: This is a clear violation of her privacy.
-JUROR NUMBER 2: (Moaning even louder)
+JUROR NUMBER 2: (Moaning even louder) MMMMM! UHH! UHH! UHH! YEAHHHHH!
 PROSECUTOR: Would you like to see some more footage, Mr. Juror Number 2?
-JUROR NUMBER 2 (moaning uncontrollably): Yes, please! Zoom in so I can be 100% sure!
+JUROR NUMBER 2 (moaning uncontrollably): Uhh... uhh... yeahhh... Yes, please! Zoom in so I can be 100% sure!
 (The prosecutor zooms in on the footage, and Juror Number 2 continues to moan in pleasure.)
-JUROR NUMBER 2 (moaning): This is so hot... I can't believe I'm getting off to this!
+JUROR NUMBER 2 (moaning): Mmmm... yeahhh... This is so hot... I can't believe I'm getting off to this! Uhh... uhh...
 (The other jurors start to look uncomfortable, and some start to leave the courtroom.)
 [FADE]
 `,
