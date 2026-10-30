@@ -11,16 +11,43 @@ import type { Player } from "./Player";
  * out. Over the top = over-wonked, too little = under-wonked, just right = the white jet stream.
  */
 
-const ZONE_LO = 0.7;
-const ZONE_HI = 0.88;
-const OVER = 0.97;
-const TIME = 7000;
-const NEED = 2200;
-const PUSH = 0.07;
+export const OVER = 0.97;
+const TIME = 8000;
+
+// Flappy physics: each press kicks the gauge upward, gravity drags it back down. Easy to overshoot.
+export const FLAP = 0.7; // upward speed (gauge units/sec) set by a press
+export const GRAV = 2.1; // gauge units/sec^2
+
+export interface WonkZone { lo: number; hi: number; need: number }
+/** A new KREZZ ZONE every time: random height, random width. Narrow zones need less time in them. */
+export function randomZone(): WonkZone {
+  const width = 0.07 + Math.random() * 0.17;
+  const lo = 0.22 + Math.random() * (OVER - 0.05 - width - 0.22);
+  return { lo, hi: lo + width, need: Math.round(1300 + width * 5000) };
+}
+export interface Flappy { gauge: number; vel: number }
+export function flap(g: Flappy) {
+  g.vel = FLAP;
+}
+export function fall(g: Flappy, dtMs: number) {
+  const dt = dtMs / 1000;
+  g.vel -= GRAV * dt;
+  g.gauge += g.vel * dt;
+  if (g.gauge <= 0) {
+    g.gauge = 0;
+    g.vel = 0;
+  }
+  if (g.gauge > 1) g.gauge = 1;
+}
 
 export function startWonk(p: Player, now: number) {
   const w = p.world;
   const sc = w.sc;
+  const Z = randomZone();
+  const ZONE_LO = Z.lo;
+  const ZONE_HI = Z.hi;
+  const NEED = Z.need;
+  const fl: Flappy = { gauge: 0, vel: 0 };
   let gauge = 0;
   let inZone = 0;
   let t = 0;
@@ -51,7 +78,7 @@ export function startWonk(p: Player, now: number) {
   const title = sc.add.text(480, 52, "WONK YOUR THANG", { fontFamily: "Impact, sans-serif", fontSize: "46px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 8 }).setOrigin(0.5).setScale(0.2);
   ui.add(title);
   sc.tweens.add({ targets: title, scale: 1, duration: 300, ease: "Back.out" });
-  const how = sc.add.text(480, 96, TOUCH.enabled ? "TAP TAP TAP! Keep it in the KREZZ ZONE" : "MASH R (or SPACE / CLICK)! Keep it in the KREZZ ZONE", { fontFamily: "sans-serif", fontSize: "16px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5);
+  const how = sc.add.text(480, 96, TOUCH.enabled ? "TAP to flap it up! Keep it in the KREZZ ZONE" : "TAP R (or SPACE / CLICK) to flap it up! Keep it in the KREZZ ZONE", { fontFamily: "sans-serif", fontSize: "16px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5);
   ui.add(how);
   // gauge
   const GX = 640;
@@ -78,7 +105,7 @@ export function startWonk(p: Player, now: number) {
   // ---- input: the same button, plus space / click / tap anywhere
   const press = () => {
     if (done) return;
-    gauge = Math.min(1, gauge + PUSH);
+    flap(fl);
     presses.push(t);
     synth.wonkTick(gauge);
     hero.setY(300 + (Math.random() - 0.5) * 6);
@@ -112,13 +139,12 @@ export function startWonk(p: Player, now: number) {
       const padNow = !!(gp && (gp.L1 || gp.A));
       if (padNow && !padWas) press();
       padWas = padNow;
-      // it resists: harder to hold the higher it gets
-      // resistance grows with the square of the gauge: the zone sits at about 4.5-7 presses a second
-      gauge = Math.max(0, gauge - (0.05 + 0.64 * gauge * gauge) * (dt / 1000));
+      fall(fl, dt);
+      gauge = fl.gauge;
       presses = presses.filter((x) => t - x < 600);
       const zone = gauge >= ZONE_LO && gauge <= ZONE_HI;
       if (zone) inZone += dt;
-      (sc as any).__wonk = { gauge, inZone, t };
+      (sc as any).__wonk = { gauge, inZone, t, lo: ZONE_LO, hi: ZONE_HI, need: NEED };
       // visuals
       fill.setSize(54, GH * gauge);
       fill.setFillStyle(gauge > ZONE_HI ? 0xef4444 : zone ? 0x22c55e : 0xff4fa3);
@@ -127,7 +153,7 @@ export function startWonk(p: Player, now: number) {
       const rate = presses.length;
       hero.setX(320 + (Math.random() - 0.5) * Math.min(14, rate * 1.6));
       hero.setAngle((Math.random() - 0.5) * Math.min(8, rate));
-      status.setText(gauge > ZONE_HI ? "TOO MUCH! EASE OFF!" : zone ? "IN THE ZONE..." : gauge > 0.4 ? "MORE!" : "WONK IT!").setColor(gauge > ZONE_HI ? "#f87171" : zone ? "#86efac" : "#ffffff");
+      status.setText(gauge > ZONE_HI ? "TOO MUCH! EASE OFF!" : zone ? "IN THE ZONE..." : gauge > ZONE_LO - 0.2 ? "MORE!" : "WONK IT!").setColor(gauge > ZONE_HI ? "#f87171" : zone ? "#86efac" : "#ffffff");
       if (rate > 4 && Math.random() < 0.08) {
         const d = sc.add.text(320 + (Math.random() - 0.5) * 120, 200, "💦", { fontSize: "20px" }).setOrigin(0.5);
         ui.add(d);

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { randomZone, flap, fall, OVER, type WonkZone } from "../combat/Wonk";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -49,16 +50,15 @@ const BAND_INTRO = [
   say("SANMIK", "This one's for the ladies. And Gronny."),
 ];
 
-const ZONE_LO = 0.7;
-const ZONE_HI = 0.88;
-const OVER = 0.97;
-const TIME = 7000;
-const NEED = 2200;
+const TIME = 8000;
 
 interface Rival {
   id: string;
   spr: Phaser.GameObjects.Sprite;
   gauge: number;
+  vel: number;
+  zone: WonkZone;
+  nextFlap: number;
   inZone: number;
   /** how this one will go */
   plan: "perfect" | "over" | "under";
@@ -629,7 +629,7 @@ export class ClubScene extends Phaser.Scene {
       const head = this.add.text(480, 44, "WONK-OFF", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 9 }).setOrigin(0.5).setScale(0.2);
       ui.add(head);
       this.tweens.add({ targets: head, scale: 1, duration: 300, ease: "Back.out" });
-      ui.add(this.add.text(480, 88, TOUCH.enabled ? "TAP TAP TAP! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins." : "MASH R / SPACE / CLICK! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins.", { fontFamily: "sans-serif", fontSize: "14px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+      ui.add(this.add.text(480, 88, TOUCH.enabled ? "TAP to flap it up! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins." : "TAP R / SPACE / CLICK to flap it up! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins.", { fontFamily: "sans-serif", fontSize: "14px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
       // the line-up: you in the middle
       const ids = [...rivalIds];
       ids.splice(Math.floor(ids.length / 2), 0, s.player);
@@ -643,11 +643,13 @@ export class ClubScene extends Phaser.Scene {
         ui.add(this.add.text(spr.x, 150, id === s.player ? "YOU" : CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: id === s.player ? "14px" : "11px", color: id === s.player ? "#ffd23f" : "#ffd1e8", fontStyle: "bold" }).setOrigin(0.5));
         // gauge under each
         ui.add(this.add.rectangle(spr.x, 420, 26, 140, 0x000000, 0.85).setStrokeStyle(id === s.player ? 3 : 1, id === s.player ? 0xffd23f : 0xffffff, 0.8));
-        ui.add(this.add.rectangle(spr.x, 420 + 70 - 140 * ((ZONE_LO + ZONE_HI) / 2), 26, 140 * (ZONE_HI - ZONE_LO), 0x22c55e, 0.4));
+        const zone = randomZone();
+        ui.add(this.add.rectangle(spr.x, 420 + 70 - 140 * ((zone.lo + zone.hi) / 2), 26, 140 * (zone.hi - zone.lo), 0x22c55e, 0.4));
+        ui.add(this.add.rectangle(spr.x, 420 + 70 - 140 * ((OVER + 1) / 2), 26, 140 * (1 - OVER), 0xef4444, 0.6));
         const fill = this.add.rectangle(spr.x, 490, 20, 0, 0xff4fa3).setOrigin(0.5, 1);
         ui.add(fill);
         const roll = Math.random();
-        return { id, spr, gauge: 0, inZone: 0, plan: roll < 0.4 ? "perfect" : roll < 0.75 ? "over" : "under", skill: 0.6 + Math.random() * 0.5, fill };
+        return { id, spr, gauge: 0, vel: 0, zone, nextFlap: 0, inZone: 0, plan: roll < 0.4 ? "perfect" : roll < 0.75 ? "over" : "under", skill: 0.6 + Math.random() * 0.5, fill };
       });
       // one long censor bar across every waist
       ui.add(this.add.rectangle(480, 290, Math.max(260, (n - 1) * gap + 130), 46, 0x000000));
@@ -660,7 +662,7 @@ export class ClubScene extends Phaser.Scene {
       let done = false;
       const press = () => {
         if (done || you.result) return;
-        you.gauge = Math.min(1, you.gauge + 0.07);
+        flap(you);
         synth.wonkTick(you.gauge);
       };
       const onKey = (e: KeyboardEvent) => {
@@ -699,17 +701,21 @@ export class ClubScene extends Phaser.Scene {
           for (const r of all) {
             if (r.result) continue;
             if (r !== you) {
-              // rivals: a noisy rhythm heading for their fate
-              const want = r.plan === "perfect" ? 0.74 + r.skill * 0.04 : 0.5;
-              const go = r.plan === "over" ? Math.random() < 0.09 + r.skill * 0.08 : r.gauge < want && Math.random() < 0.12 * r.skill;
-              if (go) r.gauge = Math.min(1, r.gauge + 0.07);
+              // rivals: flap with a human-ish reaction time, heading for their fate
+              if (t >= r.nextFlap) {
+                const mid = (r.zone.lo + r.zone.hi) / 2;
+                const go = r.plan === "over" ? Math.random() < 0.5 : r.plan === "under" ? r.gauge < r.zone.lo - 0.15 : r.vel <= 0 && r.gauge < mid + (Math.random() - 0.5) * (0.25 - r.skill * 0.15);
+                if (go) flap(r);
+                r.nextFlap = t + 90 + Math.random() * 160 / r.skill;
+              }
             }
-            r.gauge = Math.max(0, r.gauge - (0.05 + 0.64 * r.gauge * r.gauge) * 0.016);
-            if (r.gauge >= ZONE_LO && r.gauge <= ZONE_HI) r.inZone += 16;
-            r.fill!.setSize(20, 140 * r.gauge).setFillStyle(r.gauge > ZONE_HI ? 0xef4444 : r.gauge >= ZONE_LO ? 0x22c55e : 0xff4fa3);
+            fall(r, 16);
+            const Z = r.zone;
+            if (r.gauge >= Z.lo && r.gauge <= Z.hi) r.inZone += 16;
+            r.fill!.setSize(20, 140 * r.gauge).setFillStyle(r.gauge > Z.hi ? 0xef4444 : r.gauge >= Z.lo ? 0x22c55e : 0xff4fa3);
             r.spr.setX((r.spr.getData("x0") as number) + (Math.random() - 0.5) * (2 + r.gauge * 8));
             if (r.gauge >= OVER) finishOne(r, "over");
-            else if (r.inZone >= NEED) finishOne(r, "perfect");
+            else if (r.inZone >= r.zone.need) finishOne(r, "perfect");
           }
           if (t >= TIME || all.every((r) => r.result)) {
             for (const r of all) if (!r.result) finishOne(r, "under");
