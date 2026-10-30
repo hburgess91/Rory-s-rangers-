@@ -4687,6 +4687,12 @@
    "frameHeight": 120,
    "hd": 0.4167
   },
+  "boss_hoard": {
+   "file": "combat/boss_hoard.png",
+   "frameWidth": 112,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
   "boss_krozno": {
    "file": "combat/boss_krozno.png",
    "frameWidth": 88,
@@ -4837,6 +4843,18 @@
    "frameHeight": 40,
    "hd": 0.5
   },
+  "en_mould": {
+   "file": "combat/en_mould.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_mould_pizza": {
+   "file": "combat/en_mould_pizza.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
   "en_pending_orb": {
    "file": "combat/en_pending_orb.png",
    "frameWidth": 32,
@@ -4845,6 +4863,12 @@
   },
   "en_pipe_gremlin": {
    "file": "combat/en_pipe_gremlin.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_plushie": {
+   "file": "combat/en_plushie.png",
    "frameWidth": 32,
    "frameHeight": 32,
    "hd": 0.5
@@ -4875,6 +4899,12 @@
   },
   "en_tray_turret": {
    "file": "combat/en_tray_turret.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_trinket": {
+   "file": "combat/en_trinket.png",
    "frameWidth": 32,
    "frameHeight": 32,
    "hd": 0.5

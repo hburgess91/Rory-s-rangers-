@@ -447,7 +447,7 @@ export const ARCS: Arc[] = [
         id: "gym",
         text: "Pick Polson up from Polson Towers and take him to the gym for 'an intense workout'.",
         at: "POLSON_ROAD",
-        step: { kind: "vignette", id: "polson_gym", intro: [say("POLSON", "Right. Gym. Intense workout. Today's the day."), say("EDEN", "(from upstairs) Take a water bottle."), say("POLSON", "Mork.")] },
+        step: { kind: "vignette", id: "polson_gym", intro: [say("POLSON", "Right. Gym. Intense workout. Today's the day."), say("POLSON", "It's on the list. Gym. Get trim. Travelling. In that order."), say("POLSON", "Mork.")] },
       },
       {
         id: "cctv",

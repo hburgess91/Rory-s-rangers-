@@ -590,7 +590,8 @@ export class HubScene extends Phaser.Scene {
 
   private spawnNpcs() {
     const s = G.s;
-    for (const id of [...PLAYABLE_ORDER, "POLSON", "EDEN"]) {
+    // Eden moved out of Polson Towers in chapter 2
+    for (const id of [...PLAYABLE_ORDER, "POLSON"]) {
       if (id === s.player) continue;
       if ((id === "POLSON" || id === "EDEN") && s.chapter < 3) continue;
       if (id === "KREBON" && s.flags.krebon_gone) continue;

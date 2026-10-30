@@ -9,6 +9,7 @@ interface Profile {
 }
 
 const PROFILES: Record<string, Profile> = {
+  "POLSON'S MUM": { pitch: 1.05, rate: 0.95, female: true },
   DESTINY: { pitch: 1.3, rate: 1, female: true },
   CRYSTAL: { pitch: 1.15, rate: 0.95, female: true },
   "BIG DEREK": { pitch: 0.45, rate: 0.85 },

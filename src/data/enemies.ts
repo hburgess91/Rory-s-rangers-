@@ -27,6 +27,10 @@ export const ENEMIES: Record<string, EnemyDef> = {
   tray_turret: { id: "tray_turret", name: "School Dinner Tray", behavior: "orbiter", hp: 30, speed: 70, damage: 6, size: 14, color: 0xb0b8c0, accent: 0x6b7280, shape: "box", projectile: { speed: 190, damage: 7, color: 0xd1d5db, rate: 1400 }, coins: 4, krezz: 3 },
   // Chapter 2 — Polson Towers / Reaction Network
   friend_crawler: { id: "friend_crawler", name: "Friend Request", behavior: "chaser", hp: 30, speed: 105, damage: 9, size: 14, color: 0x1877f2, accent: 0xffffff, shape: "blob", label: "+", coins: 4, krezz: 3 },
+  plushie: { id: "plushie", name: "Stuffed Toy", behavior: "chaser", hp: 26, speed: 95, damage: 8, size: 14, color: 0xc08457, accent: 0xffffff, shape: "blob", coins: 3, krezz: 3 },
+  trinket: { id: "trinket", name: "Trinket Swarm", behavior: "swarm", hp: 12, speed: 150, damage: 5, size: 10, color: 0xa78bfa, accent: 0xfde68a, shape: "mite", coins: 1, krezz: 2 },
+  mould: { id: "mould", name: "Mouldy Takeaway", behavior: "shooter", hp: 30, speed: 70, damage: 8, size: 14, color: 0x84cc16, accent: 0x3f6212, shape: "box", projectile: { speed: 160, damage: 7, color: 0x9ccc65, rate: 1700 }, coins: 4, krezz: 4 },
+  mould_pizza: { id: "mould_pizza", name: "Furry Pizza", behavior: "charger", hp: 44, speed: 85, damage: 13, size: 17, color: 0x65a30d, accent: 0xfacc15, shape: "brute", coins: 5, krezz: 5 },
   cheese_mite: { id: "cheese_mite", name: "Cheese Mite", behavior: "swarm", hp: 10, speed: 135, damage: 5, size: 9, color: 0xffd23f, accent: 0xb58b00, shape: "mite", coins: 1, krezz: 2 },
   blocked_brute: { id: "blocked_brute", name: "Blocked User", behavior: "charger", hp: 70, speed: 70, damage: 16, size: 22, color: 0x4b5563, accent: 0xef4444, shape: "brute", label: "⊘", coins: 9, krezz: 6 },
   pending_orb: { id: "pending_orb", name: "Pending Request", behavior: "bomber", hp: 26, speed: 95, damage: 20, size: 14, color: 0x9ca3af, accent: 0xffffff, shape: "bubble", label: "…", coins: 4, krezz: 4 },

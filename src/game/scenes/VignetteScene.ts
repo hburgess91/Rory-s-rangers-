@@ -564,8 +564,8 @@ export class VignetteScene extends Phaser.Scene {
       say("POLSON", "Bulked."),
       say("POLSON", "Same time tomorrow? Intense workout. Then here."),
       dir("You pay. Obviously you pay. Polson 'left his wallet in his gym bag', which he did not bring."),
-      ping("EDEN", "Did he eat fudge"),
-      ping("EDEN", "He's not allowed fudge"),
+      ping("POLSON'S MUM", "Did he eat fudge"),
+      ping("POLSON'S MUM", "He's meant to be getting trim"),
     ]);
     synth.stopMusic();
   }
@@ -609,9 +609,9 @@ export class VignetteScene extends Phaser.Scene {
       dir("16:30. CAM 1: Polson is asleep on the sofa, holding a slice of pizza like a teddy bear."),
       ping("POLSON", "Done 3 hours. Absolutely destroyed. Core is on fire."),
       say("MIKEY", "(over the War Room comms) FGM to base. Subject has not left the house. Repeat, subject has not left the house. Subject has, however, eaten an entire fudge."),
-      ping("EDEN", "Why is there no cheese"),
+      ping("KREZMAR", "Why is there no cheese in the War Room"),
       ping("POLSON", "Mork."),
-      dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Eden will definitely want it."),
+      dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Polson's mum will definitely want it."),
     ]);
     synth.stopMusic();
   }

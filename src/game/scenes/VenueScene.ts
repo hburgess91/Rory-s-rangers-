@@ -27,7 +27,7 @@ export const SANMIK_SONGS: { id: string; title: string; album: string }[] = [
 ];
 
 const SANMIK_HURT = ["OI!", "That's not fair lads", "I'm mid-verse!", "Can I finish the song at least", "Fair play. Ow.", "I'm telling Drongus"];
-const SANCHZ_HURT = ["Mork.", "Hrrrm. Mork mork.", "That's great for the core", "I'm calling Eden", "OW. My bulk."];
+const SANCHZ_HURT = ["Mork.", "Hrrrm. Mork mork.", "That's great for the core", "I'm calling my mum", "OW. My bulk."];
 const HYPE = ["SANMIK!!", "SANCHZ!!", "TUNE!", "PEENER 4EVA", "ENCORE!", "GET CRUNK!", "WHAT A TUNE", "HOT TUB!!", "FRAGRANT!", "🔥🔥🔥"];
 
 interface Performer {

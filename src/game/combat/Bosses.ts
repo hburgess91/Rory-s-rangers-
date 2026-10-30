@@ -929,8 +929,51 @@ export class RivalBoss extends Boss {
   }
 }
 
+// ----------------------------------------------------------------- THE HOARD (Polson Towers)
+
+export class HoardBoss extends Boss {
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "hoard", x, y, 1300, w.sc.textures.exists("boss_hoard") ? "boss_hoard" : "boss_flatmate", 64, 0x84cc16, 64, 64);
+    this.setScale(2.6);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    // it shuffles after you, slowly, shedding stuff
+    this.moveToward(p.x, p.y, (this.phase === 2 ? 55 : this.phase ? 42 : 30) * this.world.enemyTimeScale);
+    if (now < this.nextPattern) return;
+    const n = this.phase === 2 ? 5 : 4;
+    const pick = this.patternIdx++ % n;
+    this.taunt();
+    if (pick === 0) {
+      // stuffed toys pour out of it
+      for (let i = 0; i < (this.phase ? 5 : 3); i++) this.world.spawnEnemy("plushie", this.x + (Math.random() - 0.5) * 120, this.y + 40, { minion: true });
+      this.nextPattern = now + 2400;
+    } else if (pick === 1) {
+      // boxes and shopping bags, lobbed at you
+      for (let i = 0; i < (this.phase ? 7 : 5); i++) {
+        const a = Math.atan2(p.y - this.y, p.x - this.x) + (i - 3) * 0.22;
+        this.world.shoot(this.x, this.y, { owner: "enemy", damage: 11, speed: 170 + Math.random() * 40, angle: a, color: 0xb08d57, scale: 2.4, life: 4000 });
+      }
+      this.nextPattern = now + 1700;
+    } else if (pick === 2) {
+      // a ring of mould spores
+      this.ring(this.phase ? 16 : 12, 130, 8, 0x9ccc65, Math.random());
+      this.nextPattern = now + 1700;
+    } else if (pick === 3) {
+      for (let i = 0; i < 2; i++) this.world.spawnEnemy(this.phase ? "mould_pizza" : "mould", this.x + (i ? 80 : -80), this.y + 30, { minion: true });
+      this.nextPattern = now + 2300;
+    } else {
+      // avalanche: the whole heap slides at you
+      this.world.enemyLine(this.x, this.y, Math.atan2(p.y - this.y, p.x - this.x), 700, 70, 22, 900);
+      this.nextPattern = now + 2200;
+    }
+  }
+}
+
 export function createBoss(id: string, w: CombatWorld, x: number, y: number): Boss {
   switch (id) {
+    case "hoard":
+      return new HoardBoss(w, x, y);
     case "salmon":
       return new SalmonSovereign(w, x, y);
     case "feedback":
