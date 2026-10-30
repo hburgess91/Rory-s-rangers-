@@ -241,6 +241,21 @@ export class Synth {
       case "shoot":
         this.tone(880, 0.06, "square", 0.12, 0, 0.5);
         break;
+      case "fart":
+        this.tone(70, 0.5, "sawtooth", 0.35, 0, 0.6);
+        this.burst(0.45, 0.25, 0.02, 180, undefined, 2);
+        break;
+      case "burp":
+        this.tone(110, 0.35, "sawtooth", 0.3, 0, 0.8);
+        this.burst(0.3, 0.15, 0, 400, undefined, 1.5);
+        break;
+      case "splash":
+        this.burst(0.6, 0.5, 0, 1200, undefined, 0.4);
+        break;
+      case "flush":
+        this.burst(1.4, 0.35, 0, 700, undefined, 0.5);
+        this.burst(0.8, 0.2, 0.5, 300, undefined, 0.5);
+        break;
       case "gun_pistol":
         this.burst(0.08, 0.35, 0, 3000, undefined, 0.6);
         this.tone(520, 0.07, "square", 0.15, 0, 0.4);

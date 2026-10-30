@@ -42,6 +42,20 @@ interface Actor {
   name: string;
 }
 
+/** Stock roles played by existing TV actors. */
+const TV_ALIASES: Record<string, string> = {
+  JOURNALIST: "REPORTER",
+  ALAN: "ADVISOR",
+  KAREN: "MADISON",
+  "DNC REP": "OFFICIAL",
+  AIDE: "ADVISOR",
+  "DEMOCRATIC LEADER": "EXECUTIVE",
+  MODERATOR: "HOST",
+  "PUB PATRON": "GROZZ",
+  "CONSERVATIVE SUPPORTER": "GROZZ",
+  VOTER: "MINTY",
+};
+
 const EXTRA_CAST_SHOWS = new Set(["creation_myth", "eastenders_krezz", "beep_show"]);
 
 export class TVScene extends Phaser.Scene {
@@ -553,8 +567,13 @@ export class TVScene extends Phaser.Scene {
   private actorTex(name: string): string | null {
     // PixelLab TV cast (spr_TV_<NAME>) first
     const up = name.toUpperCase() === "KRELBERT AND RONSON" ? "KRELBERT" : name.toUpperCase();
-    const tvKey = `spr_TV_${up.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`;
+    const keyOf = (n: string) => `spr_TV_${n.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`;
+    const tvKey = keyOf(up);
     if (this.textures.exists(tvKey)) return tvKey;
+    // numbered extras ("EXECUTIVE 2", "JOURNALIST #4") and stock roles share one actor
+    const base = up.replace(/\s*#?\d+$/, "");
+    const alias = TV_ALIASES[base] ?? base;
+    if (this.textures.exists(keyOf(alias))) return keyOf(alias);
     const c = CAST[name.toUpperCase()];
     if (typeof c === "string") return c;
     if (c) return `tv_${name.toUpperCase()}`;

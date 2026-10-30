@@ -2077,6 +2077,99 @@
     ]
    }
   },
+  "spr_TV_DAVE": {
+   "file": "chars/TV_DAVE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_DAVID_DICKINSON": {
+   "file": "chars/TV_DAVID_DICKINSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_DONALD_TRUMP": {
+   "file": "chars/TV_DONALD_TRUMP.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_DR_JAMESON": {
    "file": "chars/TV_DR_JAMESON.png",
    "frame": 64,
@@ -2418,6 +2511,68 @@
     ]
    }
   },
+  "spr_TV_JOE": {
+   "file": "chars/TV_JOE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_JOE_BIDEN": {
+   "file": "chars/TV_JOE_BIDEN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_JOHN": {
    "file": "chars/TV_JOHN.png",
    "frame": 64,
@@ -2606,6 +2761,37 @@
   },
   "spr_TV_MARC": {
    "file": "chars/TV_MARC.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_MARGE_PLUNKETT": {
+   "file": "chars/TV_MARGE_PLUNKETT.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -2883,6 +3069,99 @@
     ]
    }
   },
+  "spr_TV_PRESIDENT_HAN": {
+   "file": "chars/TV_PRESIDENT_HAN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_PRIME_MINISTER": {
+   "file": "chars/TV_PRIME_MINISTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_PROFESSOR_GUTTRIDGE": {
+   "file": "chars/TV_PROFESSOR_GUTTRIDGE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_PROSECUTOR": {
    "file": "chars/TV_PROSECUTOR.png",
    "frame": 64,
@@ -2916,6 +3195,37 @@
   },
   "spr_TV_REPORTER": {
    "file": "chars/TV_REPORTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_RISHI_SUNAK": {
+   "file": "chars/TV_RISHI_SUNAK.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -3100,6 +3410,68 @@
     ]
    }
   },
+  "spr_TV_SQUID": {
+   "file": "chars/TV_SQUID.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_SUE": {
+   "file": "chars/TV_SUE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_SUSAN_NIPWOOD": {
    "file": "chars/TV_SUSAN_NIPWOOD.png",
    "frame": 64,
@@ -3164,6 +3536,37 @@
   },
   "spr_TV_VJ": {
    "file": "chars/TV_VJ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_WOMAN": {
+   "file": "chars/TV_WOMAN.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -4075,17 +4478,29 @@
   "tv_cockpit": {
    "file": "backdrops/tv_cockpit.png"
   },
+  "tv_conference_hall": {
+   "file": "backdrops/tv_conference_hall.png"
+  },
   "tv_courtroom": {
    "file": "backdrops/tv_courtroom.png"
   },
+  "tv_debate_stage": {
+   "file": "backdrops/tv_debate_stage.png"
+  },
   "tv_default": {
    "file": "backdrops/tv_default.png"
+  },
+  "tv_downing_st": {
+   "file": "backdrops/tv_downing_st.png"
   },
   "tv_emergency": {
    "file": "backdrops/tv_emergency.png"
   },
   "tv_forest": {
    "file": "backdrops/tv_forest.png"
+  },
+  "tv_ice_cream": {
+   "file": "backdrops/tv_ice_cream.png"
   },
   "tv_kids_studio": {
    "file": "backdrops/tv_kids_studio.png"
@@ -4102,8 +4517,14 @@
   "tv_office_night": {
    "file": "backdrops/tv_office_night.png"
   },
+  "tv_oval_office": {
+   "file": "backdrops/tv_oval_office.png"
+  },
   "tv_pitch": {
    "file": "backdrops/tv_pitch.png"
+  },
+  "tv_polling": {
+   "file": "backdrops/tv_polling.png"
   },
   "tv_polson_ext": {
    "file": "backdrops/tv_polson_ext.png"
@@ -4119,6 +4540,9 @@
   },
   "tv_smash": {
    "file": "backdrops/tv_smash.png"
+  },
+  "tv_stadium": {
+   "file": "backdrops/tv_stadium.png"
   },
   "tv_street_day": {
    "file": "backdrops/tv_street_day.png"

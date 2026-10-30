@@ -4,6 +4,7 @@ import { CREATION_MYTH } from "./extra/creationMyth";
 import { EASTENDERS_KREZZ } from "./extra/eastenders";
 import { BEEP_SHOW } from "./extra/beepShow";
 import { KREWS_EPISODES } from "./extra/krews";
+import { KREWS3_EPISODES } from "./extra/krews2";
 
 // Everything on KrelTV. Episodes are data; most are written in the screenplay format
 // (see parseScreenplay) so new ones can be pasted in.
@@ -322,7 +323,7 @@ VJ: Absolute tune. Our studio has decided not to react to it as a mark of respec
   { unlockFlag: "met_emergency", unlockHint: "Premieres after the Emergency Reaction Session" },
 );
 
-export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES];
+export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES];
 
 export const CHANNELS: string[] = [
   "KRELFORD NEWS AT SIX",
@@ -341,6 +342,14 @@ export const CHANNELS: string[] = [
 /** Which set a shot uses. The TV renderer draws these procedurally. */
 export function setKeyFor(set: string): string {
   const s = set.toUpperCase();
+  if (s.includes("OVAL OFFICE")) return "oval_office";
+  if (s.includes("DEBATE")) return "debate_stage";
+  if (s.includes("CONFERENCE HALL")) return "conference_hall";
+  if (s.includes("ICE CREAM")) return "ice_cream";
+  if (s.includes("POLLING")) return "polling";
+  if (s.includes("DOWNING STREET")) return "downing_st";
+  if (s.includes("STADIUM")) return "stadium";
+  if (s.includes("PRESS BRIEFING") || s.includes("PRESS CONFERENCE")) return "press";
   if (s.includes("NEWSDESK")) return "newsdesk";
   if (s.includes("CAVE")) return "cave";
   if (s.includes("CELLAR")) return "cellar";
