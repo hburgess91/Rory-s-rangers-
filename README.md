@@ -37,11 +37,14 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 | Fizzy Bongo (buff, gets you drunk) | B | D-pad right |
 | Krezz Burst (full Wonk meter) | R / L | LB |
 | Swap fists / found guns | X (touch: GUN) | D-pad up |
+| Fart (meter fills from hits; 4 potency levels) | G (touch: 💨) | D-pad down |
 | Interact / advance dialogue | E / Space / click | X |
 | Skip dialogue (stops at choices) | Tab | |
 | Pause / menu | Esc | Start |
 
 ## What's in it
+
+- **Fart attacks.** Landing hits fills a four-level fart meter: Fairy Fart, Baked Beans, Cabbage, and the IBS Attack (a full-room final smash with gas clouds and diarrhoea everywhere). Each character has their own twist.
 
 - **Guns.** Weapon crates turn up in cleared dungeon rooms (the first one is guaranteed): Wonk Pistol, Crobley Uzi, Bongo Boomstick, Wiki Railgun and The Marital Aid (pink rubber rockets). Enemies drop ammo; when a gun runs dry you go back to your own attack.
 

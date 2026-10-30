@@ -17,6 +17,7 @@ import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
 import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
 import { leadCamera } from "../gfx/HD";
+import { addFart } from "../combat/Farts";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir } from "../../content/dsl";
@@ -121,6 +122,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.morkRound = 0;
     this.enemyTimeScale = 1;
     this.prophecyUntil = 0;
+    if (this.roomIdx === 0 || G.rt.dungeonId !== this.dungeon.id) G.rt.fart = 0;
     G.rt.dungeonId = this.dungeon.id;
     G.rt.room = this.roomIdx;
     (this as any)._bossHpPct = data.bossHpPct;
@@ -1061,8 +1063,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       synth.play(opts.crit ? "crit" : "hit");
       if (opts.crit) this.hitStop(50);
     }
-    if (!opts.noWonk) this.addWonk(Math.min(6, a * 0.18));
-    if (e.hp <= 0) this.killEnemy(e);
+    if (!opts.noWonk) {
+      this.addWonk(Math.min(6, a * 0.18));
+      // fart meter: fast attackers get less per hit so everyone fills at a similar pace
+      const rate = CHARACTERS[this.player.id]?.attackRate ?? 300;
+      const up = addFart(2.4 * Phaser.Math.Clamp(rate / 300, 0.55, 1.5));
+      if (up) this.fartLevelUp(up);
+    }
+    if (e.hp <= 0) {
+      // kills made by farts and auras don't refill the fart meter
+      if (opts.noWonk) (e as any).noFartKill = true;
+      this.killEnemy(e);
+    }
   }
 
   private killEnemy(e: Enemy) {
@@ -1073,6 +1085,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     bump(s, "kills_total");
     if (e.def.counter) bump(s, e.def.counter);
     if (!e.isBoss) this.addWonk(3);
+    if (!(e as any).noFartKill) {
+      const up = addFart(4);
+      if (up) this.fartLevelUp(up);
+    }
     this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
     if (e instanceof Boss) {
       this.boss = null;
@@ -1208,6 +1224,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   hitStop(ms: number) {
     this.hitStopUntil = Math.max(this.hitStopUntil, this.now() + ms);
+  }
+
+  private fartLevelUp(level: number) {
+    synth.play("fart_ready");
+    const names = ["", "FAIRY FART READY", "BAKED BEANS READY", "CABBAGE READY", "IBS ATTACK READY!!"];
+    this.floatText(this.player.x, this.player.y - 58, `💨 ${names[level]}`, level === 4 ? "#d4ff3a" : "#9ccc65", level === 4 ? 18 : 13);
+    if (level === 4) this.toast("💨 IBS ATTACK READY", "Press G (or the 💨 button) to unleash it.");
   }
 
   addWonk(n: number) {

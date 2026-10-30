@@ -4001,6 +4001,12 @@
    "file": "props/fx_bullet.png",
    "hd": 0.8
   },
+  "hd__fairy": {
+   "file": "props/fx_fairy.png"
+  },
+  "fx_fairy": {
+   "file": "props/fx_fairy.png"
+  },
   "hd__flask": {
    "file": "props/fx_flask.png"
   },
@@ -4008,12 +4014,36 @@
    "file": "props/fx_flask.png",
    "hd": 1.0
   },
+  "hd__gas": {
+   "file": "props/fx_gas.png"
+  },
+  "fx_gas": {
+   "file": "props/fx_gas.png"
+  },
+  "hd__gas2": {
+   "file": "props/fx_gas2.png"
+  },
+  "fx_gas2": {
+   "file": "props/fx_gas2.png"
+  },
   "hd__paper": {
    "file": "props/fx_paper.png"
   },
   "fx_paper": {
    "file": "props/fx_paper.png",
    "hd": 0.6667
+  },
+  "hd__poo": {
+   "file": "props/fx_poo.png"
+  },
+  "fx_poo": {
+   "file": "props/fx_poo.png"
+  },
+  "hd__poo_drop": {
+   "file": "props/fx_poo_drop.png"
+  },
+  "fx_poo_drop": {
+   "file": "props/fx_poo_drop.png"
   },
   "hd__rocket": {
    "file": "props/fx_rocket.png"

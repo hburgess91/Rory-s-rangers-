@@ -11,6 +11,7 @@ import type { Controls } from "./Controls";
 import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { currentGun, cycleGun, fitTo } from "./Guns";
+import { releaseFart } from "./Farts";
 
 export interface Turret {
   spr: Phaser.GameObjects.Sprite;
@@ -31,6 +32,9 @@ export class Player {
   specialCd = 0;
   dodgeCd = 0;
   dodgeQueuedUntil = 0;
+  /** Melee combo: 1, 2, 3 (finisher). Resets if you pause between swings. */
+  meleeStep = 0;
+  lastSwing = 0;
   dodgeUntil = 0;
   dodgeAngle = 0;
   iframesUntil = 0;
@@ -246,6 +250,7 @@ export class Player {
     if (c.bottle()) this.drinkBottle(now);
     if (c.bongo()) this.drinkBongo(now);
     if (c.burst()) this.tryBurst(now);
+    if (c.fart()) releaseFart(this, now);
     // turrets
     this.updateTurrets(now);
     // Gronny gut-stank aura
@@ -403,7 +408,11 @@ export class Player {
     switch (this.def.attack) {
       case "melee": {
         this.combo++;
-        let d = this.dmg(base, now);
+        // three-hit combo; the third swing is a heavy finisher
+        this.meleeStep = now - this.lastSwing < (this.def.attackRate ?? 300) + 380 ? (this.meleeStep % 3) + 1 : 1;
+        this.lastSwing = now;
+        const fin = this.meleeStep === 3;
+        let d = this.dmg(base, now) * (fin ? 1.5 : 1);
         let crit = Math.random() < 0.08;
         if (this.id === "FLENKY" && s.upgrades.fl3 && this.combo % 4 === 0) {
           d *= 3;
@@ -414,12 +423,49 @@ export class Player {
           crit = true;
         }
         if (crit && !this.nextHitCrit) d *= 2;
-        const range = (this.def.range ?? 50) * (this.id === "KREBON" ? 1.1 : 1);
-        const arc = this.id === "KREBON" || this.id === "GRONNY" ? 1.25 : 1.05;
-        synth.play("swing");
-        const fx = this.world.sc.add.image(this.x + Math.cos(this.aim) * 16, this.y + Math.sin(this.aim) * 16, "fx_slash").setRotation(this.aim).setDepth(510).setTint(this.def.color).setScale(range / 40).setAlpha(0.85);
-        this.world.sc.tweens.add({ targets: fx, alpha: 0, duration: 140, onComplete: () => fx.destroy() });
+        const range = (this.def.range ?? 50) * (this.id === "KREBON" ? 1.1 : 1) * (fin ? 1.2 : 1);
+        const arc = (this.id === "KREBON" || this.id === "GRONNY" ? 1.25 : 1.05) + (fin ? 0.3 : 0);
+        // a little aim assist: swing at the nearest enemy roughly in front of you
+        const near = this.world.nearestEnemy(this.x, this.y, range * 1.7);
+        if (near) {
+          const toNear = Math.atan2(near.y - this.y, near.x - this.x);
+          if (Math.abs(Phaser.Math.Angle.Wrap(toNear - this.aim)) < 0.75) this.aim = toNear;
+        }
+        // lunge into the swing (less if they're already in your face)
+        const body = this.spr.body as Phaser.Physics.Arcade.Body;
+        const close = near && Phaser.Math.Distance.Between(this.x, this.y, near.x, near.y) < near.radius + 18;
+        if (!close) {
+          const lunge = fin ? 260 : 150;
+          body.velocity.x += Math.cos(this.aim) * lunge;
+          body.velocity.y += Math.sin(this.aim) * lunge;
+        }
+        if (fin) this.attackAnimUntil = now + 170;
+        synth.play(fin ? "swing3" : this.meleeStep === 2 ? "swing2" : "swing");
+        // swoosh: an arc that sweeps across the swing, alternating direction each hit
+        const sc = this.world.sc;
+        const dir = this.meleeStep === 2 ? -1 : 1;
+        const sweep = sc.add.graphics().setDepth(512).setPosition(this.x, this.y);
+        const col = fin ? 0xffffff : this.def.color;
+        const t0 = { p: 0 };
+        sc.tweens.add({
+          targets: t0,
+          p: 1,
+          duration: fin ? 120 : 85,
+          onUpdate: () => {
+            sweep.clear();
+            const a0 = this.aim - arc * dir;
+            const a1 = a0 + 2 * arc * dir * t0.p;
+            for (let k = 0; k < 3; k++) {
+              sweep.lineStyle((fin ? 9 : 6) - k * 2, k ? col : 0xffffff, 0.9 - k * 0.25);
+              sweep.beginPath();
+              sweep.arc(0, 0, range * (0.75 + k * 0.12), Math.min(a0, a1), Math.max(a0, a1));
+              sweep.strokePath();
+            }
+          },
+          onComplete: () => sc.tweens.add({ targets: sweep, alpha: 0, duration: 90, onComplete: () => sweep.destroy() }),
+        });
         let hitAny = false;
+        const knockBase = (this.id === "KREBON" ? 260 : 140) * (fin ? 1.9 : 1);
         for (const e of [...this.world.enemies]) {
           if (e.dead) continue;
           const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
@@ -435,9 +481,24 @@ export class Player {
               c2 = true;
             }
           }
-          this.world.damageEnemy(e, dd, { crit: c2, knock: this.id === "KREBON" ? 260 : 140, angle: ang });
+          this.world.damageEnemy(e, dd, { crit: c2, knock: knockBase, angle: ang, stun: fin ? 350 : 0 });
           if (this.id === "KREBON" && s.upgrades.kn2) s.hp = Math.min(maxHp(s), s.hp + 3);
+          // impact: spark burst and a ring where it landed
+          const ix = e.x - Math.cos(ang) * e.radius * 0.5;
+          const iy = e.y - Math.sin(ang) * e.radius * 0.5;
+          this.world.burst(ix, iy, fin ? 0xffffff : this.def.color, fin ? 10 : 5);
+          const ring = sc.add.circle(ix, iy, 6, 0xffffff, 0).setStrokeStyle(3, 0xffffff, 0.9).setDepth(1400);
+          sc.tweens.add({ targets: ring, radius: fin ? 34 : 22, alpha: 0, duration: 160, onComplete: () => ring.destroy() });
           hitAny = true;
+        }
+        if (hitAny) {
+          // the weight: freeze a few frames, thump, and shake
+          synth.play(fin ? "punch_big" : "punch");
+          this.world.hitStop(fin ? 85 : 45);
+          this.world.shake(fin ? 140 : 70, fin ? 0.007 : 0.0025);
+          // stop the lunge on contact so you don't slide through them
+          body.velocity.x *= 0.3;
+          body.velocity.y *= 0.3;
         }
         if (this.nextHitCrit && hitAny) {
           this.nextHitCrit = false;

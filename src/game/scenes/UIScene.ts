@@ -1,4 +1,5 @@
 import { currentGun, ownedGuns } from "../combat/Guns";
+import { fartLevel, fartMeter } from "../combat/Farts";
 import Phaser from "phaser";
 import { G } from "../G";
 import { maxHp, maxKrezz, maxBottles, intoxLabel } from "../systems/stats";
@@ -20,6 +21,7 @@ export class UIScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;
   private nameT!: Phaser.GameObjects.Text;
   private statT!: Phaser.GameObjects.Text;
+  private fartT!: Phaser.GameObjects.Text;
   private roomT!: Phaser.GameObjects.Text;
   private objT!: Phaser.GameObjects.Text;
   private ruleT!: Phaser.GameObjects.Text;
@@ -60,6 +62,7 @@ export class UIScene extends Phaser.Scene {
     this.hpT = this.add.text(70, 22, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
     this.kzT = this.add.text(70, 37, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
     this.wonkT = this.add.text(68, 52, "", { fontFamily: FONT, fontSize: "10px", color: "#ff8c00", fontStyle: "bold" });
+    this.fartT = this.add.text(384, 51, "", { fontFamily: FONT, fontSize: "10px", color: "#9ccc65", fontStyle: "bold" }).setShadow(1, 1, "#000", 0);
     this.timerT = this.add.text(480, 96, "", { fontFamily: FONT, fontSize: "22px", color: "#ff4d4d", fontStyle: "bold", backgroundColor: "#000000aa", padding: { x: 8, y: 3 } }).setOrigin(0.5, 0).setDepth(50).setVisible(false);
     this.off = G.on((ev, d) => this.onEvent(ev, d));
     this.events.off("mode");
@@ -171,7 +174,27 @@ export class UIScene extends Phaser.Scene {
       g.fillStyle(full && Math.floor(time / 150) % 2 ? 0xffffff : UI.wonk, 1);
       g.fillRect(171, 53, 84 * (wonk / 100), 7);
       this.wonkT.setText(full ? `${labels[2]} FULL — PRESS R` : `${labels[2]} METER`).setVisible(true);
-    } else this.wonkT.setVisible(false);
+      // fart meter: four potency segments
+      const fm = fartMeter();
+      const lv = fartLevel();
+      const fx = 262;
+      g.fillStyle(0x000000, 0.65);
+      g.fillRect(fx, 52, 118, 9);
+      for (let i = 0; i < 4; i++) {
+        const fill = Phaser.Math.Clamp((fm - i * 25) / 25, 0, 1);
+        const col = [0xc5e1a5, 0x9ccc65, 0x7cb342, 0xd4ff3a][i];
+        const pulse = lv === 4 && Math.floor(time / 140) % 2 ? 0xffffff : col;
+        g.fillStyle(pulse, 1);
+        g.fillRect(fx + 1 + i * 29, 53, 28 * fill, 7);
+      }
+      g.lineStyle(1, 0x000000, 0.9);
+      for (let i = 1; i < 4; i++) g.lineBetween(fx + i * 29.25, 52, fx + i * 29.25, 61);
+      const nm = ["💨 FART METER", "💨 FAIRY (G)", "💨 BEANS (G)", "💨 CABBAGE (G)", "💨 IBS ATTACK! (G)"][lv];
+      this.fartT.setText(nm).setColor(lv === 4 ? "#d4ff3a" : "#9ccc65").setVisible(true);
+    } else {
+      this.wonkT.setVisible(false);
+      this.fartT.setVisible(false);
+    }
     const nm = time < this.renameUntil && this.rename ? this.rename : CHARACTERS[s.player].name;
     this.nameT.setText(nm);
     this.hpT.setText(hpS);

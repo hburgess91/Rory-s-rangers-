@@ -210,6 +210,82 @@ export class Synth {
     return true;
   }
 
+  /** One buzzy fart segment: a filtered sawtooth fluttered by a square LFO. */
+  private fartSeg(when: number, dur: number, f0: number, f1: number, flutter: number, vol: number, cutoff = 900) {
+    const ctx = this.ctx!;
+    const t = ctx.currentTime + when;
+    const o = ctx.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    const lfo = ctx.createOscillator();
+    lfo.type = "square";
+    lfo.frequency.setValueAtTime(flutter, t);
+    lfo.frequency.linearRampToValueAtTime(flutter * (0.6 + Math.random() * 0.8), t + dur);
+    const depth = ctx.createGain();
+    depth.gain.value = 0.5;
+    const am = ctx.createGain();
+    am.gain.value = 0.5;
+    lfo.connect(depth);
+    depth.connect(am.gain);
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = cutoff;
+    lp.Q.value = 5;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    g.gain.setValueAtTime(vol, t + dur * 0.75);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(am);
+    am.connect(lp);
+    lp.connect(g);
+    g.connect(this.sfxGain);
+    o.start(t);
+    lfo.start(t);
+    o.stop(t + dur + 0.05);
+    lfo.stop(t + dur + 0.05);
+  }
+
+  /** Farts by potency: the higher the level, the longer and more ridiculous. */
+  fart(level: number) {
+    if (!this.ctx) return;
+    const S = (w: number, d: number, a: number, b: number, fl: number, v: number, c?: number) => this.fartSeg(w, d, a, b, fl, v, c);
+    const wet = (w: number, v = 0.5) => this.burst(0.12 + Math.random() * 0.1, v, w, 380 + Math.random() * 200, undefined, 1.2);
+    if (level <= 1) {
+      // fairy: a tiny high squeak and a twinkle
+      S(0, 0.22, 420, 560, 48, 0.22, 1600);
+      this.tone(2093, 0.12, "sine", 0.08, 0.2);
+      this.tone(2637, 0.15, "sine", 0.07, 0.28);
+    } else if (level === 2) {
+      // baked beans: poot poot poooot
+      S(0, 0.16, 170, 150, 30, 0.35);
+      S(0.24, 0.17, 160, 140, 32, 0.35);
+      S(0.5, 0.5, 150, 90, 24, 0.4);
+    } else if (level === 3) {
+      // cabbage: one long wobbling rip with a squeaky tail
+      S(0, 0.5, 130, 100, 20, 0.42);
+      S(0.45, 0.7, 110, 80, 16, 0.45, 700);
+      S(1.1, 0.5, 95, 70, 26, 0.4, 650);
+      wet(0.9, 0.3);
+      S(1.65, 0.22, 380, 620, 40, 0.28, 1800);
+    } else {
+      // IBS: gut gurgles during the wind-up, then a three-second catastrophe
+      for (let i = 0; i < 7; i++) this.tone(60 + Math.random() * 60, 0.18, "sine", 0.25, i * 0.18, 1.6);
+      for (let i = 0; i < 5; i++) this.tone(180 + Math.random() * 120, 0.08, "sine", 0.12, 0.2 + i * 0.22, 2.5);
+      const t0 = 1.5;
+      S(t0, 0.9, 120, 70, 14, 0.6, 800);
+      S(t0 + 0.85, 1.0, 95, 50, 11, 0.6, 600);
+      S(t0 + 1.8, 0.9, 80, 45, 18, 0.55, 600);
+      this.burst(1.2, 0.5, t0, 300, undefined, 0.5);
+      for (let i = 0; i < 9; i++) wet(t0 + 0.3 + Math.random() * 2.6, 0.45);
+      S(t0 + 2.75, 0.14, 300, 420, 40, 0.3, 1600);
+      S(t0 + 2.95, 0.14, 360, 500, 40, 0.3, 1600);
+      S(t0 + 3.15, 0.2, 420, 700, 44, 0.3, 1800);
+      S(t0 + 3.7, 0.12, 520, 560, 50, 0.18, 2000);
+    }
+  }
+
   play(id: string) {
     if (!this.ctx) return;
     // canned laughter: a random slice of the real laugh track (the big one plays most of it)
@@ -255,6 +331,32 @@ export class Synth {
       case "flush":
         this.burst(1.4, 0.35, 0, 700, undefined, 0.5);
         this.burst(0.8, 0.2, 0.5, 300, undefined, 0.5);
+        break;
+      case "splat":
+        this.burst(0.16, 0.45, 0, 420, undefined, 1.4);
+        break;
+      case "harmonica":
+        this.tone(392, 0.5, "square", 0.08, 0.1, 0.94);
+        this.tone(466, 0.4, "square", 0.06, 0.1, 0.94);
+        break;
+      case "punch":
+        this.tone(95, 0.11, "sine", 0.55, 0, 0.45);
+        this.burst(0.07, 0.55, 0, 1200, undefined, 0.8);
+        break;
+      case "punch_big":
+        this.tone(70, 0.2, "sine", 0.7, 0, 0.4);
+        this.burst(0.14, 0.7, 0, 900, undefined, 0.7);
+        this.burst(0.05, 0.4, 0, 4500, undefined, 1);
+        break;
+      case "swing2":
+        this.burst(0.08, 0.28, 0, 5200, undefined, 2.2);
+        break;
+      case "swing3":
+        this.burst(0.13, 0.35, 0, 2600, undefined, 1.6);
+        break;
+      case "fart_ready":
+        this.tone(700, 0.07, "square", 0.12);
+        this.tone(1050, 0.1, "square", 0.12, 0.08);
         break;
       case "gun_pistol":
         this.burst(0.08, 0.35, 0, 3000, undefined, 0.6);

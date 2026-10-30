@@ -59,7 +59,7 @@ export class MenuScene extends Phaser.Scene {
         if (this.caller === "Hub") items.push(["SAVE GAME", () => this.saveNow()]);
         items.push(["QUIT TO TITLE (progress is autosaved)", () => this.quit()]);
         items.forEach(([t, fn], i) => add(button(this, 480, 170 + i * 52, t, fn, { w: 380 })));
-        add(this.add.text(480, 470, "Controls: WASD move · Mouse aim · LMB attack · RMB/F special · Space dodge · Q pussy juice · B fizzy bongo · R Krezz Burst · X swap gun · E interact · Tab skip dialogue", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
+        add(this.add.text(480, 470, "Controls: WASD move · Mouse aim · LMB attack · RMB/F special · Space dodge · Q pussy juice · B fizzy bongo · R Krezz Burst · G fart · X swap gun · E interact · Tab skip dialogue", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
         break;
       }
       case "settings": {

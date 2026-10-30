@@ -22,6 +22,8 @@ class GameContext {
     room: 0,
     lastToastAt: 0,
     timerEnd: 0,
+    /** Fart meter 0-100 (carried between rooms of one dungeon). */
+    fart: 0,
   };
 
   constructor() {
