@@ -239,7 +239,7 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     color: 0x17c6c0,
     portrait: "pt_crongus",
     playable: true,
-    look: { skin: SKIN_PINK, hair: null, hairStyle: "crown", beard: 0x7a5233, glasses: "none", top: 0xff8db3, topDetail: 0x1dc7c1, bottom: 0x16161a, shoes: 0x2a63c9, accent: 0xd4a017, bulk: 1 },
+    look: { skin: SKIN_PINK, hair: null, hairStyle: "bald", beard: 0x7a5233, glasses: "none", top: 0xff8db3, topDetail: 0x1dc7c1, bottom: 0x16161a, shoes: 0x2a63c9, accent: 0xd4a017, bulk: 1 },
     maxHp: 80,
     speed: 220,
     damage: 12,
