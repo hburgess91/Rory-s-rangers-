@@ -837,7 +837,7 @@ export class MinigameScene extends Phaser.Scene {
     const me = this.add.sprite(480, 440, `spr_${G.s.player}`, 0).setScale(2.4).setDepth(40);
     this.add.text(480, 404, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
     title(this, 480, 26, "TWITCHER MUTINY · KREBON LIVE AT THE KREZZ ARMS", 21, "#ffd23f").setDepth(200);
-    this.add.text(480, 52, "You're in the crowd. Move with A/D or ← → (or drag) · SPACE / tap to throw. Krebon catches anything that lands near him.", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", stroke: "#000", strokeThickness: 3, align: "center", wordWrap: { width: 900 } }).setOrigin(0.5).setDepth(200);
+    this.add.text(480, 52, "Move A/D or drag low · SPACE / tap high to throw underwear at Krebon · F / tap a mosher to PUNCH · knock stage invaders off with a throw", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", stroke: "#000", strokeThickness: 3, align: "center", wordWrap: { width: 900 } }).setOrigin(0.5).setDepth(200);
     synth.music("twitcher", true);
     const start = this.time.now;
     let points = 0;
@@ -848,8 +848,84 @@ export class MinigameScene extends Phaser.Scene {
     let holdX: number | null = null;
     let lastThrow = 0;
     const keys = this.input.keyboard?.addKeys("A,D,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key> | undefined;
+    // ---- chaos: moshers, stage invaders, flying pints
+    let moshed = 0;
+    let shoved = 0;
+    let invaders = 0;
+    let stunUntil = 0;
+    const moshers: Phaser.GameObjects.Sprite[] = [];
+    let invader: Phaser.GameObjects.Sprite | null = null;
+    const ids = others.length ? others : ["FOLK0"];
+    const shout = (x: number, y: number, t: string, c = "#ffffff") => {
+      const p = this.add.text(x, y, t, { fontFamily: FONT, fontSize: "13px", color: c, backgroundColor: "#000000aa", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(150);
+      this.tweens.add({ targets: p, y: y - 24, alpha: 0, delay: 1400, duration: 500, onComplete: () => p.destroy() });
+    };
+    const spawnMosher = () => {
+      if (this.ended) return;
+      const fromLeft = Math.random() < 0.5;
+      const m = this.add.sprite(fromLeft ? -30 : 990, 440 + (Math.random() - 0.5) * 16, `spr_${ids[Math.floor(Math.random() * ids.length)]}`, 0).setScale(2.3).setDepth(39);
+      m.setData("v", (fromLeft ? 1 : -1) * (0.22 + Math.random() * 0.14));
+      m.setFlipX(!fromLeft);
+      moshers.push(m);
+      if (Math.random() < 0.4) shout(m.x < 0 ? 80 : 880, 400, ["MOSH PIT!", "OI OI OI", "WALL OF DEATH!", "'AVE IT!"][Math.floor(Math.random() * 4)], "#ff6b6b");
+      this.time.delayedCall(1600 + Math.random() * 1800, spawnMosher);
+    };
+    this.time.delayedCall(2500, spawnMosher);
+    const punch = () => {
+      if (this.ended || this.box.active) return;
+      const near = moshers.filter((m) => Math.abs(m.x - me.x) < 110).sort((x, y) => Math.abs(x.x - me.x) - Math.abs(y.x - me.x))[0];
+      synth.play(near ? "punch" : "swing");
+      this.tweens.add({ targets: me, x: me.x + (near ? Math.sign(near.x - me.x) * 20 : 0), duration: 70, yoyo: true });
+      if (!near) return;
+      moshed++;
+      points += 5;
+      const side = Math.sign(near.x - me.x) || 1;
+      moshers.splice(moshers.indexOf(near), 1);
+      this.cameras.main.shake(90, 0.006);
+      this.pop(near.x, 400, ["MOSH! +5", "BOSH! +5", "SIT DOWN! +5", "GET OUT THE PIT! +5"][Math.floor(Math.random() * 4)], "#ffd23f", 18);
+      this.tweens.add({ targets: near, x: near.x + side * 300, y: near.y - 140, angle: side * 720, alpha: 0, duration: 700, onComplete: () => near.destroy() });
+    };
+    this.input.keyboard?.on("keydown-F", punch);
+    this.input.keyboard?.on("keydown-E", punch);
+    const spawnInvader = () => {
+      if (this.ended) return;
+      if (!invader) {
+        invaders++;
+        const id = Math.random() < 0.35 && this.textures.exists("spr_POLSON") ? "POLSON" : ids[Math.floor(Math.random() * ids.length)];
+        invader = this.add.sprite(80 + Math.random() * 800, 310, `spr_${id}`, 0).setScale(2.8).setDepth(11);
+        this.tweens.add({ targets: invader, y: 296, duration: 220, yoyo: true, repeat: -1 });
+        shout(krebon.x, 230, ["GET OFF MY STAGE", "Security? We don't have security.", "This is Reprieve. It's a REPRIEVE.", "Mate. Mate. MATE."][Math.floor(Math.random() * 4)], "#ffd23f");
+        if (id === "POLSON") shout(invader.x, 250, "IT'S THE SMOKE MACHINE", "#ffffff");
+        const inv = invader;
+        this.time.delayedCall(7000, () => {
+          if (invader === inv) {
+            this.tweens.add({ targets: inv, alpha: 0, duration: 300, onComplete: () => inv.destroy() });
+            invader = null;
+          }
+        });
+      }
+      this.time.delayedCall(9000 + Math.random() * 7000, spawnInvader);
+    };
+    this.time.delayedCall(8000, spawnInvader);
+    // pints arcing over the crowd
+    this.time.addEvent({
+      delay: 2600,
+      loop: true,
+      callback: () => {
+        if (this.ended) return;
+        const x0 = 60 + Math.random() * 840;
+        const x1 = 140 + Math.random() * 680;
+        const pint = this.add.rectangle(x0, 520, 10, 16, 0xf5c542).setDepth(55);
+        this.tweens.add({ targets: pint, x: x1, duration: 800 });
+        this.tweens.add({ targets: pint, y: 200, duration: 400, ease: "Quad.out", yoyo: true, onComplete: () => {
+          if (Math.abs(x1 - krebon.x) < 60) shout(krebon.x, 250, "OI! WHO THREW THAT", "#ff6b6b");
+          synth.play("splash");
+          pint.destroy();
+        } });
+      },
+    });
     const throwUnderwear = () => {
-      if (this.ended || this.box.active || this.time.now - lastThrow < 350) return;
+      if (this.ended || this.box.active || this.time.now - lastThrow < 350 || this.time.now < stunUntil) return;
       lastThrow = this.time.now;
       thrown++;
       const kind = Math.random() < 0.5 ? "bra" : "thong";
@@ -862,7 +938,15 @@ export class MinigameScene extends Phaser.Scene {
       this.tweens.add({ targets: img, angle: 540, duration: 760 });
       this.time.delayedCall(760, () => {
         if (this.ended) return;
-        if (Math.abs(krebon.x - x) < 52) {
+        if (invader && Math.abs(invader.x - x) < 56) {
+          const inv = invader;
+          invader = null;
+          points += 20;
+          synth.play("punch_big");
+          this.pop(inv.x, 230, "INVADER DOWN! +20", "#5ad35a", 20);
+          this.tweens.add({ targets: inv, y: 520, angle: 360, alpha: 0, duration: 600, onComplete: () => inv.destroy() });
+          img.destroy();
+        } else if (Math.abs(krebon.x - x) < 52) {
           caught++;
           const prancing = this.time.now < pranceUntil;
           const gain = (kind === "thong" ? 15 : 10) * (prancing ? 2 : 1);
@@ -878,6 +962,7 @@ export class MinigameScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-SPACE", throwUnderwear);
     this.input.on("pointerdown", (pt: Phaser.Input.Pointer) => {
       if (pt.y < 380) throwUnderwear();
+      else if (moshers.some((m) => Math.abs(m.x - pt.x) < 50 && Math.abs(m.x - me.x) < 140)) punch();
       else holdX = pt.x;
     });
     this.input.on("pointermove", (pt: Phaser.Input.Pointer) => {
@@ -891,7 +976,7 @@ export class MinigameScene extends Phaser.Scene {
       G.s.flags.rock_points = ((G.s.flags.rock_points as number) ?? 0) + points;
       G.s.flags.saw_gig = true;
       this.finish(true, [
-        dir(`You threw ${thrown} items of underwear. Krebon caught ${caught}. Rockstar points: +${points}.`),
+        dir(`You threw ${thrown} items of underwear. Krebon caught ${caught}. You decked ${moshed} moshers, got shoved ${shoved} times and saw off ${invaders} stage invaders. Rockstar points: +${points}.`),
         say("KREBON", "Thank you Krelford. You've been a strange and moist crowd."),
         dir("Polson is crying. He says it's the smoke machine. There is no smoke machine."),
       ]);
@@ -921,6 +1006,24 @@ export class MinigameScene extends Phaser.Scene {
         if (keys?.D.isDown || keys?.RIGHT.isDown) mv = 1;
         if (holdX !== null && Math.abs(holdX - me.x) > 10) mv = holdX < me.x ? -1 : 1;
         me.x = Phaser.Math.Clamp(me.x + mv * 0.3 * 16, 60, 900);
+        // moshers barrel across the floor and shove you
+        for (const m of moshers.slice()) {
+          m.x += (m.getData("v") as number) * 16;
+          m.y = 440 + Math.sin(now / 90 + m.x) * 6;
+          if (!m.getData("hit") && Math.abs(m.x - me.x) < 34) {
+            m.setData("hit", true);
+            shoved++;
+            stunUntil = now + 600;
+            me.x = Phaser.Math.Clamp(me.x + Math.sign(m.getData("v") as number) * 110, 60, 900);
+            synth.play("hurt");
+            this.cameras.main.shake(120, 0.008);
+            this.pop(me.x, 400, "SHOVED!", "#ff6b6b", 18);
+          }
+          if (m.x < -60 || m.x > 1020) {
+            moshers.splice(moshers.indexOf(m), 1);
+            m.destroy();
+          }
+        }
         animateWalker(me, mv, 0, mv !== 0, now);
         crowd.forEach((c, i) => c.setY(478 + (i % 2) * 20 - Math.max(0, Math.sin(now / 160 + i)) * 10));
         lights.forEach((l, i) => l.setAlpha(0.1 + Math.max(0, Math.sin(now / 300 + i)) * 0.18));
@@ -929,7 +1032,7 @@ export class MinigameScene extends Phaser.Scene {
         if (elapsed > 30) endBtn.setVisible(true);
         const len = pr.d || 180;
         const left = Math.max(0, len - (pr.d ? pr.t : elapsed));
-        this.hud.setText(`🤘 ${points}   THROWN ${thrown}   CAUGHT ${caught}   ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")} left`);
+        this.hud.setText(`🤘 ${points}   CAUGHT ${caught}   MOSHED ${moshed}   ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, "0")} left`);
         if ((pr.d && pr.ended) || (!pr.d && elapsed > 180)) done();
       },
     });

@@ -232,3 +232,44 @@ export const PUB_CONVERSATIONS: PubConversation[] = [
     ],
   },
 ];
+
+// Short real-chat snippets for the random "sit down" table. Seats are whoever speaks.
+const S = (id: string, lines: [string, string][]): PubConversation => ({
+  id,
+  title: id,
+  seats: Array.from(new Set(lines.map((l) => l[0]))),
+  lines: lines.map(([s, t]) => say(s as never, t)),
+});
+
+export const PUB_SNIPPETS: PubConversation[] = [
+  S("the_shoe", [["KREBLIS", "Luv 2 drinke bere frm a shoe."], ["DRONGUS", "Shoe me up pls barman."], ["KREBLIS", "Slowly walking down the shoe. Faster than a cannon ball."], ["GRONNY", "Fair enough."]]),
+  S("bere_bere", [["KREBLIS", "Wot abowt bere mixd wiv anuvor bere."], ["DRONGUS", "Bere wiv cerel!!!"], ["KREBLIS", "Beer me up scotty."], ["KREBLIS", "Hu cn drunke mor, me or a sharke?"]]),
+  S("drunk_b4_werk", [["KREBLIS", "Shudnt av goten this drunke b4 werk!"], ["DRONGUS", "It's Saturday."], ["KREBLIS", "Alright you win... maybe I shouldn't have got this drunk before work... so sue me!"]]),
+  S("koeman_papers", [["KREBLIS", "Call it the Koeman Papers."], ["DRONGUS", "What's in them?"], ["KREBLIS", "A ridiculous timeline of events. Culminating in Koeman's return."], ["KREBLIS", "Needs some paint. Underline, circle etc."], ["DRONGUS", "Welll wWell wELL."]]),
+  S("westside_merch", [["KREBLIS", "Some random woman just messaged the page. 'Do you do merch? I want a Westside Gunn sweatshirt.'"], ["DRONGUS", "Do we do merch?"], ["KREBLIS", "I'll just get a white sweater. And write Westside Gun on it. Personally signed by me."], ["DRONGUS", "How is that page verified."], ["KREBLIS", "I wanna sell it."]]),
+  S("chomsky_scam", [["KREBLIS", "Can you imagine if Chomsky was running a credit card scam. Something really petty and dirty."], ["DRONGUS", "Email him."], ["KREBLIS", "Chomsky@science.com. Just a '?'"]]),
+  S("one_brexit", [["DRONGUS", "One Brexit pls barman."], ["KREBLIS", "Brex... brrrrrex... mmmm brex..."], ["KREBLIS", "BREXITTTTTT."], ["KREZMAR", "He's been doing this for an hour."]]),
+  S("speed_up_world_cup", [["KREBLIS", "Nede 2 spede up werld cupe!!"], ["DRONGUS", "Reschedule it so the whole tournament's played out in a day."], ["KREBLIS", "Ref just stands in the middle of the pitch waving flags. Blowing indiscriminately."], ["SCROMBUS", "This is infrastructure."]]),
+  S("vegas_booking", [["DRONGUS", "My fortnightly check-in to see if you've booked Vegas yet."], ["KREBLIS", "Not yet man."], ["DRONGUS", "..."], ["KREBLIS", "The procrastination will pay off. You'll see."]]),
+  S("workout_dealer", [["KREBLIS", "Got a fuckin horrible workout for ya."], ["DRONGUS", "Go on."], ["KREBLIS", "77 burpees. 44 press-ups. 11 squats. EMOM."], ["KREBLIS", "Then the double reverse carol whirl burpee."], ["DRONGUS", "That's not a real move."], ["KREBLIS", "The longer the name, the more dangerous the move."]]),
+  S("krandall", [["KREBLIS", "First album: Krandall With Kare."], ["DRONGUS", "Second album?"], ["KREBLIS", "Too Hot To Krandall."], ["KREBLIS", "Oh and middle name Krandall ofc."], ["GRONNY", "Fair enough."]]),
+  S("old_news", [["KREBLIS", "Queen's dead..."], ["KREZMAR", "That was six days ago."], ["KREBLIS", "Russia's invaded Poland. Christ!"], ["KREZMAR", "It hasn't."], ["KREBLIS", "...invaded it. With bombs."]]),
+  S("pure_content", [["KREBLIS", "Wonder when Polson will next do something funny..."], ["DRONGUS", "He's pure content."], ["POLSON", "Lads. I'm trending on Chinese social media."], ["KREBLIS", "They don't know how to stop him."]]),
+  S("new_harry", [["KREBLIS", "Had a pint with new Harry from work."], ["DRONGUS", "Stop calling him that."], ["KREBLIS", "Oh, new Harry! Never change..."]]),
+  S("krank_kommandments", [["KREBLIS", "Always cran before you kronk."], ["DRONGUS", "Thou shalt not kronk another cran's name."], ["KREBLIS", "Written by the three wise Krank. Honk, Ponk and Konk."], ["CRONGUS", "Lmao."]]),
+  S("final_flash", [["KREBLIS", "Remember when you kept Final Flashing me on that DBZ game?"], ["DRONGUS", "That was years ago."], ["KREBLIS", "Gronny was there. He can verify it was unfair."], ["GRONNY", "Fair enough."]]),
+  S("cumin_on2me", [["KREBLIS", "Eh?? Wot r u tryin 2 say?!"], ["KREZWONK", "Nothing."], ["KREBLIS", "O u fink ur al tht do ya?? Sounds lyke ur cumin on2 me 😡"], ["KREZWONK", "I foresaw this."], ["KREBLIS", "Wot goin on I cud take any1 anytyme!!!"]]),
+  S("saul_theory", [["KREBLIS", "Saul to sue the government for defamation on behalf of the cartel."], ["DRONGUS", "Surprise witness?"], ["KREBLIS", "Gus."], ["DRONGUS", "Hamlin Hamlin & Heisenberg."]]),
+  S("crunch_munch", [["DRONGUS", "Waiting for food."], ["KREBLIS", "Crunch..."], ["KREBLIS", "...Slurp."], ["KREBLIS", "...drool."], ["DRONGUS", "Me hungy."]]),
+  S("broskilensky", [["KREBLIS", "Wuu2 today then broskilensky."], ["DRONGUS", "Working. You know how it is, broseph."], ["KREBLIS", "Radicalino dudemeister."], ["KREZMAR", "What's happening to you both."]]),
+  S("brikies", [["KREBLIS", "Us brikies r the reel branes bhind the operashun."], ["DRONGUS", "You're not a brickie."], ["KREBLIS", "Got sum red brickes 4 sayle."]]),
+  S("spelt_wrong", [["MIKEY", "Did you notice I spelt my name wrong deliberately so I haven't actually agreed to anything? Yeeee."], ["DRONGUS", "Always lie."], ["MIKEY", "You are a master of puppets."]]),
+  S("nuclear", [["DRONGUS", "We need to prepare the nuclear option."], ["MIKEY", "Nuclear nuclear option."], ["DRONGUS", "Don't do it yet."], ["MIKEY", "'Double nuclear option' is now a thing mate."]]),
+  S("maccers", [["KREBLIS", "Mikey having another Maccers."], ["MIKEY", "Cardano is a sleeping giant."], ["KREBLIS", "The topic was the national debt."], ["MIKEY", "Ignorant!"]]),
+  S("popcorn", [["MIKEY", "I'll buy the popcorn."], ["KREZMAR", "For what?"], ["MIKEY", "Polson's just walked in with the big suitcase."], ["POLSON", "It's one night. Options."]]),
+  S("russhen_hackers", [["MIKEY", "I spoke to the Russian hackers."], ["DRONGUS", "To be fair I've seen him talk to Russians sometimes."], ["KREBLIS", "Do u reckon he a russhen spy?"], ["MIKEY", "Yeee."]]),
+  S("text_arrest", [["KREBLIS", "Get drink did ya?!?"], ["DRONGUS", "One."], ["KREBLIS", "You're under text arrest!!!"]]),
+  S("big_max", [["KREBLIS", "Mmmm nevar truste a man wot dnt lyke a Big Max!!!"], ["KREBON", "I don't like a Big Max."], ["KREBLIS", "..."], ["KREBON", "Betrayal noted."]]),
+  S("albatross", [["KREBLIS", "I swear there's an albatross, circling the house."], ["KREZMAR", "We're in a pub."], ["KREBLIS", "Circling the pub, then."]]),
+  S("not_an_expert", [["KREBLIS", "Have just seen that China invaded the U.S.?"], ["FLENKY", "What?"], ["KREBLIS", "I think that's what they just said on the news anyway. Not sure. Not an expert."]]),
+];
