@@ -288,11 +288,18 @@ export class TVScene extends Phaser.Scene {
     const b = this.ep.beats[this.beat];
     this.applyBeat(b);
     const dur = beatDuration(b) * 1000;
-    this.beatTimer = this.time.delayedCall(dur, () => {
+    const started = this.time.now;
+    const next = () => {
       if (this.pausedPlay) return;
+      // don't cut the reader off mid-passage: wait for the speech to finish (capped so a stuck engine can't hang the show)
+      if (b.type === "speaker" && voice.busy() && this.time.now - started < dur + 30000) {
+        this.beatTimer = this.time.delayedCall(150, next);
+        return;
+      }
       this.beat++;
       this.runBeat();
-    });
+    };
+    this.beatTimer = this.time.delayedCall(dur, next);
   }
 
   private applyBeat(b: TVBeat) {
@@ -671,10 +678,21 @@ export class TVScene extends Phaser.Scene {
     if (this.mode !== "playing") return;
     this.pausedPlay = !this.pausedPlay;
     this.caption.setText(this.pausedPlay ? "⏸ PAUSED" : "");
+    const ss = "speechSynthesis" in window ? window.speechSynthesis : null;
     if (!this.pausedPlay) {
-      this.beat++;
-      this.runBeat();
-    } else this.beatTimer?.remove();
+      ss?.resume();
+      // let the line that was paused finish reading before moving on
+      const go = () => {
+        if (this.pausedPlay || this.mode !== "playing") return;
+        if (voice.busy()) { this.beatTimer = this.time.delayedCall(150, go); return; }
+        this.beat++;
+        this.runBeat();
+      };
+      go();
+    } else {
+      this.beatTimer?.remove();
+      ss?.pause();
+    }
   }
 
   private skipBeat() {

@@ -117,6 +117,27 @@ export function speakable(text: string) {
     .trim();
 }
 
+/** Split text into chunks of whole sentences (or clauses / words if needed), each at most `max` chars. */
+export function chunkSpeech(text: string, max = 160): string[] {
+  const parts = text.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) ?? [text];
+  const out: string[] = [];
+  let cur = "";
+  const push = (p: string) => {
+    if ((cur + p).length <= max) { cur += p; return; }
+    if (cur.trim()) out.push(cur.trim());
+    cur = "";
+    if (p.length <= max) { cur = p; return; }
+    // a single over-long sentence: break on commas, then on words
+    for (const w of p.split(/(?<=[,;:])\s+|\s+/)) {
+      if ((cur + " " + w).trim().length > max && cur.trim()) { out.push(cur.trim()); cur = ""; }
+      cur = (cur + " " + w).trim();
+    }
+  };
+  for (const p of parts) push(p);
+  if (cur.trim()) out.push(cur.trim());
+  return out.length ? out : [text];
+}
+
 export const voice = {
   enabled() {
     return "speechSynthesis" in window && G.meta.settings.voices !== false;
@@ -124,19 +145,26 @@ export const voice = {
   stop() {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   },
+  /** True while a line (or any of its chunks) is still being read out. */
+  busy() {
+    return "speechSynthesis" in window && this.enabled() && (window.speechSynthesis.speaking || window.speechSynthesis.pending);
+  },
   /** Speak a line as `speaker`. Cancels whatever was being said. */
   say(speaker: string, text: string) {
     if (!this.enabled()) return;
     const t = speakable(text);
     if (!t) return;
     const prof = PROFILES[speaker.toUpperCase()] ?? { pitch: 0.8 + (hash(speaker) % 9) / 15, rate: 0.95 + (hash(speaker + "r") % 5) / 20 };
-    const u = new SpeechSynthesisUtterance(t);
     const v = pickVoice(speaker, !!prof.female);
-    if (v) u.voice = v;
-    u.pitch = Math.max(0, Math.min(2, prof.pitch));
-    u.rate = Math.max(0.5, Math.min(2, prof.rate));
-    u.volume = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1);
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    // Browsers silently cut off long utterances (~15s on Chrome), so read long passages as a queue of short chunks.
+    for (const chunk of chunkSpeech(t)) {
+      const u = new SpeechSynthesisUtterance(chunk);
+      if (v) u.voice = v;
+      u.pitch = Math.max(0, Math.min(2, prof.pitch));
+      u.rate = Math.max(0.5, Math.min(2, prof.rate));
+      u.volume = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1);
+      window.speechSynthesis.speak(u);
+    }
   },
 };
