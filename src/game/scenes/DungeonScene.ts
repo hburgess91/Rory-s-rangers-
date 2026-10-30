@@ -246,6 +246,19 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private decorate(r: RoomDef) {
     const rnd = new Phaser.Math.RandomDataGenerator([`${this.dungeon.id}${this.roomIdx}`]);
+    // PixelLab set dressing along the walls, clear of the centre lane and the door
+    const decor = [0, 1, 2].map((i) => `dec_${r.theme}_${i}`).filter((k) => this.textures.exists(k));
+    if (decor.length) {
+      const spots: [number, number][] = [];
+      for (let x = 90; x < r.w - 90; x += 150) spots.push([x, 92], [x, r.h - 60]);
+      for (let y = 180; y < r.h - 120; y += 160) spots.push([60, y], [r.w - 60, y]);
+      spots.forEach(([x, y], i) => {
+        if (Math.abs(x - r.w / 2) < 110 || rnd.frac() < 0.45) return;
+        const k = decor[i % decor.length];
+        this.add.image(x, y + 24, k).setOrigin(0.5, 1).setDepth(y + 24);
+        this.obstacles.add(this.add.rectangle(x, y + 10, 44, 24, 0, 0));
+      });
+    }
     const n = r.boss ? 0 : 3;
     for (let i = 0; i < n; i++) {
       const x = rnd.between(140, r.w - 140);

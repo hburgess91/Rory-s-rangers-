@@ -1,7 +1,119 @@
 {
  "chars": {
+  "spr_KREBON": {
+   "file": "chars/KREBON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
   "spr_BOGGOR": {
    "file": "chars/BOGGOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_COP": {
+   "file": "chars/COP.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -504,8 +616,232 @@
     ]
    }
   },
+  "spr_GARY": {
+   "file": "chars/GARY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
   "spr_GRONNY": {
    "file": "chars/GRONNY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_GRUNGUS": {
+   "file": "chars/GRUNGUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_JOURNALIST": {
+   "file": "chars/JOURNALIST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "npc_journo": {
+   "file": "chars/JOURNALIST.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -784,62 +1120,6 @@
     ]
    }
   },
-  "spr_KREBON": {
-   "file": "chars/KREBON.png",
-   "frame": 64,
-   "idle": {
-    "south": 0,
-    "east": 4,
-    "north": 5,
-    "west": 6
-   },
-   "walk": {
-    "south": [
-     8,
-     9,
-     10,
-     11,
-     12,
-     13
-    ],
-    "east": [
-     16,
-     17,
-     18,
-     19,
-     20,
-     21
-    ],
-    "north": [
-     24,
-     25,
-     26,
-     27,
-     28,
-     29
-    ],
-    "west": [
-     32,
-     33,
-     34,
-     35,
-     36,
-     37
-    ]
-   },
-   "attack": {
-    "south": [
-     40,
-     41,
-     42
-    ],
-    "east": [
-     44,
-     45,
-     46
-    ]
-   }
-  },
   "spr_KREZMAR": {
    "file": "chars/KREZMAR.png",
    "frame": 64,
@@ -1008,6 +1288,62 @@
     ]
    }
   },
+  "spr_MOLLOR": {
+   "file": "chars/MOLLOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
   "spr_POLSON": {
    "file": "chars/POLSON.png",
    "frame": 64,
@@ -1120,6 +1456,118 @@
     ]
    }
   },
+  "spr_SANCHZ": {
+   "file": "chars/SANCHZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SANMIK": {
+   "file": "chars/SANMIK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
   "spr_SCROMBUS": {
    "file": "chars/SCROMBUS.png",
    "frame": 64,
@@ -1176,8 +1624,1112 @@
     ]
    }
   },
+  "spr_SWIG": {
+   "file": "chars/SWIG.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "npc_swig": {
+   "file": "chars/SWIG.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_TV_ADVISOR": {
+   "file": "chars/TV_ADVISOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_ANNOUNCER": {
+   "file": "chars/TV_ANNOUNCER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_CHEERLEADERS": {
+   "file": "chars/TV_CHEERLEADERS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_CHRISTOPHER_THICK": {
+   "file": "chars/TV_CHRISTOPHER_THICK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_COMMENTATOR": {
+   "file": "chars/TV_COMMENTATOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_CO_COMMENTATOR": {
+   "file": "chars/TV_CO_COMMENTATOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_CO_HOST": {
+   "file": "chars/TV_CO_HOST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_EXECUTIVE": {
+   "file": "chars/TV_EXECUTIVE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_FLAT_TYRE_FROLLICK": {
+   "file": "chars/TV_FLAT_TYRE_FROLLICK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_FOSTER": {
+   "file": "chars/TV_FOSTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_GOKU": {
+   "file": "chars/TV_GOKU.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_GROZZ": {
+   "file": "chars/TV_GROZZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_HOST": {
+   "file": "chars/TV_HOST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_JENNY_CUMMING": {
+   "file": "chars/TV_JENNY_CUMMING.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_JEZ": {
+   "file": "chars/TV_JEZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_KEIR_STARMER": {
+   "file": "chars/TV_KEIR_STARMER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_KRELBERT": {
+   "file": "chars/TV_KRELBERT.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_MADISON": {
+   "file": "chars/TV_MADISON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_MARC": {
+   "file": "chars/TV_MARC.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_MINTY": {
+   "file": "chars/TV_MINTY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_NEWSREADER": {
    "file": "chars/TV_NEWSREADER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_OFFICER": {
+   "file": "chars/TV_OFFICER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_OFFICIAL": {
+   "file": "chars/TV_OFFICIAL.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_PEGGY": {
+   "file": "chars/TV_PEGGY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_PHEZON": {
+   "file": "chars/TV_PHEZON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_PHIL": {
+   "file": "chars/TV_PHIL.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_REPORTER": {
+   "file": "chars/TV_REPORTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_RONSON": {
+   "file": "chars/TV_RONSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_SCRIMBLE": {
+   "file": "chars/TV_SCRIMBLE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_SHEZLEIGH": {
+   "file": "chars/TV_SHEZLEIGH.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_SIMON": {
+   "file": "chars/TV_SIMON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_SINGER": {
+   "file": "chars/TV_SINGER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_VJ": {
+   "file": "chars/TV_VJ.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -1326,98 +2878,215 @@
   "hd_bassist": {
    "file": "props/d_bassist.png"
   },
+  "d_bassist": {
+   "file": "props/d_bassist.png"
+  },
   "hd_billboard": {
+   "file": "props/d_billboard.png"
+  },
+  "d_billboard": {
    "file": "props/d_billboard.png"
   },
   "hd_bra": {
    "file": "props/d_bra.png"
   },
+  "d_bra": {
+   "file": "props/d_bra.png"
+  },
   "hd_busstop": {
+   "file": "props/d_busstop.png"
+  },
+  "d_busstop": {
    "file": "props/d_busstop.png"
   },
   "hd_camera": {
    "file": "props/d_camera.png"
   },
+  "d_camera": {
+   "file": "props/d_camera.png"
+  },
   "hd_candy": {
+   "file": "props/d_candy.png"
+  },
+  "d_candy": {
    "file": "props/d_candy.png"
   },
   "hd_car": {
    "file": "props/d_car.png"
   },
+  "d_car": {
+   "file": "props/d_car.png"
+  },
   "hd_climber": {
+   "file": "props/d_climber.png"
+  },
+  "d_climber": {
    "file": "props/d_climber.png"
   },
   "hd_crates": {
    "file": "props/d_crates.png"
   },
+  "d_crates": {
+   "file": "props/d_crates.png"
+  },
   "hd_drummer": {
+   "file": "props/d_drummer.png"
+  },
+  "d_drummer": {
    "file": "props/d_drummer.png"
   },
   "hd_fence": {
    "file": "props/d_fence.png"
   },
+  "d_fence": {
+   "file": "props/d_fence.png"
+  },
   "hd_flowerbed": {
+   "file": "props/d_flowerbed.png"
+  },
+  "d_flowerbed": {
    "file": "props/d_flowerbed.png"
   },
   "hd_foodtruck": {
    "file": "props/d_foodtruck.png"
   },
+  "d_foodtruck": {
+   "file": "props/d_foodtruck.png"
+  },
   "hd_fountain": {
+   "file": "props/d_fountain.png"
+  },
+  "d_fountain": {
    "file": "props/d_fountain.png"
   },
   "hd_hedge": {
    "file": "props/d_hedge.png"
   },
+  "d_hedge": {
+   "file": "props/d_hedge.png"
+  },
   "hd_neonsign": {
+   "file": "props/d_neonsign.png"
+  },
+  "d_neonsign": {
    "file": "props/d_neonsign.png"
   },
   "hd_newsstand": {
    "file": "props/d_newsstand.png"
   },
+  "d_newsstand": {
+   "file": "props/d_newsstand.png"
+  },
   "hd_phonebooth": {
+   "file": "props/d_phonebooth.png"
+  },
+  "d_phonebooth": {
    "file": "props/d_phonebooth.png"
   },
   "hd_picnic": {
    "file": "props/d_picnic.png"
   },
+  "d_picnic": {
+   "file": "props/d_picnic.png"
+  },
   "hd_portal": {
+   "file": "props/d_portal.png"
+  },
+  "d_portal": {
    "file": "props/d_portal.png"
   },
   "hd_pot": {
    "file": "props/d_pot.png"
   },
+  "d_pot": {
+   "file": "props/d_pot.png"
+  },
   "hd_roundabout": {
+   "file": "props/d_roundabout.png"
+  },
+  "d_roundabout": {
    "file": "props/d_roundabout.png"
   },
   "hd_sandpit": {
    "file": "props/d_sandpit.png"
   },
+  "d_sandpit": {
+   "file": "props/d_sandpit.png"
+  },
   "hd_scooter": {
+   "file": "props/d_scooter.png"
+  },
+  "d_scooter": {
    "file": "props/d_scooter.png"
   },
   "hd_seesaw": {
    "file": "props/d_seesaw.png"
   },
+  "d_seesaw": {
+   "file": "props/d_seesaw.png"
+  },
   "hd_slide": {
+   "file": "props/d_slide.png"
+  },
+  "d_slide": {
    "file": "props/d_slide.png"
   },
   "hd_stall": {
    "file": "props/d_stall.png"
   },
+  "d_stall": {
+   "file": "props/d_stall.png"
+  },
   "hd_statue": {
+   "file": "props/d_statue.png"
+  },
+  "d_statue": {
    "file": "props/d_statue.png"
   },
   "hd_swings": {
    "file": "props/d_swings.png"
   },
+  "d_swings": {
+   "file": "props/d_swings.png"
+  },
   "hd_thong": {
+   "file": "props/d_thong.png"
+  },
+  "d_thong": {
    "file": "props/d_thong.png"
   },
   "hd_vendingbike": {
    "file": "props/d_vendingbike.png"
   },
+  "d_vendingbike": {
+   "file": "props/d_vendingbike.png"
+  },
+  "hd_barbell": {
+   "file": "props/p_barbell.png"
+  },
+  "p_barbell": {
+   "file": "props/p_barbell.png",
+   "hd": 0.5128
+  },
+  "hd_bed": {
+   "file": "props/p_bed.png"
+  },
+  "p_bed": {
+   "file": "props/p_bed.png",
+   "hd": 0.6038
+  },
   "hd_bench": {
    "file": "props/p_bench.png"
+  },
+  "p_bench": {
+   "file": "props/p_bench.png"
+  },
+  "hd_bertha": {
+   "file": "props/p_bertha.png"
+  },
+  "p_bertha": {
+   "file": "props/p_bertha.png",
+   "hd": 0.5763
   },
   "hd_bin": {
    "file": "props/p_bin.png"
@@ -1426,7 +3095,52 @@
    "file": "props/p_bin.png",
    "hd": 0.5
   },
+  "hd_board": {
+   "file": "props/p_board.png"
+  },
+  "p_board": {
+   "file": "props/p_board.png",
+   "hd": 0.8372
+  },
+  "hd_bongo": {
+   "file": "props/p_bongo.png"
+  },
+  "p_bongo": {
+   "file": "props/p_bongo.png",
+   "hd": 0.7273
+  },
+  "hd_bottle": {
+   "file": "props/p_bottle.png"
+  },
+  "p_bottle": {
+   "file": "props/p_bottle.png",
+   "hd": 0.6667
+  },
+  "hd_coin": {
+   "file": "props/p_coin.png"
+  },
+  "p_coin": {
+   "file": "props/p_coin.png",
+   "hd": 0.5714
+  },
+  "hd_crobley": {
+   "file": "props/p_crobley.png"
+  },
+  "p_crobley": {
+   "file": "props/p_crobley.png",
+   "hd": 0.7143
+  },
+  "hd_fridge": {
+   "file": "props/p_fridge.png"
+  },
+  "p_fridge": {
+   "file": "props/p_fridge.png",
+   "hd": 0.5946
+  },
   "hd_gate": {
+   "file": "props/p_gate.png"
+  },
+  "p_gate": {
    "file": "props/p_gate.png"
   },
   "hd_kreltower": {
@@ -1436,7 +3150,17 @@
    "file": "props/p_kreltower.png",
    "hd": 0.6452
   },
+  "hd_krezz": {
+   "file": "props/p_krezz.png"
+  },
+  "p_krezz": {
+   "file": "props/p_krezz.png",
+   "hd": 0.6667
+  },
   "hd_lamp": {
+   "file": "props/p_lamp.png"
+  },
+  "p_lamp": {
    "file": "props/p_lamp.png"
   },
   "hd_pigeon": {
@@ -1445,6 +3169,13 @@
   "p_pigeon": {
    "file": "props/p_pigeon.png",
    "hd": 0.6667
+  },
+  "hd_plane": {
+   "file": "props/p_plane.png"
+  },
+  "p_plane": {
+   "file": "props/p_plane.png",
+   "hd": 0.5
   },
   "hd_puddle": {
    "file": "props/p_puddle.png"
@@ -1460,12 +3191,47 @@
    "file": "props/p_rubble.png",
    "hd": 1.0811
   },
+  "hd_scroll": {
+   "file": "props/p_scroll.png"
+  },
+  "p_scroll": {
+   "file": "props/p_scroll.png",
+   "hd": 0.7
+  },
+  "hd_sign": {
+   "file": "props/p_sign.png"
+  },
+  "p_sign": {
+   "file": "props/p_sign.png",
+   "hd": 0.5
+  },
+  "hd_table": {
+   "file": "props/p_table.png"
+  },
+  "p_table": {
+   "file": "props/p_table.png",
+   "hd": 0.7385
+  },
   "hd_tap": {
    "file": "props/p_tap.png"
   },
   "p_tap": {
    "file": "props/p_tap.png",
    "hd": 0.5517
+  },
+  "hd_terminal": {
+   "file": "props/p_terminal.png"
+  },
+  "p_terminal": {
+   "file": "props/p_terminal.png",
+   "hd": 0.5091
+  },
+  "hd_token": {
+   "file": "props/p_token.png"
+  },
+  "p_token": {
+   "file": "props/p_token.png",
+   "hd": 0.7778
   },
   "hd_tree": {
    "file": "props/p_tree.png"
@@ -1477,6 +3243,9 @@
   "hd_tree2": {
    "file": "props/p_tree2.png"
   },
+  "p_tree2": {
+   "file": "props/p_tree2.png"
+  },
   "hd_tv": {
    "file": "props/p_tv.png"
   },
@@ -1484,12 +3253,33 @@
    "file": "props/p_tv.png",
    "hd": 0.2821
   },
+  "hd_valve": {
+   "file": "props/p_valve.png"
+  },
+  "p_valve": {
+   "file": "props/p_valve.png",
+   "hd": 0.625
+  },
+  "hd_valve_open": {
+   "file": "props/p_valve_open.png"
+  },
+  "p_valve_open": {
+   "file": "props/p_valve_open.png",
+   "hd": 0.5263
+  },
   "hd_vending": {
    "file": "props/p_vending.png"
   },
   "p_vending": {
    "file": "props/p_vending.png",
    "hd": 0.4762
+  },
+  "hd_wonking": {
+   "file": "props/p_wonking.png"
+  },
+  "p_wonking": {
+   "file": "props/p_wonking.png",
+   "hd": 0.5479
   },
   "tv_archive": {
    "file": "backdrops/tv_archive.png"
@@ -1554,6 +3344,33 @@
   "tv_townhall_cam": {
    "file": "backdrops/tv_townhall_cam.png"
   },
+  "tile_school": {
+   "file": "tiles/tile_school.png"
+  },
+  "tile_mansion": {
+   "file": "tiles/tile_mansion.png"
+  },
+  "tile_network": {
+   "file": "tiles/tile_network.png"
+  },
+  "tile_industrial": {
+   "file": "tiles/tile_industrial.png"
+  },
+  "tile_temple": {
+   "file": "tiles/tile_temple.png"
+  },
+  "tile_prison": {
+   "file": "tiles/tile_prison.png"
+  },
+  "tile_wiki": {
+   "file": "tiles/tile_wiki.png"
+  },
+  "tile_hall": {
+   "file": "tiles/tile_hall.png"
+  },
+  "tile_pub": {
+   "file": "tiles/tile_pub.png"
+  },
   "tile_cobble": {
    "file": "tiles/tile_cobble.png"
   },
@@ -1573,5 +3390,264 @@
    "file": "tiles/tile_road.png"
   }
  },
- "sheets": {}
+ "sheets": {
+  "boss_banhammer": {
+   "file": "combat/boss_banhammer.png",
+   "frameWidth": 160,
+   "frameHeight": 192,
+   "hd": 0.5
+  },
+  "boss_brand": {
+   "file": "combat/boss_brand.png",
+   "frameWidth": 80,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "boss_cronster": {
+   "file": "combat/boss_cronster.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
+  },
+  "boss_drongus": {
+   "file": "combat/boss_drongus.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "boss_feedback": {
+   "file": "combat/boss_feedback.png",
+   "frameWidth": 160,
+   "frameHeight": 128,
+   "hd": 0.5
+  },
+  "boss_flatmate": {
+   "file": "combat/boss_flatmate.png",
+   "frameWidth": 80,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "boss_krozno": {
+   "file": "combat/boss_krozno.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
+  },
+  "boss_lorelord": {
+   "file": "combat/boss_lorelord.png",
+   "frameWidth": 128,
+   "frameHeight": 160,
+   "hd": 0.4167
+  },
+  "boss_machine": {
+   "file": "combat/boss_machine.png",
+   "frameWidth": 192,
+   "frameHeight": 160,
+   "hd": 0.5
+  },
+  "boss_rival": {
+   "file": "combat/boss_rival.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "boss_salmon": {
+   "file": "combat/boss_salmon.png",
+   "frameWidth": 144,
+   "frameHeight": 96,
+   "hd": 0.5
+  },
+  "boss_spectre": {
+   "file": "combat/boss_spectre.png",
+   "frameWidth": 144,
+   "frameHeight": 160,
+   "hd": 0.5
+  },
+  "boss_troll": {
+   "file": "combat/boss_troll.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "en_ai_portrait": {
+   "file": "combat/en_ai_portrait.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_bandit": {
+   "file": "combat/en_bandit.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_bandit_gunner": {
+   "file": "combat/en_bandit_gunner.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_betrayer": {
+   "file": "combat/en_betrayer.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_blocked_brute": {
+   "file": "combat/en_blocked_brute.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_cheese_mite": {
+   "file": "combat/en_cheese_mite.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_citation": {
+   "file": "combat/en_citation.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_cultist": {
+   "file": "combat/en_cultist.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_decree_drone": {
+   "file": "combat/en_decree_drone.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_deleted_text": {
+   "file": "combat/en_deleted_text.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_dinner_lady": {
+   "file": "combat/en_dinner_lady.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_friend_crawler": {
+   "file": "combat/en_friend_crawler.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_guard_ghost": {
+   "file": "combat/en_guard_ghost.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_gym_bro": {
+   "file": "combat/en_gym_bro.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_hammerling": {
+   "file": "combat/en_hammerling.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_invoice": {
+   "file": "combat/en_invoice.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_krez_leak": {
+   "file": "combat/en_krez_leak.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_krezbian": {
+   "file": "combat/en_krezbian.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_pending_orb": {
+   "file": "combat/en_pending_orb.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_pipe_gremlin": {
+   "file": "combat/en_pipe_gremlin.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_record": {
+   "file": "combat/en_record.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_roadie": {
+   "file": "combat/en_roadie.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_smolt": {
+   "file": "combat/en_smolt.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_soldier": {
+   "file": "combat/en_soldier.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_tray_turret": {
+   "file": "combat/en_tray_turret.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_trolley": {
+   "file": "combat/en_trolley.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_unread": {
+   "file": "combat/en_unread.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_vending_mimic": {
+   "file": "combat/en_vending_mimic.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_wiki_fragment": {
+   "file": "combat/en_wiki_fragment.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_wisp": {
+   "file": "combat/en_wisp.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  }
+ }
 }
