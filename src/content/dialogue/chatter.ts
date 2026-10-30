@@ -336,4 +336,44 @@ export const CHATTER: Chatter[] = [
     ["POLSON", "DIET GRAAAAY!"],
     ["MIKEY", "I've just been Gray'd."],
   ]),
+  X("sigma", [
+    ["FLENKY", "Sigma males are a more alpha version of alpha males."],
+    ["KREBLIS", "Do you believe that?"],
+    ["FLENKY", "To confirm. I don't buy into the archetypes."],
+    ["FLENKY", "I spelt sigma wrong."],
+  ]),
+  X("burger_brothers", [
+    ["FLENKY", "Burger brothers!"],
+    ["GRONNY", "Who?"],
+    ["FLENKY", "You and Drongus. Wario and Waluigi."],
+    ["GRONNY", "Fair enough."],
+  ]),
+  X("ai_portraits", [
+    ["DRONGUS", "AI portraits. Fifteen Krezzcoin each. Everyone's paid."],
+    ["FLENKY", "I'm not sending fifteen lmao."],
+    ["DRONGUS", "Everyone's paid except you."],
+    ["FLENKY", "Don't want it. Haters gonna hate."],
+  ]),
+  X("the_pigeon", [
+    ["KREZMAR", "He made up the pigeon story."],
+    ["FLENKY", "I didn't."],
+    ["KREZMAR", "Nobody bludgeons a pigeon before a festival."],
+    ["FLENKY", "It was a mercy."],
+  ]),
+  X("the_doctor", [
+    ["FLENKY", "Sometimes people refer to me as 'doctor'."],
+    ["KREZWONK", "Are you a doctor?"],
+    ["FLENKY", "No. But it's monumentally validating."],
+  ]),
+  X("socratic", [
+    ["FLENKY", "Hmmm. So I'm curious. You mentioned the pub. What is so good about that for you?"],
+    ["CRONGUS", "Lmao."],
+    ["FLENKY", "And how did that make you feel?"],
+    ["CRONGUS", "Thirsty."],
+  ]),
+  X("waist_size", [
+    ["FLENKY", "I'm a 32 waist now. Wot r u."],
+    ["SCROMBUS", "I've never measured."],
+    ["FLENKY", "Never. And I mean never. Neg me about my waist size."],
+  ]),
 ];

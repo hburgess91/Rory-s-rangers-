@@ -35,7 +35,7 @@ describe("character side stories", () => {
   });
 
   it("covers the six requested characters", () => {
-    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["CRONGUS", "FLENKY", "GRONNY", "KREBLIS", "KREBLIS", "KREBON", "KREZMAR", "KREZWONK", "MIKEY", "SCROMBUS"]);
+    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["CRONGUS", "FLENKY", "FLENKY", "GRONNY", "KREBLIS", "KREBLIS", "KREBON", "KREZMAR", "KREZWONK", "MIKEY", "SCROMBUS"]);
     expect(ARCS.filter((a) => a.player === "ALL").length).toBeGreaterThanOrEqual(2);
   });
 

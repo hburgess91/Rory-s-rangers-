@@ -272,4 +272,13 @@ export const PUB_SNIPPETS: PubConversation[] = [
   S("big_max", [["KREBLIS", "Mmmm nevar truste a man wot dnt lyke a Big Max!!!"], ["KREBON", "I don't like a Big Max."], ["KREBLIS", "..."], ["KREBON", "Betrayal noted."]]),
   S("albatross", [["KREBLIS", "I swear there's an albatross, circling the house."], ["KREZMAR", "We're in a pub."], ["KREBLIS", "Circling the pub, then."]]),
   S("not_an_expert", [["KREBLIS", "Have just seen that China invaded the U.S.?"], ["FLENKY", "What?"], ["KREBLIS", "I think that's what they just said on the news anyway. Not sure. Not an expert."]]),
+  S("top_lad", [["DRONGUS", "Whispers amongst the lads that you've demoted yourself from top lad status."], ["FLENKY", "Woah. Hearsay."], ["FLENKY", "I'm the toppest. I'll fuckin burst ye."], ["GRONNY", "Fair enough."]]),
+  S("goblin_mode", [["FLENKY", "Wyd... and don't lie."], ["DRONGUS", "Goblin mode."], ["FLENKY", "Yeee. Love to see it."]]),
+  S("all_coming_up_flenky", [["FLENKY", "Got four on the back and forth. All coming up Flenky."], ["KREZMAR", "How's it going?"], ["FLENKY", "Bzzzt wrong. Mixed them up."], ["FLENKY", "Damnit!!!! Flenky dropped the ball!!! Silly boy!!!"]]),
+  S("alright_hume", [["DRONGUS", "Personal identity is a myth."], ["FLENKY", "Alright Hume."], ["KREBLIS", "Wittgenstein language games 🚬"]]),
+  S("orangutan", [["FLENKY", "Would you rather fight an orangutan with a sword once a year, or a chicken every time you use transport?"], ["GRONNY", "Chicken."], ["FLENKY", "Excellent. Gotta keep drinking either way."]]),
+  S("classic_jenko", [["FLENKY", "I did the classic Jenko. Started drinking the moment the music started."], ["KREBLIS", "Classic Jenko."], ["FLENKY", "Normally it's a few drinks then bed by 12. Because I feel like I'm going to die."]]),
+  S("bully_jenko", [["KREBLIS", "Shall I do a Jenko? Start mocking him?"], ["FLENKY", "Nah nah. Not funny."], ["KREBLIS", "Stinky Jenkins."], ["FLENKY", "Oh shut it! Wot do u no!"]]),
+  S("money_no_object", [["FLENKY", "Money is no object mate."], ["FLENKY", "Lol jk."], ["FLENKY", "Or am I..."], ["MIKEY", "I'll buy the popcorn."]]),
 ];
+
