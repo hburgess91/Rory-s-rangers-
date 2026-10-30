@@ -10,6 +10,7 @@ import { currentStep } from "../Flow";
 import { resentmentLabel } from "../systems/reactions";
 import { synth } from "../audio/Synth";
 import { TouchControls, isTouchDevice } from "../ui/TouchControls";
+import { DRONGUS_STATUSES } from "../../content/dialogue/drongusStatuses";
 
 interface Toast {
   c: Phaser.GameObjects.Container;
@@ -52,6 +53,19 @@ export class UIScene extends Phaser.Scene {
     this.boss = null;
     this.rule = null;
     this.g = this.add.graphics();
+    // every couple of minutes, one of Drongus's old Facebook statuses resurfaces
+    if (!G.rt.nextStatusAt) G.rt.nextStatusAt = Date.now() + 45000 + Math.random() * 45000;
+    this.time.addEvent({
+      delay: 1000,
+      loop: true,
+      callback: () => {
+        if (!DRONGUS_STATUSES.length || !G.s.flags.met_emergency || Date.now() < G.rt.nextStatusAt) return;
+        G.rt.nextStatusAt = Date.now() + 100000 + Math.random() * 110000;
+        if (!G.rt.statusDeck.length) G.rt.statusDeck = Phaser.Utils.Array.Shuffle(DRONGUS_STATUSES.map((_, i) => i));
+        const st = DRONGUS_STATUSES[G.rt.statusDeck.pop()!];
+        this.onEvent("fbstatus", { text: st.t, year: st.y });
+      },
+    });
     const pk = portraitKey(this, G.s.player);
     if (pk) this.add.image(34, 34, pk).setDisplaySize(52, 52);
     this.add.rectangle(34, 34, 54, 54).setStrokeStyle(2, CHARACTERS[G.s.player].color);
@@ -97,6 +111,10 @@ export class UIScene extends Phaser.Scene {
         this.pushToast(CHARACTERS[d.from]?.name ?? d.from, d.text, true, d.from);
         synth.play("notify");
         break;
+      case "fbstatus":
+        this.pushStatus(d.text, d.year);
+        synth.play("notify");
+        break;
       case "boss":
         this.boss = d;
         break;
@@ -121,6 +139,33 @@ export class UIScene extends Phaser.Scene {
         this.rename = d;
         this.renameUntil = this.time.now + 5000;
         break;
+    }
+  }
+
+  /** A Facebook status from Drongus, years old, resurfacing for no reason. */
+  private pushStatus(text: string, year?: string) {
+    const w = 300;
+    const c = this.add.container(960 - w - 10, 0).setDepth(100);
+    const body = this.add.text(10, 40, text, { fontFamily: FONT, fontSize: "12px", color: "#050505", wordWrap: { width: w - 20, useAdvancedWrap: true } });
+    const h = body.height + 66;
+    const bg = this.add.rectangle(0, 0, w, h, 0xffffff, 0.97).setOrigin(0).setStrokeStyle(2, 0x1877f2);
+    const band = this.add.rectangle(0, 0, w, 18, 0x1877f2).setOrigin(0);
+    const brand = this.add.text(8, 2, "facebrook", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", fontStyle: "bold" });
+    const pk = portraitKey(this, "DRONGUS");
+    const who = this.add.text(pk ? 40 : 10, 21, `${CHARACTERS.DRONGUS?.name ?? "DRONGUS"} · ${year ? `${year} · ` : ""}🌐`, { fontFamily: FONT, fontSize: "10px", color: "#1877f2", fontStyle: "bold" });
+    const foot = this.add.text(10, h - 20, `👍 0   💬 0   Seen by 9`, { fontFamily: FONT, fontSize: "10px", color: "#65676b" });
+    c.add([bg, band, brand, who, body, foot]);
+    if (pk) c.add(this.add.image(22, 28, pk).setDisplaySize(18, 18));
+    c.setData("h", h);
+    let y0 = 8;
+    for (const t of this.toasts) y0 += (t.c.getData("h") as number) + 6;
+    c.y = y0;
+    c.setAlpha(0);
+    this.tweens.add({ targets: c, alpha: 1, duration: 150 });
+    this.toasts.push({ c, until: this.time.now + 7500 });
+    if (this.toasts.length > 5) {
+      const t = this.toasts.shift()!;
+      t.c.destroy();
     }
   }
 

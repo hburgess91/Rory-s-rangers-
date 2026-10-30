@@ -28,6 +28,9 @@ class GameContext {
     wonk: 0,
     /** Town time (ms) until the next chance of a posse beat-up. */
     beatupIn: undefined as number | undefined,
+    /** Real time (ms) of Drongus's next old Facebook status, and the shuffled deck. */
+    nextStatusAt: 0,
+    statusDeck: [] as number[],
   };
 
   constructor() {
