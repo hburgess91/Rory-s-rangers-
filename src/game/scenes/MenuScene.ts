@@ -19,6 +19,7 @@ type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests";
 /** Overlay menus: pause, settings, bank (upgrades), ban tribunal, quests, death. */
 const BANK_PERKS = [
   { id: "pk_armor", name: "Krez-Proof Vest", desc: "Armour: take 10% less damage per level. Hi-vis. Smells of Lynx Africa.", cost: 170, max: 3 },
+  { id: "pk_krezz", name: "Krezz Regeneration Serum", desc: "Krezz refills 30% faster per level (specials come back sooner).", cost: 190, max: 3 },
   { id: "pk_meter", name: "Pre-Workout (Bootleg)", desc: "Wonk and Fart meters fill 30% faster per level.", cost: 160, max: 2 },
   { id: "pk_autoaim", name: "Auto-Aim (Krezz-Assist)", desc: "Your attacks and guns lock onto the nearest enemy automatically.", cost: 300, max: 1 },
   { id: "pk_spd", name: "Fresh Trainers", desc: "+7% movement speed per level. Krunch-approved. Smell of new.", cost: 140, max: 3 },
@@ -154,12 +155,12 @@ export class MenuScene extends Phaser.Scene {
         add(this.add.text(480, 78, `${CHARACTERS[minister as string]?.name}${minister === "PROCTUS" ? ` (${CHARACTERS[s.player].proctusTitle})` : ", Minister of Money and Loans"} · You have ${s.coins} Krezzcoin`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5));
         const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "LADS & MOVES"]];
         tabs.forEach(([k, label], i) => add(button(this, 255 + i * 150, 106, label, () => { this.bankTab = k; this.render("bank"); }, { w: 140, h: 28, size: 13, color: this.bankTab === k ? 0x22c55e : undefined })));
-        let y = 136;
+        let y = 130;
         const row = (name: string, desc: string, btn: string, disabled: boolean, fn: () => void, col = "#ffffff") => {
           add(this.add.text(150, y, name, { fontFamily: FONT, fontSize: "14px", color: col }));
           add(this.add.text(150, y + 18, desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 500 } }));
-          add(button(this, 760, y + 14, btn, fn, { w: 150, h: 30, size: 13, disabled }));
-          y += 42;
+          add(button(this, 760, y + 14, btn, fn, { w: 150, h: 28, size: 13, disabled }));
+          y += 40;
         };
         if (this.bankTab === "upgrades") {
           for (const u of GENERIC_UPGRADES) {
@@ -211,7 +212,7 @@ export class MenuScene extends Phaser.Scene {
             row(m.name, m.desc, owned ? "OWNED" : `BUY ${m.cost}`, owned || s.coins < m.cost, () => this.buyBranch(m.id, m.cost), owned ? "#5ad35a" : "#ffffff");
           }
         }
-        add(button(this, 480, 514, "LEAVE THE BANK", () => this.close(), { w: 220, h: 34 }));
+        add(button(this, 480, 518, "LEAVE THE BANK", () => this.close(), { w: 220, h: 30 }));
         break;
       }
       case "tribunal": {

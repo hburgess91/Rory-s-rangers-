@@ -32,6 +32,7 @@ export class VignetteScene extends Phaser.Scene {
       pudding: () => this.pudding(),
       pudding_spy: () => this.pudding(G.s.player),
       pudding_raid: () => this.puddingRaid(),
+      plane_escape: () => this.planeEscape(),
       flatmate: () => this.flatmate(),
       rival: () => this.rival(),
       press_conference: () => this.pressConference(),
@@ -732,17 +733,10 @@ export class VignetteScene extends Phaser.Scene {
       say("WAITER", "All of it?"),
       say("POLSON", "It's bulking food. Great bulking food. You've got to eat for the gains."),
     ]);
-    for (let i = 0; i < 9; i++) {
-      const f = this.add.image(380 + (i % 3) * 40, 360, "p_food").setScale(1.4).setDepth(20).setCrop((i % 3) * 20, 0, 20, 24);
-      synth.play(i % 2 ? "gulp" : "slurp");
-      pol2.setFrame(3);
-      await this.tween({ targets: f, x: pol2.x, y: pol2.y - 20, scale: 0.2, duration: 260 });
-      f.destroy();
-      pol2.setFrame(0);
-      pol2.setScale(3 + i * 0.08, 3 + i * 0.03);
-    }
+    await this.bulkPolson(pol2);
     await this.talk([
-      say("POLSON", "Bulked."),
+      say("POLSON", "Bulked. Absolutely bulked."),
+      dir("Polson is now noticeably, structurally larger. His t-shirt has given up. The chair has given up."),
       say("POLSON", "Same time tomorrow? Intense workout. Then here."),
       dir("You pay. Obviously you pay. Polson 'left his wallet in his gym bag', which he did not bring."),
       ping("POLSON'S MUM", "Did he eat fudge"),
@@ -840,6 +834,286 @@ export class VignetteScene extends Phaser.Scene {
     ]);
     const r = maybeFinishArc(G.s);
     if (r) await this.talk([dir(r)]);
+  }
+
+  // ---------------------------------------------------------------- FLIGHT KR-069: THE COCKPIT, THE PARACHUTE, THE TOWER
+
+  private async planeEscape() {
+    const me = G.s.player;
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
+    // ---- the cockpit, on the approach
+    const sky = this.sky(0x7ec8f0, 0xf3d9b1);
+    const city = this.add.graphics();
+    city.fillStyle(0x5a6a80, 1);
+    for (let i = 0; i < 20; i++) city.fillRect(i * 50, 330 - ((i * 37) % 70), 44, 300);
+    const tower = this.add.image(480, 420, "p_kreltower").setOrigin(0.5, 1).setScale(0.6).setDepth(2);
+    const dash = this.add.graphics().setDepth(20);
+    dash.fillStyle(0x1f2937, 1).fillRect(0, 380, 960, 160);
+    dash.fillStyle(0x111827, 1).fillRect(0, 0, 960, 40).fillRect(0, 0, 60, 540).fillRect(900, 0, 60, 540).fillRect(470, 0, 20, 380);
+    for (let i = 0; i < 14; i++) dash.fillStyle([0x22c55e, 0xef4444, 0xfacc15][i % 3], 1).fillCircle(120 + i * 52, 420 + (i % 2) * 22, 7);
+    dash.fillStyle(0x374151, 1).fillRect(400, 450, 160, 70);
+    this.add.text(480, 485, "AUTOPILOT: TESLA FSD (BETA)", { fontFamily: FONT, fontSize: "10px", color: "#86efac" }).setOrigin(0.5).setDepth(21);
+    const pilot = this.add.sprite(480, 470, `spr_${me}`, 5).setScale(3).setDepth(22);
+    synth.play("alarm");
+    this.tween({ targets: tower, scale: 4.5, duration: 9000, ease: "Quad.in" });
+    await this.talk([
+      dir("The cockpit of Flight KR-069. Krozno is unconscious in the drinks trolley. Through the windscreen: Kreltower. It is getting bigger. It is getting much bigger."),
+      dir("You approach the controls. There are four hundred buttons. One of them is labelled 'DO NOT'."),
+    ]);
+    this.tween({ targets: pilot, y: 440, duration: 600 });
+    await this.wait(700);
+    await this.talk([
+      dir("You don't know how to fly a plane."),
+      dir("Why did you do this."),
+      dir("It probably won't even hit the tower now that Krozno has been bested."),
+      dir("Just find a parachute and get yourself some pussy juice."),
+      say(me, "…yeah. Fair."),
+    ]);
+    sky.destroy();
+    city.destroy();
+    tower.destroy();
+    dash.destroy();
+    pilot.destroy();
+    this.children.list.filter((o) => o instanceof Phaser.GameObjects.Text).forEach((o) => o.destroy());
+    // ---- the cabin: shove your way to the parachute
+    await this.parachuteShove(me);
+    // ---- the jump
+    await this.talk([
+      dir("You open the emergency door. The wind takes your eyebrows."),
+      say(me, "It'll probably auto-land. It's a Tesla plane."),
+      dir("You jump."),
+    ]);
+    // ---- outside: parachuting down, everyone watching
+    const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
+    const g = this.add.graphics();
+    g.fillStyle(0x5a6a80, 1);
+    for (let i = 0; i < 20; i++) g.fillRect(i * 50, 300 - ((i * 37) % 90), 44, 300);
+    g.fillStyle(0x3d6a2a, 1).fillRect(0, 430, 960, 110);
+    if (backdrop(this, "bg_city", { depth: -10 })) {
+      skyG.setVisible(false);
+      g.setVisible(false);
+    }
+    const tw = this.add.image(620, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
+    const people = this.crowd(470).filter((p) => p.texture.key !== `spr_${me}`);
+    synth.music("airport");
+    const chute = this.add.container(180, -60).setDepth(70);
+    const canopy = this.add.graphics();
+    canopy.fillStyle(0xff4fa3, 1).slice(0, 0, 46, Math.PI, 0, false).fillPath();
+    canopy.lineStyle(2, 0xffffff, 1).lineBetween(-44, 0, 0, 56).lineBetween(44, 0, 0, 56).lineBetween(0, -40, 0, 56);
+    chute.add([canopy, this.add.sprite(0, 70, `spr_${me}`, 0).setScale(2)]);
+    this.tween({ targets: chute, y: 330, x: 120, duration: 9000, ease: "Sine.out" });
+    this.tweens.add({ targets: chute, angle: { from: -8, to: 8 }, yoyo: true, repeat: -1, duration: 900 });
+    await this.talk([dir("You drift down over Krelford under a pink parachute. Below, everyone is outside. Everyone is looking up.")]);
+    const plane = this.add.image(1020, 110, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
+    await this.talk([say("KREBLIS", "Is that… is that the plane?"), say("MIKEY", "It's on autopilot. It's a Tesla. It'll be fine.")]);
+    await this.tween({ targets: plane, x: 670, y: 250, angle: 8, duration: 2600, ease: "Sine.in" });
+    plane.destroy();
+    synth.play("boom");
+    this.cameras.main.flash(500, 255, 240, 200);
+    this.cameras.main.shake(1400, 0.03);
+    const fire = this.add.circle(620, 260, 20, 0xff7a00, 0.95).setDepth(15);
+    this.tween({ targets: fire, radius: 80, duration: 600 });
+    for (let i = 0; i < 18; i++) {
+      const smoke = this.add.circle(620 + (Math.random() - 0.5) * 90, 250 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
+      this.tween({ targets: smoke, y: smoke.y - 170, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
+    }
+    this.people(people, "!!");
+    synth.play("gasp");
+    await this.talk([
+      say("FLENKY", "NOT AGAIN!!"),
+      say("SCROMBUS", "NOT AGAIN!!"),
+      say("KREZMAR", "NOT AGAIN!!!"),
+      say("GRONNY", "Not again."),
+      ping("DRONGUS", "NOT AGAIN !!"),
+      say("KREZWONK", "Well. At least it won't collapse. They rebuilt it to code this time."),
+    ]);
+    synth.play("boom");
+    this.cameras.main.shake(2800, 0.035);
+    fire.destroy();
+    this.tween({ targets: tw, scaleY: 0.05, duration: 2600, ease: "Quad.in" });
+    for (let i = 0; i < 34; i++) {
+      const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
+      this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 640, y: 380 - Math.random() * 130, scale: 3, alpha: 0, duration: 3500 });
+    }
+    this.caption("KRELTOWER HAS FALLEN (AGAIN)", "#ff4d4d");
+    synth.play("alarm");
+    await this.wait(3000);
+    await this.talk([
+      dir("Silence. Then sirens. Then you land, gently, on top of the Great Tap."),
+      say("KREZWONK", "…I'd like that struck from the record."),
+      say(me, "Anyone got any pussy juice?"),
+      ping("DRONGUS", "It only just got rebuilt !"),
+      dir("KRELTOWER: DESTROYED (AGAIN). Krozno was found in the drinks trolley, unharmed, and charged with 'being up to his usual dirty bloody tricks'. The plane's autopilot has been asked for comment."),
+    ]);
+    synth.stopMusic();
+    Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true });
+  }
+
+  /** Down the aisle to the parachute. Everyone is in the way. Shove them. */
+  private parachuteShove(me: string) {
+    return new Promise<void>((resolve) => {
+      this.add.rectangle(480, 270, 960, 540, 0x2a2f3a).setDepth(0);
+      this.add.rectangle(480, 330, 960, 90, 0x7a1f2b).setDepth(1);
+      for (let i = 0; i < 9; i++) {
+        this.add.rectangle(60 + i * 110, 250, 70, 50, 0x334155).setStrokeStyle(2, 0x1e293b).setDepth(2);
+        this.add.rectangle(60 + i * 110, 410, 70, 50, 0x334155).setStrokeStyle(2, 0x1e293b).setDepth(2);
+      }
+      this.add.text(480, 40, "GET TO THE PARACHUTE", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffd23f", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setDepth(100);
+      this.add.text(480, 78, "Tap / SPACE to shove passengers out of the aisle", { fontFamily: FONT, fontSize: "14px", color: "#ffffff" }).setOrigin(0.5).setDepth(100);
+      const chute = this.add.text(900, 320, "🪂", { fontSize: "44px" }).setOrigin(0.5).setDepth(5);
+      this.add.text(900, 360, "PARACHUTE", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5).setDepth(5);
+      const hero = this.add.sprite(80, 330, `spr_${me}`, 4).setScale(2.6).setDepth(20);
+      const screams = ["HELP US!!", "LAND THE FUCKING PLANE", "WHO'S FLYING THIS", "I HAVE A FAMILY", "IS THAT A PARACHUTE", "SHARE IT!!", "MY DUTY FREE", "PLEASE", "DO SOMETHING"];
+      const pax = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+        const p = this.add.sprite(200 + i * 95, 330, `spr_FOLK${i % 4}`, 0).setScale(2.4).setDepth(10);
+        p.setData("hp", 2 + (i % 2));
+        return p;
+      });
+      const bubble = (x: number, y: number, t: string) => {
+        const b = this.add.text(x, y, t, { fontFamily: FONT, fontSize: "12px", color: "#111", backgroundColor: "#ffffffee", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(50);
+        this.tween({ targets: b, y: y - 16, alpha: 0, delay: 900, duration: 500 });
+      };
+      const panic = this.time.addEvent({ delay: 650, loop: true, callback: () => {
+        const alive = pax.filter((p) => p.active && (p.getData("hp") as number) > 0);
+        const p = alive[Math.floor(Math.random() * alive.length)];
+        if (p) bubble(p.x, p.y - 50, screams[Math.floor(Math.random() * screams.length)]);
+        this.cameras.main.shake(120, 0.003);
+      } });
+      let done = false;
+      const shove = () => {
+        if (done || this.box.active) return;
+        const next = pax.find((p) => (p.getData("hp") as number) > 0);
+        if (!next) return;
+        this.tween({ targets: hero, x: next.x - 60, duration: 120 });
+        synth.play("punch");
+        const hp = (next.getData("hp") as number) - 1;
+        next.setData("hp", hp);
+        this.tweens.add({ targets: next, x: next.x + 14, duration: 70, yoyo: true });
+        if (hp <= 0) {
+          const up = Math.random() < 0.5;
+          this.tween({ targets: next, y: up ? 250 : 410, x: next.x + 20, angle: up ? -80 : 80, duration: 260 });
+          bubble(next.x, next.y - 50, ["OI!", "RUDE", "MY BACK", "SIR!!"][Math.floor(Math.random() * 4)]);
+        }
+        if (pax.every((p) => (p.getData("hp") as number) <= 0)) {
+          done = true;
+          panic.remove();
+          this.input.keyboard?.off("keydown-SPACE", shove);
+          this.input.off("pointerdown", shove);
+          this.tween({ targets: hero, x: 860, duration: 500 }).then(() => {
+            chute.destroy();
+            synth.play("pickup");
+            this.time.delayedCall(500, () => {
+              this.children.removeAll(true);
+              resolve();
+            });
+          });
+        }
+      };
+      this.input.keyboard?.on("keydown-SPACE", shove);
+      this.input.on("pointerdown", shove);
+    });
+  }
+
+  /** Stuff Polson's face. Food slides down the table: shove it in as it reaches his mouth. Skip the salad. */
+  private bulkPolson(pol: Phaser.GameObjects.Sprite) {
+    return new Promise<void>((resolve) => {
+      const MOUTH_X = pol.x + 30;
+      const sx0 = pol.scaleX;
+      const sy0 = pol.scaleY;
+      const hud = this.add.text(480, 130, "", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(100);
+      const help = this.add.text(480, 160, "Tap / SPACE when the food reaches his mouth. NOT the salad.", { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(100);
+      const zone = this.add.rectangle(MOUTH_X, 300, 60, 60).setStrokeStyle(3, 0xffd23f).setDepth(30);
+      const menu = [
+        { e: "🍔", name: "BURGER", good: true },
+        { e: "🍫", name: "CHOCOLATE", good: true },
+        { e: "🟫", name: "FUDGE", good: true },
+        { e: "🍕", name: "PIZZA", good: true },
+        { e: "🍩", name: "KREZPY KREAM", good: true },
+        { e: "🥗", name: "SALAD", good: false },
+      ];
+      const lines = ["Great bulking food.", "Mmm. Gains.", "That's protein, that is.", "Bulking season.", "Get it in.", "Mork.", "More fudge.", "Clean bulk. Basically."];
+      type Food = { t: Phaser.GameObjects.Text; good: boolean; done: boolean };
+      const foods: Food[] = [];
+      let eaten = 0;
+      let wasted = 0;
+      let spawned = 0;
+      const TOTAL = 18;
+      const say1 = (txt: string, col = "#ffffff") => {
+        const b = this.add.text(pol.x, pol.y - pol.displayHeight / 2 - 24, txt, { fontFamily: FONT, fontSize: "13px", color: "#111", backgroundColor: "#ffffffee", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(60);
+        b.setColor(col === "#ffffff" ? "#111" : col);
+        this.tween({ targets: b, y: b.y - 18, alpha: 0, delay: 700, duration: 400 });
+      };
+      const spawn = this.time.addEvent({
+        delay: 900,
+        loop: true,
+        callback: () => {
+          if (spawned >= TOTAL) return;
+          spawned++;
+          const m = Math.random() < 0.18 ? menu[5] : menu[Math.floor(Math.random() * 5)];
+          const t = this.add.text(1000, 300, m.e, { fontSize: "40px" }).setOrigin(0.5).setDepth(40);
+          foods.push({ t, good: m.good, done: false });
+        },
+      });
+      const shove = () => {
+        if (this.box.active) return;
+        const f = foods.find((x) => !x.done && Math.abs(x.t.x - MOUTH_X) < 46);
+        pol.setFrame(3);
+        this.time.delayedCall(120, () => pol.setFrame(0));
+        if (!f) {
+          synth.play("tap_fail");
+          return;
+        }
+        f.done = true;
+        this.tween({ targets: f.t, x: pol.x, y: pol.y - 20, scale: 0.2, duration: 160 }).then(() => f.t.destroy());
+        if (!f.good) {
+          synth.play("tap_fail");
+          say1("THAT'S NOT BULKING FOOD", "#ef4444");
+          pol.setTint(0x99ff99);
+          this.time.delayedCall(400, () => pol.clearTint());
+          return;
+        }
+        eaten++;
+        synth.play(eaten % 2 ? "gulp" : "slurp");
+        say1(lines[eaten % lines.length]);
+        // he grows. Mostly sideways.
+        this.tweens.add({ targets: pol, scaleX: sx0 * (1 + eaten * 0.13), scaleY: sy0 * (1 + eaten * 0.03), duration: 200, ease: "Back.out" });
+        this.cameras.main.shake(80, 0.002 + eaten * 0.0004);
+      };
+      this.input.keyboard?.on("keydown-SPACE", shove);
+      this.input.on("pointerdown", shove);
+      const tick = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          for (const f of foods) {
+            if (f.done) continue;
+            f.t.x -= 4.2;
+            if (f.t.x < MOUTH_X - 60) {
+              f.done = true;
+              if (f.good) {
+                wasted++;
+                say1("ON THE SHIRT", "#ef4444");
+              }
+              this.tween({ targets: f.t, y: 400, alpha: 0, duration: 300 }).then(() => f.t.destroy());
+            }
+          }
+          hud.setText(`EATEN ${eaten}   ON THE FLOOR ${wasted}`);
+          if (spawned >= TOTAL && foods.every((f) => f.done)) {
+            tick.remove();
+            spawn.remove();
+            this.input.keyboard?.off("keydown-SPACE", shove);
+            this.input.off("pointerdown", shove);
+            hud.destroy();
+            help.destroy();
+            zone.destroy();
+            G.s.flags.polson_fat = Math.max((G.s.flags.polson_fat as number) ?? 0, eaten);
+            this.caption(eaten >= 12 ? "MAXIMUM BULK" : eaten >= 7 ? "BULKED" : "LIGHT BULK", "#ffd23f", 30);
+            this.time.delayedCall(1200, () => resolve());
+          }
+        },
+      });
+    });
   }
 
 }

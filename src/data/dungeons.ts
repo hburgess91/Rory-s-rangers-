@@ -389,25 +389,16 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     returnAt: "AIRPORT",
     rooms: [
       {
-        name: "Krelford International: Departures",
-        w: 1300,
-        h: 760,
-        theme: "industrial",
-        waves: [[["bandit", 6]], [["bandit_gunner", 3], ["bandit", 3]]],
-        enterLines: [
-          { s: "NARRATOR", t: "Krelford International. Gate 6 is empty. Flight KR-069 to Kreddle has pushed back early, with Krozno and his bandits on board, and it is not heading to Kreddle.", dir: true },
-          { s: "KREBLIS", t: "(over the network) This is a Krelmergency message. They've set a course for Kreltower. Again. You've got five minutes. FIVE.", cond: { notPlayer: "KREBLIS" } },
-          { s: "KREBLIS", t: "Krelmergency. They're heading for Kreltower. Again. Five minutes. Go.", cond: { player: "KREBLIS" } },
-          { s: "NARRATOR", t: "A TIMER has started. Reach the cockpit and stop Krozno before KR-069 reaches Kreltower.", dir: true },
-        ],
-      },
-      {
         name: "Flight KR-069: Economy",
         w: 1500,
         h: 520,
         theme: "industrial",
         waves: [[["bandit", 5], ["trolley", 1]], [["bandit_gunner", 3], ["trolley", 2]]],
-        enterLines: [{ s: "NARRATOR", t: "You're in. Seatbelt sign on. Krozno's bandits are serving drinks out of a possessed trolley. Nobody ordered anything.", dir: true }],
+        enterLines: [
+          { s: "NARRATOR", t: "You're in. Seatbelt sign on. Krozno's bandits are serving drinks out of a possessed trolley. Nobody ordered anything.", dir: true },
+          { s: "KREBLIS", t: "(over the network) This is a Krelmergency message. They've set a course for Kreltower. Again. You've got five minutes. FIVE.", cond: { notPlayer: "KREBLIS" } },
+          { s: "NARRATOR", t: "A TIMER has started. Fight through the cabin to the cockpit and stop Krozno before KR-069 reaches Kreltower.", dir: true },
+        ],
       },
       {
         name: "Flight KR-069: The Cockpit",

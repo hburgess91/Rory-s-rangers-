@@ -237,7 +237,7 @@ export class Player {
     else if (now < this.shieldUntil) this.spr.setTint(0xc4b5fd);
     else this.spr.clearTint();
     // Krezz trickle
-    s.krezz = Math.min(maxKrezz(s), s.krezz + dt * 0.004);
+    s.krezz = Math.min(maxKrezz(s), s.krezz + dt * 0.0022 * (1 + 0.3 * (s.upgrades.pk_krezz ?? 0)));
     // Krez Loan interest
     if (this.interestUntil > now && this.loanUntil < now) {
       const rate = (maxHp(s) * (s.upgrades.kz3 ? 0.075 : 0.15)) / 4000;

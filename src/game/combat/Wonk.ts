@@ -298,7 +298,7 @@ function jetStream(p: Player, now: number) {
           if (along < 0 || along > st.len || across > WIDTH + e.radius) continue;
           const n = (hit.get(e) ?? 0) + 1;
           hit.set(e, n);
-          const dmg = p.dmg(p.def.damage ?? 10, now) * 3 + (e.isBoss ? e.maxHp * 0.025 : 0);
+          const dmg = p.dmg(p.def.damage ?? 10, now) * 2.2 + (e.isBoss ? e.maxHp * 0.011 : 0);
           w.damageEnemy(e, dmg, { knock: 220, angle: a, crit: n === 1, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });
           if (n === 1) w.burst(e.x, e.y, 0xffffff, 10);
         }

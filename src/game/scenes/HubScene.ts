@@ -17,7 +17,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, ministryQuestFor, ministryQuestState, acceptMinistry, completeMinistry, ministryProgress } from "../systems/quests";
 import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
-import { arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
+import { arcDue, arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
 import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
@@ -288,7 +288,8 @@ export class HubScene extends Phaser.Scene {
       const k = `arc_announced_${c.arc.id}`;
       if (s.flags[k] || s.flags[`${c.arc.id}_done`]) continue;
       s.flags[k] = true;
-      G.emit("toast", { title: c.arc.player === "ALL" ? `NEW SIDE QUEST: ${c.arc.title}` : `YOUR STORY: ${c.arc.title}`, text: c.step.text });
+      const due = arcDue(c.arc);
+      G.emit("toast", { title: `${c.arc.player === "ALL" ? "NEW SIDE QUEST" : "YOUR STORY"}: ${c.arc.title}`, text: `${c.step.text}${due !== null ? ` (Required before the Chapter ${Math.max(due, s.chapter)} dungeon.)` : ""}` });
     }
     // one visit, not three: roll straight on into this chapter's Town Hall meeting(s)
     if (this.chainMeetings) {
@@ -621,6 +622,12 @@ export class HubScene extends Phaser.Scene {
       if (id === "KREBON" && s.flags.krebon_gone) continue;
       // from chapter 2 the others are out doing their own side stories
       this.addNpc(id, (s.chapter >= 2 && ARC_SPOTS[id]) || NPC_SPOTS[id]);
+      // the bulk is permanent
+      if (id === "POLSON" && s.flags.polson_fat) {
+        const n = this.npcs[this.npcs.length - 1];
+        const k = 1 + Math.min(12, s.flags.polson_fat as number) * 0.05;
+        n.spr.setScale(n.spr.scaleX * k, n.spr.scaleY * (1 + (k - 1) * 0.2));
+      }
     }
     // Mikey: not playable. Follows you everywhere asking to join the group.
     if (s.player !== "MIKEY") {
@@ -1352,7 +1359,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "AIRPORT": {
         if (s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved) {
           G.rt.timerEnd = 0;
-          this.go("Dungeon", { dungeon: "airport", room: 0 });
+          this.go("Minigame", { mode: "cannon", returnAt: "AIRPORT" });
           return;
         }
         await this.talk(

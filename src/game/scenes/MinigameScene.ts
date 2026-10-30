@@ -67,6 +67,7 @@ export class MinigameScene extends Phaser.Scene {
       facebook: () => this.fbTroll(),
       modulator: () => this.fbTroll("mikey"),
       crocodile: () => this.crocodile(),
+      cannon: () => this.cannon(),
       gig: () => (G.s.player === "KREBON" ? this.gig() : this.gigWatch()),
     };
     (modes[this.mode] ?? (() => this.finish(false)))();
@@ -1282,6 +1283,105 @@ export class MinigameScene extends Phaser.Scene {
       dir("The crocodiles now live in the Krelford Playground. They have been added to the register."),
     ]);
     G.s.flags.crocs_loose = true;
+  }
+
+  // ---------------------------------------------------------------- THE CANNON (boarding Flight KR-069)
+
+  private cannon() {
+    this.add.rectangle(480, 270, 960, 540, 0x8fc3ea);
+    this.add.rectangle(480, 470, 960, 140, 0x4b5563);
+    for (let i = 0; i < 12; i++) this.add.rectangle(40 + i * 80, 470, 40, 6, 0xfacc15);
+    title(this, 480, 24, "BOARD FLIGHT KR-069", 26, "#ffd23f").setDepth(200);
+    this.add.text(480, 52, "Gate 6 is closed. The plane is taxiing. Get in the cannon. Tap / SPACE once for ANGLE, again for POWER.", { fontFamily: FONT, fontSize: "12px", color: "#111", align: "center" }).setOrigin(0.5).setDepth(200);
+    const plane = this.add.image(-200, 360, "p_plane").setScale(2).setDepth(10);
+    const barrel = this.add.rectangle(110, 440, 90, 26, 0x1f2937).setOrigin(0.1, 0.5).setStrokeStyle(3, 0x000000).setDepth(20);
+    this.add.circle(110, 450, 26, 0x374151).setStrokeStyle(3, 0x000000).setDepth(21);
+    const hero = this.add.sprite(110, 420, `spr_${G.s.player}`, 0).setScale(2).setDepth(19).setVisible(false);
+    const powBg = this.add.rectangle(110, 300, 20, 120, 0x000000, 0.6).setStrokeStyle(2, 0xffffff).setDepth(30).setVisible(false);
+    const pow = this.add.rectangle(110, 360, 16, 0, 0xef4444).setOrigin(0.5, 1).setDepth(31).setVisible(false);
+    let phase: "angle" | "power" | "flying" | "done" = "angle";
+    let ang = -0.3;
+    let power = 0;
+    let tries = 0;
+    let px = 0;
+    let py = 0;
+    let vx = 0;
+    let vy = 0;
+    const fire = () => {
+      if (this.ended || this.box.active) return;
+      if (phase === "angle") {
+        phase = "power";
+        powBg.setVisible(true);
+        pow.setVisible(true);
+      } else if (phase === "power") {
+        phase = "flying";
+        tries++;
+        synth.play("boom");
+        this.cameras.main.shake(200, 0.01);
+        powBg.setVisible(false);
+        pow.setVisible(false);
+        px = 110 + Math.cos(ang) * 80;
+        py = 440 + Math.sin(ang) * 80;
+        const sp = 380 + power * 520;
+        vx = Math.cos(ang) * sp;
+        vy = Math.sin(ang) * sp;
+        hero.setPosition(px, py).setVisible(true);
+      }
+    };
+    this.input.keyboard?.on("keydown-SPACE", fire);
+    this.input.on("pointerdown", fire);
+    const reset = (msg: string) => {
+      phase = "done";
+      this.pop(480, 240, msg, "#ff6b6b", 22);
+      this.time.delayedCall(900, () => {
+        hero.setVisible(false).setAngle(0);
+        phase = tries >= 3 ? "done" : "angle";
+        if (tries >= 3) void win(true);
+      });
+    };
+    const win = async (thrown: boolean) => {
+      if (this.ended) return;
+      this.ended = true;
+      this.time.removeAllEvents();
+      await this.box.play(
+        thrown
+          ? [dir("A baggage handler sighs, picks you up, and throws you through the cargo door. You are on board. Technically as luggage.")]
+          : [dir("You hit the fuselage, bounce off a wing, and fall through an open window into seat 23B. The man in 23A doesn't look up from his book."), say(G.s.player, "Is this seat taken?")],
+      );
+      switchTo(this, "Dungeon", { dungeon: "airport", room: 0 });
+    };
+    this.time.addEvent({
+      delay: 16,
+      loop: true,
+      callback: () => {
+        if (this.ended) return;
+        const now = this.time.now;
+        // the plane taxis past, again and again
+        plane.x += 2.6;
+        if (plane.x > 1200) plane.x = -220;
+        if (phase === "angle") {
+          ang = -0.25 - (0.5 + 0.5 * Math.sin(now / 380)) * 1.0;
+          barrel.setRotation(ang);
+        } else if (phase === "power") {
+          power = 0.5 + 0.5 * Math.sin(now / 260);
+          pow.setSize(16, 120 * power);
+        } else if (phase === "flying") {
+          const dt = 0.016;
+          vy += 700 * dt;
+          px += vx * dt;
+          py += vy * dt;
+          hero.setPosition(px, py).setAngle(hero.angle + 14);
+          if (Math.abs(px - plane.x) < plane.displayWidth * 0.42 && Math.abs(py - plane.y) < plane.displayHeight * 0.32) {
+            phase = "done";
+            synth.play("punch_big");
+            this.pop(px, py - 40, "ON BOARD", "#22c55e", 26);
+            hero.setVisible(false);
+            this.time.delayedCall(600, () => void win(false));
+          } else if (py > 520 || px > 1000) reset(["MISSED. TRY AGAIN.", "THAT WAS THE TERMINAL.", "SO CLOSE."][tries % 3]);
+        }
+        this.hud.setText(`ATTEMPTS ${tries}/3   ${phase === "angle" ? "set the ANGLE" : phase === "power" ? "set the POWER" : ""}`);
+      },
+    });
   }
 
 }

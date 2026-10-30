@@ -1,4 +1,5 @@
 import { offerFacts, adoptFact } from "../data/historicalRevisions";
+import { requiredArcSteps } from "./systems/arcs";
 import Phaser from "phaser";
 import type { Line, PlayableId } from "../data/types";
 import { G } from "./G";
@@ -55,7 +56,14 @@ export function currentStep(): { text: string; target?: string } | null {
   const s = G.s;
   const ch = chapterDef(s.chapter);
   for (const st of ch.steps) {
-    if (!evalCond(st.done, s)) return { text: st.text, target: st.target };
+    if (!evalCond(st.done, s)) {
+      // required side quests come before the dungeon
+      if (st.id === "s_dungeon") {
+        const req = requiredArcSteps(s)[0];
+        if (req) return { text: `SIDE QUEST (required): ${req.arc.title} — ${req.step.text}`, target: req.step.at === "FIELD" ? undefined : req.step.at };
+      }
+      return { text: st.text, target: st.target };
+    }
   }
   return null;
 }
@@ -99,6 +107,8 @@ export function dungeonOpen(): { open: boolean; why?: string } {
     if (!evalCond(ch.steps[i].done, s)) return { open: false, why: ch.steps[i].text };
   }
   if (s.flags[`ch${s.chapter}_clear`]) return { open: false, why: "Already cleared. Report to the Town Hall." };
+  const req = requiredArcSteps(s);
+  if (req.length) return { open: false, why: `Not yet. Side quests first (${req.length} left): ${req.map((c) => c.arc.title).join(", ")}. Next: ${req[0].step.text}` };
   return { open: true };
 }
 

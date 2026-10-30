@@ -683,7 +683,7 @@ export const ARCS: Arc[] = [
           kind: "collect",
           label: "Photograph",
           guard: "playground",
-          pickup: [dir("*click* A beautiful shot. Not a child in frame. The galvanised steel glistens. Boggor will weep.")],
+          pickup: [dir("*click* A beautiful shot. The galvanised steel glistens. Boggor will weep.")],
           spots: [
             { x: 190, y: 580, name: "the swings" },
             { x: 300, y: 530, name: "the slide" },

@@ -587,6 +587,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const txt = BOSS_TEXT[r.boss!];
     this.busy = true;
     const b = createBoss(r.boss!, this, r.w / 2, r.h / 2 - 100);
+    // bosses toughen up as the story goes on (the bank is how you keep up)
+    const bossMult = 1 + Math.max(0, G.s.chapter - 2) * 0.18;
+    b.maxHp = Math.round(b.maxHp * bossMult);
+    b.hp = b.maxHp;
+    b.dmgMult = (b.dmgMult ?? 1) * (1 + Math.max(0, G.s.chapter - 2) * 0.1);
     const pct = (this as any)._bossHpPct;
     if (typeof pct === "number" && pct > 0 && pct < 1) b.hp = Math.max(1, Math.round(b.maxHp * pct));
     this.boss = b;
@@ -630,7 +635,6 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (b.bossId === "krozno") {
       await this.talk(BOSS_TEXT.krozno.outro);
-      Object.assign(s.flags, { kreltower_resolved: true, kreltower_saved: true });
       G.rt.timerEnd = 0;
       G.emit("timer", null);
       s.coins += 300;
@@ -639,7 +643,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       G.save();
       this.time.delayedCall(600, () => {
         this.transitioning = true;
-        switchTo(this, "Vignette", { id: "kreltower_saved", returnAt: "AIRPORT" });
+        switchTo(this, "Vignette", { id: "plane_escape", returnAt: "AIRPORT" });
       });
       return;
     }

@@ -183,7 +183,7 @@ export const BOSS_TEXT: Record<string, BossText> = {
     ],
     outro: [
       say("KROZNO", "My… dirty… bloody… tricks…"),
-      dir("Krozno slumps off the yoke. You grab it. You have never flown a plane. Nobody in Krelworld has ever flown a plane. You pull up."),
+      dir("Krozno slumps into the drinks trolley. The cockpit is yours. Through the windscreen, Kreltower is getting bigger."),
     ],
     taunts: ["DIRTY BLOODY TRICKS!", "TURBULENCE!", "BANDITS, ASSEMBLE!", "KRELTOWER IS THE LORE!", "PLEASE FASTEN YOUR SEATBELTS!"],
   },
