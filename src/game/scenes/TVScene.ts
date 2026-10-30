@@ -366,6 +366,20 @@ export class TVScene extends Phaser.Scene {
     for (const p of Object.values(this.props)) p.destroy();
     this.props = {};
     this.stage.removeAll(true);
+    // PixelLab set (generated at 280x212, drawn at 2x inside the CRT)
+    const known = ["newsdesk", "polson_ext", "townhall_cam", "pitch", "shopping", "emergency", "archive", "forest", "nyc_skyline", "office_night", "cave", "livingroom", "pubbar", "cellar", "press", "cockpit", "bunker", "boardroom", "cell", "street_day"];
+    const artKey = `tv_${known.includes(key) ? key : "default"}`;
+    if (this.textures.exists(artKey)) {
+      const img = this.add.image(SX + SW / 2, SY + SH / 2, artKey);
+      const src = this.textures.get(artKey).getSourceImage();
+      img.setScale(Math.max(SW / src.width, SH / src.height));
+      this.stage.add(img);
+      if (key === "shopping") this.stage.add(this.add.image(SX + 430, SY + 250, "p_wonking").setScale(3));
+      if (key === "emergency") this.stage.add(this.add.text(SX + SW / 2, SY + 25, "⚠ EMERGENCY BROADCAST ⚠", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", backgroundColor: "#b91c1c" }).setOrigin(0.5));
+      if (key === "townhall_cam") this.stage.add(this.add.text(SX + SW - 60, SY + 20, "● LIVE", { fontFamily: FONT, fontSize: "13px", color: "#ff3333", fontStyle: "bold" }));
+      this.frame(framing);
+      return;
+    }
     const g = this.add.graphics();
     this.stage.add(g);
     const P = (x: number, y: number, w: number, h: number, c: number, a = 1) => {

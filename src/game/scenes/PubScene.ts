@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { PUB_CONVERSATIONS, type PubConversation } from "../../content/dialogue/pub";
 import { evalCond } from "../systems/conditions";
@@ -27,7 +28,8 @@ export class PubScene extends Phaser.Scene {
   create() {
     this.busy = false;
     this.cameras.main.fadeIn(300);
-    this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+    const pubBg = this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+    if (backdrop(this, "bg_pub", { dim: 0.2, depth: -10 })) pubBg.setVisible(false);
     const g = this.add.graphics();
     g.fillStyle(0x3b2a1a, 1).fillRect(0, 0, 960, 120);
     g.fillStyle(0x6b4527, 1).fillRect(0, 110, 960, 40);

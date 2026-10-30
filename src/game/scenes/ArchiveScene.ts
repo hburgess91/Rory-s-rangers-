@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { ARCHIVE } from "../../content/archive/historicalScenes";
 import type { ArchiveEntry } from "../../data/types";
 import { G } from "../G";
@@ -29,8 +30,12 @@ export class ArchiveScene extends Phaser.Scene {
     this.filter = data?.filter ?? null;
     this.page = 0;
     this.playing = false;
-    this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0).setAlpha(0.6);
-    this.add.rectangle(0, 0, 960, 540, 0x1a120a, 0.75).setOrigin(0);
+    const arBg = this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0).setAlpha(0.6);
+    const arDim = this.add.rectangle(0, 0, 960, 540, 0x1a120a, 0.75).setOrigin(0);
+    if (backdrop(this, "bg_archive", { dim: 0.55, depth: -10 })) {
+      arBg.setVisible(false);
+      arDim.setVisible(false);
+    }
     title(this, 480, 26, this.filter === "ban" ? "BAN TRIBUNAL — EXHIBITS" : "THE KRELWORLD HISTORICAL ARCHIVE", 24, "#c8b88a");
     this.add.text(480, 48, "Official records. Original excerpts. Contradictions. Annotations by the Supreme Leader.", { fontFamily: FONT, fontSize: "12px", color: "#9a8a6a" }).setOrigin(0.5);
     this.listC = this.add.container(0, 0);

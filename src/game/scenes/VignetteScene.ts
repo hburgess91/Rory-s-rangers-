@@ -7,7 +7,7 @@ import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
-import { animateWalker } from "../gfx/HD";
+import { animateWalker, backdrop } from "../gfx/HD";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
 export class VignetteScene extends Phaser.Scene {
@@ -78,11 +78,15 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- THE KRELTOWER INCIDENT
 
   private async kreltower(saved: boolean) {
-    this.sky(saved ? 0x7ec8f0 : 0x8fc3ea, 0xf3d9b1);
+    const skyG = this.sky(saved ? 0x7ec8f0 : 0x8fc3ea, 0xf3d9b1);
     const g = this.add.graphics();
     g.fillStyle(0x5a6a80, 1);
     for (let i = 0; i < 20; i++) g.fillRect(i * 50, 300 - ((i * 37) % 90), 44, 300);
     g.fillStyle(0x3d6a2a, 1).fillRect(0, 430, 960, 110);
+    if (backdrop(this, "bg_city", { depth: -10 })) {
+      skyG.setVisible(false);
+      g.setVisible(false);
+    }
     const tower = this.add.image(560, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
     this.add.text(560, 440, "KRELTOWER", { fontFamily: FONT, fontSize: "11px", color: "#ffffff" }).setOrigin(0.5, 0).setDepth(11);
     const people = this.crowd(470);
@@ -146,7 +150,7 @@ export class VignetteScene extends Phaser.Scene {
     people.forEach((p, i) => {
       p.setFlipX(i % 2 === 0);
       this.tweens.add({ targets: p, x: i % 2 ? 1040 : -80, duration: 1500 + Math.random() * 1500, delay: 300 + i * 80 });
-      this.time.addEvent({ delay: 120, repeat: 20, callback: () => p.setFrame(p.frame.name === "1" ? 2 : 1) });
+      this.time.addEvent({ delay: 120, repeat: 20, callback: () => animateWalker(p, i % 2 ? 1 : -1, 0, true, this.time.now) });
     });
     for (let i = 0; i < 10; i++) {
       this.time.delayedCall(i * 250, () => {
@@ -182,7 +186,7 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- BREAD AND BUTTER PUDDING
 
   private async pudding() {
-    this.sky(0x0a0a1a, 0x1a1a2e);
+    const skyP = this.sky(0x0a0a1a, 0x1a1a2e);
     const g = this.add.graphics();
     g.fillStyle(0x2a2a2a, 1).fillRect(300, 170, 360, 260);
     g.fillStyle(0x1a1a1a, 1).fillTriangle(280, 175, 680, 175, 480, 100);
@@ -192,10 +196,16 @@ export class VignetteScene extends Phaser.Scene {
     }
     const door = this.add.rectangle(480, 395, 60, 70, 0x0a0a0a).setDepth(5);
     g.fillStyle(0x222222, 1).fillRect(0, 430, 960, 110);
-    this.add.text(480, 150, "(ABANDONED)", { fontFamily: FONT, fontSize: "12px", color: "#666" }).setOrigin(0.5);
+    const abLbl = this.add.text(480, 150, "(ABANDONED)", { fontFamily: FONT, fontSize: "12px", color: "#666" }).setOrigin(0.5);
+    if (backdrop(this, "bg_abandoned", { depth: -10 })) {
+      skyP.setVisible(false);
+      abLbl.setVisible(false);
+      door.setAlpha(0.25);
+      g.clear();
+    }
     const luke = this.add.sprite(120, 420, "spr_CRONGUS", 0).setScale(3).setDepth(10);
     await this.talk([dir("The abandoned building. A faint smell of custard. And something underneath the custard that the custard is trying to cover up.")]);
-    this.time.addEvent({ delay: 140, repeat: 14, callback: () => luke.setFrame(luke.frame.name === "1" ? 2 : 1) });
+    this.time.addEvent({ delay: 140, repeat: 14, callback: () => animateWalker(luke, 1, 0, true, this.time.now) });
     await this.tween({ targets: luke, x: 480, duration: 2000 });
     await this.talk([say("CRONGUS", "Hello? Is the… is the bread and butter pudding here?"), dir("Something inside says 'yes'. It is not clear what said it.")]);
     await this.tween({ targets: luke, alpha: 0, scale: 2.6, duration: 600 });
@@ -264,9 +274,11 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- CARPET KEV
 
   private async flatmate() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0);
-    this.add.rectangle(480, 470, 900, 120, 0x7a1f2b, 0.85);
-    this.add.text(480, 470, "(the carpet)", { fontFamily: FONT, fontSize: "12px", color: "#d6c49a" }).setOrigin(0.5);
+    if (!backdrop(this, "bg_flat", { depth: -10 })) {
+      this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0);
+      this.add.rectangle(480, 470, 900, 120, 0x7a1f2b, 0.85);
+      this.add.text(480, 470, "(the carpet)", { fontFamily: FONT, fontSize: "12px", color: "#d6c49a" }).setOrigin(0.5);
+    }
     const kev = this.add.sprite(640, 360, "boss_flatmate", 0).setScale(3).setDepth(10);
     const gron = this.add.sprite(260, 360, "spr_GRONNY", 0).setScale(4).setDepth(10);
     await this.talk([say("CARPET KEV", "Gronny, mate. Let's talk about this. The deposit's coming. I've got a guy."), say("GRONNY", "…"), this.cue("THE CARPET HAS BEEN AVENGED IN SIX PARTS", true)]);
@@ -353,7 +365,7 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- BRICK KOLBANE
 
   private async rival() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    if (!backdrop(this, "bg_gym", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     const brick = this.add.sprite(480, 380, "boss_rival", 0).setScale(3.2).setDepth(10);
     const bar = this.add.image(480, 300, "p_barbell").setScale(3).setDepth(11);
     this.add.sprite(200, 380, "spr_KREZWONK", 0).setScale(4).setDepth(10);
@@ -387,9 +399,11 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- CUDDLE CRONSTER PRESS CONFERENCE
 
   private async pressConference() {
-    this.add.rectangle(480, 270, 960, 540, 0x1e2a44);
-    this.add.rectangle(480, 120, 700, 120, 0x1e3a8a).setStrokeStyle(4, 0xfacc15);
-    this.add.text(480, 120, "KRELFORD CONSTABULARY\nPRESS CONFERENCE", { fontFamily: FONT, fontSize: "22px", color: "#ffffff", fontStyle: "bold", align: "center" }).setOrigin(0.5);
+    if (!backdrop(this, "bg_press", { depth: -10 })) {
+      this.add.rectangle(480, 270, 960, 540, 0x1e2a44);
+      this.add.rectangle(480, 120, 700, 120, 0x1e3a8a).setStrokeStyle(4, 0xfacc15);
+    }
+    this.add.text(480, 60, "KRELFORD CONSTABULARY · PRESS CONFERENCE", { fontFamily: FONT, fontSize: "20px", color: "#ffffff", fontStyle: "bold", align: "center", backgroundColor: "#1e3a8acc", padding: { x: 10, y: 4 } }).setOrigin(0.5);
     this.add.rectangle(480, 330, 120, 90, 0x5a3a20).setDepth(20);
     const swig = this.add.sprite(480, 280, "npc_swig", 0).setScale(3).setDepth(15);
     const press: Phaser.GameObjects.Sprite[] = [];
@@ -450,7 +464,7 @@ export class VignetteScene extends Phaser.Scene {
   // ---------------------------------------------------------------- POLSON GETS FIT
 
   private async polsonGym() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    if (!backdrop(this, "bg_gym", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     const tm = this.add.rectangle(480, 400, 220, 30, 0x111111).setDepth(5);
     this.add.rectangle(560, 340, 12, 100, 0x374151).setDepth(5);
     this.add.text(480, 300, "TREADMILL", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5);
@@ -464,7 +478,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: pol, x: 470, y: 370, duration: 900 });
     synth.play("select");
     const belt = this.time.addEvent({ delay: 80, loop: true, callback: () => tm.setFillStyle(tm.fillColor === 0x111111 ? 0x222222 : 0x111111) });
-    this.time.addEvent({ delay: 100, repeat: 18, callback: () => pol.setFrame(pol.frame.name === "1" ? 2 : 1) });
+    this.time.addEvent({ delay: 100, repeat: 18, callback: () => animateWalker(pol, 1, -0.3, true, this.time.now) });
     const clock = this.add.text(480, 250, "0.0s", { fontFamily: FONT, fontSize: "28px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(50);
     const t0 = this.time.now;
     const tick = this.time.addEvent({ delay: 50, loop: true, callback: () => clock.setText(`${((this.time.now - t0) / 1000).toFixed(1)}s`) });
@@ -484,7 +498,7 @@ export class VignetteScene extends Phaser.Scene {
     // restaurant
     this.children.removeAll(true);
     this.lastCaption = undefined;
-    this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+    if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
     this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
     this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
     const pol2 = this.add.sprite(420, 320, "spr_POLSON", 0).setScale(3).setDepth(10);
@@ -515,7 +529,7 @@ export class VignetteScene extends Phaser.Scene {
   }
 
   private async polsonCctv() {
-    this.add.rectangle(480, 270, 960, 540, 0x0a0f1a);
+    if (!backdrop(this, "bg_fgm", { dim: 0.75, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x0a0f1a);
     // four CCTV feeds; feed 1 is Polson's living room
     const feeds: [number, number, string][] = [
       [250, 150, "CAM 1 — POLSON TOWERS: LOUNGE"],

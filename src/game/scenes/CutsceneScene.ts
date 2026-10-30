@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import type { Line } from "../../data/types";
 import { DialogueBox } from "../ui/DialogueBox";
 import { CHAPTERS } from "../../content/chapters/chapters";
@@ -42,7 +43,11 @@ export class CutsceneScene extends Phaser.Scene {
     this.chatY = 70;
     const bg = data.bg ?? "black";
     if (bg === "messenger") this.drawMessenger(W, H);
-    else if (bg === "townhall") {
+    else if (bg === "townhall" && backdrop(this, "bg_townhall", { dim: 0.2, depth: -10 })) {
+      // PixelLab council chamber
+    } else if (bg === "citadel" && backdrop(this, "bg_citadel", { dim: 0.15, depth: -10 })) {
+      // PixelLab citadel hall
+    } else if (bg === "townhall") {
       this.add.tileSprite(0, 0, W, H, "tile_hall").setOrigin(0);
       this.add.rectangle(W / 2, 120, 520, 130, 0x000000, 0.4);
       this.add.image(W / 2, 140, "p_tap").setScale(1.6).setAlpha(0.7);

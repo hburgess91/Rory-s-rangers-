@@ -133,3 +133,17 @@ export function feetBody(spr: Phaser.Physics.Arcade.Sprite, w: number, h: number
 export function hdFactor(o: { texture?: Phaser.Textures.Texture }) {
   return hdOf(o);
 }
+
+/**
+ * Full-screen PixelLab backdrop (generated at 480x272, drawn at 2x). Returns null when the art
+ * isn't installed so callers can keep their old background. `dim` darkens it for readability.
+ */
+export function backdrop(scene: Phaser.Scene, key: string, opts: { dim?: number; depth?: number; scroll?: boolean } = {}) {
+  if (!scene.textures.exists(key)) return null;
+  const img = scene.add.image(480, 270, key).setDepth(opts.depth ?? -10);
+  const src = scene.textures.get(key).getSourceImage();
+  img.setScale(Math.max(960 / src.width, 540 / src.height));
+  if (!opts.scroll) img.setScrollFactor(0);
+  if (opts.dim) scene.add.rectangle(480, 270, 960, 540, 0x0a0614, opts.dim).setDepth((opts.depth ?? -10) + 1).setScrollFactor(0);
+  return img;
+}

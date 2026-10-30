@@ -8,6 +8,7 @@ import { FONT, title } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
+import { backdrop } from "../gfx/HD";
 
 const MIKEY_BARKS = [
   "Mikey here.",
@@ -107,8 +108,10 @@ export class MinigameScene extends Phaser.Scene {
     const target = proxy ? "PROCTUS" : "MIKEY";
     const name = proxy ? "PROCTUS (ACTING MIKEY)" : "MIKEY";
     const barks = proxy ? PROCTUS_BARKS : MIKEY_BARKS;
-    this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
-    this.add.rectangle(480, 470, 960, 140, 0x2a1a0a);
+    if (!backdrop(this, "bg_booth", { dim: 0.15, depth: -10 })) {
+      this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+      this.add.rectangle(480, 470, 960, 140, 0x2a1a0a);
+    }
     title(this, 480, 70, `TAKE OUT YOUR FRUSTRATION ON ${name}`, 26, "#ff6b6b");
     this.add.text(480, 100, "Tap / SPACE to vent. The group chat has been a lot this week.", { fontFamily: FONT, fontSize: "14px", color: "#d6d6d6" }).setOrigin(0.5);
     const bag = this.add.sprite(480, 330, `spr_${target}`, 0).setScale(6).setDepth(10);
@@ -165,7 +168,7 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- DEADLIFT
 
   private deadlift() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    if (!backdrop(this, "bg_gym", { dim: 0.2, depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     title(this, 480, 70, "DEADLIFT: 300KG (RECORD: 280)", 28);
     this.add.text(480, 102, "Mash Tap / SPACE. Don't stop. The HGH is doing most of the work.", { fontFamily: FONT, fontSize: "14px", color: "#d6d6d6" }).setOrigin(0.5);
     const lifter = this.add.sprite(480, 380, `spr_${G.s.player}`, 0).setScale(5).setDepth(10);
@@ -208,7 +211,7 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- GIRLFRIENDS
 
   private girlfriends() {
-    this.add.rectangle(480, 270, 960, 540, 0x1f1b2e);
+    if (!backdrop(this, "bg_flat", { dim: 0.6, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1f1b2e);
     title(this, 480, 50, "THE ROTA", 32);
     this.add.text(480, 84, "Answer the RIGHT phone before it rings out. Don't send the wrong text to the wrong girlfriend.", { fontFamily: FONT, fontSize: "14px", color: "#d6d6d6" }).setOrigin(0.5);
     const girls = ["KRELISSA", "KREZABETH", "KAYLOR"];
@@ -302,7 +305,7 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- RENOVATE
 
   private renovate() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0);
+    if (!backdrop(this, "bg_fixer", { dim: 0.15, depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0);
     title(this, 480, 50, "FLIP IT: FIX 25 PROBLEMS IN 45 SECONDS", 26);
     const kinds = [
       { t: "DAMP", c: 0x4a6a4a },
@@ -355,7 +358,7 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- RUNESCAPE (keep the gear coming)
 
   private runescape() {
-    this.add.rectangle(480, 270, 960, 540, 0x3d6a2a);
+    if (!backdrop(this, "bg_runescape", { dim: 0.1, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x3d6a2a);
     this.add.rectangle(480, 270, 940, 520).setStrokeStyle(6, 0x5a4a2a);
     title(this, 480, 40, "WOODCUTTING → 99", 26, "#ffff00");
     this.add.text(480, 70, "Tap / SPACE to chop. When the gear runs out, RE-UP (G or the button).", { fontFamily: FONT, fontSize: "13px", color: "#ffffff" }).setOrigin(0.5);
@@ -440,7 +443,7 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- HIIT BURPEES (eternal life)
 
   private burpees() {
-    this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    if (!backdrop(this, "bg_gym", { dim: 0.25, depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     title(this, 480, 44, "EMOM: CHEST-TO-FLOOR BURPEES", 26);
     this.add.text(480, 76, "Alternate DOWN and UP (arrow keys / S then W / tap bottom then top half). 30 burpees before time.", { fontFamily: FONT, fontSize: "13px", color: "#ffffff" }).setOrigin(0.5);
     const me = this.add.sprite(480, 330, `spr_${G.s.player}`, 0).setScale(5);

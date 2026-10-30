@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import type { PlayableId } from "../../data/types";
 import { button, FONT, hexStr, label, title, UI } from "../ui/theme";
@@ -25,7 +26,8 @@ export class CharSelectScene extends Phaser.Scene {
 
   create() {
     const { width: W, height: H } = this.scale;
-    this.add.rectangle(0, 0, W, H, 0x10101e).setOrigin(0);
+    const csBg = this.add.rectangle(0, 0, W, H, 0x10101e).setOrigin(0);
+    if (backdrop(this, "bg_charselect", { dim: 0.45, depth: -10 })) csBg.setVisible(false);
     title(this, W / 2, 30, this.ngPlus ? "NEW KREZ+ · CHOOSE YOUR DEGENERATE" : "CHOOSE YOUR DEGENERATE", 26);
     label(this, W / 2, 52, "Whoever you pick, Proctus Krelmor will cover their ministry. Badly.", 13, "#9aa0b4").setOrigin(0.5, 0);
 

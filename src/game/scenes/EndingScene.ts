@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
 import { FINAL_PROMPT, ENDINGS, EPILOGUES, CREDITS, SEQUEL_CARD, endingKeyFor } from "../../content/endings";
@@ -21,7 +22,8 @@ export class EndingScene extends Phaser.Scene {
   async create(data: { replay?: boolean }) {
     const s = G.s;
     this.cameras.main.fadeIn(800);
-    this.add.tileSprite(0, 0, 960, 540, "tile_wiki").setOrigin(0);
+    const enBg = this.add.tileSprite(0, 0, 960, 540, "tile_wiki").setOrigin(0);
+    if (backdrop(this, "bg_ending", { dim: 0.15, depth: -10 })) enBg.setVisible(false);
     this.add.rectangle(0, 0, 960, 540, 0x000000, 0.25).setOrigin(0);
     const dr = this.add.sprite(480, 250, "spr_DRONGUS", 0).setScale(5).setAngle(-80).setTint(0xddddaa);
     synth.stopMusic();

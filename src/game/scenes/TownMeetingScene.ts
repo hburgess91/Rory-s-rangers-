@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { MEETINGS } from "../../content/meetings";
 import type { MeetingScript, SpeakerId } from "../../data/types";
 import { REACTION_EMOJI } from "../../data/types";
@@ -72,7 +73,8 @@ export class TownMeetingScene extends Phaser.Scene {
 
   private drawRoom(m: MeetingScript, W: number, H: number) {
     const fgm = m.location === "WAR_ROOM";
-    this.add.tileSprite(0, 0, W, H, fgm ? "tile_prison" : "tile_hall").setOrigin(0);
+    const tmBg = this.add.tileSprite(0, 0, W, H, fgm ? "tile_prison" : "tile_hall").setOrigin(0);
+    if (backdrop(this, fgm ? "bg_fgm" : "bg_townhall", { dim: 0.25, depth: -10 })) tmBg.setVisible(false);
     if (m.historical) this.add.rectangle(0, 0, W, H, 0x704214, 0.25).setOrigin(0).setDepth(900);
     // windows with the Tap
     if (!fgm) {

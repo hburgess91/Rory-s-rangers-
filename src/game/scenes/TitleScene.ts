@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { animateWalker, backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { button, FONT, title, label } from "../ui/theme";
 import { synth } from "../audio/Synth";
@@ -19,6 +20,8 @@ export class TitleScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillGradientStyle(0x1a0f2e, 0x1a0f2e, 0x3a1f3e, 0x2a1a2e, 1);
     g.fillRect(0, 0, W, H);
+    const titleBg = backdrop(this, "bg_title", { depth: -10 });
+    if (titleBg) g.setVisible(false);
     // skyline
     g.fillStyle(0x120a1c, 1);
     for (let i = 0; i < 24; i++) {
@@ -39,7 +42,7 @@ export class TitleScene extends Phaser.Scene {
     PLAYABLE_ORDER.forEach((id, i) => {
       const s = this.add.sprite(-40 - i * 40, H - 70, `spr_${id}`, 0).setScale(2.5);
       this.tweens.add({ targets: s, x: W + 60, duration: 16000, delay: i * 500, repeat: -1 });
-      this.time.addEvent({ delay: 180, loop: true, callback: () => s.setFrame(s.frame.name === "1" ? 2 : 1) });
+      this.time.addEvent({ delay: 180, loop: true, callback: () => animateWalker(s, 1, 0, true, this.time.now) });
     });
     const dr = this.add.sprite(W - 120, 150, "spr_DRONGUS", 0).setScale(3).setAlpha(0.85);
     this.tweens.add({ targets: dr, y: 140, yoyo: true, repeat: -1, duration: 1400, ease: "Sine.inOut" });

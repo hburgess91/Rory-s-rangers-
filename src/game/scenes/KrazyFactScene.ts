@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { offerFacts, adoptFact, type KrazyFact } from "../../data/historicalRevisions";
 import { FONT, title } from "../ui/theme";
@@ -19,7 +20,8 @@ export class KrazyFactScene extends Phaser.Scene {
     this.chosen = false;
     const s = G.s;
     this.cameras.main.fadeIn(300);
-    this.add.tileSprite(0, 0, 960, 540, "tile_hall").setOrigin(0);
+    const kfBg = this.add.tileSprite(0, 0, 960, 540, "tile_hall").setOrigin(0);
+    if (backdrop(this, "bg_townhall", { dim: 0.45, depth: -10 })) kfBg.setVisible(false);
     this.add.rectangle(0, 0, 960, 540, 0x000000, 0.55).setOrigin(0);
     title(this, 480, 40, "SUBMIT A KRAZY FACT", 30, "#ffd23f");
     this.add.text(480, 72, `End of Chapter ${s.chapter}. The cabinet will enter one fact into the record. Krelworld will rewrite itself around it.`, { fontFamily: FONT, fontSize: "13px", color: "#ffffff", align: "center", wordWrap: { width: 800 } }).setOrigin(0.5);
