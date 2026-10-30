@@ -28,7 +28,7 @@ export const MUSIC_FILES: Record<string, string> = {
   boss_banhammer: "audio/boss_banhammer.mp3",
   boss_spectre: "audio/boss_spectre.mp3",
   boss_krozno: "audio/boss_krozno.mp3",
-  boss_brand: "audio/boss1.mp3",
+  boss_brand: "audio/flenky.mp3",
   boss_troll: "audio/boss2.mp3",
   boss_flatmate: "audio/boss3.mp3",
   boss_rival: "audio/boss1.mp3",
@@ -41,6 +41,7 @@ export const MUSIC_FILES: Record<string, string> = {
   bbp: "audio/bbp.mp3",
   twitcher: "audio/twitcher.mp3",
   crocodile: "audio/crocodile.mp3",
+  flenky: "audio/flenky.mp3",
   ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),
 };
 

@@ -117,7 +117,13 @@ export class PubScene extends Phaser.Scene {
     items.push([s.flags.pub_tv_off ? "📺 Turn the telly back on" : "📺 Turn the telly off", () => this.toggleTv()]);
     if (this.sanmikOn) items.push(["🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
     if (s.player !== "KREBON" && !s.flags.krebon_gone && s.flags.met_emergency) items.push(["🎸 Back room: Twitcher Mutiny are on. It's getting rowdy.", () => switchTo(this, "Minigame", { mode: "gig", returnAt: "PUB" })]);
-    items.push([synth.playingFile() === "crazy" ? "🎵 Jukebox: stop the song" : "🎵 Jukebox: 'Krazy For The Krelworld' (2 Krezzcoin)", () => this.jukebox()]);
+    {
+      const names: Record<string, string> = { crazy: "'Krazy For The Krelworld' (Drongus)", flenky: "'Flenky' (SanChz)", crocodile: "'Do The Crocodile' (SanMik)" };
+      const order = ["crazy", "flenky", "crocodile"];
+      const next = order[((s.flags.jukebox_next as number) ?? 0) % 3];
+      const playing = order.includes(synth.playingFile());
+      items.push([playing && next === "crazy" ? "🎵 Jukebox: stop the music" : `🎵 Jukebox: ${names[next]} (2 Krezzcoin)`, () => this.jukebox()]);
+    }
     const q = personalQuest(s);
     if (q && pickupsInHub(s).some((p) => p.anchor === "PUB_MENU")) items.push(["📜 Nick the menu off the bar", () => this.readMenu()]);
     if (canTurnIn(s, "PUB")) items.push(["✨ Open Krezmond's treasure", () => this.turnIn()]);
@@ -136,21 +142,40 @@ export class PubScene extends Phaser.Scene {
 
   private async jukebox() {
     const s = G.s;
-    if (synth.playingFile() === "crazy") {
+    const tracks = ["crazy", "flenky", "crocodile"];
+    const now = synth.playingFile();
+    if (tracks.includes(now) && (s.flags.jukebox_next as number) === 0) {
       synth.music("pub");
       this.showMenu();
       return;
     }
     if (s.coins < 2) return this.play([dir("The jukebox wants 2 Krezzcoin. You have the lore but not the coin.")]);
     s.coins -= 2;
-    synth.music("crazy", true);
+    const i = ((s.flags.jukebox_next as number) ?? 0) % tracks.length;
+    s.flags.jukebox_next = (i + 1) % tracks.length;
+    synth.music(tracks[i], true);
     this.showMenu();
-    await this.play([
-      dir("NOW PLAYING: 'Krazy For The Krelworld'. The whole pub turns to look at the jukebox, then at you, then at their phones."),
-      ping("DRONGUS", "Is that my song playing in the Krezz Arms ??"),
-      ping("DRONGUS", "Someone react to it. Anyone. Please. Thumbs up will do"),
-      say("KREZMAR", "Absolute banger. I'd rather die than react."),
-    ]);
+    const lines: Record<string, Line[]> = {
+      crazy: [
+        dir("NOW PLAYING: 'Krazy For The Krelworld'. The whole pub turns to look at the jukebox, then at you, then at their phones."),
+        ping("DRONGUS", "Is that my song playing in the Krezz Arms ??"),
+        ping("DRONGUS", "Someone react to it. Anyone. Please. Thumbs up will do"),
+        say("KREZMAR", "Absolute banger. I'd rather die than react."),
+      ],
+      flenky: [
+        dir("NOW PLAYING: 'Flenky' — SanChz, from the diss album. The pub goes quiet. Somebody turns it up."),
+        say("FLENKY", "Is this... is this about me?", { variants: { FLENKY: "(It's about you. It's definitely about you. You will fight for their honour in Brazilian jujitsu.)" } }),
+        say("POLSON", "SanChz. Fourth album. Best one. I AM THE NEW COLETRAIN."),
+        say("MIKEY", "I uploaded it. Had to fix the cover art. Needs to be a perfect square."),
+        say("KREBLIS", "Flenky jenky is quite renky."),
+      ],
+      crocodile: [
+        dir("NOW PLAYING: 'Do The Crocodile' — SanMik. Nine men at the bar slowly raise their left hands. Very seriously."),
+        say("MIKEY", "YOU TAKE YOUR LEFT HAND."),
+        say("GRONNY", "And go like this."),
+      ],
+    };
+    await this.play(lines[tracks[i]]);
   }
 
   private async play(lines: Line[]) {
