@@ -52,6 +52,8 @@ interface Interactable {
 
 const SHAKE = () => G.meta.settings.shake;
 
+const clearKey = (dungeon: string, room: number) => `dclr_${dungeon}_${room}`;
+
 export class DungeonScene extends Phaser.Scene implements CombatWorld {
   sc!: Phaser.Scene;
   player!: Player;
@@ -92,14 +94,29 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private pendingSpawns = 0;
   private transitioning = false;
 
+  private resumed = false;
+
   constructor() {
     super("Dungeon");
+  }
+
+  private markCleared() {
+    G.s.flags[clearKey(this.dungeon.id, this.roomIdx)] = true;
+    G.save();
   }
 
   init(data: { dungeon: string; room?: number; bossHpPct?: number }) {
     this.sc = this;
     this.dungeon = DUNGEONS[data.dungeon] ?? DUNGEONS.wildern;
     this.roomIdx = data.room ?? 0;
+    // Saved progress: walking in from town resumes at the first room you haven't cleared.
+    this.resumed = false;
+    if (this.roomIdx === 0 && G.s.flags[clearKey(this.dungeon.id, 0)]) {
+      let i = 0;
+      while (i < this.dungeon.rooms.length - 1 && G.s.flags[clearKey(this.dungeon.id, i)]) i++;
+      this.roomIdx = i;
+      this.resumed = i > 0;
+    }
     this.room = this.dungeon.rooms[this.roomIdx];
     this.waves = (this.room.waves ?? []).map((w) => w.map((x) => [x[0], x[1]] as [string, number]));
     this.enemies = [];
@@ -409,6 +426,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
     if (this.roomIdx === 0) G.drongus("enter_dungeon");
     this.busy = false;
+    if (this.resumed) this.toast("PROGRESS SAVED", `Picking up where you left off: room ${this.roomIdx + 1} of ${this.dungeon.rooms.length}.`);
+    if (!r.boss && G.s.flags[clearKey(this.dungeon.id, this.roomIdx)]) {
+      this.roomCleared = true;
+      this.checkExit();
+      return;
+    }
     if (r.boss) {
       await this.startBoss();
       return;
@@ -416,6 +439,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
     else {
       this.roomCleared = true;
+      this.markCleared();
       this.checkExit();
     }
   }
@@ -451,6 +475,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private onRoomCleared() {
     if (this.roomCleared) return;
     this.roomCleared = true;
+    this.markCleared();
     synth.play("ding");
     for (let i = 0; i < 6; i++) this.dropPickup(this.player.x + (Math.random() - 0.5) * 140, this.player.y - 40 + (Math.random() - 0.5) * 80, "coin", 3);
     coolBanRisk(G.s, 15);
@@ -569,6 +594,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async onBossDefeated(b: Boss) {
     this.busy = true;
     const s = G.s;
+    // dungeon done: forget room progress so a replay starts from the top
+    for (let i = 0; i < this.dungeon.rooms.length; i++) delete s.flags[clearKey(this.dungeon.id, i)];
     G.emit("boss", null);
     synth.play("boom");
     this.shake(800, 0.03);
@@ -1014,7 +1041,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   spawnEnemy(type: string, x: number, y: number, opts: { noDrops?: boolean; minion?: boolean } = {}): Enemy | null {
     if (!ENEMIES[type]) return null;
-    if (this.enemies.filter((e) => !e.dead).length > 40) return null;
+    if (this.enemies.filter((e) => !e.dead).length > 28) return null;
     const s = G.s;
     const e = new Enemy(this, type, Phaser.Math.Clamp(x, this.bounds.left + 20, this.bounds.right - 20), Phaser.Math.Clamp(y, this.bounds.top + 20, this.bounds.bottom - 20), enemyHpMult(s));
     e.noDrops = !!opts.noDrops;

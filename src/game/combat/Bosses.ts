@@ -942,7 +942,10 @@ export class HoardBoss extends Boss {
     this.moveToward(p.x, p.y, (this.phase === 2 ? 55 : this.phase ? 42 : 30) * this.world.enemyTimeScale);
     if (now < this.nextPattern) return;
     const n = this.phase === 2 ? 6 : 5;
-    const pick = this.patternIdx++ % n;
+    let pick = this.patternIdx++ % n;
+    // keep the room light on phones: no more minions once a crowd is already up
+    const crowd = this.world.enemies.filter((e) => !e.dead && !e.isBoss).length;
+    if (crowd >= 12 && (pick === 0 || pick === 3)) pick = 2;
     this.taunt();
     if (pick === 4) {
       // the Salem souvenir: a witch-museum broom buried in the heap. Not a headache. Energies.

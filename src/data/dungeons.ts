@@ -108,6 +108,9 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [
           { s: "NARRATOR", t: "Polson Towers. It's his house. You can't see the floor. You can't see the walls. You can see a lot of stuffed toys, and some of them are moving.", dir: true },
           { s: "POLSON", t: "(on the phone) Shoes off. Actually, shoes on. Definitely shoes on." },
+          { s: "POLSON", t: "(on the phone) Most of that's Eden's. I'm not really allowed to move it. I've never been allowed to move it." },
+          { s: "KREZMAR", t: "It's YOUR house, Polson. Every bag that goes out, a bit more of you comes back." },
+          { s: "NARRATOR", t: "Objective: clear out Eden's stuff. Room by room. Give Polson his house back.", dir: true },
         ],
       },
       {
@@ -120,6 +123,9 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [
           { s: "NARRATOR", t: "The kitchen. Every surface is takeaway. Some of the takeaway has developed opinions.", dir: true },
           { s: "POLSON", t: "(on the phone) There's a spagon bol-bol in there from about March. Don't make eye contact with it." },
+          { s: "POLSON", t: "(on the phone) Eden said she'd sort the kitchen. That was before March." },
+          { s: "NARRATOR", t: "A note on the fridge, in Eden's handwriting: 'DO NOT THROW ANYTHING AWAY. I MIGHT NEED IT.' It is pinned under a magnet shaped like a smaller magnet.", dir: true },
+          { s: "KREBLIS", t: "Breaking news: the bin is empty. It has always been empty. Nobody in this house has ever used the bin." },
         ],
       },
       {
@@ -131,6 +137,9 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [
           { s: "NARRATOR", t: "The bedroom. A mountain of stuffed toys reaches the ceiling. At the summit, a hamster watches you with serene, total calm.", dir: true },
           { s: "POLSON", t: "(on the phone) Is the hamster alright? Tell him I love him." },
+          { s: "POLSON", t: "(on the phone) The toys are Eden's. Every one has a name. I'm not allowed on that side of the bed. I sleep on the edge, like a plank." },
+          { s: "NARRATOR", t: "Each stuffed toy wears a tiny label: 'EDEN'S. DO NOT TOUCH.' One of the labels says 'POLSON'S'. It's on the hamster. It's the only thing in the room with his name on it.", dir: true },
+          { s: "MIKEY", t: "(ping) Bin bags. Divide and conquer." },
         ],
       },
       {
@@ -139,6 +148,11 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 820,
         theme: "mansion",
         boss: "hoard",
+        enterLines: [
+          { s: "NARRATOR", t: "The living room. Everything Eden ever bought, kept, was given, or found, piled into one shape. Underneath it, somewhere, is Polson's sofa. And the router.", dir: true },
+          { s: "POLSON", t: "(on the phone) That's all of it. All of her stuff. If it goes... it's just my house again. Just me." },
+          { s: "POLSON", t: "(on the phone) Fifty percent towards breaking up. Fifty-five. Clear it. Clear the lot." },
+        ],
       },
     ],
   },
