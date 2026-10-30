@@ -122,7 +122,6 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.morkRound = 0;
     this.enemyTimeScale = 1;
     this.prophecyUntil = 0;
-    if (this.roomIdx === 0 || G.rt.dungeonId !== this.dungeon.id) G.rt.fart = 0;
     G.rt.dungeonId = this.dungeon.id;
     G.rt.room = this.roomIdx;
     (this as any)._bossHpPct = data.bossHpPct;
@@ -143,7 +142,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.buildRoom();
     this.controls = new Controls(this);
     this.player = new Player(this, r.w / 2, r.h - 90);
-    this.player.wonk = activeMods(s).wonkStart;
+    // the meter carries over between rooms; a revision can guarantee a minimum
+    this.player.wonk = Math.max(this.player.wonk, activeMods(s).wonkStart);
     this.enemyGroup = this.physics.add.group();
     this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.collider(this.player.spr, this.obstacles);

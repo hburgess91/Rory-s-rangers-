@@ -22,6 +22,8 @@ export class UIScene extends Phaser.Scene {
   private nameT!: Phaser.GameObjects.Text;
   private statT!: Phaser.GameObjects.Text;
   private fartT!: Phaser.GameObjects.Text;
+  private wonkChip!: Phaser.GameObjects.Text;
+  private fartChip!: Phaser.GameObjects.Text;
   private roomT!: Phaser.GameObjects.Text;
   private objT!: Phaser.GameObjects.Text;
   private ruleT!: Phaser.GameObjects.Text;
@@ -61,8 +63,10 @@ export class UIScene extends Phaser.Scene {
     this.bossT = this.add.text(480, 494, "", { fontFamily: FONT, fontSize: "14px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setShadow(2, 2, "#000", 0);
     this.hpT = this.add.text(70, 22, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
     this.kzT = this.add.text(70, 37, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setDepth(5).setShadow(1, 1, "#000", 0);
-    this.wonkT = this.add.text(68, 52, "", { fontFamily: FONT, fontSize: "10px", color: "#ff8c00", fontStyle: "bold" });
-    this.fartT = this.add.text(384, 51, "", { fontFamily: FONT, fontSize: "10px", color: "#9ccc65", fontStyle: "bold" }).setShadow(1, 1, "#000", 0);
+    this.wonkT = this.add.text(70, 52, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setShadow(1, 1, "#000", 0);
+    this.fartT = this.add.text(70, 68, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold" }).setShadow(1, 1, "#000", 0);
+    this.wonkChip = this.add.text(262, 52, "", { fontFamily: FONT, fontSize: "10px", color: "#111111", fontStyle: "bold", backgroundColor: "#ffd23f", padding: { x: 5, y: 1 } }).setVisible(false);
+    this.fartChip = this.add.text(262, 68, "", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", fontStyle: "bold", backgroundColor: "#3f6212", padding: { x: 5, y: 1 } }).setVisible(false);
     this.timerT = this.add.text(480, 96, "", { fontFamily: FONT, fontSize: "22px", color: "#ff4d4d", fontStyle: "bold", backgroundColor: "#000000aa", padding: { x: 8, y: 3 } }).setOrigin(0.5, 0).setDepth(50).setVisible(false);
     this.off = G.on((ev, d) => this.onEvent(ev, d));
     this.events.off("mode");
@@ -169,31 +173,51 @@ export class UIScene extends Phaser.Scene {
     if (this.mode === "dungeon" && dun?.player) wonk = dun.player.wonk;
     if (this.mode === "dungeon") {
       const full = wonk >= 100;
-      g.fillStyle(0x000000, 0.65);
-      g.fillRect(170, 52, 86, 9);
-      g.fillStyle(full && Math.floor(time / 150) % 2 ? 0xffffff : UI.wonk, 1);
-      g.fillRect(171, 53, 84 * (wonk / 100), 7);
-      this.wonkT.setText(full ? `${labels[2]} FULL — R: WONK YOUR THANG` : `${labels[2]} METER`).setVisible(true);
-      // fart meter: four potency segments
       const fm = fartMeter();
       const lv = fartLevel();
-      const fx = 262;
-      g.fillStyle(0x000000, 0.65);
-      g.fillRect(fx, 52, 118, 9);
+      const flash = Math.floor(time / 160) % 2 === 0;
+      // a solid panel so the specials never get lost in the scenery
+      g.fillStyle(0x0b0614, 0.82);
+      g.fillRoundedRect(62, 49, 300, 34, 6);
+      g.lineStyle(1, 0xffffff, 0.25);
+      g.strokeRoundedRect(62, 49, 300, 34, 6);
+      // WONK
+      g.fillStyle(0x000000, 0.8);
+      g.fillRect(66, 52, 190, 13);
+      g.fillStyle(full ? (flash ? 0xffd23f : 0xff8c00) : UI.wonk, 1);
+      g.fillRect(67, 53, 188 * Math.min(1, wonk / 100), 11);
+      g.lineStyle(full ? 2 : 1, full ? 0xffd23f : 0xffffff, full ? 1 : 0.35);
+      g.strokeRect(66, 52, 190, 13);
+      this.wonkT.setText(full ? `${labels[2]} FULL!` : `${labels[2]} ${Math.floor(wonk)}%`).setColor(full ? "#1a0b00" : "#ffffff").setShadow(1, 1, full ? "#ffe9a8" : "#000", 0).setPosition(70, 52).setVisible(true);
+      // FART: four potency segments
+      const fx = 66;
+      g.fillStyle(0x000000, 0.8);
+      g.fillRect(fx, 68, 190, 13);
       for (let i = 0; i < 4; i++) {
         const fill = Phaser.Math.Clamp((fm - i * 25) / 25, 0, 1);
         const col = [0xc5e1a5, 0x9ccc65, 0x7cb342, 0xd4ff3a][i];
-        const pulse = lv === 4 && Math.floor(time / 140) % 2 ? 0xffffff : col;
-        g.fillStyle(pulse, 1);
-        g.fillRect(fx + 1 + i * 29, 53, 28 * fill, 7);
+        g.fillStyle(lv === 4 ? (flash ? 0xd4ff3a : 0xa3e635) : col, 1);
+        g.fillRect(fx + 1 + i * 47.25, 69, 46.25 * fill, 11);
       }
-      g.lineStyle(1, 0x000000, 0.9);
-      for (let i = 1; i < 4; i++) g.lineBetween(fx + i * 29.25, 52, fx + i * 29.25, 61);
-      const nm = ["💨 FART METER", "💨 FAIRY (G)", "💨 BEANS (G)", "💨 CABBAGE (G)", "💨 IBS ATTACK! (G)"][lv];
-      this.fartT.setText(nm).setColor(lv === 4 ? "#d4ff3a" : "#9ccc65").setVisible(true);
+      g.lineStyle(1, 0x000000, 1);
+      for (let i = 1; i < 4; i++) g.lineBetween(fx + i * 47.5, 68, fx + i * 47.5, 81);
+      g.lineStyle(lv === 4 ? 2 : 1, lv === 4 ? 0xd4ff3a : 0xffffff, lv === 4 ? 1 : 0.35);
+      g.strokeRect(fx, 68, 190, 13);
+      const fn = ["FART", "FART · FAIRY", "FART · BAKED BEANS", "FART · CABBAGE", "FART · IBS ATTACK!"][lv];
+      this.fartT.setText(`💨 ${fn}`).setColor(lv === 4 ? "#0f1a05" : lv ? "#ffffff" : "#c5e1a5").setShadow(1, 1, lv === 4 ? "#f0ffb0" : "#000", 0).setPosition(70, 68).setVisible(true);
+      // "press this" chips
+      const touch = !!this.touch && isTouchDevice(this.game);
+      this.wonkChip.setText(touch ? "TAP WONK" : "PRESS R").setVisible(full).setAlpha(flash ? 1 : 0.75);
+      this.fartChip.setText(touch ? "TAP 💨" : "PRESS G").setVisible(lv >= 1).setBackgroundColor(lv === 4 ? (flash ? "#d4ff3a" : "#7cb342") : "#3f6212").setColor(lv === 4 ? "#111" : "#fff");
+      this.touch?.glow("burst", full, time);
+      this.touch?.glow("fart", lv === 4, time);
+      this.statT.setY(88);
     } else {
       this.wonkT.setVisible(false);
       this.fartT.setVisible(false);
+      this.wonkChip?.setVisible(false);
+      this.fartChip?.setVisible(false);
+      this.statT.setY(66);
     }
     const nm = time < this.renameUntil && this.rename ? this.rename : CHARACTERS[s.player].name;
     this.nameT.setText(nm);

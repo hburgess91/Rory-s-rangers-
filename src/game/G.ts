@@ -24,6 +24,8 @@ class GameContext {
     timerEnd: 0,
     /** Fart meter 0-100 (carried between rooms of one dungeon). */
     fart: 0,
+    /** Wonk meter 0-100 (carried between rooms). */
+    wonk: 0,
     /** Town time (ms) until the next chance of a posse beat-up. */
     beatupIn: undefined as number | undefined,
   };
@@ -44,6 +46,8 @@ class GameContext {
   newRun(player: PlayableId, ngPlus = 0) {
     this._state = newGameState(player, ngPlus, this.meta);
     this._state.hp = maxHp(this._state);
+    this.rt.wonk = 0;
+    this.rt.fart = 0;
     this.save();
   }
 

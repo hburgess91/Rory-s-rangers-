@@ -18,6 +18,7 @@ export class TouchControls {
   private knob!: Phaser.GameObjects.Arc;
   private stickId: number | null = null;
   private origin = { x: 110, y: 430 };
+  private btns: Record<string, { c: Phaser.GameObjects.Arc; color: number }> = {};
 
   constructor(scene: Phaser.Scene, combat: boolean) {
     this.scene = scene;
@@ -50,6 +51,7 @@ export class TouchControls {
       const c = scene.add.circle(x, y, r, color, 0.18).setStrokeStyle(2, color, 0.5).setInteractive();
       const t = scene.add.text(x, y, label, { fontFamily: FONT, fontSize: r > 34 ? "15px" : "12px", color: "#ffffff", fontStyle: "bold", align: "center" }).setOrigin(0.5);
       this.root.add([c, t]);
+      this.btns[key] = { c, color };
       c.on("pointerdown", () => {
         if (hold) TOUCH.attack = true;
         else TOUCH.edges.add(key);
@@ -76,6 +78,18 @@ export class TouchControls {
       btn(860, 450, 44, "E", "interact");
     }
     btn(930, 180, 22, "II", "pause");
+  }
+
+  /** Pulse a button when its special is ready. */
+  glow(key: string, on: boolean, time: number) {
+    const b = this.btns[key];
+    if (!b) return;
+    if (!on) {
+      b.c.setStrokeStyle(2, b.color, 0.5).setScale(1);
+      return;
+    }
+    const p = 0.5 + 0.5 * Math.sin(time / 120);
+    b.c.setStrokeStyle(4 + p * 3, 0xffffff, 0.6 + p * 0.4).setScale(1 + p * 0.08);
   }
 
   private move(p: Phaser.Input.Pointer) {

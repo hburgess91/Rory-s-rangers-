@@ -25,7 +25,13 @@ export class Player {
   def: CharacterDef;
   spr: Phaser.Physics.Arcade.Sprite;
   world: CombatWorld;
-  wonk = 0;
+  /** Kept in G.rt so it carries over between rooms. */
+  get wonk() {
+    return G.rt.wonk ?? 0;
+  }
+  set wonk(v: number) {
+    G.rt.wonk = v;
+  }
   facing = 0;
   aim = 0;
   // timers
