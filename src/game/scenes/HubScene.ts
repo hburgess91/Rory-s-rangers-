@@ -177,6 +177,9 @@ export class HubScene extends Phaser.Scene {
   private kids: { spr: Phaser.GameObjects.Sprite; tx: number; ty: number; next: number }[] = [];
   private pg = { distractedUntil: 0, candyAt: { x: 0, y: 0 }, alarmAt: 0, cooldownUntil: 0, chaseUntil: 0 };
   private cops: Phaser.GameObjects.Sprite[] = [];
+  private pgSign: Phaser.GameObjects.Text | null = null;
+  private spawnedSpots = new Set<string>();
+  private photoMarks: { ring: Phaser.GameObjects.Arc; done: () => boolean }[] = [];
   private walkT = 0;
   private nextChatter = 0;
   private idleMs = 0;
@@ -198,6 +201,9 @@ export class HubScene extends Phaser.Scene {
     this.busy = false;
     this.anchorsSpr = {};
     this.kids = [];
+    this.photoMarks = [];
+    this.pgSign = null;
+    this.spawnedSpots = new Set();
     this.cops = [];
     this.pg = { distractedUntil: 0, candyAt: { x: 0, y: 0 }, alarmAt: 0, cooldownUntil: 0, chaseUntil: 0 };
     this.cameras.main.fadeIn(350);
@@ -729,6 +735,12 @@ export class HubScene extends Phaser.Scene {
     }
     // keep talk interactables attached to NPC positions
     for (const it of this.interactables) {
+      if ((it as any).__throw) {
+        const near = this.nearPlayground(this.av.x, this.av.y, 150);
+        it.x = near ? this.av.x : -9999;
+        it.y = near ? this.av.y : -9999;
+        continue;
+      }
       const npc = (it as any).__npc as Npc | undefined;
       if (npc) {
         it.x = npc.spr.x;
@@ -843,20 +855,19 @@ export class HubScene extends Phaser.Scene {
       const spr = this.add.sprite(x, P.cy, key, 0).setScale(key.startsWith("spr_KID") ? 2 : 1.4).setDepth(P.cy);
       this.kids.push({ spr, tx: x, ty: P.cy, next: 0 });
     }
-    // sweetie throwing spots on the fence
-    for (const [x, y] of [
-      [P.cx, P.y + P.h + 30],
-      [P.x + P.w + 30, P.cy],
-    ]) {
-      this.interactables.push({
-        x,
-        y,
-        r: 60,
-        enabled: () => ((G.s.flags.boggor_candy as number) ?? 0) > 0,
-        label: () => `Throw a sweetie into the playground (${G.s.flags.boggor_candy} left)`,
-        use: () => this.throwCandy(),
-      });
-    }
+    // throwing a sweetie: press E anywhere near the playground (the prompt follows you)
+    const throwIt: HubInteract = {
+      x: -9999,
+      y: -9999,
+      r: 80,
+      enabled: () => ((G.s.flags.boggor_candy as number) ?? 0) > 0 && !this.kidsDistracted(),
+      label: () => `🍬 Throw a sweetie over the fence (${G.s.flags.boggor_candy} left)`,
+      use: () => this.throwCandy(),
+    };
+    (throwIt as any).__throw = true;
+    this.interactables.push(throwIt);
+    // big sign over the playground saying what to do
+    this.pgSign = this.add.text(P.cx, P.y - 34, "", { fontFamily: FONT, fontSize: "15px", color: "#ffffff", fontStyle: "bold", align: "center", stroke: "#000", strokeThickness: 4, backgroundColor: "#00000088", padding: { x: 8, y: 4 } }).setOrigin(0.5, 1).setDepth(6000).setVisible(false);
   }
 
   private kidsDistracted() {
@@ -873,11 +884,11 @@ export class HubScene extends Phaser.Scene {
     this.tweens.add({ targets: c, x: tx, y: ty, duration: 600, ease: "Quad.out", onComplete: () => this.tweens.add({ targets: c, alpha: 0, delay: 12000, duration: 400, onComplete: () => c.destroy() }) });
     this.tweens.add({ targets: c, angle: 720, duration: 600 });
     synth.play("lob");
-    this.pg.distractedUntil = this.time.now + 15000;
+    this.pg.distractedUntil = this.time.now + 25000;
     this.pg.candyAt = { x: tx, y: ty };
     this.pg.alarmAt = 0;
     for (const k of this.kids) this.kidBubble(k.spr, ["SWEETIES!", "MINE!", "CANDY!!", "NO MINE!"][Math.floor(Math.random() * 4)], "#ffd23f");
-    G.emit("toast", { title: "DISTRACTED", text: "The kids are fighting over a sweetie. ~15 seconds. Get your photos." });
+    G.emit("toast", { title: "KIDS DISTRACTED", text: "25 seconds. Walk to each 📸 camera in the playground and press E to snap it." });
   }
 
   private kidBubble(spr: Phaser.GameObjects.Sprite, text: string, color = "#ff3b3b") {
@@ -949,6 +960,7 @@ export class HubScene extends Phaser.Scene {
       animateWalker(k.spr, dx, dy, moving, now);
       k.spr.setDepth(k.spr.y);
     }
+    this.updatePlaygroundSign(now);
     if (this.busy) return;
     // the kids notice any adult who gets close while they're not busy with sweeties
     if (!distracted && this.nearPlayground(this.av.x, this.av.y)) this.raiseAlarm();
@@ -966,6 +978,30 @@ export class HubScene extends Phaser.Scene {
         if (d < 26) return this.endChase(true);
       }
       if (now > this.pg.chaseUntil) this.endChase(false);
+    }
+  }
+
+  private updatePlaygroundSign(now: number) {
+    if (!this.pgSign) return;
+    const photosOpen = this.photoMarks.some((m) => !m.done());
+    if (!photosOpen) {
+      this.pgSign.setVisible(false);
+      return;
+    }
+    const left = Math.ceil((this.pg.distractedUntil - now) / 1000);
+    const candy = (G.s.flags.boggor_candy as number) ?? 0;
+    const done = this.photoMarks.filter((m) => m.done()).length;
+    if (left > 0) this.pgSign.setText(`KIDS DISTRACTED: ${left}s\n📸 Snap the cameras (E)  ${done}/${this.photoMarks.length}`).setColor(left <= 5 ? "#ff6b6b" : "#86efac");
+    else if (candy > 0) this.pgSign.setText(`🍬 Stand by the fence and press E to throw a sweetie\nThen snap the 📸 cameras while the kids are busy  ${done}/${this.photoMarks.length}`).setColor("#ffd23f");
+    else this.pgSign.setText("Out of sweeties. Boggor has more (his dark house, just above the playground).").setColor("#ffffff");
+    this.pgSign.setVisible(true);
+    const on = left > 0;
+    for (const m of this.photoMarks) {
+      if (m.done()) {
+        m.ring.setVisible(false);
+        continue;
+      }
+      m.ring.setStrokeStyle(3, on ? 0x22c55e : 0xef4444, 0.9).setFillStyle(on ? 0x22c55e : 0xef4444, on ? 0.18 + 0.12 * Math.sin(now / 150) : 0.08);
     }
   }
 
@@ -1053,18 +1089,27 @@ You are required by law to sign the Sex Offenders Register.`, {
       if (k.kind !== "collect") continue;
       k.spots.forEach((sp, i) => {
         const f = spotFlag(c.arc, c.step, i);
-        if (G.s.flags[f]) return;
+        if (G.s.flags[f] || this.spawnedSpots.has(f)) return;
+        this.spawnedSpots.add(f);
         const glow = this.add.circle(sp.x, sp.y, 20, 0xf9a8d4, 0.25).setDepth(sp.y - 1);
         const img = k.guard ? this.add.image(sp.x, sp.y - 30, this.textures.exists("hd_camera") ? "hd_camera" : "p_tv").setScale(this.textures.exists("hd_camera") ? 1 : 1.2).setDepth(5000) : this.add.image(sp.x, sp.y, "p_token").setScale(2).setDepth(sp.y);
+        let label: Phaser.GameObjects.Text | null = null;
+        if (k.guard) {
+          const ring = this.add.circle(sp.x, sp.y, 34, 0xef4444, 0.08).setStrokeStyle(3, 0xef4444, 0.9).setDepth(sp.y - 2);
+          label = this.add.text(sp.x, sp.y + 22, `📸 ${sp.name.replace(/^the /, "").toUpperCase()}`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5, 0).setDepth(5000);
+          this.photoMarks.push({ ring, done: () => !!G.s.flags[f] });
+        }
         this.tweens.add({ targets: img, y: sp.y - 6, yoyo: true, repeat: -1, duration: 600 });
         this.interactables.push({
           x: sp.x,
           y: sp.y,
-          r: 46,
-          label: () => `Pick up: ${k.label} (${sp.name})`,
+          r: k.guard ? 60 : 46,
+          label: () => (k.guard ? `📸 Photograph ${sp.name}` : `Pick up: ${k.label} (${sp.name})`),
           enabled: () => !G.s.flags[f],
           use: async () => {
             if (k.guard === "playground" && !this.kidsDistracted()) {
+              // you have sweeties: throw one now instead of getting caught
+              if (((G.s.flags.boggor_candy as number) ?? 0) > 0) return this.throwCandy();
               this.raiseAlarm();
               G.emit("toast", { title: "SPOTTED", text: "Distract the kids with a sweetie first." });
               return;
@@ -1074,6 +1119,7 @@ You are required by law to sign the Sex Offenders Register.`, {
             if (k.guard) this.cameras.main.flash(120, 255, 255, 255);
             img.destroy();
             glow.destroy();
+            label?.destroy();
             const got = k.spots.filter((_, j) => G.s.flags[spotFlag(c.arc, c.step, j)]).length;
             await this.talk(k.pickup);
             G.emit("toast", { title: c.arc.title.toUpperCase(), text: `${k.label}: ${sp.name} (${got}/${k.spots.length})` });
@@ -1306,6 +1352,7 @@ You are required by law to sign the Sex Offenders Register.`, {
   }
 
   private arcPayout() {
+    this.spawnCollectibles();
     const r = maybeFinishArc(G.s);
     if (r) {
       synth.play("cheer");

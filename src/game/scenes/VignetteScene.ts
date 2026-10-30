@@ -415,9 +415,39 @@ export class VignetteScene extends Phaser.Scene {
       press.push(this.add.sprite(110 + i * 92, 470 + (i % 2) * 14, tex, 0).setScale(tex === "npc_journo" ? 1.6 : 2.6).setDepth(30 + i));
     }
     synth.music("ominous");
-    const flashes = this.time.addEvent({ delay: 400, loop: true, callback: () => this.cameras.main.flash(60, 255, 255, 255) });
+    // front page first: who the Cuddle Cronster is
+    const paper = this.add.container(480, 270).setDepth(200);
+    paper.add(this.add.rectangle(0, 0, 760, 420, 0xf4ecd8).setStrokeStyle(4, 0x1f1f1f));
+    paper.add(this.add.text(0, -180, "THE KRELFORD KRONICLE", { fontFamily: "Georgia, serif", fontSize: "30px", color: "#111", fontStyle: "bold" }).setOrigin(0.5));
+    paper.add(this.add.rectangle(0, -155, 700, 3, 0x111111));
+    paper.add(this.add.text(0, -110, "TERROR GRIPS KRELFORD AS THE\n\u201cCUDDLE CRONSTER\u201d STRIKES AGAIN", { fontFamily: "Georgia, serif", fontSize: "28px", color: "#7f1d1d", fontStyle: "bold", align: "center" }).setOrigin(0.5));
+    paper.add(this.add.text(0, -20, "\u201cI'll cuddle you, squeeze you, and extract all your lovely juices\u201d  \u263a", { fontFamily: "Comic Sans MS, cursive", fontSize: "20px", color: "#be185d", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
+    if (this.textures.exists("p_token")) paper.add(this.add.image(-250, 110, "p_token").setDisplaySize(90, 90));
+    paper.add(this.add.text(40, 110, "Cuddle token found at the scene.\nMotto: \u201cSweet hugs, sweeter squeezes.\u201d", { fontFamily: "Georgia, serif", fontSize: "18px", color: "#111", align: "center" }).setOrigin(0.5));
+    paper.setScale(0.2).setAngle(-540);
+    await this.tween({ targets: paper, scale: 1, angle: 0, duration: 700, ease: "Back.easeOut" });
+    synth.play("smash");
     await this.talk([
-      dir("In a hastily organised press conference, Sergeant Grimbolus Swig, the lead investigator on the case, addresses the growing panic in Krelford."),
+      say("NEWSREADER", "Krelford is once again in the icy grip of terror as the elusive criminal known only as the \"Cuddle Cronster\" continues his reign of bizarre and unsettling crimes."),
+      say("NEWSREADER", "The latest victim, identified only as a local woman from the outskirts of town, discovered a cryptic note in her home. Written in disturbingly cheery handwriting, it read:"),
+      say("NEWSREADER", "\"I'll cuddle you, squeeze you, and extract all your lovely juices.\""),
+      say("NEWSREADER", "The note was signed with an unsettlingly cheerful smiley face and accompanied by one of the Cronster's infamous edible \"cuddle tokens\" – intricate chocolate coins that bear his terrifying motto: \"Sweet hugs, sweeter squeezes.\""),
+      dir("POLICE HOLD CHAOTIC PRESS CONFERENCE"),
+    ]);
+    await this.tween({ targets: paper, y: 800, angle: 12, duration: 500, ease: "Quad.easeIn" });
+    paper.destroy();
+    // an occasional press camera flash, not a strobe
+    const flashes = this.time.addEvent({
+      delay: 2600,
+      loop: true,
+      callback: () => {
+        const p = press[Math.floor(Math.random() * press.length)];
+        const f = this.add.circle(p.x + 10, p.y - 30, 14, 0xffffff, 0.9).setDepth(80);
+        this.tween({ targets: f, alpha: 0, scale: 2.5, duration: 220 }).then(() => f.destroy());
+      },
+    });
+    await this.talk([
+      dir("In a hastily organised press conference earlier today, Sergeant Grimbolus Swig, the lead investigator on the case, addresses the growing panic in Krelford. He stands before a tense room filled with journalists."),
       say("SERGEANT SWIG", "Krelford. Please. Remain calm. The situation is under control."),
       dir("He attempts to downplay the Cronster's activities. However, things quickly unravel when he begins discussing the chocolate tokens left behind by the criminal."),
     ]);
@@ -456,9 +486,14 @@ export class VignetteScene extends Phaser.Scene {
     synth.stopMusic();
     await this.talk([
       dir("He pulls out his sidearm and fires indiscriminately into the audience. Journalists dive under chairs, behind cameras, and in one case into a bin."),
-      dir("Many are now questioning the competence of law enforcement to handle the case."),
-      dir("Citizens have been urged to report any suspicious activity and to avoid consuming any chocolate tokens they may find, no matter how tempting."),
-      dir("As tensions rise and trust in law enforcement plummets, one question remains: will the Cuddle Cronster be stopped before he strikes again? Or will Krelford continue to spiral into fear, chaos, and chocolate-fueled madness?"),
+      dir("CHAOS AND CONTROVERSY"),
+      say("NEWSREADER", "Many are now questioning the competence of law enforcement to handle the case."),
+      say("NEWSREADER", "Meanwhile, experts warn that the Cronster's chocolate tokens—though delicious—may serve a sinister purpose. Dr. Grungus Florp, a leading criminal psychologist, believes the tokens are a psychological tool designed to distract and disarm investigators."),
+      say("DR. GRUNGUS FLORP", "The Cuddle Cronster is a master manipulator. By combining his grotesque threats with sweet, irresistible treats, he's playing a twisted game with the authorities. And clearly, it's working."),
+      dir("A COMMUNITY ON EDGE"),
+      say("NEWSREADER", "As the hunt for the Cuddle Cronster continues, Krelford residents remain on high alert. Citizens have been urged to report any suspicious activity and to avoid consuming any chocolate tokens they may find—no matter how tempting."),
+      say("NEWSREADER", "But as tensions rise and trust in law enforcement plummets, one question remains: will the Cuddle Cronster be stopped before he strikes again? Or will Krelford continue to spiral into fear, chaos, and chocolate-fueled madness?"),
+      say("NEWSREADER", "For now, the Cuddle Cronster roams free, leaving only his disturbing notes and sweet, sinister tokens in his wake."),
       say("SERGEANT SWIG", "(quietly, to you, reloading) Find the tokens. Bring them to me. For evidence."),
       dir("NEW OBJECTIVE: find six chocolate cuddle tokens around Krelford. They glow pink."),
     ]);
