@@ -1,0 +1,479 @@
+import Phaser from "phaser";
+import { G } from "../G";
+import { Controls } from "../combat/Controls";
+import { DialogueBox } from "../ui/DialogueBox";
+import { switchTo } from "../Flow";
+import { synth } from "../audio/Synth";
+import { FONT, title } from "../ui/theme";
+import { dir, say } from "../../content/dsl";
+import { animateWalker, backdrop } from "../gfx/HD";
+import { bump, maxBottles } from "../systems/stats";
+import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { TOUCH } from "../ui/TouchControls";
+
+/**
+ * THE WONKY POLE: a cabaret club. Dancers dance (costumes on), the lads leer, and you can call a
+ * WONK-OFF. The dancer goes on her break, everyone competes behind a very large censor bar,
+ * everyone krezzes, and Big Derek throws you all out.
+ */
+
+const DANCERS = [
+  { id: "DESTINY", tex: "spr_TV_DANCER1" },
+  { id: "CRYSTAL", tex: "spr_TV_DANCER2" },
+];
+
+const LEER = ["Mmm.", "Mmmmmm.", "Mmmmmmmmmm.", "She's mine.", "She's MINE.", "She looked at me. She's mine.", "Back off. Mine.", "Mmm. Yes.", "I think she likes me.", "She's mine, lads. Sorry.", "She winked at me. That's legally binding.", "Mine. Mine mine mine."];
+const LEER_BY: Record<string, string[]> = {
+  FLENKY: ["Jenko's in love.", "She's mine. Jenko has spoken."],
+  KREZMAR: ["Mmm. That's the blues, that.", "She's mine. Motion carried."],
+  KREBLIS: ["She's mine. I'll send her a Facebook message.", "mmm mmm she is mine dont reply to this"],
+  KREZWONK: ["The omens say she's mine.", "I foresaw this. She's mine."],
+  SCROMBUS: ["Mmm. Lovely. She's mine. Ta.", "Can I have her? Ta."],
+  KREBON: ["She's coming to my gig. She's mine.", "🤘 Mine 🤘"],
+  CRONGUS: ["Mmm. Like a pudding.", "She's mine. I'm Lil' but I'm mine. She's mine."],
+  GRONNY: ["Waa waa wee waa.", "Mmm. Lovely day for it.", "Buying gf!"],
+  MIKEY: ["Can I sit with you lot?", "Mmm. She's... can I have her? Can I join?"],
+};
+
+const ZONE_LO = 0.7;
+const ZONE_HI = 0.88;
+const OVER = 0.97;
+const TIME = 7000;
+const NEED = 2200;
+
+interface Rival {
+  id: string;
+  spr: Phaser.GameObjects.Sprite;
+  gauge: number;
+  inZone: number;
+  /** how this one will go */
+  plan: "perfect" | "over" | "under";
+  skill: number;
+  result?: "perfect" | "over" | "under";
+  finishedAt?: number;
+  fill?: Phaser.GameObjects.Rectangle;
+  label?: Phaser.GameObjects.Text;
+}
+
+export class ClubScene extends Phaser.Scene {
+  private controls!: Controls;
+  private box!: DialogueBox;
+  private me!: Phaser.GameObjects.Sprite;
+  private dancer!: Phaser.GameObjects.Sprite;
+  private dancerIdx = 0;
+  private patrons: { id: string; spr: Phaser.GameObjects.Sprite }[] = [];
+  private prompt!: Phaser.GameObjects.Text;
+  private busy = false;
+  private nextLeer = 0;
+  private nextSwap = 0;
+  private onBreak = false;
+  private spots: Phaser.GameObjects.Arc[] = [];
+
+  constructor() {
+    super("Club");
+  }
+
+  create() {
+    this.busy = false;
+    this.onBreak = false;
+    this.patrons = [];
+    this.spots = [];
+    this.cameras.main.fadeIn(300);
+    if (!backdrop(this, "bg_club", { depth: -10, dim: 0.1 })) this.add.rectangle(480, 270, 960, 540, 0x1a0b24).setDepth(-10);
+    title(this, 480, 40, "THE WONKY POLE", 28, "#ff6bb0").setDepth(200);
+    this.add.text(480, 66, "GENTLEMEN'S CABARET · LOOK, DON'T TOUCH · NO WONKING", { fontFamily: FONT, fontSize: "11px", color: "#ffd1e8" }).setOrigin(0.5).setDepth(200);
+    for (let i = 0; i < 5; i++) {
+      const l = this.add.circle(200 + i * 140, 200, 90, [0xff2e88, 0xa855f7, 0x5ad1ff][i % 3], 0.13).setBlendMode(Phaser.BlendModes.ADD).setDepth(3);
+      this.tweens.add({ targets: l, alpha: 0.3, duration: 260 + i * 80, yoyo: true, repeat: -1 });
+      this.spots.push(l);
+    }
+    if (!this.textures.exists("bg_club")) this.add.rectangle(480, 190, 6, 200, 0xd4af37).setDepth(4);
+    // the dancer
+    this.dancer = this.add.sprite(430, 330, this.dancerTex(), 0).setScale(3).setDepth(330);
+    this.nextSwap = this.time.now + 35000;
+    // the lads, front row
+    const s = G.s;
+    const ids = [...PLAYABLE_ORDER.filter((id) => id !== s.player && !(id === "KREBON" && s.flags.krebon_gone)), "MIKEY"].slice(0, 7);
+    const seats = [
+      [150, 470],
+      [255, 478],
+      [360, 470],
+      [600, 470],
+      [705, 478],
+      [810, 470],
+      [880, 400],
+    ];
+    ids.forEach((id, i) => {
+      const [x, y] = seats[i % seats.length];
+      const spr = this.add.sprite(x, y, `spr_${id}`, 0).setScale(2).setDepth(y);
+      spr.setData("facing", "north");
+      animateWalker(spr, 0, 0, false, 0);
+      this.patrons.push({ id, spr });
+      this.add.text(x, y + 30, CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: "9px", color: "#ffd1e8", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setDepth(y + 1);
+    });
+    // stations
+    this.add.text(870, 330, "🍸 BAR", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
+    this.add.text(70, 400, "🏆 WONK-OFF\nTABLE", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", align: "center", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
+    this.add.rectangle(480, 532, 90, 14, 0xffd23f, 0.3).setStrokeStyle(2, 0xffd23f).setDepth(1);
+    this.add.text(480, 532, "EXIT", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f" }).setOrigin(0.5).setDepth(2);
+    this.me = this.add.sprite(480, 495, `spr_${s.player}`, 0).setScale(2).setDepth(495);
+    this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#000000cc", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(1000).setVisible(false);
+    this.controls = new Controls(this);
+    this.box = new DialogueBox(this, 2000, 0.2);
+    if (!this.scene.isActive("UI")) this.scene.launch("UI", { mode: "hub" });
+    else this.scene.get("UI").events.emit("mode", "hub");
+    synth.music("pub", true);
+    bump(s, "club_visits");
+    this.time.delayedCall(500, () => {
+      if (s.flags.club_seen) return;
+      s.flags.club_seen = true;
+      this.talk([
+        dir("THE WONKY POLE. It smells of cherry vape and Lynx Africa. On stage, a dancer in an extremely sparkly costume is doing a routine with a lot of spinning."),
+        dir("The entire chat is already here, in the front row, at 2pm on a weekday."),
+        dir("Tip the dancer at the stage, get a drink at the bar, or go to the WONK-OFF TABLE if you're feeling competitive. The EXIT is at the bottom."),
+      ]);
+    });
+  }
+
+  private dancerTex() {
+    const d = DANCERS[this.dancerIdx % DANCERS.length];
+    return this.textures.exists(d.tex) ? d.tex : "spr_FOLK2";
+  }
+  private dancerName() {
+    return DANCERS[this.dancerIdx % DANCERS.length].id;
+  }
+
+  private async talk(lines: Parameters<DialogueBox["play"]>[0]) {
+    this.busy = true;
+    await this.box.play(lines);
+    this.controls.swallow();
+    this.busy = false;
+  }
+
+  private bubble(spr: Phaser.GameObjects.Sprite, text: string, ms = 1800, bg = "#ffffff") {
+    const t = this.add.text(spr.x, spr.y - 46, text, { fontFamily: FONT, fontSize: "11px", color: "#050505", backgroundColor: bg, padding: { x: 5, y: 3 }, wordWrap: { width: 180 }, align: "center" }).setOrigin(0.5, 1).setDepth(1500);
+    this.tweens.add({ targets: t, y: t.y - 8, duration: ms });
+    this.time.delayedCall(ms, () => t.destroy());
+  }
+
+  private leer(n = 1) {
+    for (let i = 0; i < n && this.patrons.length; i++) {
+      const p = this.patrons[Math.floor(Math.random() * this.patrons.length)];
+      const pool = [...LEER, ...(LEER_BY[p.id] ?? []), ...(LEER_BY[p.id] ?? [])];
+      this.time.delayedCall(i * 300, () => this.bubble(p.spr, pool[Math.floor(Math.random() * pool.length)]));
+    }
+  }
+
+  update(time: number, delta: number) {
+    const dt = Math.min(delta, 50);
+    // the routine
+    if (!this.onBreak) {
+      const t = time / 1000;
+      this.dancer.x = 430 + Math.sin(t * 1.3) * 60;
+      this.dancer.y = 330 - Math.abs(Math.sin(t * 3.2)) * 8;
+      // hip sway on the beat, turning to face each side now and then
+      if (!this.tweens.isTweening(this.dancer)) this.dancer.setAngle(Math.sin(t * 6.3) * 9);
+      this.dancer.setFlipX(Math.floor(t / 1.9) % 2 === 1);
+      if (Math.random() < 0.004) this.tweens.add({ targets: this.dancer, angle: 360, duration: 500, onComplete: () => this.dancer.setAngle(0) });
+      if (time > this.nextSwap && !this.busy) this.swapDancer();
+    }
+    // the lads bob about and leer
+    this.patrons.forEach((p, i) => {
+      if (!this.busy) p.spr.y += Math.sin(time / 300 + i) * 0.08;
+    });
+    if (time > this.nextLeer && !this.busy && !this.onBreak) {
+      this.nextLeer = time + 1600 + Math.random() * 1800;
+      this.leer(1);
+    }
+    if (this.busy) {
+      this.prompt.setVisible(false);
+      return;
+    }
+    const mv = this.controls.move();
+    const sp = 200 * (dt / 1000);
+    this.me.x = Phaser.Math.Clamp(this.me.x + mv.x * sp, 40, 920);
+    this.me.y = Phaser.Math.Clamp(this.me.y + mv.y * sp, 380, 520);
+    this.me.setDepth(this.me.y);
+    animateWalker(this.me, mv.x, mv.y, Math.hypot(mv.x, mv.y) > 0.1, time);
+    const atStage = this.me.y < 430 && Math.abs(this.me.x - 430) < 130;
+    const atBar = this.me.x > 780 && this.me.y < 440;
+    const atTable = this.me.x < 130 && this.me.y < 470;
+    const atExit = this.me.y > 495 && Math.abs(this.me.x - 480) < 70;
+    let label = "";
+    let act: (() => void) | null = null;
+    if (atStage && !this.onBreak) {
+      label = `E: Tip ${this.dancerName()} (5 Krezzcoin)`;
+      act = () => this.tip();
+    } else if (atBar) {
+      label = "E: Order a Pussy Juice (10 Krezzcoin)";
+      act = () => this.bar();
+    } else if (atTable) {
+      label = "E: Call a WONK-OFF";
+      act = () => this.wonkOff();
+    } else if (atExit) {
+      label = "E: Leave";
+      act = () => this.leave();
+    }
+    if (act) {
+      this.prompt.setText(label).setPosition(this.me.x, this.me.y - 50).setVisible(true);
+      if (this.controls.interact()) act();
+    } else {
+      this.prompt.setVisible(false);
+      this.controls.interact();
+    }
+    if (this.controls.pause()) this.leave();
+  }
+
+  private swapDancer() {
+    this.nextSwap = this.time.now + 35000;
+    const old = this.dancer;
+    this.tweens.add({ targets: old, x: -60, duration: 900 });
+    this.time.delayedCall(900, () => {
+      this.dancerIdx++;
+      old.setTexture(this.dancerTex(), 0).setX(1020);
+      synth.play("cheer");
+      this.leer(3);
+      this.tweens.add({ targets: old, x: 480, duration: 900 });
+    });
+  }
+
+  private tip() {
+    const s = G.s;
+    if (s.coins < 5) {
+      this.bubble(this.dancer, "Come back when you've got money, babe.", 1800);
+      return;
+    }
+    s.coins -= 5;
+    bump(s, "club_tips");
+    synth.play("coin");
+    this.tweens.add({ targets: this.dancer, angle: 360, duration: 450, onComplete: () => this.dancer.setAngle(0) });
+    this.bubble(this.dancer, ["Thanks, hun.", "Aw, cheers babe.", "Ta, love."][Math.floor(Math.random() * 3)], 1600, "#ffd1e8");
+    // jealousy
+    this.time.delayedCall(500, () => {
+      for (let i = 0; i < 3; i++) {
+        const p = this.patrons[Math.floor(Math.random() * this.patrons.length)];
+        this.time.delayedCall(i * 250, () => this.bubble(p.spr, ["SHE'S MINE", "Oi! She's MINE", "She was looking at ME", "That's my tip money!"][i % 4], 1500, "#ffe4e4"));
+      }
+    });
+  }
+
+  private bar() {
+    const s = G.s;
+    if (s.coins < 10) {
+      this.bubble(this.me, "Skint.", 1200);
+      return;
+    }
+    s.coins -= 10;
+    synth.play("gulp");
+    if (s.bottles < maxBottles(s)) {
+      s.bottles++;
+      this.bubble(this.me, "+1 Pussy Juice (for later)", 1400, "#ffd1e8");
+    } else {
+      s.intoxication = Math.min(100, s.intoxication + 12);
+      this.bubble(this.me, "Necked it.", 1200, "#ffd1e8");
+    }
+  }
+
+  private leave() {
+    if (this.busy) return;
+    this.busy = true;
+    synth.stopMusic();
+    G.save();
+    this.cameras.main.fadeOut(300);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
+  }
+
+  // ------------------------------------------------------------------ WONK-OFF
+
+  private async wonkOff() {
+    const s = G.s;
+    const me = s.player;
+    const crew = Phaser.Utils.Array.Shuffle(this.patrons.filter((p) => p.id !== "MIKEY").slice()).slice(0, 4);
+    const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+    await this.talk([
+      say(me, "Lads. Wonk-off. Right now."),
+      ...crew.slice(0, 3).map((c) => say(c.id, pick(["Say less.", "I've been waiting all night for this.", "Finally.", "I was born ready. Literally.", "Is there a prize?", "Mmm. Yes."]))),
+      say(this.dancerName(), "Absolutely not. I'm going on my break."),
+    ]);
+    // she leaves. lights down.
+    this.onBreak = true;
+    this.tweens.add({ targets: this.dancer, x: 1020, duration: 900 });
+    this.spots.forEach((l) => this.tweens.add({ targets: l, alpha: 0.03, duration: 600 }));
+    if (this.patrons.some((p) => p.id === "MIKEY")) this.bubble(this.patrons.find((p) => p.id === "MIKEY")!.spr, "Can I join the wonk-off?", 1800);
+    await new Promise((r) => this.time.delayedCall(900, r));
+    this.busy = true;
+    await this.runWonkOff(crew.map((c) => c.id));
+  }
+
+  private runWonkOff(rivalIds: string[]): Promise<void> {
+    return new Promise((resolve) => {
+      const s = G.s;
+      const ui = this.add.container(0, 0).setDepth(3000);
+      ui.add(this.add.rectangle(480, 270, 960, 540, 0x14001f, 0.88));
+      const head = this.add.text(480, 44, "WONK-OFF", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 9 }).setOrigin(0.5).setScale(0.2);
+      ui.add(head);
+      this.tweens.add({ targets: head, scale: 1, duration: 300, ease: "Back.out" });
+      ui.add(this.add.text(480, 88, TOUCH.enabled ? "TAP TAP TAP! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins." : "MASH R / SPACE / CLICK! Keep YOUR gauge in the KREZZ ZONE. First to krezz properly wins.", { fontFamily: "sans-serif", fontSize: "14px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+      // the line-up: you in the middle
+      const ids = [...rivalIds];
+      ids.splice(Math.floor(ids.length / 2), 0, s.player);
+      const n = ids.length;
+      const gap = Math.min(170, 840 / n);
+      const x0 = 480 - ((n - 1) * gap) / 2;
+      const all: Rival[] = ids.map((id, i) => {
+        const spr = this.add.sprite(x0 + i * gap, 250, `spr_${id}`, 0).setScale(3.2);
+        spr.setData("x0", spr.x);
+        ui.add(spr);
+        ui.add(this.add.text(spr.x, 150, id === s.player ? "YOU" : CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: id === s.player ? "14px" : "11px", color: id === s.player ? "#ffd23f" : "#ffd1e8", fontStyle: "bold" }).setOrigin(0.5));
+        // gauge under each
+        ui.add(this.add.rectangle(spr.x, 420, 26, 140, 0x000000, 0.85).setStrokeStyle(id === s.player ? 3 : 1, id === s.player ? 0xffd23f : 0xffffff, 0.8));
+        ui.add(this.add.rectangle(spr.x, 420 + 70 - 140 * ((ZONE_LO + ZONE_HI) / 2), 26, 140 * (ZONE_HI - ZONE_LO), 0x22c55e, 0.4));
+        const fill = this.add.rectangle(spr.x, 490, 20, 0, 0xff4fa3).setOrigin(0.5, 1);
+        ui.add(fill);
+        const roll = Math.random();
+        return { id, spr, gauge: 0, inZone: 0, plan: roll < 0.4 ? "perfect" : roll < 0.75 ? "over" : "under", skill: 0.6 + Math.random() * 0.5, fill };
+      });
+      // one long censor bar across every waist
+      ui.add(this.add.rectangle(480, 290, Math.max(260, (n - 1) * gap + 130), 46, 0x000000));
+      ui.add(this.add.text(480, 290, "C E N S O R E D", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5));
+      const timeBar = this.add.rectangle(220, 520, 520, 8, 0xffd23f).setOrigin(0, 0.5);
+      ui.add(this.add.rectangle(480, 520, 524, 12, 0x000000, 0.8));
+      ui.add(timeBar);
+      const you = all.find((r) => r.id === s.player)!;
+      let t = 0;
+      let done = false;
+      const press = () => {
+        if (done || you.result) return;
+        you.gauge = Math.min(1, you.gauge + 0.07);
+        synth.wonkTick(you.gauge);
+      };
+      const onKey = (e: KeyboardEvent) => {
+        if (e.repeat) return;
+        const k = e.key.toLowerCase();
+        if (k === "r" || k === " " || k === "e" || k === "j") {
+          e.preventDefault();
+          press();
+        }
+      };
+      window.addEventListener("keydown", onKey);
+      this.input.on("pointerdown", press);
+      const finishOne = (r: Rival, res: "perfect" | "over" | "under") => {
+        r.result = res;
+        r.finishedAt = t;
+        const txt = res === "perfect" ? "KREZZED!" : res === "over" ? "TOO EARLY" : "NOTHING";
+        r.label = this.add.text(r.spr.x, 190, txt, { fontFamily: "Impact, sans-serif", fontSize: "20px", color: res === "perfect" ? "#ffffff" : "#f9a8d4", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setScale(0.3);
+        ui.add(r.label);
+        this.tweens.add({ targets: r.label, scale: 1, duration: 200, ease: "Back.out" });
+        if (res === "perfect") {
+          this.jet(ui, r.spr.x, 270);
+          synth.play("splat");
+        } else synth.play("tap_fail");
+      };
+      const tick = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          if (done) return;
+          t += 16;
+          if (TOUCH.edges.has("interact")) {
+            TOUCH.edges.delete("interact");
+            press();
+          }
+          timeBar.setSize(520 * Math.max(0, 1 - t / TIME), 8);
+          for (const r of all) {
+            if (r.result) continue;
+            if (r !== you) {
+              // rivals: a noisy rhythm heading for their fate
+              const want = r.plan === "perfect" ? 0.74 + r.skill * 0.04 : 0.5;
+              const go = r.plan === "over" ? Math.random() < 0.09 + r.skill * 0.08 : r.gauge < want && Math.random() < 0.12 * r.skill;
+              if (go) r.gauge = Math.min(1, r.gauge + 0.07);
+            }
+            r.gauge = Math.max(0, r.gauge - (0.05 + 0.64 * r.gauge * r.gauge) * 0.016);
+            if (r.gauge >= ZONE_LO && r.gauge <= ZONE_HI) r.inZone += 16;
+            r.fill!.setSize(20, 140 * r.gauge).setFillStyle(r.gauge > ZONE_HI ? 0xef4444 : r.gauge >= ZONE_LO ? 0x22c55e : 0xff4fa3);
+            r.spr.setX((r.spr.getData("x0") as number) + (Math.random() - 0.5) * (2 + r.gauge * 8));
+            if (r.gauge >= OVER) finishOne(r, "over");
+            else if (r.inZone >= NEED) finishOne(r, "perfect");
+          }
+          if (t >= TIME || all.every((r) => r.result)) {
+            for (const r of all) if (!r.result) finishOne(r, "under");
+            done = true;
+            tick.remove();
+            window.removeEventListener("keydown", onKey);
+            this.input.off("pointerdown", press);
+            this.time.delayedCall(700, () => this.climax(ui, all, you, resolve));
+          }
+        },
+      });
+    });
+  }
+
+  /** A white stream from behind the censor bar, and splats where it lands. */
+  private jet(ui: Phaser.GameObjects.Container, x: number, y: number) {
+    const line = this.add.rectangle(x, y, 10, 0, 0xffffff).setOrigin(0.5, 1);
+    ui.add(line);
+    this.tweens.add({ targets: line, height: 260, duration: 180, ease: "Quad.out" });
+    this.tweens.add({ targets: line, alpha: 0, delay: 500, duration: 300, onComplete: () => line.destroy() });
+    for (let i = 0; i < 3; i++) this.time.delayedCall(150 + i * 60, () => this.splat(ui, x + (Math.random() - 0.5) * 160, 40 + Math.random() * 120));
+  }
+
+  private splat(ui: Phaser.GameObjects.Container | null, x: number, y: number, size = 70) {
+    const tex = this.textures.exists("fx_splat_white") ? "fx_splat_white" : null;
+    const s = tex ? this.add.image(x, y, tex).setDisplaySize(size, size) : this.add.circle(x, y, size / 3, 0xf8f8f2);
+    s.setDepth(3100).setRotation(Math.random() * 6).setAlpha(0.95);
+    if (ui) ui.add(s);
+    const sx = s.scaleX;
+    const sy = s.scaleY;
+    s.setScale(sx * 0.2, sy * 0.2);
+    this.tweens.add({ targets: s, scaleX: sx, scaleY: sy, duration: 120, ease: "Back.out" });
+    this.tweens.add({ targets: s, y: y + 40, delay: 500, duration: 2400, ease: "Sine.in" });
+  }
+
+  private climax(ui: Phaser.GameObjects.Container, all: Rival[], you: Rival, resolve: () => void) {
+    const s = G.s;
+    // everyone krezzes, one way or another
+    synth.play("jet");
+    this.cameras.main.flash(200, 255, 255, 255);
+    this.cameras.main.shake(900, 0.01);
+    for (let i = 0; i < 22; i++) this.time.delayedCall(i * 45, () => {
+      this.splat(ui, 40 + Math.random() * 880, 30 + Math.random() * 480, 60 + Math.random() * 90);
+      if (i % 4 === 0) synth.play("splat");
+    });
+    const perfects = all.filter((r) => r.result === "perfect").sort((a, b) => a.finishedAt! - b.finishedAt!);
+    const won = perfects[0] === you;
+    const place = perfects.indexOf(you) + 1;
+    const verdict = won ? "WONK-OFF CHAMPION!" : you.result === "perfect" ? `KREZZED · ${place}${["", "st", "nd", "rd"][place] ?? "th"} PLACE` : you.result === "over" ? "OVER-WONKED. FIRST, BUT NOT LIKE THAT." : "UNDER-WONKED. NOTHING. NOT A DROP.";
+    const big = this.add.text(480, 270, verdict, { fontFamily: "Impact, sans-serif", fontSize: won ? "56px" : "38px", color: won ? "#ffd23f" : "#f9a8d4", stroke: "#2a0030", strokeThickness: 9, align: "center", wordWrap: { width: 860 } }).setOrigin(0.5).setDepth(3200).setScale(0.3);
+    this.tweens.add({ targets: big, scale: 1, duration: 280, ease: "Back.out", delay: 900 });
+    synth.play(won ? "cheer" : "trombone");
+    this.time.delayedCall(3000, async () => {
+      big.destroy();
+      ui.destroy();
+      // Big Derek
+      const derek = this.add.sprite(1000, 470, this.textures.exists("spr_TV_BOUNCER") ? "spr_TV_BOUNCER" : "spr_FOLK1", 0).setScale(3.2).setDepth(800);
+      synth.play("door");
+      await new Promise<void>((r) => this.tweens.add({ targets: derek, x: 760, duration: 500, onComplete: () => r() }));
+      this.cameras.main.shake(200, 0.01);
+      const reward = won ? 60 : you.result === "perfect" ? 25 : 5;
+      s.coins += reward;
+      bump(s, "wonkoffs");
+      if (won) bump(s, "wonkoff_wins");
+      s.flags.club_banned_until = s.playtimeMs + 240000;
+      this.busy = false;
+      await this.talk([
+        say("BIG DEREK", "RIGHT. WHAT IS GOING ON IN H-"),
+        say("BIG DEREK", "..."),
+        say("BIG DEREK", "OUT. ALL OF YOU. OUT. YOU'RE BARRED."),
+        say(this.dancerName(), "(from the back) I was gone for four minutes."),
+        dir(won ? `You are the undisputed WONK-OFF CHAMPION. The lads carry you out on their shoulders, at arm's length. +${reward} Krezzcoin (side bets).` : `You are thrown out with everyone else. +${reward} Krezzcoin (found on the floor; you don't ask).`),
+        dir("You're barred from The Wonky Pole for a few minutes."),
+      ]);
+      resolve();
+      this.busy = true;
+      synth.stopMusic();
+      G.save();
+      this.cameras.main.fadeOut(300);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
+    });
+  }
+}

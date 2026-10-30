@@ -55,6 +55,7 @@ const BUILDINGS: Building[] = [
   { id: "ABANDONED", name: "ABANDONED BUILDING", x: 1000, y: 1660, w: 220, h: 140, wall: 0x2a2a2a, roof: 0x111111, door: { x: 1000, y: 1730 } },
   { id: "POLICE", name: "KRELFORD CONSTABULARY", x: 1700, y: 1670, w: 240, h: 130, wall: 0x1e3a8a, roof: 0x111827, door: { x: 1700, y: 1735 } },
   { id: "BOGGOR_HOUSE", name: "BOGGOR CRANSTIL'S HOUSE", x: 300, y: 250, w: 224, h: 176, wall: 0x2a2433, roof: 0x111111, door: { x: 300, y: 338 } },
+  { id: "STRIP_CLUB", name: "THE WONKY POLE (Gentlemen's Cabaret)", x: 1660, y: 1290, w: 220, h: 150, wall: 0x2a0f2a, roof: 0x111111, door: { x: 1660, y: 1368 } },
   { id: "OLD_FLAT", name: "YOUR OLD FLAT", x: 700, y: 1650, w: 200, h: 130, wall: 0x9a8a7a, roof: 0x5a3a2a, door: { x: 700, y: 1715 } },
 ];
 
@@ -1160,6 +1161,8 @@ You are required by law to sign the Sex Offenders Register.`, {
         return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the constitutional crisis)";
       case "BOOTH":
         return "The Booth (Bully Mikey · vent your frustration)";
+      case "STRIP_CLUB":
+        return (s.flags.club_banned_until as number) > s.playtimeMs ? "The Wonky Pole (you're barred, for now)" : "Enter The Wonky Pole";
       case "UNIVERSITY":
         return "Enter Krelford University";
       case "GYM":
@@ -1204,6 +1207,15 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     if (!this.buildingBusy(b.id) && (await this.runArcStep(b.id))) return;
     switch (b.id) {
+      case "STRIP_CLUB": {
+        const left = ((s.flags.club_banned_until as number) ?? 0) - s.playtimeMs;
+        if (left > 0) {
+          await this.talk([say("BIG DEREK", `You lot are barred. ${Math.ceil(left / 60000)} more minute${left > 60000 ? "s" : ""}. And wash your hands.`)]);
+          return;
+        }
+        this.go("Club", {});
+        return;
+      }
       case "BOOTH":
         await this.talk(
           s.player === "MIKEY"

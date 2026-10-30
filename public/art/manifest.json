@@ -1860,6 +1860,37 @@
     ]
    }
   },
+  "spr_TV_BOUNCER": {
+   "file": "chars/TV_BOUNCER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
   "spr_TV_CHANCELLOR": {
    "file": "chars/TV_CHANCELLOR.png",
    "frame": 64,
@@ -2048,6 +2079,68 @@
   },
   "spr_TV_CO_HOST": {
    "file": "chars/TV_CO_HOST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_DANCER1": {
+   "file": "chars/TV_DANCER1.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8
+    ],
+    "east": [
+     16
+    ],
+    "north": [
+     24
+    ],
+    "west": [
+     32
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ]
+   }
+  },
+  "spr_TV_DANCER2": {
+   "file": "chars/TV_DANCER2.png",
    "frame": 64,
    "idle": {
     "south": 0,
@@ -3643,6 +3736,9 @@
   "bld_PUB": {
    "file": "buildings/PUB.png"
   },
+  "bld_STRIP_CLUB": {
+   "file": "buildings/STRIP_CLUB.png"
+  },
   "bld_TOWN_HALL": {
    "file": "buildings/TOWN_HALL.png"
   },
@@ -3669,6 +3765,9 @@
   },
   "bg_city": {
    "file": "backdrops/bg_city.png"
+  },
+  "bg_club": {
+   "file": "backdrops/bg_club.png"
   },
   "bg_ending": {
    "file": "backdrops/bg_ending.png"

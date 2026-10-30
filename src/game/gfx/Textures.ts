@@ -355,6 +355,9 @@ export function generatePortraits(scene: Phaser.Scene) {
 /** Named speakers who aren't in CHARACTERS but have a generated sprite. */
 const SPEAKER_SPRITES: Record<string, string> = {
   "BOGGOR CRANSTIL": "spr_BOGGOR",
+  DESTINY: "spr_TV_DANCER1",
+  CRYSTAL: "spr_TV_DANCER2",
+  "BIG DEREK": "spr_TV_BOUNCER",
   "SERGEANT SWIG": "spr_SWIG",
   "DR. GRUNGUS FLORP": "spr_GRUNGUS",
   MOLLOR: "spr_MOLLOR",
