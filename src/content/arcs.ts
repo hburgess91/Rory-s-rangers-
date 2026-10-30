@@ -107,18 +107,18 @@ export const ARCS: Arc[] = [
     id: "arc_krezmar",
     player: "KREZMAR",
     title: "Blues Night",
-    blurb: "Derek Grumbo, the ugliest man in Krelford, has taken over blues night at the Krezz Arms. He holds a grudge about a fizzy bongo. Headbutt him to death.",
+    blurb: "Alistair Swamp, the ugliest man in Krelford, has taken over blues night at the Krezz Arms. He holds a grudge about a fizzy bongo. Headbutt him to death.",
     reward: { coins: 350, desc: "Vending machines are free for you forever (the barman is grateful)." },
     steps: [
       {
         id: "rumour",
-        text: "Hear about Derek Grumbo at the Booth (the Fair).",
+        text: "Hear about Alistair Swamp at the Booth (the Fair).",
         at: "BOOTH",
         step: {
           kind: "dialogue",
           lines: [
             dir("The fairground man running the Frustration Booth leans in."),
-            say("FAIRGROUND MAN", "You're Krezmar? There's a bloke asking for you. Derek Grumbo. Bald. Short dark beard. Ugliest man you'll ever see. Plays a Les Paul. Blues band, back room of the Krezz Arms, Thursdays."),
+            say("FAIRGROUND MAN", "You're Krezmar? There's a bloke asking for you. Alistair Swamp. Bald. Short dark beard. Ugliest man you'll ever see. Plays a Les Paul. Blues band, back room of the Krezz Arms, Thursdays."),
             say("FAIRGROUND MAN", "Says you owe him a fizzy bongo from 2023. Says the blues don't forget."),
             say("KREZMAR", "I'm going to need a krambulance. For him."),
           ],
@@ -126,7 +126,7 @@ export const ARCS: Arc[] = [
       },
       {
         id: "troll",
-        text: "Go to blues night at the Krezz Arms. Headbutt Derek Grumbo.",
+        text: "Go to blues night at the Krezz Arms. Headbutt Alistair Swamp.",
         at: "PUB",
         step: { kind: "arena", dungeon: "arena_troll", intro: [dir("A twelve-bar blues shuffle is coming through the back-room door. It's very, very loud.")] },
       },

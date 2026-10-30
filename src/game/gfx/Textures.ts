@@ -365,7 +365,7 @@ const SPEAKER_SPRITES: Record<string, string> = {
   SANCHZ: "spr_SANCHZ",
   KROZNO: "boss_krozno",
   "RUSSELL BRAND": "boss_brand",
-  "DEREK GRUMBO": "boss_troll",
+  "ALISTAIR SWAMP": "boss_troll",
   "CARPET KEV": "boss_flatmate",
   "BRICK KOLBANE": "boss_rival",
   "THE CUDDLE CRONSTER": "boss_cronster",

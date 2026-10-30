@@ -797,7 +797,7 @@ export class CronsterBoss extends Boss {
   }
 }
 
-// ----------------------------------------------------------------- DEREK GRUMBO, BLUES BRUISER (Krezmar arena)
+// ----------------------------------------------------------------- ALISTAIR SWAMP, BLUES BRUISER (Krezmar arena)
 
 export class TrollBoss extends Boss {
   staggered = false;
@@ -816,7 +816,7 @@ export class TrollBoss extends Boss {
     this.setFrame(Math.floor(now / 250) % 3);
     if (!this.staggered && this.hp <= this.maxHp * 0.12 + 1) {
       this.staggered = true;
-      this.world.toast("STAGGERED", "Derek is dazed. Get close and HEADBUTT him (F / right click)!");
+      this.world.toast("STAGGERED", "Alistair is dazed. Get close and HEADBUTT him (F / right click)!");
     }
     if (this.staggered) {
       this.halt();
