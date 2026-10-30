@@ -326,7 +326,7 @@ export class DialogueBox {
     const queue = [...lines];
     const s = G.s;
     // On the register: whoever speaks to you first opens with what they think of you.
-    if (s.flags.on_register) {
+    if (s.flags.on_register && !(((s.flags.on_register_until as number) ?? Infinity) < s.playtimeMs)) {
       const i = queue.findIndex((l) => !l.dir && !l.notify && l.s !== "NARRATOR" && l.s !== s.player && !!l.t && evalCond(l.cond, s));
       if (i >= 0) queue.splice(i, 0, { s: queue[i].s, t: REGISTER_JIBES[Math.floor(Math.random() * REGISTER_JIBES.length)], tag: "new" });
     }

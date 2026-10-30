@@ -67,6 +67,9 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
 ];
 
 /** The playground (Boggor's view). Kids, sweeties, screaming. */
+/** How long the register sticks (ms of play). */
+const REGISTER_MS = 240000;
+
 const PLAYGROUND = { x: 120, y: 480, w: 360, h: 190, cx: 300, cy: 575 };
 const PLAY_EQUIP: [string, number, number][] = [
   ["hd_swings", 190, 560],
@@ -910,6 +913,15 @@ export class HubScene extends Phaser.Scene {
   private raiseAlarm() {
     const now = this.time.now;
     if (this.pg.alarmAt || now < this.pg.chaseUntil || now < this.pg.cooldownUntil) return;
+    // you've already been through the system once: now they just shout
+    if (((G.s.flags.register_count as number) ?? 0) >= 1) {
+      this.pg.cooldownUntil = now + 4500;
+      synth.play("alarm");
+      const lines = ["PEDO! PEDO!", "IT'S HIM AGAIN!", "PEDO!!!", "HE'S ON THE LIST!", "MUUUM, THE PEDO'S BACK"];
+      this.kids.forEach((k, i) => this.time.delayedCall(i * 220, () => this.kidBubble(k.spr, lines[(i + Math.floor(now / 1000)) % lines.length])));
+      this.time.delayedCall(900, () => this.kids.forEach((k) => this.kidBubble(k.spr, "PEDO! PEDO!")));
+      return;
+    }
     this.pg.alarmAt = now + 2200;
     synth.play("alarm");
     this.kids.forEach((k, i) => this.time.delayedCall(i * 250, () => this.kidBubble(k.spr, KID_SHOUTS[(i + Math.floor(now / 1000)) % KID_SHOUTS.length])));
@@ -1010,6 +1022,19 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  /** The register wears off after a few minutes. */
+  private updateRegister() {
+    const s = G.s;
+    if (!s.flags.on_register) return;
+    if (s.flags.on_register_until === undefined) s.flags.on_register_until = s.playtimeMs + REGISTER_MS;
+    if (s.playtimeMs > (s.flags.on_register_until as number) && !this.busy) {
+      delete s.flags.on_register;
+      delete s.flags.on_register_until;
+      G.emit("toast", { title: "OFF THE REGISTER", text: "Your name has quietly dropped off the list. Everyone still remembers." });
+      G.save();
+    }
+  }
+
   /** Caught. Charged. Must click the button. */
   private registerScene() {
     this.busy = true;
@@ -1037,6 +1062,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     );
     const sign = () => {
       G.s.flags.on_register = true;
+      G.s.flags.on_register_until = G.s.playtimeMs + REGISTER_MS;
       G.s.flags.register_count = ((G.s.flags.register_count as number) ?? 0) + 1;
       G.save();
       synth.play("archive");
@@ -1046,7 +1072,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       this.busy = false;
       this.talk([
         say("SERGEANT SWIG", "Signed, sealed, registered. Welcome to the list, sicko."),
-        dir("You are now on the Sex Offenders Register. Everyone in Krelford has read it. Everyone in Krelford will mention it."),
+        dir("You are now on the Sex Offenders Register. Everyone in Krelford has read it. For the next few minutes, everyone in Krelford will mention it."),
         dir("Word is the Supreme Leader can make paperwork disappear. For a price. Try the Town Hall."),
       ]);
     };
@@ -1697,6 +1723,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setDepth(this.av.y + 1);
     this.updateNpcs(time, dt);
     this.updatePlayground(time, dt);
+    this.updateRegister();
     this.beatup?.update(time, dt);
     if (!this.busy && this.controls.attackHeld()) {
       const m = this.npcs.find((n) => n.follower);

@@ -23,7 +23,15 @@ const DANCERS = [
   { id: "CRYSTAL", tex: "spr_TV_DANCER2" },
 ];
 
-const LEER = ["Mmm.", "Mmmmmm.", "Mmmmmmmmmm.", "She's mine.", "She's MINE.", "She looked at me. She's mine.", "Back off. Mine.", "Mmm. Yes.", "I think she likes me.", "She's mine, lads. Sorry.", "She winked at me. That's legally binding.", "Mine. Mine mine mine."];
+const LEER = [
+  "I'm horny!",
+  "I'm turned on.",
+  "My thang is getting much more solid!",
+  "I want to wonk!",
+  "I want to wonk. Can we wonk?",
+  "Mmm… her breasts are so filled with milk.",
+  "Ugh… her fanny is so filled with lust.",
+  "Mmm.", "Mmmmmm.", "Mmmmmmmmmm.", "She's mine.", "She's MINE.", "She looked at me. She's mine.", "Back off. Mine.", "Mmm. Yes.", "I think she likes me.", "She's mine, lads. Sorry.", "She winked at me. That's legally binding.", "Mine. Mine mine mine."];
 const LEER_BY: Record<string, string[]> = {
   FLENKY: ["Jenko's in love.", "She's mine. Jenko has spoken."],
   KREZMAR: ["Mmm. That's the blues, that.", "She's mine. Motion carried."],
@@ -84,7 +92,10 @@ export class ClubScene extends Phaser.Scene {
   private ko = new Set<Phaser.GameObjects.Sprite>();
   private brawl = 0;
   private lastSwing = 0;
-  private derek: { spr: Phaser.GameObjects.Sprite; hits: number; down: boolean } | null = null;
+  private derek: { spr: Phaser.GameObjects.Sprite; hits: number; down: boolean; angry?: boolean } | null = null;
+  /** You hit a dancer: everything gets worse. */
+  private angry = false;
+  private dancerDown = false;
   private musicStopped = false;
 
   constructor() {
@@ -146,6 +157,8 @@ export class ClubScene extends Phaser.Scene {
     this.ko = new Set();
     this.brawl = 0;
     this.derek = null;
+    this.angry = false;
+    this.dancerDown = false;
     this.musicStopped = false;
     this.songIdx = -1;
     this.between = false;
@@ -227,7 +240,7 @@ export class ClubScene extends Phaser.Scene {
   update(time: number, delta: number) {
     const dt = Math.min(delta, 50);
     // the routine
-    if (!this.onBreak) {
+    if (!this.onBreak && !this.dancerDown) {
       const t = time / 1000;
       this.dancer.x = 430 + Math.sin(t * 1.3) * 60;
       this.dancer.y = 330 - Math.abs(Math.sin(t * 3.2)) * 8;
@@ -257,7 +270,7 @@ export class ClubScene extends Phaser.Scene {
     this.patrons.forEach((p, i) => {
       if (!this.busy && !this.ko.has(p.spr)) p.spr.y += Math.sin(time / 300 + i) * 0.08;
     });
-    if (time > this.nextLeer && !this.busy && !this.onBreak) {
+    if (time > this.nextLeer && !this.busy && !this.onBreak && !this.angry) {
       this.nextLeer = time + 1600 + Math.random() * 1800;
       this.leer(1);
     }
@@ -277,12 +290,14 @@ export class ClubScene extends Phaser.Scene {
     const atExit = this.me.y > 495 && Math.abs(this.me.x - 480) < 70;
     let label = "";
     let act: (() => void) | null = null;
-    if (atStage && !this.onBreak) {
+    if (atStage && !this.onBreak && !this.dancerDown) {
       label = `E: Tip ${this.dancerName()} (5 Krezzcoin)`;
       act = () => this.tip();
     } else if (atBar) {
       label = "E: Order a Pussy Juice (10 Krezzcoin)";
       act = () => this.bar();
+    } else if (atTable && this.angry) {
+      label = "Nobody will wonk-off with you now.";
     } else if (atTable && this.derek && !this.derek.down) {
       label = "Big Derek is right there. Not now.";
     } else if (atTable) {
@@ -350,23 +365,7 @@ export class ClubScene extends Phaser.Scene {
     const mx = this.me.x;
     const my = this.me.y;
     this.tweens.add({ targets: this.me, x: mx + Math.cos(a) * 14, y: my + Math.sin(a) * 8, duration: 60, yoyo: true, onComplete: () => this.me.setPosition(mx, my) });
-    if (t.kind === "dancer") {
-      // she is not having it
-      synth.play("punch_big");
-      this.cameras.main.shake(160, 0.01);
-      this.pow(spr.x, spr.y - 60, "BLOCKED", "#f9a8d4", 20);
-      this.bubble(spr, ["Not a chance, babe.", "Touch me again and Derek's coming.", "DEREK!", "Absolutely not."][Math.floor(Math.random() * 4)], 1500, "#ffd1e8");
-      this.time.delayedCall(140, () => {
-        this.pow(this.me.x, this.me.y - 50, "BOOT!", "#ff6bb0", 22);
-        synth.play("punch");
-        this.tweens.add({ targets: this.me, y: Math.min(520, this.me.y + 110), x: this.me.x + Math.cos(a) * -60, duration: 280, ease: "Quad.out" });
-        this.me.setTintFill(0xffffff);
-        this.time.delayedCall(80, () => this.me.clearTint());
-      });
-      this.brawl += 2;
-      this.callDerek();
-      return;
-    }
+    if (t.kind === "dancer") return this.hitDancer(spr, a);
     const n = (this.hits.get(spr) ?? 0) + 1;
     this.hits.set(spr, n);
     this.brawl++;
@@ -409,13 +408,64 @@ export class ClubScene extends Phaser.Scene {
     if (this.ko.size >= 1 || this.brawl >= 6) this.callDerek();
   }
 
+  /** You can. You really shouldn't. */
+  private hitDancer(spr: Phaser.GameObjects.Sprite, a: number) {
+    const s = G.s;
+    const n = (this.hits.get(spr) ?? 0) + 1;
+    this.hits.set(spr, n);
+    this.brawl += 3;
+    synth.play("punch");
+    this.cameras.main.shake(100, 0.006);
+    spr.setTintFill(0xffffff);
+    this.time.delayedCall(80, () => spr.active && spr.clearTint());
+    this.pow(spr.x, spr.y - 56, ["POW!", "SMACK!"][n % 2]);
+    // the room turns on you, immediately
+    synth.play("gasp");
+    const up = this.patrons.filter((p) => !this.ko.has(p.spr));
+    up.slice(0, 3).forEach((p, i) =>
+      this.time.delayedCall(i * 200, () => this.bubble(p.spr, ["You hit a WOMAN?!", "Bro. What is WRONG with you.", "Not cool, man. NOT cool.", "I'm telling my mum.", "Even Boggor wouldn't do that.", "DEREK! DEREK!"][(n + i) % 6], 1600, "#fecaca")),
+    );
+    this.angry = true;
+    if (n < 4) {
+      this.bubble(spr, ["OW! DEREK!", "DEREK!!!", "Are you serious?!", "You're DEAD. Derek's going to kill you."][n % 4], 1500, "#ffd1e8");
+      this.callDerek();
+      return;
+    }
+    // down
+    this.ko.add(spr);
+    this.dancerDown = true;
+    spr.setAngle(90);
+    synth.play("death");
+    synth.stopMusic();
+    this.musicStopped = true;
+    this.banner?.setText("♪ The music has stopped. Everyone is staring at you.");
+    this.pow(spr.x, spr.y - 40, "K.O.", "#ffffff", 22);
+    const fine = Math.min(s.coins, 50);
+    s.coins -= fine;
+    s.drongusResentment = Math.min(100, s.drongusResentment + 10);
+    s.flags.hit_dancer = true;
+    bump(s, "dancer_kos");
+    G.emit("toast", { title: "A NEW LOW", text: `You knocked out ${this.dancerName()}. -${fine} Krezzcoin (her medical bills). Everyone saw. Drongus heard.` });
+    for (const p of up) this.bubble(p.spr, ["...", "I'm leaving.", "I don't know you.", "That's it. I'm out of the chat.", "Disgusting."][Math.floor(Math.random() * 5)], 2200, "#fecaca");
+    if (this.derek) this.enrageDerek();
+    else this.callDerek();
+  }
+
+  private enrageDerek() {
+    const d = this.derek;
+    if (!d) return;
+    d.angry = true;
+    this.bubble(d.spr, `YOU DID WHAT TO ${this.dancerName()}?!`, 2000, "#fecaca");
+    (this.children.getByName("derekBanner") as Phaser.GameObjects.Text | null)?.setText("BIG DEREK IS FURIOUS · 18 hits to drop him. He's fast now. Good luck.");
+  }
+
   private callDerek() {
     if (this.derek || this.busy) return;
     const spr = this.add.sprite(1000, 470, this.textures.exists("spr_TV_BOUNCER") ? "spr_TV_BOUNCER" : "spr_FOLK1", 0).setScale(3.2).setDepth(470);
-    this.derek = { spr, hits: 0, down: false };
+    this.derek = { spr, hits: 0, down: false, angry: this.angry };
     synth.play("door");
     synth.play("roar");
-    this.bubble(spr, "RIGHT. WHO'S KICKING OFF.", 2000, "#fecaca");
+    this.bubble(spr, this.angry ? `WHO TOUCHED ${this.dancerName()}?!` : "RIGHT. WHO'S KICKING OFF.", 2000, "#fecaca");
     this.add.text(480, 120, "BIG DEREK IS COMING · Knock him out (10 hits) before he grabs you", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#7f1d1dcc", padding: { x: 8, y: 3 } }).setOrigin(0.5).setDepth(1700).setName("derekBanner");
   }
 
@@ -427,7 +477,7 @@ export class ClubScene extends Phaser.Scene {
     const dy = this.me.y - d.spr.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 34) return this.thrownOut();
-    const sp = 62 * (dt / 1000);
+    const sp = (d.angry ? 115 : 62) * (dt / 1000);
     d.spr.x += (dx / dist) * sp;
     d.spr.y += (dy / dist) * sp;
     d.spr.setDepth(d.spr.y);
@@ -437,8 +487,8 @@ export class ClubScene extends Phaser.Scene {
     const d = this.derek!;
     d.hits++;
     this.tweens.add({ targets: d.spr, x: d.spr.x + Math.cos(a) * 40, y: d.spr.y + Math.sin(a) * 16, duration: 140, ease: "Quad.out" });
-    if (d.hits === 5) this.bubble(d.spr, "...that tickled.", 1400, "#fecaca");
-    if (d.hits < 10) return;
+    if (d.hits === 5) this.bubble(d.spr, d.angry ? "THAT'S NOT GOING TO SAVE YOU." : "...that tickled.", 1400, "#fecaca");
+    if (d.hits < (d.angry ? 18 : 10)) return;
     d.down = true;
     d.spr.setAngle(90);
     this.cameras.main.shake(400, 0.014);
@@ -448,12 +498,17 @@ export class ClubScene extends Phaser.Scene {
     this.pow(d.spr.x, d.spr.y - 60, "BIG DEREK IS DOWN", "#ffd23f", 30);
     (this.children.getByName("derekBanner") as Phaser.GameObjects.Text | null)?.destroy();
     const s = G.s;
-    const first = !s.flags.derek_beaten;
+    const first = !s.flags.derek_beaten && !this.angry;
     if (first) {
       s.flags.derek_beaten = true;
       s.coins += 40;
     }
     bump(s, "derek_kos");
+    if (this.angry) {
+      for (const p of this.patrons.filter((q) => !this.ko.has(q.spr))) this.bubble(p.spr, ["Nobody's cheering, mate.", "...", "I'm still not talking to you."][Math.floor(Math.random() * 3)], 1800, "#fecaca");
+      this.time.delayedCall(800, () => this.talk([dir("Big Derek is down. Nobody cheers. Somebody has called the police. You should probably leave."), say("SERGEANT SWIG", "(on the radio, mouth full of chocolate) Yeah we'll get round to it.")]));
+      return;
+    }
     for (const p of this.patrons.filter((q) => !this.ko.has(q.spr))) this.bubble(p.spr, ["LEGEND!", "YOU KILLED DEREK!", "He's not dead. Probably.", "Drinks are free now, right?"][Math.floor(Math.random() * 4)], 1800, "#fff7c2");
     this.time.delayedCall(800, () => this.talk([dir(`Big Derek is asleep on the carpet. The Wonky Pole is, for now, yours.${first ? " +40 Krezzcoin from his bumbag." : ""}`), say(this.dancerName(), "...honestly? Fair play.")]));
   }
@@ -465,8 +520,13 @@ export class ClubScene extends Phaser.Scene {
     this.cameras.main.shake(300, 0.012);
     this.tweens.add({ targets: this.me, y: 540, angle: 180, duration: 400 });
     this.busy = false;
-    await this.talk([say("BIG DEREK", "OUT."), dir("Big Derek picks you up by the back of your collar and carries you out like a bin bag. You're barred for a few minutes.")]);
-    s.flags.club_banned_until = s.playtimeMs + 240000;
+    await this.talk(
+      this.angry
+        ? [say("BIG DEREK", "You. Hit. A DANCER."), dir("Big Derek carries you out by the ankles and throws you into the bins. You're barred for a LONG time.")]
+        : [say("BIG DEREK", "OUT."), dir("Big Derek picks you up by the back of your collar and carries you out like a bin bag. You're barred for a few minutes.")],
+    );
+    s.flags.club_banned_until = s.playtimeMs + (this.angry ? 900000 : 240000);
+    if (this.angry) s.hp = Math.max(1, s.hp - 30);
     this.busy = true;
     synth.stopMusic();
     G.save();
@@ -527,6 +587,7 @@ export class ClubScene extends Phaser.Scene {
   private leave() {
     if (this.busy) return;
     this.busy = true;
+    if (this.angry) G.s.flags.club_banned_until = G.s.playtimeMs + 900000;
     synth.stopMusic();
     G.save();
     this.cameras.main.fadeOut(300);
