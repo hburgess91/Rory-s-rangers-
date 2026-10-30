@@ -74,10 +74,11 @@ export class TownMeetingScene extends Phaser.Scene {
   private drawRoom(m: MeetingScript, W: number, H: number) {
     const fgm = m.location === "WAR_ROOM";
     const tmBg = this.add.tileSprite(0, 0, W, H, fgm ? "tile_prison" : "tile_hall").setOrigin(0);
-    if (backdrop(this, fgm ? "bg_fgm" : "bg_townhall", { dim: 0.25, depth: -10 })) tmBg.setVisible(false);
+    const hasBg = !!backdrop(this, fgm ? "bg_fgm" : "bg_townhall", { dim: 0.25, depth: -10 });
+    if (hasBg) tmBg.setVisible(false);
     if (m.historical) this.add.rectangle(0, 0, W, H, 0x704214, 0.25).setOrigin(0).setDepth(900);
-    // windows with the Tap
-    if (!fgm) {
+    // windows with the Tap (the PixelLab chamber has its own)
+    if (!fgm && !hasBg) {
       this.add.rectangle(110, 70, 150, 100, 0x6a8fd0).setStrokeStyle(4, 0x3b2a1a);
       this.add.image(110, 92, "p_tap").setScale(0.9);
       this.add.rectangle(110, 70, 4, 100, 0x3b2a1a);
@@ -97,6 +98,11 @@ export class TownMeetingScene extends Phaser.Scene {
       this.agendaTexts.push(this.add.text(18, 150 + i * 30, a, { fontFamily: FONT, fontSize: "10px", color: "#2a1a0a", wordWrap: { width: 182 } }).setDepth(5));
     });
     // horseshoe table (half-ellipse)
+    if (this.textures.exists("p_meeting_table")) {
+      this.add.image(W / 2, 258, "p_meeting_table").setScale(1.5).setDepth(2);
+      if (fgm) this.add.text(W / 2, 290, "12:00 MIDDAY · OPERATION FRAGMAR", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(3);
+      return;
+    }
     const g = this.add.graphics();
     const pts: Phaser.Math.Vector2[] = [];
     for (let a = 8; a <= 172; a += 4) {

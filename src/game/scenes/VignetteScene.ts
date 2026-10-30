@@ -308,8 +308,8 @@ export class VignetteScene extends Phaser.Scene {
       await this.tween({ targets: kev, x: 640, angle: 0, duration: 400 });
     });
     await hit("PART 2: AN ANVIL (MADE OF UNPAID RENT)", async () => {
-      const anvil = this.add.rectangle(640, -40, 70, 40, 0x4b5563).setDepth(12);
-      this.add.text(640, -40, "RENT", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5).setDepth(13);
+      const anvil = this.textures.exists("p_anvil") ? this.add.image(640, -40, "p_anvil").setScale(1.5).setDepth(12) : this.add.rectangle(640, -40, 70, 40, 0x4b5563).setDepth(12);
+      if (!this.textures.exists("p_anvil")) this.add.text(640, -40, "RENT", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5).setDepth(13);
       await this.tween({ targets: anvil, y: 320, duration: 500, ease: "Quad.in" });
       synth.play("banhammer");
       kev.setScale(4, 0.6);
@@ -328,7 +328,7 @@ export class VignetteScene extends Phaser.Scene {
       }
     });
     await hit("PART 4: A PIANO (OUT OF TUNE)", async () => {
-      const piano = this.add.rectangle(640, -60, 120, 80, 0x111111).setDepth(12);
+      const piano = this.textures.exists("p_piano") ? this.add.image(640, -60, "p_piano").setScale(1.4).setDepth(12) : this.add.rectangle(640, -60, 120, 80, 0x111111).setDepth(12);
       await this.tween({ targets: piano, y: 330, duration: 600, ease: "Quad.in" });
       synth.play("boom");
       for (let i = 0; i < 8; i++) synth.play("select");
@@ -339,7 +339,7 @@ export class VignetteScene extends Phaser.Scene {
     });
     await hit("PART 5: ROLLED UP IN THE CARPET", async () => {
       kev.setVisible(false);
-      const roll = this.add.rectangle(640, 380, 160, 50, 0x7a1f2b).setStrokeStyle(4, 0xd6c49a).setDepth(12);
+      const roll = this.textures.exists("p_carpet_roll") ? this.add.image(640, 380, "p_carpet_roll").setScale(1.3).setDepth(12) : this.add.rectangle(640, 380, 160, 50, 0x7a1f2b).setStrokeStyle(4, 0xd6c49a).setDepth(12);
       this.add.text(640, 380, "kev (inside)", { fontFamily: FONT, fontSize: "11px", color: "#d6c49a" }).setOrigin(0.5).setDepth(13);
       await this.wait(600);
       await this.tween({ targets: roll, x: 1100, y: -100, angle: 1080, duration: 1400, ease: "Quad.out" });
@@ -468,9 +468,13 @@ export class VignetteScene extends Phaser.Scene {
 
   private async polsonGym() {
     if (!backdrop(this, "bg_gym", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
-    const tm = this.add.rectangle(480, 400, 220, 30, 0x111111).setDepth(5);
-    this.add.rectangle(560, 340, 12, 100, 0x374151).setDepth(5);
-    this.add.text(480, 300, "TREADMILL", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5);
+    const hasTm = this.textures.exists("p_treadmill");
+    const tm = this.add.rectangle(480, 400, 220, 30, 0x111111, hasTm ? 0 : 1).setDepth(5);
+    if (hasTm) this.add.image(500, 410, "p_treadmill").setOrigin(0.5, 1).setScale(1.5).setDepth(5);
+    else {
+      this.add.rectangle(560, 340, 12, 100, 0x374151).setDepth(5);
+      this.add.text(480, 300, "TREADMILL", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5);
+    }
     const pol = this.add.sprite(200, 380, "spr_POLSON", 0).setScale(3).setDepth(10);
     const me = this.add.sprite(120, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
     synth.music("hub");
@@ -502,7 +506,7 @@ export class VignetteScene extends Phaser.Scene {
     this.children.removeAll(true);
     this.lastCaption = undefined;
     if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
-    this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
+    if (!this.textures.exists("bg_restaurant")) this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
     this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
     const pol2 = this.add.sprite(420, 320, "spr_POLSON", 0).setScale(3).setDepth(10);
     this.add.sprite(560, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
@@ -549,7 +553,7 @@ export class VignetteScene extends Phaser.Scene {
     const clock = this.add.text(940, 510, "", { fontFamily: "monospace", fontSize: "13px", color: "#22c55e" }).setOrigin(1, 0);
     let mins = 0;
     this.time.addEvent({ delay: 120, loop: true, callback: () => { mins += 3; clock.setText(`${String(14 + Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`); } });
-    const sofa = this.add.rectangle(250, 190, 160, 40, 0x7a1f2b);
+    const sofa = this.textures.exists("p_sofa") ? this.add.image(250, 196, "p_sofa").setScale(1.1) : this.add.rectangle(250, 190, 160, 40, 0x7a1f2b);
     void sofa;
     const pol = this.add.sprite(250, 160, "spr_POLSON", 0).setScale(2.4);
     this.add.image(330, 200, "p_food").setScale(1.2);

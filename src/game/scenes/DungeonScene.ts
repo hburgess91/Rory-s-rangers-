@@ -198,6 +198,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     g.fillRect(r.w - 24, 0, 24, r.h);
     g.lineStyle(2, 0x000000, 0.4);
     g.strokeRect(24, 24, r.w - 48, r.h - 48);
+    // PixelLab walls: an illustrated back wall, shaded side and front walls
+    const wallKey = `wall_${r.theme}`;
+    if (this.textures.exists(wallKey)) {
+      const src = this.textures.get(wallKey).getSourceImage();
+      const back = this.add.tileSprite(0, 0, r.w, 56, wallKey).setOrigin(0).setDepth(1);
+      back.setTileScale(56 / src.height);
+      for (const [x, y, w, h] of [
+        [0, r.h - 24, r.w, 24],
+        [0, 0, 24, r.h],
+        [r.w - 24, 0, 24, r.h],
+      ])
+        this.add.tileSprite(x, y, w, h, wallKey).setOrigin(0).setDepth(1).setTint(0x8a7f9a).setTileScale(0.5);
+      this.add.rectangle(0, 56, r.w, 6, 0x000000, 0.35).setOrigin(0).setDepth(1);
+    }
     this.obstacles = this.physics.add.staticGroup();
     this.decorate(r);
     // door
@@ -237,9 +251,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const x = rnd.between(140, r.w - 140);
       const y = rnd.between(160, r.h - 200);
       if (Math.abs(x - r.w / 2) < 120) continue;
-      const pillar = this.add.rectangle(x, y, 40, 40, r.theme === "wiki" ? 0xc8ccd1 : 0x000000, r.theme === "wiki" ? 1 : 0.35).setDepth(3).setStrokeStyle(2, 0x000000, 0.4);
+      const pillarKey = `pillar_${r.theme}`;
+      const art = this.textures.exists(pillarKey);
+      const pillar = this.add.rectangle(x, y, 40, 40, r.theme === "wiki" ? 0xc8ccd1 : 0x000000, art ? 0 : r.theme === "wiki" ? 1 : 0.35).setDepth(3);
+      if (!art) pillar.setStrokeStyle(2, 0x000000, 0.4);
+      else this.add.image(x, y + 20, pillarKey).setOrigin(0.5, 1).setDepth(y + 20);
       this.obstacles.add(pillar);
-      if (r.theme === "wiki") this.add.text(x, y, "[edit]", { fontFamily: FONT, fontSize: "9px", color: "#3366cc" }).setOrigin(0.5).setDepth(4);
+      if (r.theme === "wiki" && !art) this.add.text(x, y, "[edit]", { fontFamily: FONT, fontSize: "9px", color: "#3366cc" }).setOrigin(0.5).setDepth(4);
     }
     // flavour
     const flav: Record<string, string[]> = {

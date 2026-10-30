@@ -352,21 +352,94 @@ export function generatePortraits(scene: Phaser.Scene) {
 }
 
 /** Which portrait texture to show for a speaker. */
+/** Named speakers who aren't in CHARACTERS but have a generated sprite. */
+const SPEAKER_SPRITES: Record<string, string> = {
+  "BOGGOR CRANSTIL": "spr_BOGGOR",
+  "SERGEANT SWIG": "spr_SWIG",
+  "DR. GRUNGUS FLORP": "spr_GRUNGUS",
+  MOLLOR: "spr_MOLLOR",
+  GARY: "spr_GARY",
+  "GYM DEALER": "spr_GARY",
+  JOURNALIST: "spr_JOURNALIST",
+  SANMIK: "spr_SANMIK",
+  SANCHZ: "spr_SANCHZ",
+  KROZNO: "boss_krozno",
+  "RUSSELL BRAND": "boss_brand",
+  "GRUMBO, THE BLUES TROLL": "boss_troll",
+  "CARPET KEV": "boss_flatmate",
+  "BRICK KOLBANE": "boss_rival",
+  "THE CUDDLE CRONSTER": "boss_cronster",
+  "THE SALMON SOVEREIGN": "boss_salmon",
+  WAITER: "spr_FOLK1",
+  "PROCTUS KRELMOR": "spr_PROCTUS",
+};
+
+/**
+ * A dialogue portrait cut from a PixelLab sprite: the head and shoulders of frame 0, scaled up
+ * with nearest-neighbour onto a soft backdrop. Cached as its own texture.
+ */
+function spritePortrait(scene: Phaser.Scene, sprKey: string, bg: number): string | null {
+  const key = `ptx_${sprKey}`;
+  if (scene.textures.exists(key)) return key;
+  if (!scene.textures.exists(sprKey)) return null;
+  const tex = scene.textures.get(sprKey);
+  if (!(tex.customData as { char?: unknown; hd?: number })?.hd) return null; // old procedural art: no
+  const fr = tex.get(0);
+  const src = tex.getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+  const [tmp, tctx] = canvas(fr.cutWidth, fr.cutHeight);
+  tctx.drawImage(src, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fr.cutWidth, fr.cutHeight);
+  const data = tctx.getImageData(0, 0, fr.cutWidth, fr.cutHeight).data;
+  let minX = fr.cutWidth, minY = fr.cutHeight, maxX = 0, maxY = 0;
+  for (let y = 0; y < fr.cutHeight; y++)
+    for (let x = 0; x < fr.cutWidth; x++)
+      if (data[(y * fr.cutWidth + x) * 4 + 3] > 40) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+  if (maxX <= minX) return null;
+  const h = maxY - minY + 1;
+  const side = Math.max(12, Math.round(h * 0.42));
+  const cx = Math.round((minX + maxX) / 2);
+  const sx = Phaser.Math.Clamp(cx - Math.round(side / 2), 0, Math.max(0, fr.cutWidth - side));
+  const [cv, ctx] = canvas(64, 64);
+  const g = ctx.createRadialGradient(32, 26, 4, 32, 32, 46);
+  const col = (n: number, k: number) => `rgb(${(((n >> 16) & 255) * k) | 0},${(((n >> 8) & 255) * k) | 0},${((n & 255) * k) | 0})`;
+  g.addColorStop(0, col(bg, 1));
+  g.addColorStop(1, col(bg, 0.45));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tmp, sx, Math.max(0, minY - 1), side, side, 4, 6, 56, 56);
+  addImage(scene, key, cv);
+  return key;
+}
+
+/** Which portrait texture to show for a speaker. */
 export function portraitKey(scene: Phaser.Scene, speaker: string): string | null {
   const def = CHARACTERS[speaker];
   if (def) {
+    if (def.portrait && def.portrait.startsWith("pt_") && scene.textures.exists(def.portrait)) return def.portrait;
+    const fromSprite = spritePortrait(scene, `spr_${def.id}`, shade(def.color, 0.55));
+    if (fromSprite) return fromSprite;
     if (def.portrait && scene.textures.exists(def.portrait)) return def.portrait;
     const g = `gen_${def.id.toLowerCase()}`;
     if (scene.textures.exists(g)) return g;
   }
   const s = speaker.toUpperCase();
-  if (s.includes("FRIDGE")) return "gen_fridge";
   if (s === "NARRATOR" || s === "") return null;
-  if (s.includes("NEWS") || s.includes("REPORTER") || s.includes("ANNOUNCER") || s.includes("HOST") || s.includes("COMMENTATOR")) return "gen_newsreader";
+  const named = SPEAKER_SPRITES[s] ?? (scene.textures.exists(`spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`) ? `spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}` : scene.textures.exists(`spr_${s}`) ? `spr_${s}` : "");
+  if (named) {
+    const p = spritePortrait(scene, named, 0x3d2a6b);
+    if (p) return p;
+  }
+  if (s.includes("FRIDGE")) return "gen_fridge";
+  if (s.includes("NEWS") || s.includes("REPORTER") || s.includes("ANNOUNCER") || s.includes("HOST") || s.includes("COMMENTATOR")) return spritePortrait(scene, "spr_TV_NEWSREADER", 0x2a3a6a) ?? "gen_newsreader";
   if (s === "TAP" || s.includes("GREAT TAP")) return "gen_tap";
   if (s === "ARCHIVE") return "gen_archive";
   if (s.includes("SOVEREIGN") || s.includes("LOOP") || s.includes("MACHINE") || s.includes("AUTOMATON") || s.includes("SPECTRE") || s.includes("BERTHA")) return "gen_boss";
-  return "gen_folk";
+  return spritePortrait(scene, `spr_FOLK${[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 4}`, 0x445544) ?? "gen_folk";
 }
 
 // ---------------------------------------------------------------- enemies

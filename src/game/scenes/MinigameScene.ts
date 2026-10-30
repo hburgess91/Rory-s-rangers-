@@ -325,8 +325,10 @@ export class MinigameScene extends Phaser.Scene {
       const k = kinds[Phaser.Math.Between(0, kinds.length - 1)];
       const x = Phaser.Math.Between(80, 880);
       const y = Phaser.Math.Between(120, 500);
-      const r = this.add.rectangle(x, y, 70, 46, k.c).setStrokeStyle(2, 0xffffff).setDepth(10);
-      const t = this.add.text(x, y, k.t, { fontFamily: FONT, fontSize: "12px", color: "#fff", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(11);
+      const art = `r_${k.t.toLowerCase()}`;
+      const hasArt = this.textures.exists(art);
+      const r = hasArt ? this.add.image(x, y, art).setDepth(10) : this.add.rectangle(x, y, 70, 46, k.c).setStrokeStyle(2, 0xffffff).setDepth(10);
+      const t = this.add.text(x, y + (hasArt ? 26 : 0), k.t, { fontFamily: FONT, fontSize: hasArt ? "10px" : "12px", color: "#fff", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(11);
       r.setScale(0);
       this.tweens.add({ targets: r, scale: 1, duration: 150 });
       r.setInteractive({ useHandCursor: true }).on("pointerdown", () => {

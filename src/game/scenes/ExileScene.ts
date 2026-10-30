@@ -22,8 +22,10 @@ export class ExileScene extends Phaser.Scene {
     G.drongus("banned");
     this.cameras.main.fadeIn(400);
     const exBg = this.add.rectangle(0, 0, 960, 540, 0x16161c).setOrigin(0);
-    if (backdrop(this, "bg_exile", { dim: 0.3, depth: -10 })) exBg.setVisible(false);
+    const exArt = !!backdrop(this, "bg_exile", { dim: 0.3, depth: -10 });
+    if (exArt) exBg.setVisible(false);
     const g = this.add.graphics();
+    if (exArt) g.setVisible(false);
     g.fillStyle(0x24242e, 1).fillRect(0, 200, 960, 180);
     for (let x = 0; x < 960; x += 120) g.fillStyle(0x30303c, 1).fillRect(x, 200, 6, 180);
     g.fillStyle(0x3a2a1a, 1).fillRect(430, 120, 100, 160);

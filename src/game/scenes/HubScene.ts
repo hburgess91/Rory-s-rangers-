@@ -816,11 +816,22 @@ export class HubScene extends Phaser.Scene {
 
   private drawPlayground() {
     const P = PLAYGROUND;
-    const g = this.add.graphics().setDepth(1);
-    g.fillStyle(0x7a3b5a, 1).fillRoundedRect(P.x, P.y, P.w, P.h, 18);
-    g.fillStyle(0x8f4a6b, 1);
-    for (let i = 0; i < 40; i++) g.fillCircle(P.x + 14 + ((i * 53) % (P.w - 28)), P.y + 14 + ((i * 37) % (P.h - 28)), 3);
-    g.lineStyle(4, 0xffd23f, 1).strokeRoundedRect(P.x, P.y, P.w, P.h, 18);
+    if (this.textures.exists("tile_rubber")) {
+      this.add.tileSprite(P.x, P.y, P.w, P.h, "tile_rubber").setOrigin(0).setDepth(1);
+      // a picket fence around it, with a gap at the front
+      if (this.textures.exists("hd_fence"))
+        for (let x = P.x + 40; x < P.x + P.w; x += 92) {
+          if (Math.abs(x - P.cx) < 60) continue;
+          this.add.image(x, P.y + P.h + 10, "hd_fence").setOrigin(0.5, 1).setDepth(P.y + P.h + 10);
+          this.add.image(x, P.y + 6, "hd_fence").setOrigin(0.5, 1).setDepth(P.y + 6);
+        }
+    } else {
+      const g = this.add.graphics().setDepth(1);
+      g.fillStyle(0x7a3b5a, 1).fillRoundedRect(P.x, P.y, P.w, P.h, 18);
+      g.fillStyle(0x8f4a6b, 1);
+      for (let i = 0; i < 40; i++) g.fillCircle(P.x + 14 + ((i * 53) % (P.w - 28)), P.y + 14 + ((i * 37) % (P.h - 28)), 3);
+      g.lineStyle(4, 0xffd23f, 1).strokeRoundedRect(P.x, P.y, P.w, P.h, 18);
+    }
     this.add.text(P.cx, P.y + P.h + 8, "KRELFORD PLAYGROUND · NO ADULTS UNLESS ACCOMPANYING A CHILD", { fontFamily: FONT, fontSize: "10px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(P.y + P.h + 2);
     for (const [k, x, y] of PLAY_EQUIP) {
       if (this.textures.exists(k)) this.add.image(x, y + 10, k).setOrigin(0.5, 1).setDepth(y + 10);
