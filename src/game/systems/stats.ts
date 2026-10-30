@@ -4,7 +4,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { reactionDamageMult } from "./reactions";
 
 export const GENERIC_UPGRADES = [
-  { id: "hp", name: "Vintage Pussy Juice Constitution", desc: "+15 max HP", max: 5 },
+  { id: "hp", name: "MAX HP: Vintage Pussy Juice Constitution", desc: "+15 max HP per level", max: 8 },
   { id: "dmg", name: "Resting Wonk Hand", desc: "+8% damage", max: 5 },
   { id: "krezz", name: "Extra Virgin Krezz Tank", desc: "+20 max Krezz", max: 3 },
   { id: "bottles", name: "Bottle Belt", desc: "+1 pussy juice bottle capacity", max: 3 },
@@ -48,11 +48,11 @@ export function damageMult(s: GameState): number {
 
 /** Enemy scaling: chapters get harder; New Krez+ harder again. */
 export function enemyHpMult(s: GameState): number {
-  return (1 + (s.chapter - 1) * 0.12) * (s.ngPlus > 0 ? 1.45 : 1);
+  return (1 + (s.chapter - 1) * 0.22) * (s.ngPlus > 0 ? 1.45 : 1);
 }
 
 export function enemyDamageMult(s: GameState): number {
-  return (1 + (s.chapter - 1) * 0.06) * (s.ngPlus > 0 ? 1.3 : 1) * activeMods(s).enemyDamageMult;
+  return (1 + (s.chapter - 1) * 0.13) * (s.ngPlus > 0 ? 1.3 : 1) * activeMods(s).enemyDamageMult;
 }
 
 export function intoxLabel(v: number): string {

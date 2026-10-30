@@ -6,6 +6,7 @@ import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { GENERIC_UPGRADES, upgradeCost, maxHp, counter } from "../systems/stats";
 import { GUNS, GUN_ORDER, gunMax } from "../combat/Guns";
+import { Companion } from "../combat/Companion";
 import { arcsFor, arcAvailable, currentArcSteps, stepDone } from "../systems/arcs";
 import { personalQuest, pickupsCollected, MINISTRY_QUESTS, ministryQuestState, ministryProgress } from "../systems/quests";
 import { factById } from "../../data/historicalRevisions";
@@ -17,6 +18,9 @@ type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests";
 
 /** Overlay menus: pause, settings, bank (upgrades), ban tribunal, quests, death. */
 const BANK_PERKS = [
+  { id: "pk_armor", name: "Krez-Proof Vest", desc: "Armour: take 10% less damage per level. Hi-vis. Smells of Lynx Africa.", cost: 170, max: 3 },
+  { id: "pk_meter", name: "Pre-Workout (Bootleg)", desc: "Wonk and Fart meters fill 30% faster per level.", cost: 160, max: 2 },
+  { id: "pk_autoaim", name: "Auto-Aim (Krezz-Assist)", desc: "Your attacks and guns lock onto the nearest enemy automatically.", cost: 300, max: 1 },
   { id: "pk_spd", name: "Fresh Trainers", desc: "+7% movement speed per level. Krunch-approved. Smell of new.", cost: 140, max: 3 },
   { id: "pk_dmg", name: "Krunch Gym Membership", desc: "+8% damage from everything per level. You don't go. You just have it.", cost: 160, max: 3 },
   { id: "pk_rof", name: "Itchy Trigger Finger", desc: "Guns fire 10% faster per level.", cost: 150, max: 3 },
@@ -148,14 +152,14 @@ export class MenuScene extends Phaser.Scene {
         const minister = narrativeActor("KREZMAR", s.player);
         add(title(this, 480, 52, "CENTRAL BANK OF KRELWORLD", 24, "#86efac"));
         add(this.add.text(480, 78, `${CHARACTERS[minister as string]?.name}${minister === "PROCTUS" ? ` (${CHARACTERS[s.player].proctusTitle})` : ", Minister of Money and Loans"} · You have ${s.coins} Krezzcoin`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5));
-        const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "MOVES"]];
+        const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "LADS & MOVES"]];
         tabs.forEach(([k, label], i) => add(button(this, 255 + i * 150, 106, label, () => { this.bankTab = k; this.render("bank"); }, { w: 140, h: 28, size: 13, color: this.bankTab === k ? 0x22c55e : undefined })));
         let y = 136;
         const row = (name: string, desc: string, btn: string, disabled: boolean, fn: () => void, col = "#ffffff") => {
           add(this.add.text(150, y, name, { fontFamily: FONT, fontSize: "14px", color: col }));
           add(this.add.text(150, y + 18, desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 500 } }));
           add(button(this, 760, y + 14, btn, fn, { w: 150, h: 30, size: 13, disabled }));
-          y += 44;
+          y += 42;
         };
         if (this.bankTab === "upgrades") {
           for (const u of GENERIC_UPGRADES) {
@@ -200,12 +204,14 @@ export class MenuScene extends Phaser.Scene {
             row(`${p.name} (${lvl}/${p.max})`, p.desc, maxed ? "MAXED" : `BUY ${cost}`, maxed || s.coins < cost, () => this.buy(p.id, cost));
           }
         } else {
+          const hired = typeof s.flags.companion === "string" ? (s.flags.companion as string) : "";
+          row(hired ? `HIRED: ${CHARACTERS[hired]?.name}` : "Hire a Lad (one dungeon trip)", hired ? "Waiting by the dungeon door. Goes home when you get back to town." : "A random lad joins your next dungeon, follows you room to room and shoots whatever's nearest. Can't be killed. Won't shut up.", hired ? "HIRED" : "HIRE 150", !!hired || s.coins < 150, () => this.hireLad(), hired ? "#5ad35a" : "#ffd23f");
           for (const m of BANK_MOVES) {
             const owned = !!s.upgrades[m.id];
             row(m.name, m.desc, owned ? "OWNED" : `BUY ${m.cost}`, owned || s.coins < m.cost, () => this.buyBranch(m.id, m.cost), owned ? "#5ad35a" : "#ffffff");
           }
         }
-        add(button(this, 480, 500, "LEAVE THE BANK", () => this.close(), { w: 220 }));
+        add(button(this, 480, 514, "LEAVE THE BANK", () => this.close(), { w: 220, h: 34 }));
         break;
       }
       case "tribunal": {
@@ -239,6 +245,18 @@ export class MenuScene extends Phaser.Scene {
     s.upgrades[id] = (s.upgrades[id] ?? 0) + 1;
     if (id === "hp") s.hp = Math.min(maxHp(s), s.hp + 15);
     synth.play("coin");
+    G.save();
+    this.render("bank");
+  }
+
+  private hireLad() {
+    const s = G.s;
+    if (s.coins < 150 || typeof s.flags.companion === "string") return;
+    s.coins -= 150;
+    const id = Companion.pick(s.player);
+    s.flags.companion = id;
+    synth.play("ding");
+    G.emit("toast", { title: "LAD HIRED", text: `${CHARACTERS[id]?.name} will meet you at the next dungeon.` });
     G.save();
     this.render("bank");
   }

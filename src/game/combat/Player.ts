@@ -147,7 +147,7 @@ export class Player {
     const body = this.spr.body as Phaser.Physics.Arcade.Body;
     c.invertX = now < this.invertUntil;
     // aim with intoxication drift
-    const rawAim = c.aim(this.x, this.y);
+    const rawAim = s.upgrades.pk_autoaim && c.autoAim !== null ? c.autoAim : c.aim(this.x, this.y);
     const drift = (s.intoxication / 100) * 0.4 * Math.sin(now / 370) + (s.intoxication > 60 ? (Math.random() - 0.5) * 0.15 : 0);
     this.aim = rawAim + drift;
     // movement
@@ -864,6 +864,7 @@ export class Player {
     const s = G.s;
     let a = amount;
     if (this.id === "KREBON") a *= 0.8;
+    a *= 1 - 0.1 * (s.upgrades.pk_armor ?? 0);
     if (now < this.bongoUntil) a *= 0.95;
     s.hp -= a;
     this.recentDamage.push({ t: now, amt: a });

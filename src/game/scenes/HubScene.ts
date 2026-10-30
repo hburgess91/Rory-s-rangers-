@@ -203,6 +203,12 @@ export class HubScene extends Phaser.Scene {
   create(data: { at?: string; from?: string; advance?: boolean; chain?: boolean }) {
     const s = G.s;
     if (data?.advance) endChapter();
+    if (s.flags.companion_used) {
+      const who = CHARACTERS[s.flags.companion as string]?.name ?? "Your lad";
+      delete s.flags.companion;
+      delete s.flags.companion_used;
+      this.time.delayedCall(1500, () => G.emit("toast", { title: "CONTRACT ENDED", text: `${who} has gone home. Hire another at the Central Bank.` }));
+    }
     this.chainMeetings = !!(data?.advance || data?.chain);
     s.phase = "hub";
     G.rt.timerEnd = 0;

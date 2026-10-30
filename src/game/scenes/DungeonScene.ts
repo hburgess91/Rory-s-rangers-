@@ -18,6 +18,7 @@ import { pickupsInDungeon, collectPickup } from "../systems/quests";
 import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
 import { leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
+import { Companion } from "../combat/Companion";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir } from "../../content/dsl";
@@ -95,6 +96,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private transitioning = false;
 
   private resumed = false;
+  private companion: Companion | null = null;
 
   constructor() {
     super("Dungeon");
@@ -161,6 +163,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.player = new Player(this, r.w / 2, r.h - 90);
     // the meter carries over between rooms; a revision can guarantee a minimum
     this.player.wonk = Math.max(this.player.wonk, activeMods(s).wonkStart);
+    // a lad hired at the Central Bank
+    this.companion = null;
+    if (typeof s.flags.companion === "string" && !this.dungeon.arenaFlag) {
+      this.companion = new Companion(this, this.player, s.flags.companion);
+      s.flags.companion_used = true;
+    }
     this.enemyGroup = this.physics.add.group();
     this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.collider(this.player.spr, this.obstacles);
@@ -556,6 +564,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   private cleanup() {
+    this.companion?.destroy();
+    this.companion = null;
     this.player?.destroy();
     for (const e of this.enemies) e.destroy();
     this.enemies = [];
@@ -1091,10 +1101,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (opts.crit) this.hitStop(50);
     }
     if (!opts.noWonk) {
-      this.addWonk(Math.min(6, a * 0.18));
+      this.addWonk(Math.min(4, a * 0.11));
       // fart meter: fast attackers get less per hit so everyone fills at a similar pace
       const rate = CHARACTERS[this.player.id]?.attackRate ?? 300;
-      const up = addFart(2.4 * Phaser.Math.Clamp(rate / 300, 0.55, 1.5));
+      const up = addFart(1.45 * Phaser.Math.Clamp(rate / 300, 0.55, 1.5) * (1 + 0.3 * (G.s.upgrades.pk_meter ?? 0)));
       if (up) this.fartLevelUp(up);
     }
     if (e.hp <= 0) {
@@ -1264,7 +1274,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (!this.player) return;
     const mult = this.boss instanceof DrongusBoss && this.boss.phase === 2 ? 1.6 : 1;
     const before = this.player.wonk;
-    this.player.wonk = Math.min(100, this.player.wonk + n * mult);
+    this.player.wonk = Math.min(100, this.player.wonk + n * mult * (1 + 0.3 * (G.s.upgrades.pk_meter ?? 0)));
     if (before < 100 && this.player.wonk >= 100) {
       synth.play("wonk");
       this.floatText(this.player.x, this.player.y - 50, "WONK FULL — R: WONK YOUR THANG", "#ff8c00", 15);
@@ -1340,6 +1350,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (this.paused || this.dying) return;
     const now = this.now();
+    if (!this.busy) this.companion?.update(now);
     if (now < this.hitStopUntil) {
       this.physics.world.isPaused || this.physics.world.pause();
       return;
