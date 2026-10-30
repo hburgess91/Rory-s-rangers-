@@ -1171,7 +1171,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       case "GYM":
         if (s.player !== "KREZWONK" && s.chapter >= 4) {
-          await this.talk([dir("Krunch Gym. There's a Brick Kolbane-shaped dent in the floor by the squat rack. Krezwonk has put a small plaque next to it: 'FORESEEN'."), dir("Kreblis is in the corner doing burpees. He says he's immortal now. He looks terrible.")]);
+          await this.talk([dir("Krunch Gym. There's a Chad Deltoid-shaped dent in the floor by the squat rack. Krezwonk has put a small plaque next to it: 'FORESEEN'."), dir("Kreblis is in the corner doing burpees. He says he's immortal now. He looks terrible.")]);
           return;
         }
         await this.talk([dir("Krunch Gym. Smells of pre-workout and regret. Somebody has written 'RE-RACK YOUR WEIGHTS' on the wall, and somebody else has written 'NO' underneath."), say("FOLK1", "Do you even wonk, bro?")]);

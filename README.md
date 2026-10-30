@@ -73,8 +73,8 @@ No backend, no accounts, no network calls at runtime. Saves live in `localStorag
 - **Bully Mikey** at The Booth: a punching-bag minigame (Proctus stands in if you are Mikey).
 - **Character side stories** (`src/content/arcs.ts`), unlocked after the first meeting:
   Flenky (Mollor, the psychology exam, Russell Brand at BJJ), Krezmar (Alistair Swamp, the ugliest blues guitarist in Krelford,
-  finished with a headbutt), Gronny (Carpet Kev and the carpet), Lil' Crongus (the bread and
-  butter pudding), Krezwonk (HGH, the deadlift, three girlfriends, Brick Kolbane) and Scrombus
+  finished with a headbutt), Gronny (Robbo and the carpet), Lil' Crongus (the bread and
+  butter pudding), Krezwonk (HGH, the deadlift, three girlfriends, Chad Deltoid) and Scrombus
   (renovate, flip, coup) and Kreblis (keep the "gear" coming for 99 Woodcutting, a HIIT burpee
   EMOM for eternal life, and a Facebook trolling minigame). Each has a permanent reward.
   Villains are fictional stand-ins.

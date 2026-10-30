@@ -274,7 +274,7 @@ export class VignetteScene extends Phaser.Scene {
     synth.stopMusic();
   }
 
-  // ---------------------------------------------------------------- CARPET KEV
+  // ---------------------------------------------------------------- ROBBO
 
   private async flatmate() {
     if (!backdrop(this, "bg_flat", { depth: -10 })) {
@@ -284,7 +284,7 @@ export class VignetteScene extends Phaser.Scene {
     }
     const kev = this.add.sprite(640, 360, "boss_flatmate", 0).setScale(3).setDepth(10);
     const gron = this.add.sprite(260, 360, "spr_GRONNY", 0).setScale(4).setDepth(10);
-    await this.talk([say("CARPET KEV", "Gronny, mate. Let's talk about this. The deposit's coming. I've got a guy."), say("GRONNY", "…"), this.cue("THE CARPET HAS BEEN AVENGED IN SIX PARTS", true)]);
+    await this.talk([say("ROBBO", "Gronny, mate. Let's talk about this. The deposit's coming. I've got a guy."), say("GRONNY", "…"), this.cue("THE CARPET HAS BEEN AVENGED IN SIX PARTS", true)]);
     const hit = async (label: string, fx: () => Promise<void>) => {
       this.caption(label, "#ffd23f", 26);
       await fx();
@@ -340,7 +340,7 @@ export class VignetteScene extends Phaser.Scene {
     await hit("PART 5: ROLLED UP IN THE CARPET", async () => {
       kev.setVisible(false);
       const roll = this.textures.exists("p_carpet_roll") ? this.add.image(640, 380, "p_carpet_roll").setScale(1.3).setDepth(12) : this.add.rectangle(640, 380, 160, 50, 0x7a1f2b).setStrokeStyle(4, 0xd6c49a).setDepth(12);
-      this.add.text(640, 380, "kev (inside)", { fontFamily: FONT, fontSize: "11px", color: "#d6c49a" }).setOrigin(0.5).setDepth(13);
+      this.add.text(640, 380, "robbo (inside)", { fontFamily: FONT, fontSize: "11px", color: "#d6c49a" }).setOrigin(0.5).setDepth(13);
       await this.wait(600);
       await this.tween({ targets: roll, x: 1100, y: -100, angle: 1080, duration: 1400, ease: "Quad.out" });
       const star = this.add.text(930, 30, "✦", { fontFamily: FONT, fontSize: "26px", color: "#ffffff" }).setDepth(20);
@@ -356,7 +356,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(1200);
     await this.talk([
       say("GRONNY", "Fair enough."),
-      dir("Somewhere over the horizon, Carpet Kev lands in Kreddle, alive, embarrassed, and permanently rolled in a ruined carpet. He Venmos you the deposit the next morning. With interest."),
+      dir("Somewhere over the horizon, Robbo lands in Kreddle, alive, embarrassed, and permanently rolled in a ruined carpet. He Venmos you the deposit the next morning. With interest."),
       dir("The carpet is avenged."),
     ]);
   }
@@ -365,7 +365,7 @@ export class VignetteScene extends Phaser.Scene {
     return isDir ? dir(t) : say("NARRATOR", t);
   }
 
-  // ---------------------------------------------------------------- BRICK KOLBANE
+  // ---------------------------------------------------------------- CHAD DELTOID
 
   private async rival() {
     if (!backdrop(this, "bg_gym", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
@@ -373,9 +373,9 @@ export class VignetteScene extends Phaser.Scene {
     const bar = this.add.image(480, 300, "p_barbell").setScale(3).setDepth(11);
     this.add.sprite(200, 380, "spr_KREZWONK", 0).setScale(4).setDepth(10);
     await this.talk([
-      say("BRICK KOLBANE", "You think you beat me? I'll show you. FIVE HUNDRED. Overhead. Right now."),
+      say("CHAD DELTOID", "You think you beat me? I'll show you. FIVE HUNDRED. Overhead. Right now."),
       say("KREZWONK", "Let me help you load the bar."),
-      dir("You add a plate. Then another. Then you keep adding plates. Brick is too proud to stop you."),
+      dir("You add a plate. Then another. Then you keep adding plates. Chad is too proud to stop you."),
     ]);
     for (let i = 0; i < 6; i++) {
       const plate = this.add.rectangle(i % 2 ? 610 + Math.floor(i / 2) * 12 : 350 - Math.floor(i / 2) * 12, 300, 10, 60, 0x111111).setDepth(12);
@@ -385,7 +385,7 @@ export class VignetteScene extends Phaser.Scene {
     this.caption("700KG", "#ffd23f", 30);
     await this.wait(700);
     await this.tween({ targets: bar, y: 250, duration: 900, ease: "Sine.out" });
-    await this.talk([say("BRICK KOLBANE", "EASY. EASY. I'M NOT EVEN—"), say("KREZWONK", "I foresee you dropping it.")]);
+    await this.talk([say("CHAD DELTOID", "EASY. EASY. I'M NOT EVEN—"), say("KREZWONK", "I foresee you dropping it.")]);
     synth.play("banhammer");
     this.cameras.main.shake(800, 0.03);
     await this.tween({ targets: bar, y: 370, duration: 250, ease: "Quad.in" });
@@ -393,7 +393,7 @@ export class VignetteScene extends Phaser.Scene {
     this.caption("RE-RACKED. PERMANENTLY.", "#ff4d4d", 30);
     await this.wait(1500);
     await this.talk([
-      dir("Brick Kolbane has been flattened into a perfect, gym-floor-shaped pancake. Cartoon birds circle where his head used to be."),
+      dir("Chad Deltoid has been flattened into a perfect, gym-floor-shaped pancake. Cartoon birds circle where his head used to be."),
       say("KREZWONK", "I foresaw this. I elected not to prevent it."),
       dir("The gym erupts in applause. For the first time in Krunch Gym's history, every weight is re-racked."),
     ]);

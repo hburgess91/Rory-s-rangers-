@@ -843,7 +843,7 @@ export class TrollBoss extends Boss {
   }
 }
 
-// ----------------------------------------------------------------- CARPET KEV (Gronny arena)
+// ----------------------------------------------------------------- ROBBO (Gronny arena)
 
 export class FlatmateBoss extends Boss {
   constructor(w: CombatWorld, x: number, y: number) {
@@ -879,7 +879,7 @@ export class FlatmateBoss extends Boss {
   }
 }
 
-// ----------------------------------------------------------------- BRICK KOLBANE (Krezwonk arena)
+// ----------------------------------------------------------------- CHAD DELTOID (Krezwonk arena)
 
 export class RivalBoss extends Boss {
   chargeUntil = 0;

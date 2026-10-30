@@ -136,7 +136,7 @@ export const ARCS: Arc[] = [
     id: "arc_gronny",
     player: "GRONNY",
     title: "The Carpet",
-    blurb: "Your ex-flatmate, Carpet Kev, moved out, ripped you off and destroyed the carpet. Find him. End him (cartoonishly).",
+    blurb: "Your ex-flatmate, Robbo, moved out, ripped you off and destroyed the carpet. Find him. End him (cartoonishly).",
     reward: { coins: 380, desc: "+20 max HP (closure)." },
     steps: [
       {
@@ -147,7 +147,7 @@ export const ARCS: Arc[] = [
           kind: "dialogue",
           lines: [
             dir("The Old Flat. The carpet looks like it lost a war. On the kitchen counter: a note."),
-            dir("'GRONNY — moved out. Will sort the rent next week. The carpet was like that. — KEV'"),
+            dir("'GRONNY — moved out. Will sort the rent next week. The carpet was like that. — ROBBO'"),
             dir("The carpet was not like that. You remember the carpet. You loved the carpet."),
             say("GRONNY", "Fair enough."),
             say("GRONNY", "…no. Not fair enough. Not this time."),
@@ -157,7 +157,7 @@ export const ARCS: Arc[] = [
       },
       {
         id: "kev",
-        text: "Return to the Old Flat and confront Carpet Kev.",
+        text: "Return to the Old Flat and confront Robbo.",
         at: "OLD_FLAT",
         step: { kind: "arena", dungeon: "arena_flatmate", intro: [dir("You open the cupboard.")] },
       },
@@ -217,7 +217,7 @@ export const ARCS: Arc[] = [
     id: "arc_krezwonk",
     player: "KREZWONK",
     title: "Mass Gainer",
-    blurb: "Get on HGH. Beat your deadlift record. Juggle three girlfriends without any of them finding out. Then deal with your rival, Brick Kolbane.",
+    blurb: "Get on HGH. Beat your deadlift record. Juggle three girlfriends without any of them finding out. Then deal with your rival, Chad Deltoid.",
     reward: { coins: 420, desc: "+15 max HP and +8% damage (the gains are real)." },
     steps: [
       {
@@ -251,9 +251,9 @@ export const ARCS: Arc[] = [
       },
       {
         id: "rival",
-        text: "Settle things with Brick Kolbane (Krunch Gym).",
+        text: "Settle things with Chad Deltoid (Krunch Gym).",
         at: "GYM",
-        step: { kind: "arena", dungeon: "arena_rival", intro: [say("BRICK KOLBANE", "(from the squat rack, where he is doing curls) Oi. Lurker. You think you're big now?")] },
+        step: { kind: "arena", dungeon: "arena_rival", intro: [say("CHAD DELTOID", "(from the squat rack, where he is doing curls) Oi. Lurker. You think you're big now?")] },
       },
     ],
   },

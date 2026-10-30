@@ -139,7 +139,7 @@ export const BARKS: Record<string, Bark[]> = {
     b("On the HGH now. My jaw's thinking about things.", { chapterAtLeast: 2, chapterAtMost: 3 }),
     b("Three girlfriends. None of them know. Don't say anything. Especially near the gym.", { chapterAtLeast: 3, chapterAtMost: 4 }),
     b("Pulled 300. So what can we say\u2026", { chapterAtLeast: 4, chapterAtMost: 5 }),
-    b("Brick Kolbane re-racked. Permanently. I foresaw it.", { chapterAtLeast: 5, chapterAtMost: 6 }),
+    b("Chad Deltoid re-racked. Permanently. I foresaw it.", { chapterAtLeast: 5, chapterAtMost: 6 }),
     C("So what can we say…"),
     C("The idea of Krezwonk is more important than the man."),
     C("Some serious horn has been going on."),
@@ -246,7 +246,7 @@ export const BARKS: Record<string, Bark[]> = {
     b("Crobleys. I'd kill for a crobley.", { revision: "CROBLEYS" }),
   ],
   GRONNY: [
-    b("Carpet Kev. Old flatmate. Owes me a carpet.", { chapterAtLeast: 2, chapterAtMost: 3 }),
+    b("Robbo. Old flatmate. Owes me a carpet.", { chapterAtLeast: 2, chapterAtMost: 3 }),
     b("I'm going round the old flat. Bringing a leaf blower.", { chapterAtLeast: 3, chapterAtMost: 4 }),
     b("Carpet avenged. Fair enough.", { chapterAtLeast: 5, chapterAtMost: 6 }),
     C("Luv a bit of Wallace and grom."),
