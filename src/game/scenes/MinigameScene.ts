@@ -63,6 +63,7 @@ export class MinigameScene extends Phaser.Scene {
       runescape: () => this.runescape(),
       burpees: () => this.burpees(),
       facebook: () => this.fbTroll(),
+      modulator: () => this.fbTroll("mikey"),
       gig: () => (G.s.player === "KREBON" ? this.gig() : this.gigWatch()),
     };
     (modes[this.mode] ?? (() => this.finish(false)))();
@@ -510,11 +511,13 @@ export class MinigameScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- FACEBOOK TROLLING
 
-  private fbTroll() {
+  private fbTroll(v: "kreblis" | "mikey" = "kreblis") {
+    const mk = v === "mikey";
     this.add.rectangle(480, 270, 960, 540, 0xf0f2f5);
     this.add.rectangle(480, 22, 960, 44, 0x1877f2);
     this.add.text(20, 22, "facebrook", { fontFamily: FONT, fontSize: "22px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0, 0.5);
-    this.add.text(940, 22, "Logged in as: Davey Kreblis (real account)", { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(1, 0.5);
+    if (mk) this.add.text(480, 58, "SAINTS vs POMPEY BANTER (18+) · 2,412 members · You are an ADMIN 👑", { fontFamily: FONT, fontSize: "13px", color: "#1877f2", fontStyle: "bold" }).setOrigin(0.5);
+    this.add.text(940, 22, mk ? "Logged in as: Mikey Nevitt (MODULATOR)" : "Logged in as: Davey Kreblis (real account)", { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(1, 0.5);
     this.hud.setColor("#050505").setStroke("#ffffff", 0);
     type Post = { who: string; text: string; opts: string[]; troll: number; mean: number; replies: string[] };
     const posts: Post[] = [
@@ -567,6 +570,57 @@ export class MinigameScene extends Phaser.Scene {
         replies: ["Drongus B. Drippin': Thank you", "Drongus B. Drippin': Wait", "Drongus B. Drippin': Kreblis is that you ??"],
       },
     ];
+    const mikeyPosts: Post[] = [
+      {
+        who: "Pompey Dave 1898",
+        text: "Saints fans are plastic. Prove me wrong. You can't.",
+        opts: ["Leave it. Free speech.", "BANNED FOR LIFE. Reason: lying.", "BANNED. Reason: being from Portsmouth. Also lying."],
+        troll: 1,
+        mean: 2,
+        replies: ["Pompey Dave 1898: lying about WHAT", "Admin (Mikey): u no wot u did", "Pompey Dave 1898 has left the group"],
+      },
+      {
+        who: "Gaz Saintsman",
+        text: "Is it just me or is the new admin a bit power mad?",
+        opts: ["Good question Gaz. Let's discuss it openly.", "New rule: NO PISSING OFF OR BADMOUTHING ADMINS. THANKS, ADMIN.", "Delete the whole group."],
+        troll: 1,
+        mean: 2,
+        replies: ["Gaz Saintsman: that rule wasn't there 5 seconds ago", "Admin (Mikey): it was always there", "Gaz Saintsman: do u lyk ur nu roole??"],
+      },
+      {
+        who: "THE COLONEL",
+        text: "Think carefully before you answer Michael! Did you eat all the pizza??",
+        opts: ["Yes. I ate all the pizza.", "No.", "I spoke to the Russian hackers. They say YOU ate it."],
+        troll: 2,
+        mean: 0,
+        replies: ["THE COLONEL: WHAT HACKERS", "THE COLONEL: I DONT EVEN HAVE A PIZZA", "THE COLONEL: ...did I eat the pizza?"],
+      },
+      {
+        who: "Rozzle Frowley",
+        text: "hi all new member here. love football. love the group. definitly not anyone you know",
+        opts: ["Approve Rozzle. (It's Mikey's own fake account.)", "Ban Rozzle. Frame someone else for it.", "Post: 'Rozzle is me'"],
+        troll: 0,
+        mean: 2,
+        replies: ["Rozzle Frowley: tnx admen", "Admin (Mikey): no problem rozzle", "Gaz Saintsman: why do you two type the same"],
+      },
+      {
+        who: "Group Owner",
+        text: "Admins. Please stop banning people for 'lying'. This is a banter page.",
+        opts: ["Fair enough boss.", "Ban the owner.", "New rule: Admins are allowed to break rules (Y)"],
+        troll: 2,
+        mean: 1,
+        replies: ["Group Owner: that's not a rule", "Admin (Mikey): it is now (Y)", "Group Owner: I'm making you vice-admin so I can keep an eye on you"],
+      },
+      {
+        who: "End-of-Season Awards",
+        text: "Voting is now open. Categories: Funniest Member, Biggest Plastic, WORST ADMIN.",
+        opts: ["Vote for someone else for Worst Admin.", "Post a 'VOTE MIKEY NEVITT FOR WORST ADMIN' graphic. Make it sexy as fuck.", "Mute 100 Pompey fans 'for April Fools'."],
+        troll: 1,
+        mean: 2,
+        replies: ["Gaz Saintsman: is he campaigning to be worst admin", "Pompey Dave 1898: I'm voting for him", "Admin (Mikey): WORST ADMIN 2 YEARS RUNNING YEEEE"],
+      },
+    ];
+    if (mk) posts.splice(0, posts.length, ...mikeyPosts);
     const need = 4;
     let idx = 0;
     let score = 0;
@@ -575,9 +629,9 @@ export class MinigameScene extends Phaser.Scene {
       card.removeAll(true);
       if (idx >= posts.length) {
         if (score >= need) {
-          title(this, 480, 270, "MOST HATED MAN ON FACEBROOK", 34, "#1877f2").setDepth(200);
-          this.finish(true, [dir(`Trolls landed: ${score}/${posts.length}.`)]);
-        } else this.finish(false, [dir(`Trolls landed: ${score}/${posts.length}. Need ${need}.`)]);
+          title(this, 480, 270, mk ? "POWERRRRRR" : "MOST HATED MAN ON FACEBROOK", 34, "#1877f2").setDepth(200);
+          this.finish(true, [dir(`${mk ? "Power moves" : "Trolls landed"}: ${score}/${posts.length}.`)]);
+        } else this.finish(false, [dir(`${mk ? "Power moves" : "Trolls landed"}: ${score}/${posts.length}. Need ${need}.`)]);
         return;
       }
       const p = posts[idx];
@@ -617,10 +671,10 @@ export class MinigameScene extends Phaser.Scene {
       } else if (i === p.mean) {
         synth.play("banhammer");
         G.s.banRisk = Math.min(90, G.s.banRisk + 8);
-        this.pop(480, 260, "REPORTED. Too obvious. (Ban Risk +8)", "#ef4444", 20);
+        this.pop(480, 260, mk ? "TOO OBVIOUS. The owner noticed. (Ban Risk +8)" : "REPORTED. Too obvious. (Ban Risk +8)", "#ef4444", 20);
       } else {
         synth.play("tap_fail");
-        this.pop(480, 260, "2 likes. Nobody noticed. Wasted.", "#65676b", 20);
+        this.pop(480, 260, mk ? "Fair and reasonable. Boring. Wasted." : "2 likes. Nobody noticed. Wasted.", "#65676b", 20);
       }
       this.time.delayedCall(2400, () => {
         idx++;
@@ -629,7 +683,7 @@ export class MinigameScene extends Phaser.Scene {
       });
     };
     for (const [k, n] of [["ONE", 0], ["TWO", 1], ["THREE", 2]] as const) this.input.keyboard?.on(`keydown-${k}`, () => pick(n));
-    this.time.addEvent({ delay: 200, loop: true, callback: () => this.hud.setText(`TROLLS LANDED ${score}/${need}   POST ${Math.min(idx + 1, posts.length)}/${posts.length}`) });
+    this.time.addEvent({ delay: 200, loop: true, callback: () => this.hud.setText(`${mk ? "POWER MOVES" : "TROLLS LANDED"} ${score}/${need}   POST ${Math.min(idx + 1, posts.length)}/${posts.length}`) });
     show();
   }
 

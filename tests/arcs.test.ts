@@ -7,7 +7,7 @@ import { currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepA
 
 const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE", "PORTAL"];
 const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv", "wahooga"];
-const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig"];
+const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig", "modulator"];
 
 describe("character side stories", () => {
   it("every arc step points at real places, fights, minigames and cutscenes", () => {
@@ -35,7 +35,7 @@ describe("character side stories", () => {
   });
 
   it("covers the six requested characters", () => {
-    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["CRONGUS", "FLENKY", "GRONNY", "KREBLIS", "KREBON", "KREZMAR", "KREZWONK", "SCROMBUS"]);
+    expect(ARCS.filter((a) => a.player !== "ALL").map((a) => a.player).sort()).toEqual(["CRONGUS", "FLENKY", "GRONNY", "KREBLIS", "KREBON", "KREZMAR", "KREZWONK", "MIKEY", "SCROMBUS"]);
     expect(ARCS.filter((a) => a.player === "ALL").length).toBeGreaterThanOrEqual(2);
   });
 
@@ -81,9 +81,10 @@ describe("shared side quests", () => {
     const s = newGameState("MIKEY");
     s.flags.met_emergency = true;
     s.chapter = 1;
-    expect(currentArcSteps(s).length).toBe(0);
+    const shared = () => currentArcSteps(s).filter((c) => c.arc.player === "ALL");
+    expect(shared().length).toBe(0);
     s.chapter = 3;
-    expect(currentArcSteps(s).map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_cronster", "arc_polson_fit"]);
+    expect(shared().map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_cronster", "arc_polson_fit"]);
   });
   it("collect steps finish when every token is picked up", () => {
     const s = newGameState("MIKEY");
