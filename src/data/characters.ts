@@ -123,7 +123,7 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     id: "KREBLIS",
     name: "KREBLIS",
     realName: "David Gray",
-    aka: "aka Dirty Dazzer",
+    aka: "aka Dirty Dazzer aka Diet Gray aka Krelvin",
     color: 0xd8443a,
     portrait: "pt_kreblis",
     playable: true,
