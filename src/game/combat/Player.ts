@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { charMeta, facingFrom, feetBody } from "../gfx/HD";
+import { charMeta, facingFrom, feetBody, steer } from "../gfx/HD";
 import { CHARACTERS, type CharacterDef } from "../../data/characters";
 import type { PlayableId } from "../../data/types";
 import { G } from "../G";
@@ -30,6 +30,7 @@ export class Player {
   attackCd = 0;
   specialCd = 0;
   dodgeCd = 0;
+  dodgeQueuedUntil = 0;
   dodgeUntil = 0;
   dodgeAngle = 0;
   iframesUntil = 0;
@@ -182,14 +183,20 @@ export class Player {
         body.velocity.x += (tx - body.velocity.x) * Math.min(1, dt / 260);
         body.velocity.y += (ty - body.velocity.y) * Math.min(1, dt / 260);
       } else {
-        body.setVelocity(tx, ty);
+        steer(body, tx, ty, dt);
       }
+    }
+    // a dodge pressed just before the cooldown ends still happens
+    if (this.dodgeQueuedUntil && now >= this.dodgeCd && now < this.dodgeQueuedUntil && now >= this.dodgeUntil) {
+      this.dodgeQueuedUntil = 0;
+      this.tryDodge(now, mv);
     }
     // animation
     const meta = charMeta(this.world.sc, this.spr.texture.key);
     if (meta) {
       // PixelLab sheet: face the aim direction, 4-way walk cycle, directional jab
-      const f = facingFrom(Math.cos(this.aim), Math.sin(this.aim));
+      const fighting = now < this.attackAnimUntil + 450 || c.attackHeld();
+      const f = moving && !fighting ? facingFrom(mv.x, mv.y, (this.spr.getData("facing") as any) ?? "south") : facingFrom(Math.cos(this.aim), Math.sin(this.aim));
       this.spr.setData("facing", f);
       if (now < this.attackAnimUntil) {
         const side = f === "east" || f === "west";
@@ -200,7 +207,7 @@ export class Player {
         const cyc = meta.walk[f] ?? meta.walk.south;
         this.spr.setFlipX(false).setFrame(cyc[Math.floor(now / 90) % cyc.length]);
       } else this.spr.setFlipX(false).setFrame(meta.idle[f] ?? 0);
-    } else this.spr.setFlipX(Math.cos(this.aim) < 0);
+    } else this.spr.setFlipX(moving && !(now < this.attackAnimUntil + 450 || c.attackHeld()) ? mv.x < -0.1 || (Math.abs(mv.x) <= 0.1 && this.spr.flipX) : Math.cos(this.aim) < 0);
     if (meta) {
       // handled above
     } else if (now < this.attackAnimUntil) this.spr.setFrame(3);
@@ -336,7 +343,11 @@ export class Player {
   }
 
   private tryDodge(now: number, mv: { x: number; y: number }) {
-    if (now < this.dodgeCd) return;
+    if (now < this.dodgeCd) {
+      // buffer it: pressing a moment early still counts
+      if (this.dodgeCd - now < 180) this.dodgeQueuedUntil = this.dodgeCd + 120;
+      return;
+    }
     if (now < this.noDodgeUntil) {
       this.world.floatText(this.x, this.y - 30, "DODGING IS ILLEGAL", "#ff6666", 12);
       return;

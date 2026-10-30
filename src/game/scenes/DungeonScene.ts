@@ -16,6 +16,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban";
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
 import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
+import { leadCamera } from "../gfx/HD";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir } from "../../content/dsl";
@@ -1311,6 +1312,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.controls.autoAimPoint = ne ? { x: ne.x, y: ne.y } : { x: this.player.x + Math.cos(this.player.aim) * 180, y: this.player.y + Math.sin(this.player.aim) * 180 };
     if (!this.busy) this.player.update(dt, now, this.controls);
     else (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    {
+      const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;
+      leadCamera(this.cameras.main, pb.velocity.x, pb.velocity.y, dt, 0.12, 36);
+    }
     // intoxication decays slowly
     s.intoxication = Math.max(0, s.intoxication - dt * 0.0006);
     s.playtimeMs += dt;

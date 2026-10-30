@@ -84,8 +84,10 @@ export class TouchControls {
     const max = 55;
     const k = len > max ? max / len : 1;
     this.knob.setPosition(this.base.x + dx * k, this.base.y + dy * k);
-    TOUCH.mx = len > 8 ? (dx * k) / max : 0;
-    TOUCH.my = len > 8 ? (dy * k) / max : 0;
+    // small deadzone, then full speed from about 60% of the way out (no need to push to the rim)
+    const mag = len < 8 ? 0 : Math.min(1, (len - 8) / (max * 0.6 - 8));
+    TOUCH.mx = len ? (dx / len) * mag : 0;
+    TOUCH.my = len ? (dy / len) * mag : 0;
   }
 
   destroy() {

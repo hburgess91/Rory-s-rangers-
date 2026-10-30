@@ -19,7 +19,7 @@ import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
 import { arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
-import { animateWalker, feetBody } from "../gfx/HD";
+import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
@@ -1664,8 +1664,9 @@ You are required by law to sign the Sex Offenders Register.`, {
       if (activeMods(s).slippery) {
         body.velocity.x += (tx - body.velocity.x) * Math.min(1, dt / 260);
         body.velocity.y += (ty - body.velocity.y) * Math.min(1, dt / 260);
-      } else body.setVelocity(tx, ty);
+      } else steer(body, tx, ty, dt);
       const moving = Math.hypot(mv.x, mv.y) > 0.1;
+      leadCamera(this.cameras.main, body.velocity.x, body.velocity.y, dt);
       animateWalker(this.av, mv.x, mv.y, moving, time);
       if (moving) {
         this.idleMs = 0;

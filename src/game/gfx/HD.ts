@@ -149,3 +149,29 @@ export function backdrop(scene: Phaser.Scene, key: string, opts: { dim?: number;
   if (opts.dim) scene.add.rectangle(480, 270, 960, 540, 0x0a0614, opts.dim).setDepth((opts.depth ?? -10) + 1).setScrollFactor(0);
   return img;
 }
+
+/**
+ * Ease a body's velocity toward a target. Quick to start, quicker to stop, and turns around fast,
+ * so movement feels responsive but not robotic. Times are in ms (time to cover ~63% of the gap).
+ */
+export function steer(body: Phaser.Physics.Arcade.Body, tx: number, ty: number, dt: number, accel = 45, decel = 30) {
+  const vx = body.velocity.x;
+  const vy = body.velocity.y;
+  const stopping = Math.abs(tx) < 1 && Math.abs(ty) < 1;
+  // reversing direction counts as stopping (no slidey turnarounds)
+  const reversing = vx * tx + vy * ty < 0;
+  const tau = stopping || reversing ? decel : accel;
+  const k = 1 - Math.exp(-dt / tau);
+  let nx = vx + (tx - vx) * k;
+  let ny = vy + (ty - vy) * k;
+  if (stopping && Math.hypot(nx, ny) < 8) nx = ny = 0;
+  body.setVelocity(nx, ny);
+}
+
+/** Camera leads a little in the direction of travel. */
+export function leadCamera(cam: Phaser.Cameras.Scene2D.Camera, vx: number, vy: number, dt: number, amount = 0.18, max = 48) {
+  const tx = Phaser.Math.Clamp(-vx * amount, -max, max);
+  const ty = Phaser.Math.Clamp(-vy * amount, -max * 0.7, max * 0.7);
+  const k = 1 - Math.exp(-dt / 350);
+  cam.setFollowOffset(cam.followOffset.x + (tx - cam.followOffset.x) * k, cam.followOffset.y + (ty - cam.followOffset.y) * k);
+}
