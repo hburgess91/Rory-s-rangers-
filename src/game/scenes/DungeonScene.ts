@@ -20,6 +20,7 @@ import { leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
 import { SanBrother } from "../combat/SanBrother";
+import { SideLevel } from "./side/SideLevel";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir, gabor } from "../../content/dsl";
@@ -100,6 +101,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private companion: Companion | null = null;
   side = false;
   private bros: SanBrother[] = [];
+  private sideLevel: SideLevel | null = null;
   groundY = 0;
   private platforms: Phaser.Physics.Arcade.StaticGroup | null = null;
   private sideBg: Phaser.GameObjects.TileSprite | null = null;
@@ -163,12 +165,17 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const r = this.room;
     this.telegraphMult = s.player === "KREZWONK" ? 1.4 : 1;
     this.cameras.main.fadeIn(300);
+    // a previous room's trip doesn't carry over
+    this.cameras.main.setRotation(0).setZoom(1);
+    (this.cameras.main as any).postFX?.clear?.();
     this.side = this.dungeon.view === "side";
     this.groundY = r.h - 56;
     this.platforms = null;
     this.sideBg = null;
+    this.sideLevel = this.side ? new SideLevel(this as any, r) : null;
     if (this.side) {
-      this.physics.world.setBounds(24, 0, r.w - 48, this.groundY);
+      // with holes in the floor, the floor is made of blocks and the world carries on underneath
+      this.physics.world.setBounds(24, 0, r.w - 48, this.sideLevel?.hasGaps ? r.h + 400 : this.groundY);
       // shots may dip a little below the floor line so low shots still hit things standing on it
       this.bounds.setTo(24, 0, r.w - 48, this.groundY + 40);
     } else {
@@ -203,6 +210,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.physics.add.collider(this.player.spr, this.platforms, undefined, oneWay);
       this.physics.add.collider(this.enemyGroup, this.platforms, undefined, oneWay);
     }
+    this.sideLevel?.attach(this.player.spr, this.enemyGroup);
     this.cameras.main.setBounds(0, 0, r.w, r.h);
     this.cameras.main.startFollow(this.player.spr, true, 0.12, 0.12);
     this.cameras.main.setDeadzone(80, 60);
@@ -212,7 +220,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     else this.scene.get("UI").events.emit("mode", "dungeon");
     G.emit("room", { name: `${this.dungeon.name} · ${r.name}`, idx: this.roomIdx, total: this.dungeon.rooms.length });
     G.emit("boss", null);
-    synth.music(r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : this.dungeon.music);
+    synth.music(r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : r.music ?? this.dungeon.music);
     this.player.headbuttMode = r.boss === "troll";
     if (this.dungeon.timerSec && this.roomIdx === 0 && !G.rt.timerEnd) G.rt.timerEnd = Date.now() + this.dungeon.timerSec * 1000;
 
@@ -257,8 +265,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.sideBg.setTileScale(this.sideBgScale);
     }
     const tile = `tile_${r.theme}`;
-    this.add.tileSprite(0, gy, r.w, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(0x8a8a9a);
-    this.add.rectangle(0, gy, r.w, 4, 0x000000, 0.6).setOrigin(0).setDepth(3);
+    if (!this.sideLevel?.hasGaps) {
+      this.add.tileSprite(0, gy, r.w, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(0x8a8a9a);
+      this.add.rectangle(0, gy, r.w, 4, 0x000000, 0.6).setOrigin(0).setDepth(3);
+    }
     this.platforms = this.physics.add.staticGroup();
     for (const [fx, h, w] of r.platforms ?? []) {
       const x = r.w * fx;
@@ -269,6 +279,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const plat = this.add.rectangle(x, y, w, 14, 0, 0);
       this.platforms.add(plat);
     }
+    this.sideLevel?.build(this.platforms);
     this.obstacles = this.physics.add.staticGroup();
     this.door = this.add.image(r.w - 70, gy - 30, "p_door_locked").setScale(2.2).setDepth(6);
     this.doorZone = new Phaser.Geom.Rectangle(r.w - 130, gy - 110, 110, 110);
@@ -612,7 +623,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       return;
     }
     if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
-    else {
+    else if (r.triggers?.length) {
+      // run and gun: enemies turn up as you push right
+      if (this.roomIdx > 0 || r.triggers.length) this.toast("RUN AND GUN", "Push right. They'll come to you.");
+    } else {
       this.roomCleared = true;
       this.markCleared();
       this.checkExit();
@@ -763,6 +777,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.companion = null;
     for (const b of this.bros) b.destroy();
     this.bros = [];
+    this.sideLevel?.destroy();
+    this.sideLevel = null;
     this.player?.destroy();
     for (const e of this.enemies) e.destroy();
     this.enemies = [];
@@ -1772,6 +1788,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const now = this.now();
     if (!this.busy) this.companion?.update(now);
     if (!this.busy) for (const b of this.bros) b.update(now, Math.min(delta, 50));
+    this.sideLevel?.update(Math.min(delta, 50), this.busy);
+    if (this.sideLevel?.triggersDone() && !this.roomCleared && !this.room.boss && !this.busy) this.onRoomCleared();
     if (now < this.hitStopUntil) {
       this.physics.world.isPaused || this.physics.world.pause();
       return;

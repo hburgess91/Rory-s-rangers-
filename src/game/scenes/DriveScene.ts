@@ -325,7 +325,8 @@ export class DriveScene extends Phaser.Scene {
       gabor("I fell out twice. Can we do it again? Please no. Please yes."),
       say("SANMIK", "Let's have this night of freedom. Let's have this night of love."),
       say("SANMIK", "And all you pricks who doubted me, turn on your fucking TV. Put it onto Channel U. You'll see me say FUCK YOU."),
-      dir("The truck screeches into the estate. Ahead, steaming and groaning, is the Giant Hot Tub of Catford. Something enormous is sitting in it."),
+      dir("The truck screeches into a warehouse car park on the edge of the estate. The ground is shaking. Not from the police. From the bass."),
+      say("SANMIK", "Yee. The Nu Warehouse. Where it all began. We can't fix the hot tub sober, blud. Nobody's ever fixed a hot tub sober."),
     ]);
     this.finish();
   }

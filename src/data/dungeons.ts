@@ -40,6 +40,21 @@ export interface RoomDef {
   then?: string[];
   /** Shown when the exit is locked by exitFlag. */
   exitHint?: string;
+  /** Side-scrolling platforming: holes in the floor [x 0..1, width px], what's in them, and what they're called. */
+  floorGaps?: [number, number][];
+  pitColor?: number;
+  pitName?: string;
+  /** Moving platforms: [x 0..1, height above ground, width, swing x, swing y, period ms]. */
+  movers?: [number, number, number, number, number, number][];
+  /** Crushers, steam vents and conveyor belts. */
+  hazards?: { kind: "crusher" | "steam" | "conveyor"; x: number; w?: number; period?: number; dir?: number; offset?: number }[];
+  crusherLabel?: string;
+  /** Run and gun: when you get past x (0..1), this lot turns up. Replaces waves. */
+  triggers?: [number, [string, number][]][];
+  /** Room music (overrides the dungeon's). */
+  music?: string;
+  /** The magic pill: colours, sea creatures, the room breathes. */
+  trip?: boolean;
   /** Exit is locked until this flag is set (in addition to clearing all waves). */
   exitFlag?: string;
   cond?: Cond;
@@ -595,18 +610,23 @@ export const DUNGEONS: Record<string, DungeonDef> = {
       { ...SANMIK_HANGOUT, enterLines: SANMIK_ARRIVAL },
       {
         name: "Catford High Street",
-        w: 2800,
+        w: 3400,
         h: 540,
         theme: "industrial",
         backdrop: "sm_street",
         sanBros: true,
-        platforms: [[0.2, 120, 220], [0.32, 220, 180], [0.48, 130, 260], [0.62, 120, 200], [0.7, 230, 160], [0.84, 130, 240]],
-        waves: [[["catford_fox", 9]], [["imaginary_mandem", 3], ["catford_fox", 7]], [["corn_turd", 5], ["wet_pizza", 3], ["imaginary_mandem", 3]]],
+        platforms: [[0.12, 120, 200], [0.2, 230, 160], [0.36, 130, 220], [0.5, 230, 180], [0.62, 130, 220], [0.78, 230, 160], [0.88, 130, 200]],
+        floorGaps: [[0.27, 150], [0.55, 170], [0.7, 150]],
+        pitColor: 0x111827,
+        pitName: "OPEN MANHOLE",
+        movers: [[0.29, 120, 110, 0, 60, 2600], [0.575, 140, 120, 70, 0, 3000]],
+        hazards: [{ kind: "steam", x: 0.44, period: 3200 }, { kind: "steam", x: 0.83, period: 2800 }],
+        triggers: [[0.04, [["catford_fox", 6]]], [0.22, [["catford_fox", 5], ["imaginary_mandem", 2]]], [0.4, [["corn_turd", 4], ["catford_fox", 4]]], [0.6, [["imaginary_mandem", 3], ["wet_pizza", 2]]], [0.78, [["corn_turd", 4], ["wet_pizza", 2], ["catford_fox", 5]]]],
         enterLines: [
-          { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. A chicken shop called PECKISH that has been closed since 2009 and is somehow still open.", dir: true },
+          { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. Open manholes everywhere, because the council 'is getting to it'. The kebab shop extractor fans vent pure grease steam onto the pavement.", dir: true },
           { s: "SANMIK", t: "YEEE! San Brothers, assemble! SanChz, you're on food. I'm on bars." },
           { s: "SANCHZ", t: "YEGHHH." },
-          { s: "NARRATOR", t: "SANMIK and SANCHZ have joined you. They fight on their own. When you krezz (R), SanMik does his version: the SLOPPY SURPRISE.", dir: true },
+          { s: "NARRATOR", t: "SANMIK and SANCHZ have joined you. They fight on their own. When you krezz (R), SanMik does his version: the SLOPPY SURPRISE. Jump the manholes. Mind the steam.", dir: true },
         ],
       },
       {
@@ -618,6 +638,9 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         sanBros: true,
         exitFlag: "sm_donut",
         exitHint: "Where's SanChz? He went to the toilet twenty minutes ago. Check the STAFF TOILET.",
+        hazards: [{ kind: "conveyor", x: 0.14, w: 420, dir: -1 }, { kind: "crusher", x: 0.4, w: 120, period: 2700 }, { kind: "conveyor", x: 0.55, w: 380, dir: 1 }, { kind: "crusher", x: 0.72, w: 120, period: 2400, offset: 900 }],
+        crusherLabel: "FORMS",
+        movers: [[0.86, 150, 120, 0, 70, 2400]],
         platforms: [[0.18, 110, 240], [0.3, 210, 200], [0.45, 120, 300], [0.6, 220, 200], [0.75, 120, 260]],
         waves: [[["jobcentre", 3], ["catford_fox", 5]], [["jobcentre", 3], ["pepsi_normal", 4], ["hottub_bubble", 3]], [["imaginary_mandem", 3], ["corn_turd", 4], ["jobcentre", 2]]],
         props: [
@@ -649,6 +672,33 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         then: ["norwich", "drive"],
       },
       {
+        name: "The Nu Warehouse",
+        w: 3600,
+        h: 540,
+        theme: "industrial",
+        backdrop: "nu_warehouse",
+        music: "mdmazing",
+        trip: true,
+        sanBros: true,
+        platforms: [[0.1, 130, 180], [0.22, 240, 160], [0.34, 140, 200], [0.48, 250, 180], [0.62, 140, 200], [0.76, 250, 160], [0.88, 140, 200]],
+        floorGaps: [[0.29, 140], [0.56, 160]],
+        pitColor: 0x7c3aed,
+        pitName: "THE VOID (EUPHORIC)",
+        movers: [[0.305, 130, 110, 0, 70, 2200], [0.58, 150, 110, 80, 0, 2800], [0.7, 260, 120, 0, 60, 2000]],
+        hazards: [{ kind: "steam", x: 0.18, period: 2600 }, { kind: "steam", x: 0.44, period: 2400 }, { kind: "steam", x: 0.82, period: 2200 }],
+        triggers: [[0.05, [["loved_up", 7]]], [0.2, [["rave_bouncer", 2], ["loved_up", 5]]], [0.38, [["comedown", 3], ["loved_up", 5]]], [0.55, [["rave_bouncer", 3], ["comedown", 2]]], [0.72, [["loved_up", 8], ["comedown", 3]]], [0.86, [["rave_bouncer", 3], ["comedown", 3], ["loved_up", 5]]]],
+        enterLines: [
+          { s: "NARRATOR", t: "THE NU WAREHOUSE. A derelict warehouse on the edge of Catford, shaking at the seams. Lasers. Smoke. Five hundred people in bucket hats. On the decks, playing it for the ninth time in a row: 'MDMAzing'.", dir: true },
+          { s: "SANMIK", t: "Yee. Here. Have this." },
+          { s: "NARRATOR", t: "He presses something small into your hand. It is shaped like a goat. It is pink. It has 'YEE' stamped on it.", dir: true },
+          { s: "SANMIK", t: "Magic pill. Basically a vitamin. Gets you in the zone, innit. Can't fix a hot tub without being in the zone." },
+          { s: "SANCHZ", t: "YEGHHH. I've had four." },
+          { s: "NARRATOR", t: "You take the magic pill.", dir: true },
+          { s: "NARRATOR", t: "For a moment, nothing. Then the bass drops, and so does the floor of reality. The warehouse is still here, but it is also, somehow, the bottom of the ocean. A jellyfish is dancing with a bouncer. The lasers taste purple. You love everyone. You must still, unfortunately, fight some of them.", dir: true },
+          { s: "SANMIK", t: "SEE?! MDMAZING! YEEEEE!" },
+        ],
+      },
+      {
         name: "The Giant Hot Tub of Catford",
         w: 1700,
         h: 540,
@@ -671,21 +721,64 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     rooms: [
       {
         name: "The Factory Floor",
-        w: 3000,
+        w: 4200,
         h: 540,
         theme: "industrial",
         backdrop: "cf_floor",
-        platforms: [[0.14, 120, 220], [0.24, 230, 180], [0.36, 130, 240], [0.5, 220, 200], [0.62, 120, 260], [0.74, 230, 180], [0.86, 130, 220]],
-        waves: [[["crobley_minion", 9], ["candy_drone", 2]], [["crobage", 3], ["crobley_minion", 6]], [["crobley_guard", 3], ["candy_drone", 3], ["crobage", 2]], [["crobley_guard", 3], ["crobage", 3], ["crobley_minion", 6]]],
+        platforms: [[0.08, 120, 200], [0.15, 230, 160], [0.3, 130, 200], [0.36, 240, 160], [0.5, 130, 220], [0.58, 240, 160], [0.74, 130, 200], [0.8, 240, 160], [0.9, 130, 220]],
+        floorGaps: [[0.2, 170], [0.43, 200], [0.66, 180]],
+        pitColor: 0x5b3416,
+        pitName: "CHOCOLATE RIVER",
+        movers: [[0.22, 120, 110, 0, 70, 2400], [0.455, 140, 120, 90, 0, 2800], [0.68, 130, 110, 0, 80, 2200]],
+        hazards: [{ kind: "conveyor", x: 0.04, w: 360, dir: 1 }, { kind: "crusher", x: 0.27, w: 130, period: 2600 }, { kind: "steam", x: 0.34, period: 3000 }, { kind: "conveyor", x: 0.52, w: 420, dir: -1 }, { kind: "crusher", x: 0.6, w: 130, period: 2300, offset: 800 }, { kind: "steam", x: 0.78, period: 2600 }, { kind: "crusher", x: 0.86, w: 130, period: 2500, offset: 1500 }],
+        crusherLabel: "CROBLEY PRESS",
+        triggers: [[0.03, [["crobley_minion", 8]]], [0.14, [["crobley_minion", 5], ["candy_drone", 2]]], [0.28, [["crobage", 3], ["crobley_minion", 4]]], [0.4, [["crobley_guard", 3], ["candy_drone", 2]]], [0.55, [["crobage", 3], ["crobley_minion", 6]]], [0.7, [["crobley_guard", 3], ["candy_drone", 3]]], [0.84, [["crobage", 3], ["crobley_guard", 2], ["crobley_minion", 6]]]],
         enterLines: [
-          { s: "NARRATOR", t: "THE CROBLEY FACTORY. Brass machines the size of houses. Conveyor belts of pink Crobleys stretching into the distance. A chocolate waterfall. And over the tannoy, on a loop, a child singing 'Nibble on a Crobley'.", dir: true },
-          { s: "NARRATOR", t: "The workers have been replaced by brainwashed Crobleys and very large sausages in hi-vis. They've seen you.", dir: true },
-          { s: "NARRATOR", t: "SIDE-ON: A / D run · W jump (double jump in the air) · S drop through platforms · aim and attack as normal.", dir: true },
+          { s: "NARRATOR", t: "THE CROBLEY FACTORY. Brass machines the size of houses. Conveyor belts of pink Crobleys stretching into the distance. A chocolate river runs straight through the factory floor, uncovered, because Reinhardt fired the health and safety team for being 'woke'.", dir: true },
+          { s: "NARRATOR", t: "Over the tannoy, on a loop, a child singing 'Nibble on a Crobley'. The workers have been replaced by brainwashed Crobleys and very large sausages in hi-vis.", dir: true },
+          { s: "NARRATOR", t: "RUN AND GUN: push right and they come to you. A / D run · W jump (again in the air to double jump) · S drop through · aim and fire as normal. Don't fall in the chocolate. Don't stand under the presses.", dir: true },
         ],
       },
       { name: "The Flirt Room", w: 1500, h: 540, theme: "mansion", backdrop: "cf_flirt", platforms: [[0.22, 140, 220], [0.5, 240, 240], [0.78, 140, 220]], boss: "flirt" },
+      {
+        name: "The Packing Line",
+        w: 3800,
+        h: 540,
+        theme: "industrial",
+        backdrop: "cf_packing",
+        platforms: [[0.1, 130, 200], [0.2, 240, 160], [0.33, 130, 200], [0.47, 240, 180], [0.6, 130, 200], [0.73, 240, 160], [0.86, 130, 200]],
+        floorGaps: [[0.25, 160], [0.53, 190], [0.79, 170]],
+        pitColor: 0xdb2777,
+        pitName: "THE CANDY CHUTE",
+        movers: [[0.27, 130, 110, 0, 80, 2200], [0.555, 150, 120, 80, 0, 2600], [0.81, 130, 110, 0, 70, 2000]],
+        hazards: [{ kind: "conveyor", x: 0.02, w: 600, dir: 1 }, { kind: "crusher", x: 0.16, w: 130, period: 2200 }, { kind: "conveyor", x: 0.36, w: 520, dir: -1 }, { kind: "crusher", x: 0.42, w: 130, period: 2000, offset: 600 }, { kind: "crusher", x: 0.66, w: 130, period: 2400, offset: 1200 }, { kind: "conveyor", x: 0.6, w: 480, dir: 1 }, { kind: "steam", x: 0.9, period: 2400 }],
+        crusherLabel: "WRAPPER",
+        triggers: [[0.04, [["crobley_minion", 7], ["candy_drone", 2]]], [0.2, [["crobley_guard", 3], ["crobley_minion", 4]]], [0.38, [["candy_drone", 4], ["crobage", 2]]], [0.56, [["crobley_guard", 3], ["crobage", 3]]], [0.74, [["candy_drone", 3], ["crobley_minion", 8]]], [0.88, [["crobley_guard", 4], ["crobage", 3]]]],
+        enterLines: [
+          { s: "NARRATOR", t: "THE PACKING LINE. Every Crobley in Krelworld passes through here to be wrapped, boxed and stamped with Reinhardt's face. The wrappers come down hard. The belts don't stop. The candy chute goes somewhere you don't want to find out about.", dir: true },
+        ],
+      },
       { name: "The Chinese Room", w: 1500, h: 540, theme: "temple", backdrop: "cf_chinese", platforms: [[0.22, 140, 220], [0.5, 240, 240], [0.78, 140, 220]], boss: "lantern" },
       { name: "The Room For Beautiful Men", w: 1500, h: 540, theme: "mansion", backdrop: "cf_men", platforms: [[0.2, 150, 200], [0.5, 250, 260], [0.8, 150, 200]], boss: "fruity" },
+      {
+        name: "The Sausage Works",
+        w: 3800,
+        h: 540,
+        theme: "industrial",
+        backdrop: "cf_sausage",
+        platforms: [[0.1, 130, 200], [0.2, 240, 160], [0.34, 130, 200], [0.46, 240, 180], [0.6, 130, 200], [0.72, 240, 160], [0.86, 130, 200]],
+        floorGaps: [[0.26, 180], [0.52, 200], [0.78, 180]],
+        pitColor: 0x991b1b,
+        pitName: "RAW SAUSAGE MEAT",
+        movers: [[0.28, 130, 110, 0, 80, 2000], [0.545, 150, 120, 90, 0, 2400], [0.8, 140, 110, 0, 80, 1800]],
+        hazards: [{ kind: "crusher", x: 0.14, w: 140, period: 2000 }, { kind: "steam", x: 0.22, period: 2200 }, { kind: "crusher", x: 0.4, w: 140, period: 1900, offset: 700 }, { kind: "conveyor", x: 0.42, w: 300, dir: -1 }, { kind: "steam", x: 0.64, period: 2000 }, { kind: "crusher", x: 0.68, w: 140, period: 2100, offset: 1300 }, { kind: "crusher", x: 0.92, w: 140, period: 1800, offset: 300 }],
+        crusherLabel: "MINCER",
+        triggers: [[0.04, [["crobage", 4]]], [0.18, [["crobage", 3], ["crobley_guard", 2]]], [0.36, [["crobage", 4], ["candy_drone", 3]]], [0.55, [["crobley_guard", 4], ["crobage", 3]]], [0.72, [["crobage", 5], ["candy_drone", 3]]], [0.88, [["crobley_guard", 4], ["crobage", 4]]]],
+        enterLines: [
+          { s: "NARRATOR", t: "THE SAUSAGE WORKS. Hidden in the bowels of a children's sweet factory: an entire sausage operation. CROBAGES. Mincers the size of lorries. Chains of sausages swing overhead like bunting. It smells like a barbecue in hell.", dir: true },
+          { s: "NARRATOR", t: "A sign on the wall: 'CROBAGES — FOR STRONG BOYS. A REINHARDT CROBLEY COMPANY'. Somebody has added 'SQUAWK' underneath in marker pen. That somebody was probably sacked.", dir: true },
+        ],
+      },
       { name: "The Destruction Zone", w: 1800, h: 540, theme: "industrial", backdrop: "cf_destruction", platforms: [[0.18, 150, 220], [0.42, 240, 200], [0.66, 150, 220], [0.86, 250, 180]], boss: "tank" },
       { name: "The Core", w: 1600, h: 540, theme: "industrial", backdrop: "cf_core", platforms: [[0.2, 150, 220], [0.5, 250, 260], [0.8, 150, 220]], boss: "reinhardt" },
     ],

@@ -4768,6 +4768,18 @@
   },
   "cr_crater": {
    "file": "backdrops/cr_crater.png"
+  },
+  "cf_packing": {
+   "file": "backdrops/cf_packing.png"
+  },
+  "cf_sausage": {
+   "file": "backdrops/cf_sausage.png"
+  },
+  "nu_warehouse": {
+   "file": "backdrops/nu_warehouse.png"
+  },
+  "nu_reef": {
+   "file": "backdrops/nu_reef.png"
   }
  },
  "sheets": {
