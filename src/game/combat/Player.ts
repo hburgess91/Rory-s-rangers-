@@ -75,6 +75,12 @@ export class Player {
   attackHeldTime = 0;
   dead = false;
   grappledUntil = 0;
+  /** where the aim is pointing (world), for lobbed attacks */
+  aimAt: { x: number; y: number } | null = null;
+  /** side-scrolling: jumps left, coyote time, drop-through-platform window */
+  jumps = 2;
+  coyoteUntil = 0;
+  dropUntil = 0;
   grappleEscape = 0;
   /** Arena gimmick: in the troll fight, the special becomes a headbutt. */
   headbuttMode = false;
@@ -150,6 +156,7 @@ export class Player {
     const rawAim = s.upgrades.pk_autoaim && c.autoAim !== null ? c.autoAim : c.aim(this.x, this.y);
     const drift = (s.intoxication / 100) * 0.4 * Math.sin(now / 370) + (s.intoxication > 60 ? (Math.random() - 0.5) * 0.15 : 0);
     this.aim = rawAim + drift;
+    this.aimAt = s.upgrades.pk_autoaim && c.autoAim !== null ? c.autoAimPoint : c.aimPoint();
     // movement
     const mv = c.move();
     const moving = Math.hypot(mv.x, mv.y) > 0.1;
@@ -180,14 +187,33 @@ export class Player {
       return;
     }
     this.spr.setAngle(0);
+    const side = !!this.world.side;
+    if (side) body.setAllowGravity(now >= this.dodgeUntil);
     if (now < this.dodgeUntil) {
       const ds = 520 * (this.id === "FLENKY" && s.upgrades.fl1 ? 1.4 : 1);
-      body.setVelocity(Math.cos(this.dodgeAngle) * ds, Math.sin(this.dodgeAngle) * ds);
+      body.setVelocity(Math.cos(this.dodgeAngle) * ds, side ? 0 : Math.sin(this.dodgeAngle) * ds);
       if (now > this.dashTrailUntil) {
         this.dashTrailUntil = now + 40;
         const ghost = this.world.sc.add.sprite(this.x, this.y, this.spr.texture.key, this.spr.frame.name).setScale(2).setAlpha(0.45).setTint(this.def.color).setDepth(499).setFlipX(this.spr.flipX);
         this.world.sc.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
       }
+    } else if (side) {
+      // platformer: run left/right, jump (and one more in the air), down drops through platforms
+      const grounded = body.blocked.down || body.touching.down;
+      if (grounded) {
+        this.jumps = 2;
+        this.coyoteUntil = now + 110;
+      }
+      body.velocity.x += (mv.x * speed - body.velocity.x) * Math.min(1, dt / (grounded ? 70 : 140));
+      if (c.jump() && (this.jumps > 0 || now < this.coyoteUntil)) {
+        const first = grounded || now < this.coyoteUntil;
+        body.setVelocityY(first ? -660 : -580);
+        this.jumps = first ? 1 : 0;
+        this.coyoteUntil = 0;
+        synth.play(first ? "dodge" : "select");
+        if (!first) this.world.burst(this.x, this.y + 14, 0xffffff, 6);
+      }
+      if (mv.y > 0.6) this.dropUntil = now + 220;
     } else {
       const tx = (mv.x + wobble * mv.y) * speed;
       const ty = (mv.y - wobble * mv.x) * speed;
@@ -208,14 +234,15 @@ export class Player {
     if (meta) {
       // PixelLab sheet: face the aim direction, 4-way walk cycle, directional jab
       const fighting = now < this.attackAnimUntil + 450 || c.attackHeld();
-      const f = moving && !fighting ? facingFrom(mv.x, mv.y, (this.spr.getData("facing") as any) ?? "south") : facingFrom(Math.cos(this.aim), Math.sin(this.aim));
+      let f = moving && !fighting ? facingFrom(mv.x, mv.y, (this.spr.getData("facing") as any) ?? "south") : facingFrom(Math.cos(this.aim), Math.sin(this.aim));
+      if (side) f = (moving && !fighting && Math.abs(mv.x) > 0.1 ? mv.x : Math.cos(this.aim)) < 0 ? "west" : "east";
       this.spr.setData("facing", f);
       if (now < this.attackAnimUntil) {
         const side = f === "east" || f === "west";
         const cyc = (side ? meta.attack?.east : meta.attack?.south) ?? meta.attack?.east ?? [3];
         const t = 1 - (this.attackAnimUntil - now) / 200;
         this.spr.setFlipX(f === "west").setFrame(cyc[Math.max(0, Math.min(cyc.length - 1, Math.floor(t * cyc.length)))]);
-      } else if (moving) {
+      } else if (moving && (!side || Math.abs(mv.x) > 0.1)) {
         const cyc = meta.walk[f] ?? meta.walk.south;
         this.spr.setFlipX(false).setFrame(cyc[Math.floor(now / 90) % cyc.length]);
       } else this.spr.setFlipX(false).setFrame(meta.idle[f] ?? 0);
@@ -377,6 +404,7 @@ export class Player {
     }
     const mods = activeMods(G.s);
     this.dodgeAngle = Math.hypot(mv.x, mv.y) > 0.1 ? Math.atan2(mv.y, mv.x) : this.aim;
+    if (this.world.side) this.dodgeAngle = (Math.abs(mv.x) > 0.1 ? mv.x : Math.cos(this.aim)) < 0 ? Math.PI : 0;
     const dur = this.id === "FLENKY" && G.s.upgrades.fl1 ? 230 : 170;
     this.dodgeUntil = now + dur;
     this.iframesUntil = now + dur + 90;
@@ -469,7 +497,7 @@ export class Player {
         if (!close) {
           const lunge = fin ? 260 : 150;
           body.velocity.x += Math.cos(this.aim) * lunge;
-          body.velocity.y += Math.sin(this.aim) * lunge;
+          body.velocity.y += Math.sin(this.aim) * lunge * (this.world.side ? 0.2 : 1);
         }
         if (fin) this.attackAnimUntil = now + 170;
         synth.play(fin ? "swing3" : this.meleeStep === 2 ? "swing2" : "swing");
@@ -581,7 +609,11 @@ export class Player {
             y: ty,
             angle: 540,
             duration: 380,
-            onUpdate: (tw) => fl.setScale(2 + Math.sin(tw.progress * Math.PI) * 1.2),
+            onUpdate: (tw) => {
+              fl.setScale(2 + Math.sin(tw.progress * Math.PI) * (this.world.side ? 0.3 : 1.2));
+              // side-on: a proper lobbed arc
+              if (this.world.side) fl.y = this.y + (ty - this.y) * tw.progress - Math.sin(tw.progress * Math.PI) * 90;
+            },
             onComplete: () => {
               fl.destroy();
               synth.play("explode");
@@ -602,7 +634,12 @@ export class Player {
 
   private lobTarget() {
     const r = this.def.range ?? 300;
-    return { x: this.x + Math.cos(this.aim) * Math.min(r, 260), y: this.y + Math.sin(this.aim) * Math.min(r, 260) };
+    // land where you're pointing (up to the throw range); side-on, never below the floor
+    const want = this.aimAt ? Math.hypot(this.aimAt.x - this.x, this.aimAt.y - this.y) : 260;
+    const d = this.world.side ? Phaser.Math.Clamp(want, 40, Math.min(r, 300)) : Math.min(r, 260);
+    let ty = this.y + Math.sin(this.aim) * d;
+    if (this.world.side && this.world.groundY) ty = Math.min(ty, this.world.groundY - 10);
+    return { x: this.x + Math.cos(this.aim) * d, y: ty };
   }
 
   private spendKrezz(cost: number): boolean {

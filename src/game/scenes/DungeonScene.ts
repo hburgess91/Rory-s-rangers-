@@ -97,6 +97,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private resumed = false;
   private companion: Companion | null = null;
+  side = false;
+  groundY = 0;
+  private platforms: Phaser.Physics.Arcade.StaticGroup | null = null;
+  private sideBg: Phaser.GameObjects.TileSprite | null = null;
+  private sideBgScale = 1;
 
   constructor() {
     super("Dungeon");
@@ -156,11 +161,22 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const r = this.room;
     this.telegraphMult = s.player === "KREZWONK" ? 1.4 : 1;
     this.cameras.main.fadeIn(300);
-    this.physics.world.setBounds(24, 24, r.w - 48, r.h - 48);
-    this.bounds.setTo(24, 24, r.w - 48, r.h - 48);
+    this.side = this.dungeon.view === "side";
+    this.groundY = r.h - 56;
+    this.platforms = null;
+    this.sideBg = null;
+    if (this.side) {
+      this.physics.world.setBounds(24, 0, r.w - 48, this.groundY);
+      // shots may dip a little below the floor line so low shots still hit things standing on it
+      this.bounds.setTo(24, 0, r.w - 48, this.groundY + 40);
+    } else {
+      this.physics.world.setBounds(24, 24, r.w - 48, r.h - 48);
+      this.bounds.setTo(24, 24, r.w - 48, r.h - 48);
+    }
     this.buildRoom();
     this.controls = new Controls(this);
-    this.player = new Player(this, r.w / 2, r.h - 90);
+    this.player = new Player(this, this.side ? 90 : r.w / 2, this.side ? this.groundY - 40 : r.h - 90);
+    if (this.side) (this.player.spr.body as Phaser.Physics.Arcade.Body).setGravityY(1500);
     // the meter carries over between rooms; a revision can guarantee a minimum
     this.player.wonk = Math.max(this.player.wonk, activeMods(s).wonkStart);
     // a lad hired at the Central Bank
@@ -170,9 +186,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       s.flags.companion_used = true;
     }
     this.enemyGroup = this.physics.add.group();
-    this.physics.add.collider(this.enemyGroup, this.enemyGroup);
+    if (!this.side) this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.collider(this.player.spr, this.obstacles);
     this.physics.add.collider(this.enemyGroup, this.obstacles);
+    if (this.platforms) {
+      // one-way platforms: land on them from above, jump up through them, hold down to drop
+      const oneWay = (a: any, plat: any) => {
+        const b = (a.body ?? a) as Phaser.Physics.Arcade.Body;
+        const pb = plat.body as Phaser.Physics.Arcade.StaticBody;
+        if (a === this.player.spr && this.now() < this.player.dropUntil) return false;
+        return b.velocity.y >= 0 && b.bottom <= pb.top + 14;
+      };
+      this.physics.add.collider(this.player.spr, this.platforms, undefined, oneWay);
+      this.physics.add.collider(this.enemyGroup, this.platforms, undefined, oneWay);
+    }
     this.cameras.main.setBounds(0, 0, r.w, r.h);
     this.cameras.main.startFollow(this.player.spr, true, 0.12, 0.12);
     this.cameras.main.setDeadzone(80, 60);
@@ -214,8 +241,43 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   // ------------------------------------------------------------------ room building
 
+  /** Side-scrolling room: parallax backdrop, ground strip, one-way platforms, exit on the right. */
+  private buildSideRoom() {
+    const r = this.room;
+    const gy = this.groundY;
+    const sky = this.add.graphics().setDepth(-20).setScrollFactor(0);
+    sky.fillGradientStyle(0x2a1050, 0x2a1050, 0xff7aa8, 0xff7aa8, 1).fillRect(0, 0, 960, 540);
+    if (r.backdrop && this.textures.exists(r.backdrop)) {
+      const src = this.textures.get(r.backdrop).getSourceImage();
+      this.sideBgScale = 540 / src.height;
+      this.sideBg = this.add.tileSprite(0, 0, 960, 540, r.backdrop).setOrigin(0).setScrollFactor(0).setDepth(-10);
+      this.sideBg.setTileScale(this.sideBgScale);
+    }
+    const tile = `tile_${r.theme}`;
+    this.add.tileSprite(0, gy, r.w, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(0x8a8a9a);
+    this.add.rectangle(0, gy, r.w, 4, 0x000000, 0.6).setOrigin(0).setDepth(3);
+    this.platforms = this.physics.add.staticGroup();
+    for (const [fx, h, w] of r.platforms ?? []) {
+      const x = r.w * fx;
+      const y = gy - h;
+      this.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(0xb0a0c0);
+      this.add.rectangle(x, y - 7, w, 3, 0xffd23f, 0.8).setDepth(5);
+      this.add.rectangle(x, y + 7, w, 3, 0x000000, 0.5).setDepth(5);
+      const plat = this.add.rectangle(x, y, w, 14, 0, 0);
+      this.platforms.add(plat);
+    }
+    this.obstacles = this.physics.add.staticGroup();
+    this.door = this.add.image(r.w - 70, gy - 30, "p_door_locked").setScale(2.2).setDepth(6);
+    this.doorZone = new Phaser.Geom.Rectangle(r.w - 130, gy - 110, 110, 110);
+    this.add.text(r.w - 70, gy - 78, r.boss ? "" : "EXIT →", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
+    const t = this.add.text(480, 200, r.name.toUpperCase(), { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setScrollFactor(0).setDepth(950).setShadow(3, 3, "#000", 0);
+    this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
+    for (const p of r.props ?? []) if (evalCond(p.cond, G.s)) this.addProp(p);
+  }
+
   private buildRoom() {
     const r = this.room;
+    if (this.side) return this.buildSideRoom();
     const themeTile = `tile_${r.theme}`;
     this.add.tileSprite(0, 0, r.w, r.h, themeTile).setOrigin(0).setDepth(0);
     const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1 }[r.theme];
@@ -321,7 +383,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private addProp(p: PropDef) {
     const r = this.room;
     const x = r.w * p.x;
-    const y = r.h * p.y;
+    const y = this.side ? this.groundY - 20 : r.h * p.y;
     switch (p.kind) {
       case "wonking_machine": {
         const spr = this.add.image(x, y, "p_wonking").setScale(2.4).setDepth(y);
@@ -388,11 +450,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         const key = p.image ?? `spr_${p.speaker}`;
         const big = key.startsWith("p_");
         const tex = this.textures.exists(key) ? key : "p_sign";
-        const spr = key.startsWith("spr_") ? this.add.sprite(x, y, tex, 0).setScale(2.2) : this.add.image(x, y, tex).setScale(big ? 1.2 : 2);
-        spr.setDepth(y);
+        const spr = key.startsWith("spr_") ? this.add.sprite(x, y, tex, 0).setScale(this.side ? 2.6 : 2.2) : this.add.image(x, y, tex).setScale(big ? (this.side ? (key === "p_hottub" ? 1.5 : 1.25) : 1.2) : 2);
+        spr.setDepth(this.side ? 7 : y);
+        if (this.side) spr.setOrigin(0.5, 1).setY(this.groundY + 2);
         if (key === "p_gabor") this.tweens.add({ targets: spr, angle: 4, yoyo: true, repeat: -1, duration: 500 });
-        this.add.text(x, y - spr.displayHeight / 2 - 10, p.label ?? "", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(y + 1);
-        this.interactables.push({ x, y: y + 20, r: 70, label: `Talk to ${p.label ?? "them"}`, use: () => this.talk((p.lines ?? []).map((l) => (l.dir ? dir(l.t) : say(l.s, l.t)))) });
+        const topY = this.side ? this.groundY - spr.displayHeight - 12 : y - spr.displayHeight / 2 - 10;
+        this.add.text(x, topY, p.label ?? "", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(this.side ? 8 : y + 1);
+        const verb = p.action === "hottub" ? "Get in the hot tub" : p.action === "jukebox" ? "Change the song" : p.action === "pepsi" ? "Buy a Pepsi (5)" : `Talk to ${p.label ?? "them"}`;
+        this.interactables.push({ x, y: this.side ? this.groundY - 24 : y + 20, r: this.side ? 80 : 70, label: verb, use: () => void this.useTalker(p) });
         break;
       }
       case "npc": {
@@ -425,6 +490,58 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         });
         break;
       }
+    }
+  }
+
+  private talkerVisits: Record<string, number> = {};
+  private jukeIdx = 0;
+
+  private async useTalker(p: PropDef) {
+    const key = p.label ?? "";
+    const n = (this.talkerVisits[key] = (this.talkerVisits[key] ?? 0) + 1);
+    const lines = (p.lines ?? []).map((l) => (l.dir ? dir(l.t) : say(l.s, l.t)));
+    const s = G.s;
+    switch (p.action) {
+      case "hottub":
+        await this.talk(lines.slice(0, n === 1 ? lines.length : 2));
+        s.hp = maxHp(s);
+        this.floatText(this.player.x, this.player.y - 50, "FULL HP (and a bit damp)", "#7fdfff", 14);
+        synth.play("heal");
+        return;
+      case "begour_hug":
+        await this.talk(n === 1 ? lines : [lines[lines.length - 1]]);
+        s.hp = Math.min(maxHp(s), s.hp + 30);
+        this.floatText(this.player.x, this.player.y - 50, "+30 HP (BEAR HUG)", "#86efac", 14);
+        synth.play("heal");
+        return;
+      case "pepsi":
+        if (s.coins < 5) {
+          await this.talk([dir("The machine wants 5 Krezzcoin. You have less than that. The machine knows.")]);
+          return;
+        }
+        s.coins -= 5;
+        s.hp = Math.min(maxHp(s), s.hp + 15);
+        await this.talk([lines[(n - 1) % lines.length]]);
+        this.floatText(this.player.x, this.player.y - 50, "+15 HP", "#86efac", 14);
+        synth.play("pickup");
+        return;
+      case "jukebox": {
+        const songs = ["ggg8", "ggg13", "ggg6", "ggg12", "ggg4", "ggg9", "ggg3", "ggg10"];
+        const titles: Record<string, string> = { ggg8: "Gettin Crunk Wiv SanChz", ggg13: "In Tha Hot Tub", ggg6: "Peener Colarder", ggg12: "I Love Christmas", ggg4: "Viva Reggaeton", ggg9: "Wank Til U Spunk", ggg3: "I Don't Need Yhu", ggg10: "Fragrant Bitch" };
+        const id = songs[this.jukeIdx++ % songs.length];
+        synth.music(id, true);
+        this.toast("♪ JUKEBOX", `SanMik & SanChz — "${titles[id]}"`);
+        return;
+      }
+      case "kick_gabor":
+        await this.talk(n === 1 || lines.length < 2 ? lines : [lines[1 + ((n - 2) % (lines.length - 1))]]);
+        if (n > 1) {
+          this.floatText(this.player.x + 60, this.player.y - 60, "*BAAA* (thank you)", "#ffffff", 13);
+          synth.play("hit");
+        }
+        return;
+      default:
+        await this.talk(lines);
     }
   }
 
@@ -474,8 +591,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const wave = this.waves[this.waveIdx];
     for (const [type, count] of wave) {
       for (let i = 0; i < count; i++) {
-        const x = Phaser.Math.Between(this.bounds.left + 60, this.bounds.right - 60);
-        const y = Phaser.Math.Between(this.bounds.top + 60, this.bounds.centerY + 40);
+        let x = Phaser.Math.Between(this.bounds.left + 60, this.bounds.right - 60);
+        let y = Phaser.Math.Between(this.bounds.top + 60, this.bounds.centerY + 40);
+        if (this.side) {
+          // in front of you or behind you, on the ground (or in the air for the flying ones)
+          const dir = Math.random() < 0.7 ? 1 : -1;
+          x = Phaser.Math.Clamp(this.player.x + dir * Phaser.Math.Between(260, 620), this.bounds.left + 60, this.bounds.right - 60);
+          y = this.isFlyer(type) ? Phaser.Math.Between(140, this.groundY - 180) : this.groundY - 50;
+        }
         this.spawnPortal(x, y, () => this.spawnEnemy(type, x, y));
       }
     }
@@ -507,8 +630,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const s = G.s;
     const first = !ownedGuns(s).length;
     if (!first && Math.random() > 0.33) return;
-    const x = this.bounds.centerX + (Math.random() - 0.5) * 120;
-    const y = this.bounds.centerY + 40;
+    const x = this.side ? Phaser.Math.Clamp(this.player.x + 90, 80, this.room.w - 160) : this.bounds.centerX + (Math.random() - 0.5) * 120;
+    const y = this.side ? this.groundY - 26 : this.bounds.centerY + 40;
     const tex = this.textures.exists("p_gun_crate") ? "p_gun_crate" : "p_bin";
     const crate = fitTo(this.add.image(x, y, tex), 46).setDepth(14);
     const glow = this.add.circle(x, y + 10, 30, 0x67e8f9, 0.18).setDepth(13);
@@ -555,7 +678,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (r.boss) return;
     this.door.setTexture("p_door");
-    this.toast("ROOM CLEAR", "The exit is open (top of the room).");
+    this.toast("ROOM CLEAR", this.side ? "The exit is open (far right →)." : "The exit is open (top of the room).");
   }
 
   private exitOpen() {
@@ -567,6 +690,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     synth.play("door");
     G.save();
+    if (this.roomIdx + 1 >= this.dungeon.rooms.length) {
+      // a hang-out with nowhere further to go: back to Krelford
+      G.s.phase = "hub";
+      this.cameras.main.fadeOut(250);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.transitioning = true;
+        switchTo(this, "Hub", { at: this.dungeon.returnAt ?? "PUB", from: "dungeon" });
+      });
+      return;
+    }
     this.cameras.main.fadeOut(250);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.transitioning = true;
@@ -1064,6 +1197,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   // ------------------------------------------------------------------ CombatWorld API
 
+  /** Side-scrolling rooms: these float about; everything else walks. */
+  private isFlyer(type: string) {
+    const d = ENEMIES[type];
+    return !!d && (d.shape === "bubble" || d.shape === "ghost" || d.shape === "drone" || d.shape === "page" || d.behavior === "orbiter" || d.behavior === "blinker");
+  }
+
   spawnEnemy(type: string, x: number, y: number, opts: { noDrops?: boolean; minion?: boolean } = {}): Enemy | null {
     if (!ENEMIES[type]) return null;
     if (this.enemies.filter((e) => !e.dead).length > 28) return null;
@@ -1077,6 +1216,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     e.setDepth(y);
     this.enemies.push(e);
     this.enemyGroup.add(e);
+    if (this.side && !this.isFlyer(type)) {
+      e.walker = true;
+      (e.body as Phaser.Physics.Arcade.Body).setGravityY(1500).setCollideWorldBounds(true);
+    } else if (this.side) (e.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true);
     return e;
   }
 
@@ -1327,7 +1470,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const tex = { coin: "p_coin", krezz: "p_krezz", heal: "p_bottle", crobley: "p_crobley", quest: "p_scroll", bottle: "p_bottle", bongo: "p_bongo", ammo: "p_ammo" }[kind];
     const spr = this.add.image(x, y, this.textures.exists(tex) ? tex : "p_coin").setScale(2).setDepth(15);
     if (kind === "ammo") fitTo(spr, 26);
-    this.tweens.add({ targets: spr, y: y - 8, yoyo: true, duration: 220 });
+    if (this.side && y < this.groundY - 16) this.tweens.add({ targets: spr, y: this.groundY - 14, duration: 200 + (this.groundY - y) * 1.2, ease: "Bounce.out" });
+    else this.tweens.add({ targets: spr, y: y - 8, yoyo: true, duration: 220 });
     this.pickups.push({ spr, kind, value });
   }
 
@@ -1390,7 +1534,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     else (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     {
       const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;
-      leadCamera(this.cameras.main, pb.velocity.x, pb.velocity.y, dt, 0.12, 36);
+      leadCamera(this.cameras.main, pb.velocity.x, this.side ? 0 : pb.velocity.y, dt, 0.12, 36);
+      if (this.sideBg) this.sideBg.tilePositionX = (this.cameras.main.scrollX * 0.35) / this.sideBgScale;
     }
     // intoxication decays slowly
     s.intoxication = Math.max(0, s.intoxication - dt * 0.0006);

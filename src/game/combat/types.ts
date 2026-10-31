@@ -59,4 +59,7 @@ export interface CombatWorld {
   bounds: Phaser.Geom.Rectangle;
   now(): number;
   burst(x: number, y: number, color: number, n?: number): void;
+  /** Side-scrolling room: gravity, jumping, platforms. */
+  side?: boolean;
+  groundY?: number;
 }

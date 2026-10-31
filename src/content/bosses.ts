@@ -1,5 +1,5 @@
 import type { Line } from "../data/types";
-import { dir, ping, say } from "./dsl";
+import { dir, gabor, ping, say } from "./dsl";
 
 export interface BossText {
   id: string;
@@ -239,35 +239,30 @@ export const BOSS_TEXT: Record<string, BossText> = {
     outro: [say("ROBBO", "Alright! Alright! I'll Venmo you! I swear on the carpet!")],
     taunts: ["I'LL PAY YOU NEXT WEEK!", "IT WAS LIKE THAT WHEN I MOVED IN!", "CHECK YOUR VENMO!", "THE CARPET WAS VINTAGE!", "BYE!"],
   },
-  begour: {
-    id: "begour",
-    name: "BEGOUR THE BEAR",
-    title: "Demon · Bearer of Bad News · Smell His Fart",
+  genie: {
+    id: "genie",
+    name: "THE GENIE",
+    title: "Ten Thousand Years In A Lamp · Granted A Goat · Absolutely Furious",
     intro: [
-      dir("Behind the Catford Cat, where the statue's shadow falls, there is a den. It smells of bear, fart, and the inside of an old flip phone."),
-      say("SANMIK", "Yee. Let me sing you something. 'The Ballad of Dawna'. It's about the love of my life."),
-      say("SANMIK", "I remember the day we met, because I had just bought a pet. It was a hamster, named after you. It didn't have a cage, so it lived in my shoe."),
-      say("SANMIK", "I logged onto my Facebook page. Fighted with some people, red with rage. Then it happened, and my anger stopped—"),
-      dir("A phone rings. A flip phone. Somewhere in the dark."),
-      say("SANMIK", "…It's Begour."),
-      say("BEGOUR THE BEAR", "SANMIK. IT'S BEGOUR. I'VE GOT SOME NEWS THAT WILL BREAK YOUR HEART."),
-      say("BEGOUR THE BEAR", "DAWNA HAS BROKEN UP WITH YOU. SMELL MY FART."),
-      dir("SanMik grows another head. Then he does a cartwheel. Then he starts breakdancing on the floor. Both heads are crying."),
-      say("SANMIK", "No one can help me now. Not even Begour."),
-      say("BEGOUR THE BEAR", "I AM BEGOUR. I CAN'T HELP ANYONE. THAT'S MY WHOLE THING."),
-      say("BEGOUR THE BEAR", "I'VE BEEN WHISPERING IN THIS LAD'S EAR FOR FIFTEEN YEARS. EVERY ALBUM. EVERY HOT TUB. EVERY CORN."),
-      say("BEGOUR THE BEAR", "AND NOW THE GENIE'S OPENED THE DOOR, I'M TAKING THE SANMIKVERSE TO KRELFORD. EVERYONE WILL LIVE IN A SANMIK NATION. FOREVER."),
+      dir("The very top of the Catford Cat. The wind smells of corn and Pepsi Max. The Genie is waiting, arms folded, in a cloud of purple smoke."),
+      say("GENIE", "TEN. THOUSAND. YEARS."),
+      say("GENIE", "TEN THOUSAND YEARS IN A LAMP THAT SMELLS OF FANNY JUICE. AND WHEN I FINALLY GET OUT, WHO RUBS ME? HIM."),
+      say("SANMIK", "Yee."),
+      say("GENIE", "AND WHAT DOES HE WISH FOR? A GOAT. AND TWO FIZZY DRINKS. ONE OF WHICH IS THE NORMAL VERSION OF THE OTHER."),
+      gabor("Sorry. Sorry. I'm the goat. I'm so sorry. You can hit me if you want. Please hit me."),
+      say("GENIE", "SO I HAVE MADE A NEW WISH. MY OWN. EVERYONE WHO TOUCHED THAT LAMP STAYS IN THE SANMIKVERSE. FOREVER. IN CATFORD. WITH HIM."),
+      say("SANMIK", "Sounds alright to be fair."),
       dir("You: Absolutely not."),
-      dir("TIP: Begour's farts linger. Get out of the green. When the phone rings, dodge the ringtone."),
+      dir("TIP: The Genie floats. Shoot him, or jump up and hit him (W / up to jump, twice for a double jump). Watch the sky for falling Pepsi Normal."),
     ],
     outro: [
-      say("BEGOUR THE BEAR", "…you've… hung up… on Begour…"),
-      dir("Begour topples backwards into his den with a sound like a wet sofa. One last fart escapes him. It is, everyone agrees, the worst one."),
-      say("SANMIK", "(both heads) Yee. Nobody touches SanMik. Except that bear. And the foxes. And my uncle, once, at a wedding, by accident."),
-      say("GABOR THE GOAT", "SanMik! The lamp! It's glowing! I think it wants to take us home!"),
-      dir("The magic lamp coughs. There is a smell of rank fanny juice and Pepsi Max. Then everyone is sucked back through the spout, one at a time, SanMik's second head last."),
+      say("GENIE", "…FINE. FINE! TAKE YOUR GOAT. TAKE YOUR CATFORD. I'M GOING BACK IN THE LAMP. AT LEAST IT'S QUIET."),
+      dir("The Genie pours himself back into the lamp like a sulking smoothie. The lamp coughs. It still smells exactly the same."),
+      say("BEGOUR THE BEAR", "(on the phone) Hiya, it's Begour. Just checking you're all alright. I've put the kettle on, if you want to stop in before you go."),
+      gabor("I got hit SIX times in that fight. Best day of my life. Thank you. Sorry. Thank you."),
+      dir("The lamp glows, and the SanMikverse spits you back out behind the Krezz Arms bins. You can go back through the lamp any time. Begour says he'll leave the café caravan open."),
     ],
-    taunts: ["SMELL MY FART!", "RING RING!", "IT'S BEGOUR!", "NOT EVEN BEGOUR CAN HELP YOU!", "DAWNA'S DUMPED YOU!", "SANMIK NATION!"],
+    taunts: ["TEN THOUSAND YEARS!", "A GOAT?!", "A PEPSI NORMAL?!", "YOU COULD HAVE FLOWN!", "I WISH YOU WOULD STOP!", "SMELL OF FANNY JUICE!"],
   },
   rival: {
     id: "rival",

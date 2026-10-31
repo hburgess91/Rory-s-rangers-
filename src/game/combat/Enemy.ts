@@ -33,6 +33,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   spawnCount = 0;
   flashUntil = 0;
   hpBar?: Phaser.GameObjects.Graphics;
+  /** Side-scrolling rooms: walks on the ground (gravity) rather than flying. */
+  walker = false;
   private animT = 0;
 
   constructor(world: CombatWorld, type: string, x: number, y: number, hpMult = 1, defOverride?: EnemyDef, texture?: string) {
@@ -53,6 +55,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     body.setCollideWorldBounds(true);
     this.orbitDir = Math.random() < 0.5 ? 1 : -1;
     this.nextAttack = world.now() + 800 + Math.random() * 900;
+  }
+
+  /** Stop moving (walkers keep falling). */
+  private halt2() {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (this.walker) body.setVelocityX(0);
+    else body.setVelocity(0, 0);
   }
 
   get radius() {
@@ -77,7 +86,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     else if (now < this.markedUntil) this.setTint(0xd8b4fe);
     else this.clearTint();
     if (now < this.stunUntil) {
-      body.velocity.scale(0.85);
+      if (this.walker) body.velocity.x *= 0.85;
+      else body.velocity.scale(0.85);
       return;
     }
     const ts = this.world.enemyTimeScale;
@@ -91,8 +101,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const tele = 600 * this.world.telegraphMult;
 
     const moveAngle = (ang: number, s: number) => {
-      body.setVelocity(Math.cos(ang) * s, Math.sin(ang) * s);
       this.facing = ang;
+      if (!this.walker) {
+        body.setVelocity(Math.cos(ang) * s, Math.sin(ang) * s);
+        return;
+      }
+      // side-on: run along the ground, hop up to you or over things
+      body.setVelocityX(Math.cos(ang) * s);
+      const grounded = body.blocked.down || body.touching.down;
+      if (grounded && ((dy < -70 && Math.abs(dx) < 280 && Math.random() < 0.04) || ((body.blocked.left || body.blocked.right) && Math.random() < 0.1))) body.setVelocityY(-600);
     };
 
     if (lost) {
@@ -117,12 +134,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
           if (dist < 300 && now > this.nextAttack) {
             this.state = "windup";
             this.stateUntil = now + tele;
-            this.dashAngle = toP;
-            body.setVelocity(0, 0);
-            this.world.enemyLine(this.x, this.y, toP, 260, 26, 0, tele);
+            this.dashAngle = this.walker ? (dx < 0 ? Math.PI : 0) : toP;
+            this.halt2();
+            this.world.enemyLine(this.x, this.y, this.dashAngle, 260, 26, 0, tele);
           }
         } else if (this.state === "windup") {
-          body.setVelocity(0, 0);
+          this.halt2();
           this.setTint(0xff6666);
           if (now > this.stateUntil) {
             this.state = "dash";
@@ -135,7 +152,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.stateUntil = now + 500;
           }
         } else {
-          body.velocity.scale(0.8);
+          if (this.walker) body.velocity.x *= 0.8;
+          else body.velocity.scale(0.8);
           if (now > this.stateUntil) {
             this.state = "move";
             this.nextAttack = now + 1200 + Math.random() * 800;
@@ -174,12 +192,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
           if (dist < 60) {
             this.state = "fuse";
             this.stateUntil = now + tele;
-            body.setVelocity(0, 0);
+            this.halt2();
             this.world.enemyAoe(this.x, this.y, 70, this.def.damage * this.dmgMult, tele, this.def.color);
             synth.play("telegraph");
           }
         } else {
-          body.setVelocity(0, 0);
+          this.halt2();
           this.setScale(2 + Math.sin(now / 40) * 0.2);
           if (now > this.stateUntil) {
             this.noDrops = this.noDrops; // keep drops
@@ -189,7 +207,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         break;
       }
       case "spawner": {
-        body.setVelocity(0, 0);
+        this.halt2();
         if (now > this.nextAttack && this.spawnCount < 6 && this.def.spawns) {
           this.nextAttack = now + 2600;
           this.spawnCount++;
@@ -211,10 +229,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.stateUntil = now + tele * 0.8;
             this.dashAngle = Math.atan2(p.y - by, p.x - bx);
             this.world.enemyLine(bx, by, this.dashAngle, 150, 24, 0, tele * 0.8);
-            body.setVelocity(0, 0);
+            this.halt2();
           }
         } else if (this.state === "windup") {
-          body.setVelocity(0, 0);
+          this.halt2();
           this.setAlpha(0.5 + Math.sin(now / 50) * 0.3);
           if (now > this.stateUntil) {
             this.setAlpha(1);

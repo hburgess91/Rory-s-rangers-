@@ -4666,6 +4666,18 @@
   },
   "p_begour": {
    "file": "props/p_begour.png"
+  },
+  "sm_hangout": {
+   "file": "backdrops/sm_hangout.png"
+  },
+  "sm_street": {
+   "file": "backdrops/sm_street.png"
+  },
+  "sm_jobcentre": {
+   "file": "backdrops/sm_jobcentre.png"
+  },
+  "sm_rooftop": {
+   "file": "backdrops/sm_rooftop.png"
   }
  },
  "sheets": {
@@ -4957,11 +4969,11 @@
    "frameHeight": 32,
    "hd": 0.5
   },
-  "boss_begour": {
-   "file": "combat/boss_begour.png",
-   "frameWidth": 118,
-   "frameHeight": 114,
-   "hd": 0.4211
+  "boss_genie": {
+   "file": "combat/boss_genie.png",
+   "frameWidth": 94,
+   "frameHeight": 127,
+   "hd": 0.378
   }
  }
 }

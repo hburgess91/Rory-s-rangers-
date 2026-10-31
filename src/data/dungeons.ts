@@ -1,4 +1,5 @@
 import type { Cond } from "./types";
+import { goat } from "../content/dsl";
 
 export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki";
 
@@ -13,6 +14,8 @@ export interface PropDef {
   /** talker: sprite/image key to draw, and what they say when you press E. */
   image?: string;
   lines?: { s: string; t: string; dir?: boolean }[];
+  /** talker extras: heal you, change the song, etc. */
+  action?: "hottub" | "jukebox" | "pepsi" | "kick_gabor" | "begour_hug";
 }
 
 export interface RoomDef {
@@ -28,6 +31,9 @@ export interface RoomDef {
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
   enterLines?: { s: string; t: string; dir?: boolean; cond?: Cond }[];
+  /** Side-scrolling rooms: backdrop image and one-way platforms [x (0..1), height above the ground, width]. */
+  backdrop?: string;
+  platforms?: [number, number, number][];
   /** Exit is locked until this flag is set (in addition to clearing all waves). */
   exitFlag?: string;
   cond?: Cond;
@@ -45,7 +51,128 @@ export interface DungeonDef {
   arenaFlag?: string;
   /** Hub building to return to after an arena or special mission. */
   returnAt?: string;
+  /** "side": a side-scrolling platformer (gravity, jumping, exit on the right). */
+  view?: "side";
 }
+
+/** Begour's café: the SanMikverse hang-out (no fighting). */
+const SANMIK_HANGOUT: RoomDef = {
+  name: "Begour's Café (Catford)",
+  w: 1800,
+  h: 540,
+  theme: "mansion",
+  backdrop: "sm_hangout",
+  platforms: [[0.42, 110, 200], [0.62, 200, 160]],
+  props: [
+    {
+      kind: "talker",
+      x: 0.17,
+      y: 0.5,
+      image: "p_begour",
+      label: "BEGOUR THE BEAR (café)",
+      action: "begour_hug",
+      lines: [
+        { s: "BEGOUR THE BEAR", t: "Oh hiya! Come in, come in. I'm Begour. I'm a bear. Don't worry, I'm a nice one. Mind the step." },
+        { s: "BEGOUR THE BEAR", t: "You'll want a cuppa. And a hug. Everyone wants a hug when they first get here. It's a lot, Catford." },
+        { s: "BEGOUR THE BEAR", t: "I'm the one who rings SanMik with bad news. Somebody has to. I always say sorry first. Then I fart, because it helps. It's lavender. Honestly. Have a sniff." },
+        { s: "NARRATOR", t: "It is lavender. It is, against every law of nature, lovely.", dir: true },
+        { s: "BEGOUR THE BEAR", t: "That Genie's up on top of the Catford Cat, sulking. Ten thousand years in a lamp does things to a person. High street, Job Centre, then the rooftops. Pop back if you need a hug." },
+        { s: "BEGOUR THE BEAR", t: "Come here. Big hug. There we go. Off you pop, love." },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.3,
+      y: 0.5,
+      image: "p_gabor",
+      label: "GABOR THE GOAT (kick him?)",
+      action: "kick_gabor",
+      lines: [
+        { s: "GABOR THE GOAT", t: goat("Oh! Oh god. A person. Hello. Sorry. Hello. I'm Gabor. I'm a goat. I'm SanMik's best friend. He said so. He also said he'd make a curry out of me.") },
+        { s: "GABOR THE GOAT", t: goat("Do you think he meant it? The curry? Please say yes. No. Please say no. I don't know what I want. I never know what I want.") },
+        { s: "GABOR THE GOAT", t: goat("Could you kick me? Just a little one. On the bum. I don't deserve it. That's why I want it.") },
+        { s: "GABOR THE GOAT", t: goat("Ow. OW. Thank you. Again? No. Yes. No. Yes.") },
+        { s: "GABOR THE GOAT", t: goat("That one was a bit soft. I'm not complaining. I am complaining. Do it properly.") },
+        { s: "GABOR THE GOAT", t: goat("Is this what love feels like? It's what it feels like for me.") },
+        { s: "GABOR THE GOAT", t: goat("SanMik never kicks me. He just threatens. It's worse. It's so much worse. I love it. Help me.") },
+        { s: "GABOR THE GOAT", t: goat("Sorry. Sorry for asking. Sorry for saying sorry. Kick me for saying sorry.") },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.5,
+      y: 0.5,
+      image: "p_hottub",
+      label: "THE HOT TUB",
+      action: "hottub",
+      lines: [
+        { s: "SANCHZ", t: "It's SanChz (in the hot tub)…" },
+        { s: "SANMIK", t: "And SanMik (in the hot tub)… lots of bubbles (in the hot tub)… lots of trouble (in the hot tub)…" },
+        { s: "SANCHZ", t: "No girls are (in the hot tub)…" },
+        { s: "SANMIK", t: "Feeling horny (in the hot tub)…" },
+        { s: "NARRATOR", t: "A slice of pizza drifts past. It is very wet. SanMik eats it. 'Wet pizza (in the hot tub)', he says. 'Dreams come true (in the hot tub).' You feel strangely restored.", dir: true },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.66,
+      y: 0.5,
+      image: "spr_SANMIK",
+      label: "SANMIK",
+      lines: [
+        { s: "SANMIK", t: "Yee. This is the hang out, blud. Begour does a lovely flapjack. Don't tell no one I said lovely." },
+        { s: "SANMIK", t: "I'm the fucking best. Michael Jackson is second best. I am also best dressed. Gok Wan is the second best dressed." },
+        { s: "SANMIK", t: "Everyone knows I'm solid. No cunt touches me. Except Begour. For hugs. That's allowed. That's in the rules what I wrote." },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.76,
+      y: 0.5,
+      image: "spr_FOLK2",
+      label: "UNCLE RIK",
+      lines: [
+        { s: "UNCLE RIK", t: "'Ello. It's Uncle Rik. I need a shit real bad. Yee." },
+        { s: "SANMIK", t: "NOT IN THE HOT TUB RIK. You mustn't wee or poo in the hot tub. It's in the song." },
+        { s: "UNCLE RIK", t: "…What song?" },
+        { s: "NARRATOR", t: "Uncle Rik waddles off towards Begour's caravan toilet. Begour, from inside: 'Oh. Oh, Rik, love, give it five minutes, I've just done the floor.'", dir: true },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.86,
+      y: 0.5,
+      image: "p_vending",
+      label: "PEPSI MACHINE",
+      action: "pepsi",
+      lines: [
+        { s: "NARRATOR", t: "Pepsi Max. Clunk. Lovely.", dir: true },
+        { s: "NARRATOR", t: "Pepsi Normal. Clunk. It's flat. It's the wish one. It's always the wish one.", dir: true },
+        { s: "GABOR THE GOAT", t: goat("Can I have the can after? I like to be hit with them.") },
+      ],
+    },
+    {
+      kind: "talker",
+      x: 0.07,
+      y: 0.5,
+      image: "p_tv",
+      label: "JUKEBOX",
+      action: "jukebox",
+      lines: [],
+    },
+  ],
+};
+
+const SANMIK_ARRIVAL: RoomDef["enterLines"] = [
+  { s: "NARRATOR", t: "THE SANMIKVERSE. You land on some decking, in a back yard in what is definitely, allegedly, Catford. Fairy lights. A caravan with CAFÉ painted on the side. A hot tub. The sky is the colour of Pepsi Max.", dir: true },
+  { s: "SANMIK", t: "CATFORD! Yee! I'm HOME, blud!" },
+  { s: "NARRATOR", t: "A phone rings in the caravan. A big furry arm passes SanMik a flip phone through the hatch.", dir: true },
+  { s: "BEGOUR THE BEAR", t: "Hiya SanMik love, it's Begour. I'm ever so sorry to do this. It's about Dawna. She's… she's broken up with you, love." },
+  { s: "BEGOUR THE BEAR", t: "Smell my fart. It's lavender. It'll help, I promise." },
+  { s: "NARRATOR", t: "SanMik grows another head. Then he does a cartwheel. Then he breakdances on the decking. Both heads are crying.", dir: true },
+  { s: "BEGOUR THE BEAR", t: "Oh, come here. Both of you. Both heads. Big hug." },
+  { s: "NARRATOR", t: "SIDE-ON CONTROLS: A / D to run · W (or up) to jump, press again in the air to double jump · S to drop through platforms · aim and attack with the mouse as normal · Space to dash. The exit is on the far right. Talk to everyone first. Begour gives hugs (they heal).", dir: true },
+];
 
 export const DUNGEONS: Record<string, DungeonDef> = {
   wildern: {
@@ -451,121 +578,91 @@ export const DUNGEONS: Record<string, DungeonDef> = {
   arena_sanmik: {
     id: "arena_sanmik",
     chapter: 0,
+    view: "side",
     name: "THE SANMIKVERSE (CATFORD, ALLEGEDLY)",
     music: "sanmik",
     arenaFlag: "sanmik_catford",
     returnAt: "PUB",
     rooms: [
+      { ...SANMIK_HANGOUT, enterLines: SANMIK_ARRIVAL },
       {
-        name: "Catford High Street (SanMikverse)",
-        w: 1300,
-        h: 760,
+        name: "Catford High Street",
+        w: 2800,
+        h: 540,
         theme: "industrial",
-        waves: [[["catford_fox", 10]], [["imaginary_mandem", 3], ["catford_fox", 6]], [["corn_turd", 5], ["imaginary_mandem", 2]]],
+        backdrop: "sm_street",
+        platforms: [[0.2, 120, 220], [0.32, 220, 180], [0.48, 130, 260], [0.62, 120, 200], [0.7, 230, 160], [0.84, 130, 240]],
+        waves: [[["catford_fox", 8]], [["imaginary_mandem", 3], ["catford_fox", 6]], [["corn_turd", 5], ["wet_pizza", 2], ["imaginary_mandem", 2]]],
         props: [
           {
             kind: "talker",
-            x: 0.18,
-            y: 0.25,
-            image: "p_gabor",
-            label: "GABOR THE GOAT",
-            lines: [
-              { s: "GABOR THE GOAT", t: "Yee, it's Gabor the Goat! I'm SanMik's new best friend! He threatened to make a curry out of me. It's the nicest thing anyone's ever said to me." },
-              { s: "GABOR THE GOAT", t: "Kick me. Go on. Just a little one. I deserve it." },
-              { s: "NARRATOR", t: "You do not kick the goat. The goat looks disappointed.", dir: true },
-            ],
-          },
-          {
-            kind: "talker",
-            x: 0.82,
-            y: 0.25,
+            x: 0.1,
+            y: 0.5,
             image: "spr_SANMIK",
             label: "SANMIK",
             lines: [
-              { s: "SANMIK", t: "Yee. Welcome to Catford, blud. The mythic locus. My manor. Everyone knows I'm solid. No cunt touches me." },
+              { s: "SANMIK", t: "Big up all da manz! All the fucking haters, go and suck your nans! Yee!" },
               { s: "SANMIK", t: "That's my crew. The Catford Fox Crew. Hundreds of mandem. You can't see them because they're very good at hiding." },
-              { s: "SANMIK", t: "I'm the fucking best. Michael Jackson is second best. I am also best dressed. Gok Wan is the second best dressed." },
               { s: "NARRATOR", t: "A fox bites SanMik on the ankle. He pretends it's one of his.", dir: true },
             ],
           },
         ],
         enterLines: [
-          { s: "NARRATOR", t: "THE SANMIKVERSE. It looks like Catford, if Catford had been described to a sketch artist by a man on three energy drinks. The sky is the colour of Pepsi Max. Everything smells faintly of corn.", dir: true },
-          { s: "SANMIK", t: "CATFORD! Yee! Big up all da manz! All the fucking haters, go and suck your nans!" },
-          { s: "NARRATOR", t: "The foxes have heard him. The foxes do not big him up.", dir: true },
+          { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. A chicken shop called PECKISH that has been closed since 2009 and is somehow still open.", dir: true },
+          { s: "NARRATOR", t: "The foxes have noticed you. The foxes have opinions.", dir: true },
         ],
       },
       {
         name: "Job Centre Plus (Catford Branch)",
-        w: 1200,
-        h: 720,
+        w: 2600,
+        h: 540,
         theme: "industrial",
-        waves: [[["jobcentre", 3], ["catford_fox", 5]], [["jobcentre", 2], ["pepsi_normal", 4], ["imaginary_mandem", 2]]],
+        backdrop: "sm_jobcentre",
+        platforms: [[0.18, 110, 240], [0.3, 210, 200], [0.45, 120, 300], [0.6, 220, 200], [0.75, 120, 260], [0.88, 200, 180]],
+        waves: [[["jobcentre", 3], ["catford_fox", 4]], [["jobcentre", 2], ["pepsi_normal", 4], ["hottub_bubble", 3]], [["imaginary_mandem", 3], ["corn_turd", 4]]],
         props: [
           {
             kind: "talker",
-            x: 0.5,
-            y: 0.2,
+            x: 0.08,
+            y: 0.5,
             image: "spr_SANCHZ",
             label: "MC POLSONATOR (signing on)",
             lines: [
               { s: "SANCHZ", t: "MC Polsonator. Signing on. Big up the Job Centre Plus." },
               { s: "SANCHZ", t: "She asked what I've done to look for work. I said I've been in a hot tub. She said that's not work. I said it's not NOT work." },
               { s: "SANCHZ", t: "Mork." },
-              { s: "SANMIK", t: "Oi SanChz. Ask her if she's got any jobs for a legend. Manager of something. Norwich, maybe." },
             ],
           },
         ],
         enterLines: [
           { s: "NARRATOR", t: "The Catford Job Centre Plus. A sign says 'NO HOT TUBS'. Somebody has crossed out 'NO'.", dir: true },
-          { s: "SANCHZ", t: "This is where I do my bars. And my forms." },
           { s: "NARRATOR", t: "The advisors rise from behind their desks. They have clipboards. They have questions about your availability.", dir: true },
         ],
       },
       {
-        name: "In Tha Hot Tub",
-        w: 1200,
-        h: 720,
-        theme: "mansion",
-        waves: [[["hottub_bubble", 5], ["wet_pizza", 2]], [["wet_pizza", 4], ["corn_turd", 4]]],
-        props: [
-          {
-            kind: "talker",
-            x: 0.5,
-            y: 0.22,
-            image: "p_hottub",
-            label: "THE HOT TUB",
-            lines: [
-              { s: "SANMIK", t: "It's SanMik (in the hot tub)… with SanChz (in the hot tub)… lots of bubbles (in the hot tub)… lots of trouble (in the hot tub)…" },
-              { s: "SANCHZ", t: "No girls are (in the hot tub)…" },
-              { s: "SANMIK", t: "Feeling horny (in the hot tub)…" },
-              { s: "NARRATOR", t: "A slice of pizza drifts past. It is very wet. SanMik eats it anyway. 'Wet pizza (in the hot tub)', he says, with his mouth full. 'Dreams come true (in the hot tub).'", dir: true },
-              { s: "SANCHZ", t: "Hot tub's broken (in the hot tub)." },
-              { s: "SANMIK", t: "Get an engineer (in the hot tub)." },
-            ],
-          },
-          {
-            kind: "talker",
-            x: 0.14,
-            y: 0.7,
-            image: "spr_FOLK2",
-            label: "UNCLE RIK",
-            lines: [
-              { s: "UNCLE RIK", t: "'Ello. It's Uncle Rik. I need a shit real bad. Yee." },
-              { s: "SANMIK", t: "NOT IN THE HOT TUB RIK. You mustn't wee or poo in the hot tub. It's in the song." },
-              { s: "UNCLE RIK", t: "…What song?" },
-              { s: "NARRATOR", t: "Uncle Rik waddles off towards the bushes, clenching. Nobody follows him. Nobody will ever follow him.", dir: true },
-            ],
-          },
-        ],
+        name: "Up The Catford Rooftops",
+        w: 2400,
+        h: 540,
+        theme: "temple",
+        backdrop: "sm_rooftop",
+        platforms: [[0.12, 100, 160], [0.2, 190, 140], [0.3, 110, 180], [0.38, 220, 150], [0.46, 130, 160], [0.55, 230, 170], [0.64, 120, 150], [0.72, 210, 160], [0.82, 120, 200], [0.9, 220, 160]],
+        waves: [[["hottub_bubble", 5], ["catford_fox", 4]], [["imaginary_mandem", 4], ["wet_pizza", 3]], [["pepsi_normal", 5], ["corn_turd", 4], ["hottub_bubble", 3]]],
         enterLines: [
-          { s: "NARRATOR", t: "A back garden in Catford. In the middle: a hot tub, bubbling furiously. Steam. Pizza. Something brown bobbing in the corner that everyone has agreed to call 'a crouton'.", dir: true },
-          { s: "SANMIK", t: "Ooh yee SanChz, turn them bubbles on. I love it when they go right up my— " },
-          { s: "NARRATOR", t: "The bubbles have come out of the hot tub. The bubbles are hostile.", dir: true },
+          { s: "NARRATOR", t: "The rooftops. Satellite dishes, chimneys, and up ahead, glowing purple: the Catford Cat, with something furious and blue sitting on its head.", dir: true },
+          { s: "GABOR THE GOAT", t: goat("Is it high up here? It's high up here. Push me off. No don't. Do. Don't.") },
         ],
       },
-      { name: "Begour's Den (behind the Catford Cat)", w: 1200, h: 760, theme: "temple", boss: "begour" },
+      { name: "The Top Of The Catford Cat", w: 1500, h: 540, theme: "temple", backdrop: "sm_rooftop", platforms: [[0.2, 130, 200], [0.5, 210, 240], [0.8, 130, 200]], boss: "genie" },
     ],
+  },
+  sanmik_hangout: {
+    id: "sanmik_hangout",
+    chapter: 0,
+    view: "side",
+    name: "THE SANMIKVERSE",
+    music: "sanmik",
+    returnAt: "PUB",
+    rooms: [{ ...SANMIK_HANGOUT, enterLines: [{ s: "NARRATOR", t: "You rub the lamp. Pop. Begour's café, Catford. The kettle is already on.", dir: true }] }],
   },
   arena_cronster: {
     id: "arena_cronster",

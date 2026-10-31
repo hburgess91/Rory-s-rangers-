@@ -103,7 +103,7 @@ export class Controls {
 
   /** After a dialogue closes, ignore keys that are still held until they are released. */
   swallow() {
-    for (const n of ["interact", "dodge", "special", "burst", "bottle", "bongo", "pause", "swap", "fart"]) this.pressedOnce.add(n);
+    for (const n of ["jump", "interact", "dodge", "special", "burst", "bottle", "bongo", "pause", "swap", "fart"]) this.pressedOnce.add(n);
     TOUCH.edges.clear();
   }
 
@@ -137,6 +137,13 @@ export class Controls {
   swap(): boolean {
     const p = this.pad();
     return this.edge("swap", this.keys.X.isDown || !!(p && p.up));
+  }
+  /** Side-scrolling rooms: W / Up / joystick up. */
+  jump(): boolean {
+    const k = this.keys;
+    const p = this.pad();
+    const stickUp = (TOUCH.enabled && TOUCH.my < -0.6) || !!(p && p.leftStick.y < -0.6);
+    return this.edge("jump", k.W.isDown || k.UP.isDown || stickUp);
   }
   interact(): boolean {
     const p = this.pad();

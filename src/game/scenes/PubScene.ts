@@ -117,6 +117,7 @@ export class PubScene extends Phaser.Scene {
     items.push([s.flags.pub_tv_off ? "📺 Turn the telly back on" : "📺 Turn the telly off", () => this.toggleTv()]);
     if (this.sanmikOn) items.push(["🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
     if (s.player !== "KREBON" && !s.flags.krebon_gone && s.flags.met_emergency) items.push(["🎸 Back room: Twitcher Mutiny are on. It's getting rowdy.", () => switchTo(this, "Minigame", { mode: "gig", returnAt: "PUB" })]);
+    if (s.flags.sanmik_catford) items.push(["🪔 Rub the magic lamp (back to the SanMikverse: Begour's café)", () => switchTo(this, "Dungeon", { dungeon: "sanmik_hangout", room: 0 })]);
     {
       const names: Record<string, string> = { crazy: "'Krazy For The Krelworld' (Drongus)", flenky: "'Flenky' (SanChz)", crocodile: "'Do The Crocodile' (SanMik)" };
       const order = ["crazy", "flenky", "crocodile"];

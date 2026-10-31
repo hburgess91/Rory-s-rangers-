@@ -5,7 +5,7 @@ import { DialogueBox } from "../ui/DialogueBox";
 import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
-import { dir, ping, say } from "../../content/dsl";
+import { dir, gabor, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
 import { animateWalker, backdrop } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
@@ -1153,12 +1153,13 @@ export class VignetteScene extends Phaser.Scene {
     this.tweens.add({ targets: goat, angle: 5, yoyo: true, repeat: -1, duration: 300 });
     await this.talk([
       say("SANMIK", "Yee — ooh yee, I got it. Uhh. Yee. Mate, this Pepsi Max is GREAT."),
-      say("GABOR THE GOAT", "Yee! It's Gabor the Goat! I'm your new best friend, SanMik! Let's have fun!"),
+      gabor("Oh god. Oh god I exist. Hello. I'm Gabor the Goat. Am I your best friend? I'm your best friend. Sorry. Is that too much? It's too much."),
       say("SANMIK", "Shut the fuck up, you little neeky cunt, or I'll make a fucking curry out of you."),
-      say("GABOR THE GOAT", "…Okay SanMik. You're my best friend."),
+      gabor("A curry. Would it hurt? It would hurt. Ooh. Okay. Okay SanMik. You're my best friend. Please threaten me again later."),
       say("SANCHZ", "Can I have the Pepsi normal."),
       say("SANMIK", "No."),
       say("GENIE", "ONE MORE THING. I HAVE SPENT TEN THOUSAND YEARS IN A LAMP THAT SMELLS OF FANNY JUICE. SOMEBODY IS PAYING FOR THAT."),
+      gabor("Is it me? Is it me paying? Oh no. Oh yes."),
       say("GENIE", "WELCOME… TO THE SANMIKVERSE."),
     ]);
     // everyone up the spout
@@ -1196,7 +1197,7 @@ export class VignetteScene extends Phaser.Scene {
       dir("In the middle: Gabor the Goat, wearing a rosette from each side."),
       say("KREBLIS", "Krelmergency. I repeat. Krelmergency. There are two nations on my steps and neither of them has filled in the form."),
       say(G.s.player, "What happened?"),
-      say("GABOR THE GOAT", "SanChz drank the Pepsi Normal. The wish one. SanMik said it was a declaration of war. Then they both declared war. Then they both declared nations."),
+      gabor("SanChz drank the Pepsi Normal. The wish one. SanMik said it was a declaration of war. Then they both declared nations. I'm on both sides. They're both shouting at me. It's wonderful. I'm so scared."),
     ]);
     synth.music("ggg4");
     for (let i = 0; i < 2; i++) {
@@ -1277,7 +1278,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([
       say("UNCLE RIK", "Ahh. That's better. Lovely and warm."),
       dir("The water in the hot tub is now a colour that Krelford Council will later describe as 'a biohazard and a crime'. A crouton bobs to the surface. It is not a crouton."),
-      say("GABOR THE GOAT", "Can I go in?"),
+      gabor("Can I go in? I want to go in. I don't want to go in. Push me in."),
       say("EVERYONE", "NO."),
     ]);
     // the celebration
@@ -1304,12 +1305,12 @@ export class VignetteScene extends Phaser.Scene {
       say("SANMIK", "Best dressed, blud."),
       say("SANCHZ", "Everyone knows he's solid. No cunt touches him."),
       dir("Gabor the Goat headbutts SanMik in the bum. SanMik falls down the Town Hall steps, all of them, one at a time, still twerking."),
-      say("GABOR THE GOAT", "Sorry SanMik. I love you. You're my best friend."),
+      gabor("Sorry SanMik. Sorry. I love you. You're my best friend. Headbutt me back. Please. PLEASE."),
       ping("DRONGUS", "Who let Mikey start a country"),
       ping("DRONGUS", "And why is there a goat in the group chat"),
       ping("MIKEY", "Can someone react to my message pls"),
       ping("MIKEY", "The nation one"),
-      dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour has not been heard from, apart from the occasional silent phone call and a faint smell."),
+      dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour sends a card. It says 'So proud of you both x'. It smells faintly of lavender."),
     ]);
     G.s.flags.sanmik_nation = true;
     synth.stopMusic();
