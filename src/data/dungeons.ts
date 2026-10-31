@@ -607,7 +607,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     arenaFlag: "sanmik_catford",
     returnAt: "PUB",
     rooms: [
-      { ...SANMIK_HANGOUT, enterLines: SANMIK_ARRIVAL },
+      { ...SANMIK_HANGOUT, enterLines: SANMIK_ARRIVAL, then: ["cam2cam"] },
       {
         name: "Catford High Street",
         w: 3400,
@@ -669,7 +669,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         sanBros: true,
         platforms: [[0.2, 140, 220], [0.5, 230, 260], [0.8, 140, 220]],
         boss: "jam",
-        then: ["norwich", "drive"],
+        then: ["norwich", "beepbeep", "drive"],
       },
       {
         name: "The Nu Warehouse",

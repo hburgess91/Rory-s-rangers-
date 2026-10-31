@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
-import { switchTo } from "../Flow";
+import { runChain, switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
-import { FONT, title } from "../ui/theme";
+import { FONT, button, title } from "../ui/theme";
+import { OVER, fall, flap, randomZone, type Flappy } from "../combat/Wonk";
 import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
@@ -88,6 +89,7 @@ export class MinigameScene extends Phaser.Scene {
       crocodile: () => this.crocodile(),
       cannon: () => this.cannon(),
       norwich: () => this.norwich(),
+      cam2cam: () => this.cam2cam(),
       gig: () => (G.s.player === "KREBON" ? this.gig() : this.gigWatch()),
     };
     (modes[this.mode] ?? (() => this.finish(false)))();
@@ -130,10 +132,7 @@ export class MinigameScene extends Phaser.Scene {
       this.cameras.main.fadeOut(400);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
         if (!success) return this.scene.restart(this.startData);
-        const [next, ...rest] = this.chain;
-        if (next === "drive") switchTo(this, "Drive", { chain: rest, resume: this.resume });
-        else if (next) switchTo(this, "Minigame", { mode: next, chain: rest, resume: this.resume });
-        else switchTo(this, "Dungeon", this.resume!);
+        runChain(this, this.chain, this.resume!);
       });
       return;
     }
@@ -204,6 +203,237 @@ export class MinigameScene extends Phaser.Scene {
         if (left <= 0 && !this.ended) this.finish(false, [dir("Time. You are still frustrated. Mikey looks smug, which somehow makes it worse."), say(target, barks[barks.length - 1])]);
       },
     });
+  }
+
+  // ---------------------------------------------------------------- CAM2CAM (you are SanMik)
+
+  /** SanMik on webcam. Chat her up with lines from the back catalogue, then wonk in sync until you both KREZZ. */
+  private cam2cam() {
+    const HER = "SexyChanzzz_xx";
+    // the two webcam windows
+    this.add.rectangle(480, 270, 960, 540, 0x0f0a1e);
+    title(this, 480, 20, "CAM2CAM ♥ krelchat.krw", 20, "#f472b6");
+    const cam = (x: number, bgKey: string, label: string) => {
+      const c = this.add.container(x, 175);
+      if (this.textures.exists(bgKey)) {
+        const img = this.add.image(0, 0, bgKey);
+        img.setScale(Math.max(420 / img.width, 250 / img.height));
+        c.add(img);
+      } else c.add(this.add.rectangle(0, 0, 420, 250, 0x1e1b4b));
+      const m = this.make.graphics({}).fillRect(x - 210, 50, 420, 250);
+      c.setMask(m.createGeometryMask());
+      this.add.rectangle(x, 175, 424, 254).setStrokeStyle(3, 0xf472b6);
+      this.add.text(x - 205, 54, label, { fontFamily: FONT, fontSize: "11px", color: "#fff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setDepth(20);
+      const rec = this.add.text(x + 205, 54, "● LIVE", { fontFamily: FONT, fontSize: "11px", color: "#ef4444", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(1, 0).setDepth(20);
+      this.tweens.add({ targets: rec, alpha: 0.3, yoyo: true, repeat: -1, duration: 600 });
+      return c;
+    };
+    const leftCam = cam(245, "cam_sanmik", "SanMik_Official (verified rapper)");
+    const rightCam = cam(715, "cam_her", `${HER} · 29 · Lewisham`);
+    const mik = this.add.image(0, 70, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(4.2).setOrigin(0.5, 1);
+    leftCam.add(mik);
+    const her = this.textures.exists("p_camgirl") ? this.add.image(0, 125, "p_camgirl").setScale(1.9).setOrigin(0.5, 1) : this.add.image(0, 125, "spr_FOLK1", 0).setScale(4).setOrigin(0.5, 1);
+    rightCam.add(her);
+    this.tweens.add({ targets: her, y: 121, yoyo: true, repeat: -1, duration: 1400, ease: "Sine.inOut" });
+    // interest meter
+    let interest = 20;
+    const meterBg = this.add.rectangle(715, 316, 300, 12, 0x3b0764).setStrokeStyle(2, 0xf472b6);
+    void meterBg;
+    const meter = this.add.rectangle(565, 316, 60, 10, 0xf472b6).setOrigin(0, 0.5);
+    const meterLbl = this.add.text(560, 316, "♥ INTEREST", { fontFamily: FONT, fontSize: "11px", color: "#f9a8d4" }).setOrigin(1, 0.5);
+    void meterLbl;
+    const setInterest = (v: number) => {
+      interest = Phaser.Math.Clamp(v, 0, 100);
+      meter.setSize(3 * interest, 10);
+    };
+    // the chat log
+    this.add.rectangle(480, 430, 900, 190, 0x111827, 0.95).setStrokeStyle(2, 0x6b21a8);
+    const log: Phaser.GameObjects.Text[] = [];
+    const push = (who: string, text: string, color: string) => {
+      for (const l of log) l.y -= 22;
+      const t = this.add.text(50, 398, `${who}: ${text}`, { fontFamily: FONT, fontSize: "13px", color, wordWrap: { width: 860 } });
+      log.push(t);
+      while (log.length > 3) log.shift()?.destroy();
+      synth.play("notify");
+    };
+    const pop = (x: number, t: string) => this.pop(x, 120, t, "#f9a8d4", 22);
+    type Opt = [string, number, string];
+    const ROUNDS: { her: string; opts: Opt[] }[] = [
+      { her: "heyyy 👋 u look familiar", opts: [["yee", 8, "lol. yee to u too 😂"], ["Yee. I'm a famus rapper.", 22, "OMG wait r u actually?? 😳"], ["I remember the day we met. Because I had just bought a pet. It was a hamster, named after you.", 5, "we literally met 10 seconds ago"]] },
+      { her: "so what do u do", opts: [["I'm the manager of Norwich. We are even better than Brazil. We would beat them 48-0.", 12, "ok football boy 😏"], ["I rap so hard. I'm the greatest rappers ever. Have you seen the fucking weather?", 15, "lmaooo it IS shit out tbf"], ["Mostly hot tubs.", 6, "...in them or near them?"]] },
+      { her: "describe urself in 3 words 😘", opts: [["Solid. No cunt touches me.", 10, "thats more than 3 words but ok 😂"], ["SanMik is so sexy.", 18, "3rd person 😭 weirdly works"], ["Also did I mention that I'm a ninja?", 14, "u did NOT mention that. go on then"]] },
+      { her: "whats ur best feature 👀", opts: [["I am also best dressed. Gok Wan is the second best dressed.", 14, "gok wan WISHES"], ["My willy wants your fanny like a hand in glove.", 16, "😳😳 bit forward… keep going"], ["From now on SanMik's your god.", -10, "erm. no."]] },
+      { her: "what would u do if u were here rn", opts: [["Wet pizza (in the hot tub). Dreams come true (in the hot tub).", 12, "i dont have a hot tub but i have a bath 👀"], ["Your fanny juice will taste so good. Like fish fingers.", 10, "...fish fingers?? 🐟 weirdly into it"], ["Fifteen cop cars on my tail. Got a helicopter and a tank.", 6, "is that a yes or"]] },
+      { her: "ok last chance to impress me 😏", opts: [["Yee. I'm a famus rapper.", 30, "say less 🔥🔥🔥"], ["I'm so famous and you're so pricks.", 6, "we?? there's one of me"], ["Yee I love you.", 20, "babe weve known each other 4 minutes… i love u too 😭"]] },
+    ];
+    let btns: Phaser.GameObjects.Container[] = [];
+    const clearBtns = () => {
+      btns.forEach((b) => b.destroy());
+      btns = [];
+    };
+    const round = (i: number) => {
+      if (i >= ROUNDS.length) {
+        clearBtns();
+        if (interest >= 60) this.time.delayedCall(900, () => wonk());
+        else {
+          push("*", `${HER} has disconnected.`, "#9ca3af");
+          this.finish(false, [say("SANMIK", "She's buffering. She's definitely just buffering."), dir("She is not buffering.")]);
+        }
+        return;
+      }
+      const R = ROUNDS[i];
+      push(HER, "is typing…", "#9ca3af");
+      this.time.delayedCall(900, () => {
+        log[log.length - 1]?.setText(`${HER}: ${R.her}`).setColor("#f9a8d4");
+        synth.play("notify");
+        const opts = Phaser.Utils.Array.Shuffle([...R.opts]);
+        opts.forEach((o, k) => {
+          btns.push(
+            button(this, 480, 448 + k * 30, o[0], () => {
+              clearBtns();
+              push("SanMik_Official", o[0], "#b0c4ff");
+              synth.shout("yee", 0.6);
+              this.tweens.add({ targets: mik, y: 64, yoyo: true, duration: 140 });
+              this.time.delayedCall(1000, () => {
+                push(HER, o[2], "#f9a8d4");
+                setInterest(interest + o[1]);
+                if (o[1] >= 14) pop(715, "♥♥♥");
+                else if (o[1] < 0) pop(715, "🙄");
+                this.time.delayedCall(1300, () => round(i + 1));
+              });
+            }, { w: 860, h: 26, size: 12 }),
+          );
+        });
+      });
+    };
+    // ----- the wonk
+    const wonk = () => {
+      push(HER, "ok ur actually so fit. wanna… 👀", "#f9a8d4");
+      this.time.delayedCall(1100, () => {
+        push("SanMik_Official", "YEEEEEEE", "#b0c4ff");
+        synth.shout("yee", 1);
+        this.time.delayedCall(900, () => startWonk());
+      });
+    };
+    const startWonk = () => {
+      // both cameras: CENSORED
+      const bars = [245, 715].map((x) => {
+        const c = this.add.container(x, 200).setDepth(30);
+        c.add(this.add.rectangle(0, 0, 220, 70, 0x000000));
+        c.add(this.add.text(0, 0, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "30px", color: "#fff" }).setOrigin(0.5));
+        return c;
+      });
+      const lblL = this.add.text(245, 248, "*wonk wonk wonk*", { fontFamily: FONT, fontSize: "14px", color: "#b0c4ff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(31);
+      const lblR = this.add.text(715, 248, "*female wonk*", { fontFamily: FONT, fontSize: "14px", color: "#f9a8d4", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(31);
+      // the gauge, between the cams
+      const GX = 480;
+      const GT = 70;
+      const GH = 240;
+      this.add.rectangle(GX, GT + GH / 2, 30, GH + 6, 0x000000).setStrokeStyle(2, 0xffffff).setDepth(40);
+      let zone = randomZone();
+      const zoneR = this.add.rectangle(GX, 0, 26, 10, 0x22c55e, 0.6).setDepth(41);
+      const placeZone = () => zoneR.setPosition(GX, GT + GH * (1 - (zone.lo + zone.hi) / 2)).setSize(26, GH * (zone.hi - zone.lo));
+      placeZone();
+      const fill = this.add.rectangle(GX, GT + GH, 22, 0, 0xffd23f).setOrigin(0.5, 1).setDepth(42);
+      this.add.text(GX, GT - 14, "KREZZ ZONE", { fontFamily: FONT, fontSize: "10px", color: "#86efac" }).setOrigin(0.5).setDepth(42);
+      const g: Flappy = { gauge: 0.1, vel: 0 };
+      let mine = 0;
+      let hers = 0;
+      let left = 30;
+      let done = false;
+      this.add.rectangle(245, 288, 204, 14, 0x000000, 0.7).setDepth(41);
+      const barMe = this.add.rectangle(145, 288, 0, 10, 0x60a5fa).setOrigin(0, 0.5).setDepth(42);
+      this.add.rectangle(715, 288, 204, 14, 0x000000, 0.7).setDepth(41);
+      const barHer = this.add.rectangle(615, 288, 0, 10, 0xf472b6).setOrigin(0, 0.5).setDepth(42);
+      this.add.text(245, 272, "SANMIK →  KREZZ", { fontFamily: FONT, fontSize: "10px", color: "#b0c4ff" }).setOrigin(0.5).setDepth(42);
+      this.add.text(715, 272, "CHANZ →  FEMALE KREZZ", { fontFamily: FONT, fontSize: "10px", color: "#f9a8d4" }).setOrigin(0.5).setDepth(42);
+      push("*", "TAP / SPACE to wonk. Keep the gauge in the KREZZ ZONE. You both need to get there.", "#86efac");
+      const tap = () => {
+        if (done) return;
+        flap(g);
+        synth.play(Math.random() < 0.5 ? "slurp" : "select");
+      };
+      this.mash(tap);
+      const moans = ["*wonk*", "yee", "YEE", "uhh yee", "mm fuck yes"];
+      const herMoans = ["mmm", "SanMik 😩", "dont stop", "*female wonk*", "famus rapper 😩"];
+      const timer = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+        if (done) return;
+        if (--left <= 0) {
+          done = true;
+          push(HER, "omg u took too long… im off 😴", "#f9a8d4");
+          this.finish(false, [say("SANMIK", "Lag. That was lag. Krelchat lag.")]);
+        }
+      } });
+      const tick = this.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (done) return;
+        fall(g, 16);
+        fill.setSize(22, GH * g.gauge);
+        const inZone = g.gauge >= zone.lo && g.gauge <= zone.hi;
+        fill.setFillStyle(inZone ? 0x22c55e : g.gauge > OVER ? 0xef4444 : 0xffd23f);
+        if (inZone) {
+          mine += 16 / 90;
+          hers += 16 / (80 + Math.random() * 40);
+          if (Math.random() < 0.02) this.pop(245, 230, moans[Math.floor(Math.random() * moans.length)], "#b0c4ff", 14);
+          if (Math.random() < 0.02) this.pop(715, 230, herMoans[Math.floor(Math.random() * herMoans.length)], "#f9a8d4", 14);
+        } else if (g.gauge > OVER) {
+          mine = Math.max(0, mine - 0.4);
+          if (Math.random() < 0.05) this.pop(245, 230, "TOO MUCH", "#ef4444", 14);
+        }
+        barMe.setSize(Math.min(200, mine * 2), 10);
+        barHer.setSize(Math.min(200, hers * 2), 10);
+        bars.forEach((b, k) => b.setPosition([245, 715][k] + (inZone ? Math.sin(this.time.now / 40 + k) * 6 : 0), 200 + (inZone ? Math.cos(this.time.now / 55 + k) * 4 : 0)));
+        // a new zone every so often, to keep you honest
+        if (Math.random() < 0.004) {
+          zone = randomZone();
+          placeZone();
+        }
+        this.hud.setText(`${left}s`);
+        if (mine >= 100 && hers >= 100) {
+          done = true;
+          timer.remove();
+          tick.remove();
+          krezz(bars, lblL, lblR);
+        } else if (mine >= 100) hers += 0.3; // she's nearly there
+        else if (hers >= 100) mine += 0.3;
+      } });
+    };
+    const krezz = async (bars: Phaser.GameObjects.Container[], lblL: Phaser.GameObjects.Text, lblR: Phaser.GameObjects.Text) => {
+      lblL.destroy();
+      lblR.destroy();
+      synth.play("boom");
+      synth.shout("yee", 1);
+      this.cameras.main.flash(500, 255, 255, 255);
+      this.cameras.main.shake(500, 0.02);
+      const big = (x: number, t: string, c: string) => {
+        const tx = this.add.text(x, 160, t, { fontFamily: "Impact, sans-serif", fontSize: "52px", color: c, stroke: "#000", strokeThickness: 8 }).setOrigin(0.5).setDepth(60).setScale(0.2);
+        this.tweens.add({ targets: tx, scale: 1, angle: { from: -10, to: 10 }, duration: 400, ease: "Back.out" });
+      };
+      big(245, "KREZZ!!", "#ffffff");
+      this.time.delayedCall(350, () => big(715, "FEMALE KREZZ!!", "#f9a8d4"));
+      bars.forEach((b, k) => this.tweens.add({ targets: b, y: -100, angle: k ? 40 : -40, duration: 900, ease: "Quad.in" }));
+      for (let i = 0; i < 40; i++) {
+        const c = this.add.text(Math.random() * 960, -20, ["💦", "✨", "💖", "🎉"][i % 4], { fontSize: "22px" }).setDepth(55);
+        this.tweens.add({ targets: c, y: 560, angle: 360, duration: 1500 + Math.random() * 1500, delay: i * 40 });
+      }
+      await new Promise<void>((r) => this.time.delayedCall(2600, () => r()));
+      this.finish(true, [
+        say(HER, "SanMik you're so sexy. Sexy. Sex me."),
+        say("SANMIK", "Yee. I know that. The girls know that. We all know that."),
+        say(HER, "same time tmrw? 😘"),
+        say("SANMIK", "Can't babe. Got to save Catford. I'm a famus rapper."),
+        dir(`${HER} has logged off. She has left a five-star review on Krelchat: 'genuinely a famous rapper apparently. 10/10 would krezz again'.`),
+        say("SANCHZ", "(from the doorway, where he has been the whole time) YEGHHH."),
+        say("SANMIK", "SANCHZ. HOW LONG HAVE YOU BEEN THERE."),
+        say("SANCHZ", "Since 'famus rapper'. Both times."),
+      ]);
+    };
+    this.box
+      .play([
+        dir("Begour's café caravan has Wi-Fi. SanMik has borrowed the laptop. He is wearing his best afro and a small amount of aftershave on his eyebrows. He's logging into CAM2CAM."),
+        say("SANMIK", "Yee. Give me five minutes, lads. I've got a date. You're me now. Don't fuck it up."),
+        dir("YOU ARE SANMIK. Pick your chat-up lines. Get her interest up to the line (60%). Then… well. You'll see."),
+      ])
+      .then(() => round(0));
   }
 
   // ---------------------------------------------------------------- MANIJER OF NORRICH

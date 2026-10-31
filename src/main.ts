@@ -20,6 +20,7 @@ import { MinigameScene } from "./game/scenes/MinigameScene";
 import { VenueScene } from "./game/scenes/VenueScene";
 import { ClubScene } from "./game/scenes/ClubScene";
 import { DriveScene } from "./game/scenes/DriveScene";
+import { BeepBeepScene } from "./game/scenes/BeepBeepScene";
 import { installDebug } from "./game/debug";
 import { installCrashGuard } from "./game/crashGuard";
 
@@ -55,6 +56,7 @@ const game = new Phaser.Game({
     VenueScene,
     ClubScene,
     DriveScene,
+    BeepBeepScene,
     MenuScene,
     EndingScene,
   ],

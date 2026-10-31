@@ -24,6 +24,14 @@ export function switchTo(from: Phaser.Scene, key: string, data?: any) {
   from.scene.start(key, data);
 }
 
+/** In-level detours: "drive" and "beepbeep" are their own scenes; anything else is a minigame mode. Then back into the level. */
+export function runChain(from: Phaser.Scene, chain: string[], resume: { dungeon: string; room: number }) {
+  const [next, ...rest] = chain;
+  if (!next) return switchTo(from, "Dungeon", resume);
+  const key = next === "drive" ? "Drive" : next === "beepbeep" ? "BeepBeep" : "Minigame";
+  switchTo(from, key, { mode: next, chain: rest, resume });
+}
+
 export function goNext(from: Phaser.Scene, next: Next | null | undefined) {
   if (!next) return switchTo(from, "Hub");
   switchTo(from, next.scene, next.data);

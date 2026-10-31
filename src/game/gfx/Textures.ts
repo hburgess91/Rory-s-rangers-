@@ -441,6 +441,8 @@ export function portraitKey(scene: Phaser.Scene, speaker: string): string | null
       ? "p_genie"
       : s.includes("BEGOUR")
         ? "p_begour"
+        : s.includes("CHANZZZ")
+          ? "p_camgirl"
         : s.includes("REINHARDT")
           ? "p_reinhardt"
           : s.startsWith("FLIRT CROBLEY")

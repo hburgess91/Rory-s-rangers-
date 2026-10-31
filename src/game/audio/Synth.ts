@@ -58,6 +58,7 @@ export const MUSIC_FILES: Record<string, string> = {
   crobley: "audio/crobley.mp3",
   majek_lampe: "audio/majek_lampe.mp3",
   mdmazing: "audio/mdmazing.mp3",
+  beepbeep: "audio/beepbeep.mp3",
   sanmik_nation: "audio/sanmik_nation.mp3",
   drive: "audio/ggg4.mp3",
   ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),

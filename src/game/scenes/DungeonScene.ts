@@ -21,7 +21,7 @@ import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
 import { SanBrother } from "../combat/SanBrother";
 import { SideLevel } from "./side/SideLevel";
-import { switchTo } from "../Flow";
+import { runChain, switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
 import { say, dir, gabor } from "../../content/dsl";
 import { FONT } from "../ui/theme";
@@ -750,8 +750,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.cameras.main.fadeOut(250);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
         this.transitioning = true;
-        if (first === "drive") switchTo(this, "Drive", { chain: rest, resume });
-        else switchTo(this, "Minigame", { mode: first, chain: rest, resume });
+        runChain(this, [first, ...rest], resume);
       });
       return;
     }

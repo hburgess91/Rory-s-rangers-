@@ -4780,6 +4780,18 @@
   },
   "nu_reef": {
    "file": "backdrops/nu_reef.png"
+  },
+  "p_dash": {
+   "file": "props/p_dash.png"
+  },
+  "p_camgirl": {
+   "file": "props/p_camgirl.png"
+  },
+  "cam_her": {
+   "file": "backdrops/cam_her.png"
+  },
+  "cam_sanmik": {
+   "file": "backdrops/cam_sanmik.png"
   }
  },
  "sheets": {
