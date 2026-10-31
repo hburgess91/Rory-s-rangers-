@@ -981,80 +981,139 @@ export class HoardBoss extends Boss {
   }
 }
 
-// ----------------------------------------------------------------- THE GENIE (the SanMikverse)
+// ----------------------------------------------------------------- JQ, THE JAM QUEEN (SanChz's nemesis)
 
-/** Ten thousand years in a lamp that smells of fanny juice. He floats. He is furious. */
-export class GenieBoss extends Boss {
-  diveUntil = 0;
-  diveAngle = 0;
-  helped = 0;
+/** The mother of the jam donut SanChz was caught with. Rolls, spits jam, and is very, very upset. */
+export class JamQueenBoss extends Boss {
+  sideGravity = true;
+  rollUntil = 0;
+  rollDir = 1;
   constructor(w: CombatWorld, x: number, y: number) {
-    super(w, "genie", x, y, 2300, w.sc.textures.exists("boss_genie") ? "boss_genie" : "boss_flatmate", 32, 0x3b82f6, 32, 48);
-    this.setScale(3.2);
-    (this.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+    super(w, "jam", x, y, 2100, w.sc.textures.exists("boss_jam") ? "boss_jam" : "boss_flatmate", 32, 0xdc2626, 32, 48);
+    this.setScale(3);
+  }
+  private run(vx: number) {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (this.world.side) body.setVelocityX(vx);
+    else body.setVelocity(vx, 0);
   }
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
-    const gy = this.world.groundY ?? this.world.bounds.bottom;
-    this.setFrame(Math.floor(now / 260) % 3);
-    if (now < this.diveUntil) {
-      this.moveToward(this.x + Math.cos(this.diveAngle) * 100, this.y + Math.sin(this.diveAngle) * 100, 540 * ts);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    this.setFrame(Math.floor(now / 240) % 3);
+    if (now < this.rollUntil) {
+      this.run(this.rollDir * 560 * ts);
+      this.angle += this.rollDir * 22;
+      if (body.blocked.left || body.blocked.right) this.rollUntil = 0;
       return;
     }
-    // hover above you and off to one side, bobbing
-    const sideX = p.x + (this.x < p.x ? -230 : 230);
-    const hy = Math.max(110, gy - 250 + Math.sin(now / 500) * 40);
-    if (Phaser.Math.Distance.Between(this.x, this.y, sideX, hy) > 20) this.moveToward(sideX, hy, (this.phase === 2 ? 170 : this.phase ? 140 : 115) * ts);
-    else this.halt();
+    this.angle = 0;
+    const dir = p.x < this.x ? -1 : 1;
+    this.setFlipX(dir < 0);
+    this.run(Math.abs(p.x - this.x) > 120 ? dir * (this.phase ? 95 : 70) * ts : 0);
+    if (now < this.nextPattern) return;
+    const crowd = this.world.enemies.filter((e) => !e.dead && !e.isBoss).length;
+    let pick = this.patternIdx++ % 5;
+    if (crowd >= 10 && pick === 3) pick = 1;
+    this.taunt();
+    if (pick === 0) {
+      // the roll: she's a donut, she rolls
+      this.rollDir = dir;
+      this.world.enemyLine(this.x, this.y, dir > 0 ? 0 : Math.PI, 900, 70, 0, 700 * this.world.telegraphMult);
+      this.run(0);
+      this.world.sc.time.delayedCall(700 * this.world.telegraphMult, () => (this.rollUntil = this.world.now() + 1300));
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "ROLLING DONUT (JUMP!)", "#fca5a5", 15);
+      this.nextPattern = now + 2700;
+    } else if (pick === 1) {
+      // jam everywhere
+      for (let i = 0; i < (this.phase ? 5 : 4); i++) {
+        const tx = p.x + (Math.random() - 0.5) * 360;
+        const ty = Math.min(this.world.groundY ?? p.y, p.y + 10);
+        this.world.enemyAoe(tx, ty, 60, 13, 800 + i * 120, 0xb91c1c);
+      }
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "JAM SPLATTER", "#ef4444", 15);
+      this.nextPattern = now + 2000;
+    } else if (pick === 2) {
+      this.fan(this.phase ? 11 : 8, 0.16, 250, 9, [0xf472b6, 0x60a5fa, 0xfde047, 0x4ade80][this.patternIdx % 4]);
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "SPRINKLES", "#f472b6", 15);
+      this.nextPattern = now + 1500;
+    } else if (pick === 3) {
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy("jam_donut", this.x + (i - 1.5) * 70, this.y, { minion: true });
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "MY BABIES! AVENGE YOUR SISTER!", "#fca5a5", 15);
+      this.nextPattern = now + 2600;
+    } else {
+      // a royal belly-flop
+      if (this.world.side && (body.blocked.down || body.touching.down)) body.setVelocityY(-760);
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "ROYAL SQUASH", "#fbbf24", 15);
+      this.world.sc.time.delayedCall(900, () => {
+        if (!this.active || this.dead) return;
+        this.world.shake(260, 0.014);
+        this.world.enemyLine(this.x, this.y + 20, 0, 260, 34, 16, 120);
+        this.world.enemyLine(this.x, this.y + 20, Math.PI, 260, 34, 16, 120);
+      });
+      this.nextPattern = now + 2300;
+    }
+  }
+}
+
+// ----------------------------------------------------------------- UNCLE RIK (the Giant Hot Tub)
+
+/** Seven hundred pounds of Uncle Rik, sat on every jet in the Giant Hot Tub of Catford. The jets are spewing biofilm. */
+export class RikBoss extends Boss {
+  jets: number[] = [];
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "rik", x, y, 2600, w.sc.textures.exists("boss_rik") ? "boss_rik" : "boss_flatmate", 32, 0x65a30d, 32, 48);
+    this.setScale(4.2);
+    const b = w.bounds;
+    this.jets = [0.12, 0.3, 0.7, 0.88].map((f) => b.left + b.width * f);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const gy = this.world.groundY ?? this.world.bounds.bottom;
+    this.halt();
+    // he does not move. He jiggles.
+    this.setScale(4.2 + Math.sin(now / 160) * 0.06, 4.2 - Math.sin(now / 160) * 0.06);
     this.setFlipX(p.x < this.x);
     if (now < this.nextPattern) return;
     const crowd = this.world.enemies.filter((e) => !e.dead && !e.isBoss).length;
-    let pick = this.patternIdx++ % 6;
-    if (crowd >= 10 && pick === 3) pick = 0;
-    // from phase 2, Begour rings in to help (he's a nice bear)
-    if (this.phase >= 1 && pick === 5 && this.helped < 3) {
-      this.helped++;
-      this.world.floatText(p.x, p.y - 70, "☎ It's Begour. Sorry about this, mate. Hold your breath.", "#86efac", 14);
-      this.world.sc.time.delayedCall(900, () => {
-        if (!this.active || this.dead) return;
-        const c = this.world.sc.add.circle(this.x, this.y, 20, 0x84cc16, 0.55).setDepth(460);
-        this.world.sc.tweens.add({ targets: c, radius: 120, alpha: 0, duration: 900, onComplete: () => c.destroy() });
-        this.world.damageEnemy(this, this.maxHp * 0.05, { noWonk: true, label: "BEGOUR'S FART (LAVENDER)" });
-        this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "UGH. LAVENDER.", "#86efac", 16);
-      });
-      this.nextPattern = now + 1800;
-      return;
-    }
+    let pick = this.patternIdx++ % 5;
+    if (crowd >= 10 && pick === 2) pick = 0;
     this.taunt();
     if (pick === 0) {
-      this.fan(this.phase ? 7 : 5, 0.2, 240, 10, 0xa855f7);
-      this.nextPattern = now + 1500;
+      // the jets: geysers of biofilm straight up out of the floor
+      const order = [...this.jets].sort(() => Math.random() - 0.5).slice(0, this.phase ? 4 : 2);
+      order.push(p.x);
+      for (const x of order) this.world.enemyLine(x, gy, -Math.PI / 2, 420, 54, 15, 900 * this.world.telegraphMult);
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "JETS: BIOFILM", "#a3e635", 16);
+      this.nextPattern = now + 2100;
     } else if (pick === 1) {
-      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.enemyAoe(p.x + (i - 1) * 110 + (Math.random() - 0.5) * 40, Math.min(gy - 30, p.y + (Math.random() - 0.5) * 60), 70, 14, 900 + i * 140, 0x8b5cf6);
-      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "MAGIC SMOKE", "#c084fc", 16);
-      this.nextPattern = now + 2000;
+      // lobs of scum
+      for (let i = 0; i < (this.phase ? 7 : 5); i++) {
+        const a = -Math.PI / 2 + (i - (this.phase ? 3 : 2)) * 0.32;
+        this.world.shoot(this.x, this.y - 40, { owner: "enemy", damage: 11, speed: 230, angle: a, color: 0x84cc16, scale: 2, life: 2600, homing: 0.6 });
+      }
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "SCUM", "#84cc16", 16);
+      this.nextPattern = now + 1700;
     } else if (pick === 2) {
-      // it rains Pepsi Normal
-      this.world.floatText(p.x, 60, "IT'S RAINING PEPSI NORMAL", "#60a5fa", 16);
-      for (let i = 0; i < (this.phase ? 9 : 7); i++)
-        this.world.sc.time.delayedCall(i * 110, () => {
-          if (!this.active) return;
-          this.world.shoot(p.x + (i - 4) * 70 + (Math.random() - 0.5) * 30, 20, { owner: "enemy", damage: 10, speed: 280, angle: Math.PI / 2, color: 0x1d4ed8, scale: 1.6, life: 3000 });
-        });
-      this.nextPattern = now + 2200;
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy(i % 2 ? "hottub_bubble" : "biofilm", this.jets[i % 4], gy - 60, { minion: true });
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "SOMETHING CAME OUT OF THE JETS", "#d9f99d", 14);
+      this.nextPattern = now + 2500;
     } else if (pick === 3) {
-      const kinds = this.phase === 2 ? ["pepsi_normal", "imaginary_mandem"] : ["pepsi_normal", "catford_fox"];
-      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy(kinds[i % 2], p.x + (i % 2 ? 1 : -1) * (300 + i * 40), gy - 60, { minion: true });
-      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "I WISH FOR… MINIONS", "#fbbf24", 15);
-      this.nextPattern = now + 2600;
-    } else {
-      this.diveAngle = Math.atan2(p.y - this.y, p.x - this.x);
-      this.world.enemyLine(this.x, this.y, this.diveAngle, 560, 70, 0, 800 * this.world.telegraphMult);
-      this.halt();
-      this.world.sc.time.delayedCall(800 * this.world.telegraphMult, () => (this.diveUntil = this.world.now() + 650));
-      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "TEN THOUSAND YEARS!!", "#f87171", 16);
+      // the wave: he shifts his weight and the whole tub sloshes along the floor
+      this.world.shake(400, 0.012);
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "HE SHIFTED HIS WEIGHT (JUMP!)", "#7dd3fc", 15);
+      this.world.enemyLine(this.x, gy - 14, 0, 900, 40, 18, 800 * this.world.telegraphMult);
+      this.world.enemyLine(this.x, gy - 14, Math.PI, 900, 40, 18, 800 * this.world.telegraphMult);
       this.nextPattern = now + 2400;
+    } else {
+      // he farts in the tub
+      const c = this.world.sc.add.circle(this.x, this.y, 30, 0x84cc16, 0.4).setDepth(460);
+      this.world.sc.tweens.add({ targets: c, radius: 200, alpha: 0, duration: 1200, onComplete: () => c.destroy() });
+      this.world.enemyAoe(p.x, p.y, 90, 14, 900, 0x65a30d);
+      this.world.enemyAoe(this.x, gy - 40, 200, 12, 1100, 0x84cc16);
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "*BLUB BLUB BLUB*", "#a3e635", 18);
+      this.nextPattern = now + 2200;
     }
   }
 }
@@ -1085,8 +1144,10 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
       return new FlatmateBoss(w, x, y);
     case "rival":
       return new RivalBoss(w, x, y);
-    case "genie":
-      return new GenieBoss(w, x, y);
+    case "jam":
+      return new JamQueenBoss(w, x, y);
+    case "rik":
+      return new RikBoss(w, x, y);
     default:
       return new DrongusBoss(w, x, y);
   }

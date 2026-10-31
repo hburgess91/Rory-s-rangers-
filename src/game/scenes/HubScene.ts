@@ -241,6 +241,7 @@ export class HubScene extends Phaser.Scene {
     this.arrow = this.add.text(0, 0, "➤", { fontFamily: FONT, fontSize: "26px", color: "#ffd23f" }).setOrigin(0.5).setDepth(5000).setShadow(2, 2, "#000", 0);
     this.spawnNpcs();
     this.setupInteractables();
+    this.setupExploration();
     if (!this.scene.isActive("UI")) this.scene.launch("UI", { mode: "hub" });
     else this.scene.get("UI").events.emit("mode", "hub");
     G.emit("boss", null);
@@ -814,6 +815,96 @@ export class HubScene extends Phaser.Scene {
     });
   }
 
+  // ------------------------------------------------------------- exploration
+
+  /** Every door and gate in Krelford. First time through each one pays out. */
+  private static PLACES = (): { id: string; name: string; x: number; y: number }[] => [
+    ...BUILDINGS.filter((b) => b.door).map((b) => ({ id: b.id, name: b.name, x: b.door!.x, y: b.door!.y })),
+    ...GATES.map((g) => ({ id: g.id, name: g.name, x: g.x, y: g.y })),
+  ];
+
+  /** Hidden stashes tucked into the corners of the map. */
+  private static STASHES: { x: number; y: number; what: string }[] = [
+    { x: 130, y: 130, what: "a carrier bag of Krezzcoin behind Boggor's bins (he knows)" },
+    { x: 2480, y: 140, what: "a Bonky offering bowl nobody has emptied since 2019" },
+    { x: 2490, y: 1190, what: "an envelope marked 'DEPOSIT (ROBBO)' — he owes you that anyway" },
+    { x: 140, y: 820, what: "a fizzy bongo crate with money in it instead of bongos" },
+    { x: 1780, y: 250, what: "the Archive's petty cash tin, labelled 'NOT PETTY'" },
+    { x: 880, y: 260, what: "Drongus's old busking hat, still full" },
+    { x: 2150, y: 1560, what: "a wallet. It's Polson's. It's always Polson's." },
+    { x: 1300, y: 1760, what: "a sock full of 2p coins. It's warm. Don't think about it." },
+  ];
+
+  private newMarkers: Record<string, Phaser.GameObjects.Text> = {};
+
+  private explorerProgress() {
+    const f = G.s.flags;
+    const places = HubScene.PLACES();
+    const seen = places.filter((p) => f[`visited_${p.id}`]).length;
+    const found = HubScene.STASHES.filter((_, i) => f[`stash_${i}`]).length;
+    return { seen, places: places.length, found, stashes: HubScene.STASHES.length };
+  }
+
+  private setupExploration() {
+    const f = G.s.flags;
+    // somewhere you've never been gets a bouncing "NEW" over its door
+    for (const p of HubScene.PLACES()) {
+      if (f[`visited_${p.id}`]) continue;
+      const t = this.add.text(p.x, p.y - 64, "★ NEW", { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", backgroundColor: "#000000aa", padding: { x: 4, y: 2 }, fontStyle: "bold" }).setOrigin(0.5).setDepth(2000);
+      this.tweens.add({ targets: t, y: t.y - 8, yoyo: true, repeat: -1, duration: 600, ease: "Sine.inOut" });
+      this.newMarkers[p.id] = t;
+    }
+    // stashes glint faintly; you only notice them when you're nearby
+    HubScene.STASHES.forEach((st, i) => {
+      if (f[`stash_${i}`]) return;
+      const glint = this.add.star(st.x, st.y, 4, 4, 10, 0xfff3b0, 0.85).setDepth(st.y + 2);
+      this.tweens.add({ targets: glint, angle: 90, scale: 1.4, alpha: 0.3, yoyo: true, repeat: -1, duration: 700 });
+      this.interactables.push({
+        x: st.x,
+        y: st.y,
+        r: 50,
+        label: () => "Rummage",
+        enabled: () => !G.s.flags[`stash_${i}`],
+        use: () => {
+          if (G.s.flags[`stash_${i}`]) return;
+          G.s.flags[`stash_${i}`] = true;
+          glint.destroy();
+          const coins = 60;
+          G.s.coins += coins;
+          synth.play("coin");
+          const pr = this.explorerProgress();
+          G.emit("toast", { title: `HIDDEN STASH ${pr.found}/${pr.stashes}`, text: `You found ${st.what}. +${coins} Krezzcoin.` });
+          this.checkExplorer();
+          G.save();
+        },
+      });
+    });
+  }
+
+  private discover(id: string, name: string) {
+    const f = G.s.flags;
+    if (f[`visited_${id}`]) return;
+    f[`visited_${id}`] = true;
+    this.newMarkers[id]?.destroy();
+    delete this.newMarkers[id];
+    const coins = 30;
+    G.s.coins += coins;
+    const pr = this.explorerProgress();
+    G.emit("toast", { title: `NEW PLACE DISCOVERED (${pr.seen}/${pr.places})`, text: `${name}. +${coins} Krezzcoin for having a look.${pr.seen === 3 ? " Places you haven't been yet have ★ NEW over the door. There are hidden stashes around the edges of town too." : ""}` });
+    this.checkExplorer();
+    G.save();
+  }
+
+  private checkExplorer() {
+    const f = G.s.flags;
+    const pr = this.explorerProgress();
+    if (f.explorer_done || pr.seen < pr.places || pr.found < pr.stashes) return;
+    f.explorer_done = true;
+    G.s.coins += 500;
+    G.s.upgrades.pk_spd = (G.s.upgrades.pk_spd ?? 0) + 1;
+    this.time.delayedCall(1500, () => G.emit("toast", { title: "KRELFORD EXPLORER", text: "Every door, every gate, every stash. +500 Krezzcoin and a free speed perk. Drongus has been told. Drongus has not reacted." }));
+  }
+
   // ------------------------------------------------------------- interactions
 
   private setupInteractables() {
@@ -1266,6 +1357,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     const s = G.s;
     const ch = chapterDef(s.chapter);
     synth.play("door");
+    if (!(b.id === ch.dungeonDoor && !dungeonOpen().open)) this.discover(b.id, b.name);
     if (b.id === ch.dungeonDoor) {
       const o = dungeonOpen();
       if (!o.open) {

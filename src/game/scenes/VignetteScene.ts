@@ -42,6 +42,7 @@ export class VignetteScene extends Phaser.Scene {
       polson_mouth: () => this.polsonMouth(),
       sanmik_lampe: () => this.sanmikLampe(),
       sanmik_nation: () => this.sanmikNation(),
+      sanmik_finale: () => this.sanmikFinale(),
       wahooga: () => this.wahooga(),
     };
     await (run[data.id] ?? (async () => undefined))();
@@ -1199,7 +1200,7 @@ export class VignetteScene extends Phaser.Scene {
       say(G.s.player, "What happened?"),
       gabor("SanChz drank the Pepsi Normal. The wish one. SanMik said it was a declaration of war. Then they both declared nations. I'm on both sides. They're both shouting at me. It's wonderful. I'm so scared."),
     ]);
-    synth.music("ggg4");
+    synth.music("sanmik_nation", true);
     for (let i = 0; i < 2; i++) {
       chant([mik, ...leftCrowd], "SANMIK NATION!");
       this.caption("🎤 WE ALL WANT TO LIVE IN A SANMIK NATION", "#ff6b6b", 22);
@@ -1313,6 +1314,85 @@ export class VignetteScene extends Phaser.Scene {
       dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour sends a card. It says 'So proud of you both x'. It smells faintly of lavender."),
     ]);
     G.s.flags.sanmik_nation = true;
+    synth.stopMusic();
+  }
+
+  /** The Giant Hot Tub of Catford: unblock the jets, the Genie gets his bath, everyone goes home. */
+  private async sanmikFinale() {
+    if (!backdrop(this, "sm_bigtub", { depth: -10 })) this.sky(0x2a1050, 0x9b59ff);
+    const { mik, chz } = this.sanmikSprites(200, 760, 400);
+    const me = this.add.sprite(110, 410, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const goat = this.textures.exists("p_gabor") ? this.add.image(860, 440, "p_gabor").setOrigin(0.5, 1).setScale(1).setDepth(10) : this.add.circle(860, 420, 20, 0xffffff);
+    void me;
+    synth.music("ggg8");
+    // three blocked jets along the tub
+    const jets = [300, 480, 660].map((x) => {
+      const c = this.add.container(x, 330).setDepth(20);
+      c.add(this.add.circle(0, 0, 22, 0x3f3f46).setStrokeStyle(4, 0x71717a));
+      const gunk = this.add.circle(0, 0, 18, 0x65a30d);
+      c.add(gunk);
+      return { c, gunk, clear: 0 };
+    });
+    await this.talk([
+      dir("The Giant Hot Tub of Catford, Uncle-Rik-free for the first time in weeks. The water is grey-green. The jets are clogged solid with biofilm."),
+      say("SANMIK", "Yee. Right. Get your fingers in them jets."),
+      say("SANCHZ", "YEGHHH. I've done worse."),
+      gabor("Use me. Use me as a plunger. I'm begging you. I'm begging you not to. I'm begging you."),
+    ]);
+    let done = 0;
+    await this.mashFor(18, "TAP / SPACE: unblock the jets (3 of them, 6 good jabs each)", (n) => {
+      const j = jets[Math.min(2, Math.floor((n - 1) / 6))];
+      j.clear++;
+      j.gunk.setScale(Math.max(0, 1 - j.clear / 6));
+      synth.play(n % 2 ? "slurp" : "hit");
+      const glob = this.add.circle(j.c.x, j.c.y, 6, 0x84cc16).setDepth(25);
+      this.tween({ targets: glob, x: j.c.x + (Math.random() - 0.5) * 200, y: j.c.y - 120 - Math.random() * 60, alpha: 0, duration: 600 }).then(() => glob.destroy());
+      if (j.clear === 6) {
+        done++;
+        this.caption(`JET ${done} UNBLOCKED`, "#7fdfff", 26);
+        const spout = this.add.rectangle(j.c.x, j.c.y - 60, 14, 120, 0xbae6fd, 0.8).setDepth(24);
+        this.tweens.add({ targets: spout, scaleY: 1.3, yoyo: true, repeat: -1, duration: 200 });
+      }
+    });
+    this.cameras.main.flash(400, 186, 230, 253);
+    synth.play("cheer");
+    this.caption("THE GIANT HOT TUB IS FIXED", "#7fdfff", 30);
+    const bubbles = this.time.addEvent({ delay: 90, loop: true, callback: () => {
+      const b = this.add.circle(150 + Math.random() * 660, 380, 4 + Math.random() * 8, 0xe0f2fe, 0.85).setDepth(21);
+      this.tween({ targets: b, y: 240 + Math.random() * 60, alpha: 0, duration: 1000 }).then(() => b.destroy());
+    } });
+    void bubbles;
+    await this.wait(1200);
+    // the genie gets in
+    const genie = this.textures.exists("p_genie") ? this.add.image(480, 330, "p_genie").setOrigin(0.5, 1).setScale(0.1).setDepth(19) : this.add.ellipse(480, 280, 90, 140, 0x3b82f6).setScale(0.1).setDepth(19);
+    await this.tween({ targets: genie, scale: this.textures.exists("p_genie") ? 2 : 1, duration: 900, ease: "Back.out" });
+    synth.music("ggg13", true);
+    await this.talk([
+      say("GENIE", "…"),
+      say("GENIE", "OHHHHHH."),
+      say("GENIE", "TEN THOUSAND YEARS. TEN THOUSAND YEARS I HAVE WAITED FOR THIS."),
+      say("SANMIK", "It's SanMik (in the hot tub)…"),
+      say("SANCHZ", "With SanChz (in the hot tub)…"),
+      say("GENIE", "AND A GENIE (IN THE HOT TUB)."),
+    ]);
+    this.tween({ targets: [mik, chz], x: (t: Phaser.GameObjects.Sprite) => (t === mik ? 400 : 560), y: 330, duration: 700 });
+    await this.wait(800);
+    this.tweens.add({ targets: [mik, chz, genie], y: "-=8", yoyo: true, repeat: -1, duration: 400, ease: "Sine.inOut" });
+    await this.talk([
+      say("SANMIK", "Lots of bubbles (in the hot tub)."),
+      say("SANCHZ", "Lots of trouble (in the hot tub)."),
+      say("GENIE", "WET PIZZA (IN THE HOT TUB)."),
+      dir("A slice of pizza floats past. The Genie eats it. Ten thousand years of fury leave his face."),
+      gabor("Can I come in? I'm coming in. I'm not allowed in. I'm in."),
+      dir("Gabor is in the hot tub. Nobody stops him. It's that kind of night."),
+      say("GENIE", "VERY WELL. A DEAL IS A DEAL. YOU MAY GO HOME. ALL OF YOU."),
+      say("GENIE", "EXCEPT THE GOAT. THE GOAT STAYS WITH ME. HE IS THE ONLY ONE WHO UNDERSTANDS SUFFERING."),
+      gabor("Oh no. Oh YES."),
+      dir("In the distance, a bear in a cardigan waves from the door of a café caravan. Begour has made flapjacks for the road."),
+      say("BEGOUR THE BEAR", "Bye loves! Come back any time. The lamp's in the Krezz Arms. Mind how you go!"),
+      dir("The lamp glows. Pop. You're behind the Krezz Arms bins, slightly damp, smelling faintly of lavender and biofilm."),
+    ]);
+    G.s.flags.sanmik_tub_fixed = true;
     synth.stopMusic();
   }
 

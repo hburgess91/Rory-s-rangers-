@@ -1254,35 +1254,9 @@ export const ARCS: Arc[] = [
       },
       {
         id: "catford",
-        text: "You're in the SanMikverse. Fight through 'Catford' and find whoever's behind it. (The lamp in the Krezz Arms back room takes you back in.)",
+        text: "You're in the SanMikverse. The Genie wants a bath: fix the Giant Hot Tub of Catford. (The lamp in the Krezz Arms back room takes you back in.)",
         at: "PUB",
         step: { kind: "arena", dungeon: "arena_sanmik", intro: [dir("The lamp is on the bar, still glowing. It smells of corn. You rub it. Against your better judgement, you rub it.")] },
-      },
-      {
-        id: "norwich",
-        text: "SanMik is 'the new manager of Norwich'. The Champions League final is on the Krezz Arms telly. Go and watch.",
-        at: "PUB",
-        step: {
-          kind: "minigame",
-          mode: "norwich",
-          intro: [
-            dir("The Krezz Arms telly. The Champions League final: NORWICH UNITED vs REAL MADRID. The Norwich manager is wearing an afro wig and white sunglasses."),
-            say("KREZMAR", "Is that Mikey."),
-            say("CRONGUS", "How is Mikey the manager of Norwich."),
-            dir("On the telly, SanMik holds up a sheet of A4. It says: 'IF NORWICH LOSE THEN THAT'S ILLEGAL. — THE LAW WHAT I WROTE'."),
-          ],
-          success: [
-            say("SANMIK", "(on the telly) YEE! Two goals in ten fucking seconds! Better than Messi! Better than Pele! Better than Heskey!"),
-            say("SANMIK", "Pundit one, you're a cunt. Pundit two, you're a cunt. Pundit three… you're alright."),
-            dir("Norwich win the Champions League. Also, somehow, the Premier League. SanMik runs the length of the pitch with his shirt over his head and straight into a steward."),
-            ping("DRONGUS", "Mikey won the champions league ??"),
-            ping("DRONGUS", "Still hasn't reacted to the song though"),
-          ],
-          fail: [
-            dir("Real Madrid win. On the telly, SanMik tears up the A4 law and eats it."),
-            say("SANMIK", "(on the telly) That's ILLEGAL. Replay. REPLAY. I'm getting my uncle."),
-          ],
-        },
       },
       {
         id: "nation",

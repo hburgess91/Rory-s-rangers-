@@ -19,9 +19,10 @@ import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
 import { leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
+import { SanBrother } from "../combat/SanBrother";
 import { switchTo } from "../Flow";
 import { CHEESE_ACCUSATIONS, CHEESE_WITNESSES, DOMESTICS, MORK_ROUNDS } from "../../content/polsonEden";
-import { say, dir } from "../../content/dsl";
+import { say, dir, gabor } from "../../content/dsl";
 import { FONT } from "../ui/theme";
 import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
@@ -98,6 +99,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private resumed = false;
   private companion: Companion | null = null;
   side = false;
+  private bros: SanBrother[] = [];
   groundY = 0;
   private platforms: Phaser.Physics.Arcade.StaticGroup | null = null;
   private sideBg: Phaser.GameObjects.TileSprite | null = null;
@@ -185,6 +187,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.companion = new Companion(this, this.player, s.flags.companion);
       s.flags.companion_used = true;
     }
+    this.bros = r.sanBros ? [new SanBrother(this, this.player, "SANMIK"), new SanBrother(this, this.player, "SANCHZ")] : [];
     this.enemyGroup = this.physics.add.group();
     if (!this.side) this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.collider(this.player.spr, this.obstacles);
@@ -493,6 +496,35 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
   }
 
+  /** SanChz, the Job Centre staff toilet, and a jam donut. */
+  private async donutScene() {
+    if (G.s.flags.sm_donut) {
+      await this.talk([say("SANCHZ", "We don't talk about it. YEGHHH.")]);
+      return;
+    }
+    const chz = this.bros.find((b) => b.id === "SANCHZ");
+    chz?.spr.setVisible(false);
+    await this.talk([
+      dir("You push the door. It isn't locked. It was never locked. Some part of him wanted to be found."),
+      dir("The Job Centre staff toilet has been transformed. Tealights on the cistern. Rose petals in the sink. A small speaker playing slow jams."),
+      dir("And there is SanChz. And there, cradled tenderly in both of his hands, is a jam donut."),
+      say("SANCHZ", "…"),
+      say("SANCHZ", "It's not what it looks like."),
+      say(G.s.player, "It looks like you're making sweet love to a jam donut, mate."),
+      say("SANCHZ", "…It's exactly what it looks like."),
+      dir("The donut, to its credit, looks content."),
+      say("SANMIK", "(bursting in) YEEE — oh. Oh SanChz. Not again. Not in the Job Centre."),
+      say("SANCHZ", "She's called Jaqueline. We met at Greggs. She gets me. YEGHHH."),
+      gabor("Was that allowed? I don't think that was allowed. Report me. No, report HIM. Report both of us."),
+      dir("Outside, the whole Job Centre shakes. Something enormous is rolling across the car park, screaming a name."),
+      say("SANMIK", "…SanChz. Whose donut is that."),
+      say("SANCHZ", "…Her mum's quite important."),
+    ]);
+    chz?.spr.setVisible(true);
+    G.s.flags.sm_donut = true;
+    this.checkExit();
+  }
+
   private talkerVisits: Record<string, number> = {};
   private jukeIdx = 0;
 
@@ -533,6 +565,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.toast("♪ JUKEBOX", `SanMik & SanChz — "${titles[id]}"`);
         return;
       }
+      case "donut":
+        if (!this.roomCleared) {
+          await this.talk([dir("ENGAGED. From inside: a soft, rhythmic creaking. And… is that Marvin Gaye?"), say("SANCHZ", "(muffled) Busy. Mork. Clear the Job Centre first.")]);
+          return;
+        }
+        await this.donutScene();
+        return;
       case "kick_gabor":
         await this.talk(n === 1 || lines.length < 2 ? lines : [lines[1 + ((n - 2) % (lines.length - 1))]]);
         if (n > 1) {
@@ -673,7 +712,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const r = this.room;
     if (!this.roomCleared) return;
     if (r.exitFlag && !G.s.flags[r.exitFlag]) {
-      this.toast("EXIT LOCKED", r.event === "cheesegate" ? "Solve Cheesegate first." : r.event === "mork" ? "Interpret the Mork Voice first." : r.event === "valves" ? "Open all three valves." : "Restore the Reaction Network first.");
+      this.toast("EXIT LOCKED", r.exitHint ? r.exitHint : r.event === "cheesegate" ? "Solve Cheesegate first." : r.event === "mork" ? "Interpret the Mork Voice first." : r.event === "valves" ? "Open all three valves." : "Restore the Reaction Network first.");
       return;
     }
     if (r.boss) return;
@@ -690,6 +729,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     synth.play("door");
     G.save();
+    if (this.room.then?.length) {
+      // a detour through other scenes (a minigame, a car chase) before the next room
+      const [first, ...rest] = this.room.then;
+      const resume = { dungeon: this.dungeon.id, room: this.roomIdx + 1 };
+      this.cameras.main.fadeOut(250);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.transitioning = true;
+        if (first === "drive") switchTo(this, "Drive", { chain: rest, resume });
+        else switchTo(this, "Minigame", { mode: first, chain: rest, resume });
+      });
+      return;
+    }
     if (this.roomIdx + 1 >= this.dungeon.rooms.length) {
       // a hang-out with nowhere further to go: back to Krelford
       G.s.phase = "hub";
@@ -710,6 +761,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private cleanup() {
     this.companion?.destroy();
     this.companion = null;
+    for (const b of this.bros) b.destroy();
+    this.bros = [];
     this.player?.destroy();
     for (const e of this.enemies) e.destroy();
     this.enemies = [];
@@ -741,6 +794,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.boss = b;
     this.enemies.push(b);
     this.enemyGroup.add(b);
+    if (this.side) {
+      const bb = b.body as Phaser.Physics.Arcade.Body;
+      bb.setCollideWorldBounds(true);
+      if ((b as any).sideGravity) bb.setGravityY(1500);
+      if (r.boss === "rik") b.setPosition(r.w / 2, this.groundY - 120);
+    }
     b.setAlpha(0);
     this.tweens.add({ targets: b, alpha: 1, duration: 800 });
     synth.play("roar");
@@ -753,6 +812,23 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async onBossDefeated(b: Boss) {
     this.busy = true;
     const s = G.s;
+    if (this.roomIdx < this.dungeon.rooms.length - 1) {
+      // a boss half way through: beat it and the door opens
+      G.emit("boss", null);
+      synth.play("boom");
+      this.shake(600, 0.025);
+      for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
+      for (const sh of [...this.shots]) this.killShot(sh);
+      await this.talk(BOSS_TEXT[b.bossId].outro);
+      this.boss = null;
+      this.roomCleared = true;
+      this.markCleared();
+      s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.5);
+      this.door.setTexture("p_door");
+      this.toast("EXIT OPEN", this.side ? "The way on is to the far right →." : "The exit is open.");
+      this.busy = false;
+      return;
+    }
     // dungeon done: forget room progress so a replay starts from the top
     for (let i = 0; i < this.dungeon.rooms.length; i++) delete s.flags[clearKey(this.dungeon.id, i)];
     G.emit("boss", null);
@@ -769,7 +845,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       s.hp = maxHp(s);
       s.phase = "hub";
       G.save();
-      const vig = b.bossId === "flatmate" ? "flatmate" : b.bossId === "rival" ? "rival" : null;
+      const vig = b.bossId === "flatmate" ? "flatmate" : b.bossId === "rival" ? "rival" : b.bossId === "rik" ? "sanmik_finale" : null;
       this.time.delayedCall(800, () => {
         this.transitioning = true;
         if (vig) switchTo(this, "Vignette", { id: vig, returnAt: this.dungeon.returnAt });
@@ -1510,6 +1586,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.paused || this.dying) return;
     const now = this.now();
     if (!this.busy) this.companion?.update(now);
+    if (!this.busy) for (const b of this.bros) b.update(now, Math.min(delta, 50));
     if (now < this.hitStopUntil) {
       this.physics.world.isPaused || this.physics.world.pause();
       return;

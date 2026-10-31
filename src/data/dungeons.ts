@@ -15,7 +15,7 @@ export interface PropDef {
   image?: string;
   lines?: { s: string; t: string; dir?: boolean }[];
   /** talker extras: heal you, change the song, etc. */
-  action?: "hottub" | "jukebox" | "pepsi" | "kick_gabor" | "begour_hug";
+  action?: "hottub" | "jukebox" | "pepsi" | "kick_gabor" | "begour_hug" | "donut";
 }
 
 export interface RoomDef {
@@ -34,6 +34,12 @@ export interface RoomDef {
   /** Side-scrolling rooms: backdrop image and one-way platforms [x (0..1), height above the ground, width]. */
   backdrop?: string;
   platforms?: [number, number, number][];
+  /** SanMik and SanChz fight alongside you in this room. */
+  sanBros?: boolean;
+  /** Scenes to play (in order) when you leave through the exit, before the next room: "norwich", "drive". */
+  then?: string[];
+  /** Shown when the exit is locked by exitFlag. */
+  exitHint?: string;
   /** Exit is locked until this flag is set (in addition to clearing all waves). */
   exitFlag?: string;
   cond?: Cond;
@@ -76,7 +82,8 @@ const SANMIK_HANGOUT: RoomDef = {
         { s: "BEGOUR THE BEAR", t: "You'll want a cuppa. And a hug. Everyone wants a hug when they first get here. It's a lot, Catford." },
         { s: "BEGOUR THE BEAR", t: "I'm the one who rings SanMik with bad news. Somebody has to. I always say sorry first. Then I fart, because it helps. It's lavender. Honestly. Have a sniff." },
         { s: "NARRATOR", t: "It is lavender. It is, against every law of nature, lovely.", dir: true },
-        { s: "BEGOUR THE BEAR", t: "That Genie's up on top of the Catford Cat, sulking. Ten thousand years in a lamp does things to a person. High street, Job Centre, then the rooftops. Pop back if you need a hug." },
+        { s: "BEGOUR THE BEAR", t: "Now, that Genie. Ten thousand years in a lamp, love. He just wants a bath. A proper one. He says he'll send you all home if he gets one." },
+        { s: "BEGOUR THE BEAR", t: "Only tub big enough is the Giant Hot Tub of Catford, and it's been broken for weeks. Something's blocking the jets. Something… big. Take the lads. Pop back if you need a hug." },
         { s: "BEGOUR THE BEAR", t: "Come here. Big hug. There we go. Off you pop, love." },
       ],
     },
@@ -171,6 +178,7 @@ const SANMIK_ARRIVAL: RoomDef["enterLines"] = [
   { s: "BEGOUR THE BEAR", t: "Smell my fart. It's lavender. It'll help, I promise." },
   { s: "NARRATOR", t: "SanMik grows another head. Then he does a cartwheel. Then he breakdances on the decking. Both heads are crying.", dir: true },
   { s: "BEGOUR THE BEAR", t: "Oh, come here. Both of you. Both heads. Big hug." },
+  { s: "GENIE", t: "(from inside the lamp, muffled) TEN THOUSAND YEARS. I WANT A BATH. A HOT ONE. WITH JETS. FIX THE GIANT HOT TUB OF CATFORD AND I WILL SEND YOU HOME. UNTIL THEN, NOBODY LEAVES." },
   { s: "NARRATOR", t: "SIDE-ON CONTROLS: A / D to run · W (or up) to jump, press again in the air to double jump · S to drop through platforms · aim and attack with the mouse as normal · Space to dash. The exit is on the far right. Talk to everyone first. Begour gives hugs (they heal).", dir: true },
 ];
 
@@ -591,25 +599,14 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 540,
         theme: "industrial",
         backdrop: "sm_street",
+        sanBros: true,
         platforms: [[0.2, 120, 220], [0.32, 220, 180], [0.48, 130, 260], [0.62, 120, 200], [0.7, 230, 160], [0.84, 130, 240]],
-        waves: [[["catford_fox", 8]], [["imaginary_mandem", 3], ["catford_fox", 6]], [["corn_turd", 5], ["wet_pizza", 2], ["imaginary_mandem", 2]]],
-        props: [
-          {
-            kind: "talker",
-            x: 0.1,
-            y: 0.5,
-            image: "spr_SANMIK",
-            label: "SANMIK",
-            lines: [
-              { s: "SANMIK", t: "Big up all da manz! All the fucking haters, go and suck your nans! Yee!" },
-              { s: "SANMIK", t: "That's my crew. The Catford Fox Crew. Hundreds of mandem. You can't see them because they're very good at hiding." },
-              { s: "NARRATOR", t: "A fox bites SanMik on the ankle. He pretends it's one of his.", dir: true },
-            ],
-          },
-        ],
+        waves: [[["catford_fox", 9]], [["imaginary_mandem", 3], ["catford_fox", 7]], [["corn_turd", 5], ["wet_pizza", 3], ["imaginary_mandem", 3]]],
         enterLines: [
           { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. A chicken shop called PECKISH that has been closed since 2009 and is somehow still open.", dir: true },
-          { s: "NARRATOR", t: "The foxes have noticed you. The foxes have opinions.", dir: true },
+          { s: "SANMIK", t: "YEEE! San Brothers, assemble! SanChz, you're on food. I'm on bars." },
+          { s: "SANCHZ", t: "YEGHHH." },
+          { s: "NARRATOR", t: "SANMIK and SANCHZ have joined you. They fight on their own. When you krezz (R), SanMik does his version: the SLOPPY SURPRISE.", dir: true },
         ],
       },
       {
@@ -618,41 +615,49 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 540,
         theme: "industrial",
         backdrop: "sm_jobcentre",
-        platforms: [[0.18, 110, 240], [0.3, 210, 200], [0.45, 120, 300], [0.6, 220, 200], [0.75, 120, 260], [0.88, 200, 180]],
-        waves: [[["jobcentre", 3], ["catford_fox", 4]], [["jobcentre", 2], ["pepsi_normal", 4], ["hottub_bubble", 3]], [["imaginary_mandem", 3], ["corn_turd", 4]]],
+        sanBros: true,
+        exitFlag: "sm_donut",
+        exitHint: "Where's SanChz? He went to the toilet twenty minutes ago. Check the STAFF TOILET.",
+        platforms: [[0.18, 110, 240], [0.3, 210, 200], [0.45, 120, 300], [0.6, 220, 200], [0.75, 120, 260]],
+        waves: [[["jobcentre", 3], ["catford_fox", 5]], [["jobcentre", 3], ["pepsi_normal", 4], ["hottub_bubble", 3]], [["imaginary_mandem", 3], ["corn_turd", 4], ["jobcentre", 2]]],
         props: [
           {
             kind: "talker",
-            x: 0.08,
+            x: 0.9,
             y: 0.5,
-            image: "spr_SANCHZ",
-            label: "MC POLSONATOR (signing on)",
-            lines: [
-              { s: "SANCHZ", t: "MC Polsonator. Signing on. Big up the Job Centre Plus." },
-              { s: "SANCHZ", t: "She asked what I've done to look for work. I said I've been in a hot tub. She said that's not work. I said it's not NOT work." },
-              { s: "SANCHZ", t: "Mork." },
-            ],
+            image: "p_door_locked",
+            label: "STAFF TOILET (ENGAGED)",
+            action: "donut",
+            lines: [],
           },
         ],
         enterLines: [
           { s: "NARRATOR", t: "The Catford Job Centre Plus. A sign says 'NO HOT TUBS'. Somebody has crossed out 'NO'.", dir: true },
+          { s: "SANCHZ", t: "MC Polsonator. Signing on. Big up the Job Centre Plus. YEGHHH." },
           { s: "NARRATOR", t: "The advisors rise from behind their desks. They have clipboards. They have questions about your availability.", dir: true },
         ],
       },
       {
-        name: "Up The Catford Rooftops",
-        w: 2400,
+        name: "The Job Centre Car Park",
+        w: 1600,
+        h: 540,
+        theme: "industrial",
+        backdrop: "sm_street",
+        sanBros: true,
+        platforms: [[0.2, 140, 220], [0.5, 230, 260], [0.8, 140, 220]],
+        boss: "jam",
+        then: ["norwich", "drive"],
+      },
+      {
+        name: "The Giant Hot Tub of Catford",
+        w: 1700,
         h: 540,
         theme: "temple",
-        backdrop: "sm_rooftop",
-        platforms: [[0.12, 100, 160], [0.2, 190, 140], [0.3, 110, 180], [0.38, 220, 150], [0.46, 130, 160], [0.55, 230, 170], [0.64, 120, 150], [0.72, 210, 160], [0.82, 120, 200], [0.9, 220, 160]],
-        waves: [[["hottub_bubble", 5], ["catford_fox", 4]], [["imaginary_mandem", 4], ["wet_pizza", 3]], [["pepsi_normal", 5], ["corn_turd", 4], ["hottub_bubble", 3]]],
-        enterLines: [
-          { s: "NARRATOR", t: "The rooftops. Satellite dishes, chimneys, and up ahead, glowing purple: the Catford Cat, with something furious and blue sitting on its head.", dir: true },
-          { s: "GABOR THE GOAT", t: goat("Is it high up here? It's high up here. Push me off. No don't. Do. Don't.") },
-        ],
+        backdrop: "sm_bigtub",
+        sanBros: true,
+        platforms: [[0.18, 150, 200], [0.5, 250, 220], [0.82, 150, 200]],
+        boss: "rik",
       },
-      { name: "The Top Of The Catford Cat", w: 1500, h: 540, theme: "temple", backdrop: "sm_rooftop", platforms: [[0.2, 130, 200], [0.5, 210, 240], [0.8, 130, 200]], boss: "genie" },
     ],
   },
   sanmik_hangout: {

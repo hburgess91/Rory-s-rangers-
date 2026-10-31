@@ -5,7 +5,7 @@ import { DialogueBox } from "../ui/DialogueBox";
 import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
-import { dir, say } from "../../content/dsl";
+import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
 import { animateWalker, backdrop } from "../gfx/HD";
@@ -38,6 +38,17 @@ const PROCTUS_BARKS = [
   "OW. Professionally, ow.",
 ];
 
+/** After the Champions League final, in the SanMikverse: the money, the cheque, the bank. */
+const NORWICH_AFTER: Line[] = [
+  say("SANMIK", "YEEE! Champions of Europe! Better than Messi! Better than Pele! Better than Heskey!"),
+  say("SANMIK", "Pundit one, you're a cunt. Pundit two, you're a cunt. Pundit three… you're alright."),
+  dir("The prize money is presented on a giant cheque for 'A MILLION BILLION POUNDS'. It is made out to 'SANMIK (MANAJER)'. It is written in crayon. SanMik wrote it."),
+  dir("The Bank of Catford will not cash it."),
+  say("SANMIK", "Right. Fine. Plan B. We rob the bank. Like Jason Statham in Crank."),
+  say("SANCHZ", "YEGHHH. I'll get the truck."),
+  gabor("I'll be the getaway goat. Please. Let me be the getaway goat. I'll ruin it. I always ruin it."),
+];
+
 /** Small arcade minigames. Each sets flags and, if it's the current arc step, completes it. */
 export class MinigameScene extends Phaser.Scene {
   private box!: DialogueBox;
@@ -50,7 +61,15 @@ export class MinigameScene extends Phaser.Scene {
     super("Minigame");
   }
 
-  create(data: { mode: string; returnAt?: string }) {
+  /** In-level minigames: what comes next, and where to go back into the dungeon. */
+  private chain: string[] = [];
+  private resume: { dungeon: string; room: number } | null = null;
+  private startData: any = null;
+
+  create(data: { mode: string; returnAt?: string; chain?: string[]; resume?: { dungeon: string; room: number } }) {
+    this.startData = data;
+    this.chain = data.chain ?? [];
+    this.resume = data.resume ?? null;
     this.mode = data.mode;
     this.returnAt = data.returnAt ?? "";
     this.ended = false;
@@ -103,6 +122,21 @@ export class MinigameScene extends Phaser.Scene {
     }
     if (success) G.s.flags[`mg_${this.mode}_won`] = true;
     G.save();
+    if (this.resume) {
+      // part of a level: win to carry on, lose to go again
+      if (success && this.mode === "norwich") lines.push(...NORWICH_AFTER);
+      if (!success) lines.push(dir("Again. SanMik has written a new law: the final gets replayed until Norwich win."));
+      await this.box.play(lines);
+      this.cameras.main.fadeOut(400);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        if (!success) return this.scene.restart(this.startData);
+        const [next, ...rest] = this.chain;
+        if (next === "drive") switchTo(this, "Drive", { chain: rest, resume: this.resume });
+        else if (next) switchTo(this, "Minigame", { mode: next, chain: rest, resume: this.resume });
+        else switchTo(this, "Dungeon", this.resume!);
+      });
+      return;
+    }
     await this.box.play(lines);
     this.cameras.main.fadeOut(400);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: this.returnAt, from: "minigame" }));
@@ -176,6 +210,7 @@ export class MinigameScene extends Phaser.Scene {
 
   /** Champions League final, 89th minute, 2-1 down. SanMik subs himself on. Two goals in the time left. */
   private norwich() {
+    synth.music("norwich", true);
     const g = this.add.graphics();
     g.fillStyle(0x2f8f3a, 1).fillRect(0, 0, 960, 540);
     for (let i = 0; i < 8; i++) g.fillStyle(i % 2 ? 0x2a8034 : 0x34993f, 1).fillRect(0, i * 68, 960, 68);

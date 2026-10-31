@@ -5,6 +5,15 @@ export const AUDIO_FILES: Record<string, string> = {
   // e.g. mork_voice: "audio/mork_voice.ogg"  (drop the file in public/audio)
   /** Studio-audience laugh track (sitcom canned laughter). Played in varied slices by "laugh"/"biglaugh". */
   laugh_track: "audio/laugh_track.mp3",
+  /** SanMik and SanChz, recorded: a run of YEEs and a run of YEGHs. */
+  yee: "audio/yee.mp3",
+  yegh: "audio/yegh.mp3",
+};
+
+/** Where each separate shout sits in those files: [start, length] in seconds. */
+const SHOUTS: Record<string, [number, number][]> = {
+  yee: [[0.9, 0.73], [2.25, 0.73], [4.69, 0.81], [6.17, 0.75], [7.44, 0.84], [8.73, 0.77], [9.94, 0.46], [11.06, 0.77], [12.2, 0.82], [13.33, 0.8], [14.62, 0.75], [15.98, 0.72], [17.33, 0.68], [18.59, 0.73]],
+  yegh: [[0.7, 0.33], [1.2, 0.53], [2.81, 0.64], [4.32, 1.01], [6.46, 0.71], [8.19, 0.78], [9.99, 1.0], [11.24, 0.94], [12.5, 1.68]],
 };
 
 /** Recorded music (public/audio). Ids not listed here fall back to the synthesised tracks. */
@@ -43,7 +52,11 @@ export const MUSIC_FILES: Record<string, string> = {
   crocodile: "audio/crocodile.mp3",
   flenky: "audio/flenky.mp3",
   sanmik: "audio/ggg8.mp3",
-  boss_begour: "audio/ggg9.mp3",
+  boss_rik: "audio/ggg13.mp3",
+  boss_jam: "audio/ggg9.mp3",
+  norwich: "audio/norwich.mp3",
+  sanmik_nation: "audio/sanmik_nation.mp3",
+  drive: "audio/ggg4.mp3",
   ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),
 };
 
@@ -195,6 +208,27 @@ export class Synth {
   }
 
   /** Play part of a loaded recording with a fade-out. */
+  /** One YEE (or YEGH), picked at random. */
+  shout(id: "yee" | "yegh", vol = 0.9) {
+    const buf = this.files[id];
+    const segs = SHOUTS[id];
+    if (!this.ctx || !buf || !segs) return false;
+    const [off, len] = segs[Math.floor(Math.random() * segs.length)];
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    const g = this.ctx.createGain();
+    src.buffer = buf;
+    src.playbackRate.value = 0.95 + Math.random() * 0.1;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    g.gain.setValueAtTime(vol, t + Math.max(0.03, len - 0.08));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    src.connect(g);
+    g.connect(this.sfxGain);
+    src.start(t, off, len + 0.05);
+    return true;
+  }
+
   clip(id: string, offset: number, dur: number, vol = 1, rate = 1) {
     const buf = this.files[id];
     if (!this.ctx || !buf) return false;

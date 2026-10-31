@@ -4678,6 +4678,30 @@
   },
   "sm_rooftop": {
    "file": "backdrops/sm_rooftop.png"
+  },
+  "p_truck": {
+   "file": "props/p_truck.png"
+  },
+  "p_copcar": {
+   "file": "props/p_copcar.png"
+  },
+  "p_swatvan": {
+   "file": "props/p_swatvan.png"
+  },
+  "p_heli": {
+   "file": "props/p_heli.png"
+  },
+  "p_jam": {
+   "file": "props/p_jam.png"
+  },
+  "p_rik": {
+   "file": "props/p_rik.png"
+  },
+  "sm_road": {
+   "file": "backdrops/sm_road.png"
+  },
+  "sm_bigtub": {
+   "file": "backdrops/sm_bigtub.png"
   }
  },
  "sheets": {
@@ -4969,11 +4993,17 @@
    "frameHeight": 32,
    "hd": 0.5
   },
-  "boss_genie": {
-   "file": "combat/boss_genie.png",
-   "frameWidth": 94,
+  "boss_jam": {
+   "file": "combat/boss_jam.png",
+   "frameWidth": 124,
    "frameHeight": 127,
    "hd": 0.378
+  },
+  "boss_rik": {
+   "file": "combat/boss_rik.png",
+   "frameWidth": 119,
+   "frameHeight": 124,
+   "hd": 0.3871
   }
  }
 }
