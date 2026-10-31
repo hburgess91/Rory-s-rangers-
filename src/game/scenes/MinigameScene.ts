@@ -6,6 +6,7 @@ import { runChain, switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, button, title } from "../ui/theme";
 import { OVER, fall, flap, randomZone, type Flappy } from "../combat/Wonk";
+import { VIRAL_CHART } from "../../content/charts/viral";
 import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
@@ -274,7 +275,7 @@ export class MinigameScene extends Phaser.Scene {
     const round = (i: number) => {
       if (i >= ROUNDS.length) {
         clearBtns();
-        if (interest >= 60) this.time.delayedCall(900, () => wonk());
+        if (interest >= 60) this.time.delayedCall(900, () => acapella());
         else {
           push("*", `${HER} has disconnected.`, "#9ca3af");
           this.finish(false, [say("SANMIK", "She's buffering. She's definitely just buffering."), dir("She is not buffering.")]);
@@ -305,6 +306,199 @@ export class MinigameScene extends Phaser.Scene {
           );
         });
       });
+    };
+    // ----- the acapella: "SanMik Should've Gone Viral", Guitar Hero style
+    const swapArt = (img: Phaser.GameObjects.Image, key: string, h: number, bottomY: number) => {
+      if (!this.textures.exists(key)) return;
+      img.setTexture(key, key.startsWith("spr_") ? 0 : undefined).setOrigin(0.5, 1);
+      img.setScale(h / img.height).setY(bottomY);
+    };
+    const fling = (camX: number, color: number, what: string) => {
+      const rag = this.add.rectangle(camX, 190, 40, 26, color).setDepth(45);
+      this.tweens.add({ targets: rag, x: camX + (Math.random() < 0.5 ? -260 : 260), y: -40, angle: 720, duration: 900, ease: "Quad.out", onComplete: () => rag.destroy() });
+      this.pop(camX, 110, what, "#fde68a", 18);
+    };
+    const censorBar = (parent: Phaser.GameObjects.Container, x: number, y: number, w: number) => {
+      const c = this.add.container(x, y);
+      c.add(this.add.rectangle(0, 0, w, 22, 0x000000));
+      c.add(this.add.text(0, 0, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#fff" }).setOrigin(0.5));
+      parent.add(c);
+      c.setScale(0.1);
+      this.tweens.add({ targets: c, scale: 1, duration: 250, ease: "Back.out" });
+    };
+    const acapella = () => {
+      push(HER, "wait… will u sing for me? acapella 🎤🥺", "#f9a8d4");
+      this.time.delayedCall(1200, () => {
+        push("SanMik_Official", "Yee. Stand back.", "#b0c4ff");
+        synth.shout("yee", 1);
+        this.time.delayedCall(800, () => {
+          fling(245, 0x1e3a8a, "*RIPS SHIRT OFF*");
+          swapArt(mik, "p_sm_shirtless", 230, 125);
+          this.tweens.add({ targets: mik, scaleX: mik.scaleX * 1.04, yoyo: true, repeat: -1, duration: 180 });
+          this.time.delayedCall(1100, () => startAcapella());
+        });
+      });
+    };
+    const startAcapella = () => {
+      for (const l of log) l.setVisible(false);
+      const LANES = [372, 410, 448, 486];
+      const KEYS = ["D", "F", "J", "K"];
+      const COLS = [0x22c55e, 0xef4444, 0xfacc15, 0x60a5fa];
+      const HIT_X = 150;
+      const LEAD = 1.6;
+      const lay = this.add.container(0, 0).setDepth(35);
+      LANES.forEach((y, i) => {
+        lay.add(this.add.rectangle(530, y, 820, 30, COLS[i], 0.12));
+        lay.add(this.add.circle(HIT_X, y, 15, 0x000000, 0.5).setStrokeStyle(3, COLS[i]));
+        lay.add(this.add.text(HIT_X - 50, y, KEYS[i], { fontFamily: FONT, fontSize: "16px", color: "#fff", fontStyle: "bold" }).setOrigin(0.5));
+      });
+      const lyric = this.add.text(530, 350, "🎤 SANMIK SHOULD'VE GONE VIRAL (acapella, live, shirtless)", { fontFamily: FONT, fontSize: "12px", color: "#f9a8d4" }).setOrigin(0.5).setDepth(36);
+      const score = this.add.text(900, 350, "", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(1, 0.5).setDepth(36);
+      type N = { t: number; lane: number; c: Phaser.GameObjects.Arc; done: boolean };
+      const notes: N[] = VIRAL_CHART.map(([t, lane]) => ({ t, lane, c: this.add.circle(-50, LANES[lane], 12, COLS[lane]).setStrokeStyle(2, 0xffffff).setDepth(37), done: false }));
+      let hits = 0;
+      let misses = 0;
+      let combo = 0;
+      let herStage = 0;
+      let hisStage = 0;
+      let artifactUntil = 0;
+      let over = false;
+      const t0 = this.time.now;
+      synth.music("viral", true);
+      const el = synth.musicEl();
+      const songT = () => (el && !el.paused ? el.currentTime : (this.time.now - t0) / 1000);
+      const HER_YES = ["mmm", "mmm fuck", "🔥🔥", "omg", "sing it 😩", "mmm FUCK", "ur so talented", "viral tbh"];
+      const HER_NO = ["😬", "lol", "babe…", "was that a sneeze", "ur voice cracked 😭"];
+      // a bum note does something terrible to the audio
+      const artifact = () => {
+        const now = this.time.now;
+        if (now < artifactUntil || !el) return;
+        const kind = Math.floor(Math.random() * 4);
+        el.preservesPitch = false;
+        if (kind === 0) {
+          el.playbackRate = 1.75;
+          this.pop(245, 100, "*CHIPMUNK*", "#fde047", 16);
+          artifactUntil = now + 420;
+          this.time.delayedCall(320, () => (el.playbackRate = 1));
+        } else if (kind === 1) {
+          el.playbackRate = 0.5;
+          this.pop(245, 100, "*DEMON VOICE*", "#ef4444", 16);
+          artifactUntil = now + 650;
+          this.time.delayedCall(450, () => (el.playbackRate = 1));
+        } else if (kind === 2) {
+          el.currentTime = Math.max(0, el.currentTime - 0.35);
+          this.pop(245, 100, "*SKIPS*", "#93c5fd", 16);
+          artifactUntil = now + 500;
+        } else {
+          synth.play("fart");
+          el.volume = Math.max(0, el.volume * 0.2);
+          const v = el.volume / 0.2;
+          this.pop(245, 100, "*VOICE CRACK*", "#a3e635", 16);
+          artifactUntil = now + 450;
+          this.time.delayedCall(300, () => (el.volume = Math.min(1, v)));
+        }
+        this.cameras.main.shake(80, 0.004);
+      };
+      const judge = (lane: number) => {
+        if (over || this.box.active) return;
+        const st = songT();
+        let best: N | null = null;
+        for (const n of notes) if (!n.done && n.lane === lane && Math.abs(n.t - st) < 0.16 && (!best || Math.abs(n.t - st) < Math.abs(best.t - st))) best = n;
+        const ring = this.add.circle(HIT_X, LANES[lane], 16, COLS[lane], 0.6).setDepth(38);
+        this.tweens.add({ targets: ring, scale: 1.8, alpha: 0, duration: 200, onComplete: () => ring.destroy() });
+        if (!best) return;
+        best.done = true;
+        best.c.destroy();
+        hits++;
+        combo++;
+        const perfect = Math.abs(best.t - st) < 0.06;
+        this.pop(HIT_X + 40, LANES[lane] - 14, perfect ? "PERFECT" : "YEE", perfect ? "#86efac" : "#ffffff", 12);
+        this.tweens.add({ targets: mik, angle: { from: -6, to: 6 }, duration: 90, yoyo: true });
+        if (hits % 6 === 0) this.pop(715, 120, HER_YES[Math.floor(Math.random() * HER_YES.length)], "#f9a8d4", 20);
+        if (combo % 25 === 0) this.pop(245, 120, `${combo} COMBO! YEEEE`, "#fde047", 18);
+        stages();
+      };
+      const stages = () => {
+        const n = notes.length;
+        if (hisStage === 0 && hits >= n * 0.25) {
+          hisStage = 1;
+          fling(245, 0x6b7280, "*TRACKIES OFF*");
+          swapArt(mik, "p_sm_boxers", 230, 125);
+        }
+        if (herStage === 0 && hits >= n * 0.35) {
+          herStage = 1;
+          fling(715, 0xf472b6, "*JUMPER OFF*");
+          if (this.textures.exists("p_camgirl_bra")) her.setTexture("p_camgirl_bra");
+          this.pop(715, 140, "mmm fuck 😩", "#f9a8d4", 22);
+        }
+        if (hisStage === 1 && hits >= n * 0.55) {
+          hisStage = 2;
+          fling(245, 0xd97706, "*BOXERS OFF*");
+          censorBar(leftCam, 0, 125 - 230 * 0.32, 76);
+        }
+        if (herStage === 1 && hits >= n * 0.65) {
+          herStage = 2;
+          fling(715, 0x111111, "*BRA OFF*");
+          censorBar(rightCam, 6, her.y - her.displayHeight * 0.414, 104);
+          this.pop(715, 140, "MMMM FUCK", "#f9a8d4", 24);
+        }
+      };
+      const keyMap: Record<string, number> = { D: 0, F: 1, J: 2, K: 3, A: 0, S: 1, L: 3, LEFT: 0, DOWN: 1, UP: 2, RIGHT: 3 };
+      const onKey = (e: KeyboardEvent) => {
+        const k = e.key.toUpperCase().replace("ARROW", "");
+        if (k in keyMap) judge(keyMap[k]);
+      };
+      this.input.keyboard?.on("keydown", onKey);
+      const onTap = (p: Phaser.Input.Pointer) => {
+        if (p.y < 350) return;
+        let best = 0;
+        LANES.forEach((y, i) => Math.abs(p.y - y) < Math.abs(p.y - LANES[best]) && (best = i));
+        judge(best);
+      };
+      this.input.on("pointerdown", onTap);
+      const tick = this.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (over) return;
+        const st = songT();
+        for (const n of notes) {
+          if (n.done) continue;
+          const x = HIT_X + ((n.t - st) / LEAD) * 780;
+          n.c.setX(x).setVisible(x < 950);
+          if (st - n.t > 0.18) {
+            n.done = true;
+            this.tweens.add({ targets: n.c, alpha: 0, y: n.c.y + 10, duration: 200, onComplete: () => n.c.destroy() });
+            misses++;
+            combo = 0;
+            artifact();
+            if (misses % 5 === 0) this.pop(715, 120, HER_NO[Math.floor(Math.random() * HER_NO.length)], "#9ca3af", 18);
+          }
+        }
+        const total = hits + misses;
+        score.setText(`HITS ${hits}  MISSES ${misses}  ${total ? Math.round((hits / total) * 100) : 100}%`);
+        this.hud.setText(`${Math.max(0, Math.ceil(80 - st))}s`);
+        if (st >= 80.6 || (el && el.ended) || notes.every((nn) => nn.done)) finishSong();
+      } });
+      const finishSong = () => {
+        if (over) return;
+        over = true;
+        tick.remove();
+        this.input.keyboard?.off("keydown", onKey);
+        this.input.off("pointerdown", onTap);
+        if (el) el.playbackRate = 1;
+        synth.stopMusic();
+        lay.destroy(true);
+        lyric.destroy();
+        score.destroy();
+        notes.forEach((n) => n.c.active && n.c.destroy());
+        for (const l of log) l.setVisible(true);
+        const acc = hits / Math.max(1, hits + misses);
+        // whatever happened, everyone's ended up in their pants (or less)
+        while (hisStage < 2 || herStage < 2) {
+          hits = Math.max(hits, notes.length);
+          stages();
+        }
+        push(HER, acc > 0.7 ? "that was… the best thing ive ever heard 😩 mmm fuck" : acc > 0.4 ? "ur voice cracked like 40 times. weirdly into it" : "babe that was a war crime. but ur fit so", "#f9a8d4");
+        this.time.delayedCall(1600, () => wonk());
+      };
     };
     // ----- the wonk
     const wonk = () => {

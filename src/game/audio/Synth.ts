@@ -59,13 +59,14 @@ export const MUSIC_FILES: Record<string, string> = {
   majek_lampe: "audio/majek_lampe.mp3",
   mdmazing: "audio/mdmazing.mp3",
   beepbeep: "audio/beepbeep.mp3",
+  viral: "audio/viral.mp3",
   sanmik_nation: "audio/sanmik_nation.mp3",
   drive: "audio/ggg4.mp3",
   ...Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`ggg${i + 1}`, `audio/ggg${i + 1}.mp3`])),
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["crobley", "majek_lampe", "anthem", "bbp", "twitcher", "crocodile", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
+const ONE_SHOT = new Set(["viral", "crobley", "majek_lampe", "anthem", "bbp", "twitcher", "crocodile", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
 
 type Wave = OscillatorType;
 
@@ -567,6 +568,11 @@ export class Synth {
     const e = this.el;
     if (!e) return { t: 0, d: 0, ended: true };
     return { t: e.currentTime, d: Number.isFinite(e.duration) ? e.duration : 0, ended: e.ended };
+  }
+
+  /** The <audio> element playing the current recorded track (for songs that drive a minigame clock). */
+  musicEl(): HTMLAudioElement | null {
+    return this.el;
   }
 
   playingFile(): string {

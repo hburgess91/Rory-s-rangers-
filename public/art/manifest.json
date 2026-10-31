@@ -4792,6 +4792,15 @@
   },
   "cam_sanmik": {
    "file": "backdrops/cam_sanmik.png"
+  },
+  "p_camgirl_bra": {
+   "file": "props/p_camgirl_bra.png"
+  },
+  "p_sm_shirtless": {
+   "file": "props/p_sm_shirtless.png"
+  },
+  "p_sm_boxers": {
+   "file": "props/p_sm_boxers.png"
   }
  },
  "sheets": {
