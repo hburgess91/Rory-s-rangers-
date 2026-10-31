@@ -38,6 +38,8 @@ export class VignetteScene extends Phaser.Scene {
       press_conference: () => this.pressConference(),
       polson_gym: () => this.polsonGym(),
       polson_cctv: () => this.polsonCctv(),
+      polson_gym2: () => this.polsonGym2(),
+      polson_mouth: () => this.polsonMouth(),
       wahooga: () => this.wahooga(),
     };
     await (run[data.id] ?? (async () => undefined))();
@@ -792,6 +794,268 @@ export class VignetteScene extends Phaser.Scene {
   }
 
 
+  /** Polson at his current (permanent) size. */
+  private fatPolson(x: number, y: number, base = 3) {
+    const f = Math.min(60, (G.s.flags.polson_fat as number) ?? 0);
+    const k = 1 + f * 0.04;
+    return this.add.sprite(x, y, "spr_POLSON", 0).setScale(base * k, base * (1 + (k - 1) * 0.2)).setDepth(10);
+  }
+
+  private async polsonGym2() {
+    if (!backdrop(this, "bg_gym", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
+    G.s.flags.polson_fat = Math.max(10, (G.s.flags.polson_fat as number) ?? 0);
+    // the turnstile
+    const post1 = this.add.rectangle(440, 360, 14, 110, 0x9ca3af).setDepth(12);
+    const post2 = this.add.rectangle(520, 360, 14, 110, 0x9ca3af).setDepth(12);
+    this.add.text(480, 290, "KRUNCH GYM — MEMBERS ONLY", { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(12);
+    const pol = this.fatPolson(300, 380);
+    const me = this.add.sprite(160, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    synth.music("hub");
+    await this.talk([
+      dir("Krunch Gym. Again. Polson is wearing the same headband. The headband is now under considerable tension."),
+      say("POLSON", "I've been bulking. You can tell. Look at the mass on that."),
+      say(G.s.player, "That's mostly fudge."),
+      say("POLSON", "Fudge is mass, mate. Mass is mass."),
+    ]);
+    await this.tween({ targets: pol, x: 480, duration: 900 });
+    synth.play("hit");
+    this.cameras.main.shake(200, 0.006);
+    await this.talk([dir("Polson enters the turnstile. Polson does not exit the turnstile."), say("POLSON", "It's narrower than last time. They've changed it."), say("POLSON", "Push me. Push me through. This is part of the warm-up.")]);
+    // mash to shove him through
+    await new Promise<void>((resolve) => {
+      let pushes = 0;
+      const NEED = 14;
+      const bar = this.add.rectangle(330, 200, 0, 18, 0x22c55e).setOrigin(0, 0.5).setDepth(60);
+      this.add.rectangle(480, 200, 304, 24).setStrokeStyle(3, 0xffffff).setDepth(60);
+      const help = this.add.text(480, 165, "TAP / SPACE to shove Polson through the turnstile", { fontFamily: FONT, fontSize: "14px", color: "#ffd23f", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(60);
+      me.setPosition(400, 390);
+      const shove = () => {
+        if (this.box.active || pushes >= NEED) return;
+        pushes++;
+        synth.play(pushes % 2 ? "hit" : "select");
+        bar.width = (300 * pushes) / NEED;
+        pol.x += 4;
+        post1.x -= 0.6;
+        post2.x += 0.6;
+        me.x = 400 + (pushes % 2) * 10;
+        this.cameras.main.shake(60, 0.003);
+        if (pushes >= NEED) {
+          this.input.keyboard?.off("keydown-SPACE", shove);
+          this.input.off("pointerdown", shove);
+          help.destroy();
+          synth.play("explode");
+          this.tween({ targets: post1, angle: -70, x: 380, duration: 300 });
+          this.tween({ targets: post2, angle: 70, x: 580, duration: 300 });
+          this.tween({ targets: pol, x: 640, duration: 250, ease: "Quad.out" }).then(() => this.time.delayedCall(500, () => resolve()));
+        }
+      };
+      this.input.keyboard?.on("keydown-SPACE", shove);
+      this.input.on("pointerdown", shove);
+    });
+    this.caption("TURNSTILE: DECOMMISSIONED", "#ffd23f", 26);
+    await this.talk([
+      say("POLSON", "See. Warmed up. That's a full body pump, that."),
+      dir("Polson lowers himself onto the bench press. The bench press makes a sound benches should not make."),
+    ]);
+    const bench = this.textures.exists("p_bench") ? this.add.image(700, 420, "p_bench").setScale(2).setDepth(8) : this.add.rectangle(700, 410, 160, 20, 0x374151).setDepth(8);
+    await this.tween({ targets: pol, x: 700, y: 385, duration: 600 });
+    await this.wait(500);
+    synth.play("explode");
+    this.cameras.main.shake(300, 0.012);
+    this.tween({ targets: bench, angle: 12, y: 440, duration: 200 });
+    this.tween({ targets: pol, y: 410, duration: 200 });
+    await this.talk([
+      dir("The bench snaps cleanly in half. Polson has not touched a weight."),
+      say("POLSON", "Personal best."),
+      say("CHAD DELTOID", "(from the squat rack) Mate, that's a £900 bench."),
+      say("POLSON", "Put it on his tab."),
+      dir("He points at you. Of course he points at you."),
+      say("POLSON", "Right. That's the session. Post-workout window. Got to get the protein in within thirty seconds or the gains evaporate. Science."),
+      say("POLSON", "Restaurant. Quick. QUICK."),
+    ]);
+    this.children.removeAll(true);
+    this.lastCaption = undefined;
+    if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
+    this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
+    const pol2 = this.fatPolson(420, 320);
+    this.add.sprite(620, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    await this.talk([
+      say("WAITER", "Oh no. Not him again. Last time he ate a chair leg by accident."),
+      say("POLSON", "Protein shake please. Chocolate. Blend a fudge into it. Blend two fudges. And a burger in it."),
+      say("WAITER", "…In the shake?"),
+      say("POLSON", "Liquid gains, mate. Absorbs faster."),
+    ]);
+    await this.bulkPolson(pol2, true);
+    await this.talk([
+      say("POLSON", "Oh that's hit the spot. I can feel it going straight to the muscles."),
+      dir("It is not going to the muscles. It is going everywhere except the muscles."),
+      say("POLSON", "Gonna need a bigger headband."),
+      ping("POLSON'S MUM", "Why is there a bill from Krunch Gym for a bench"),
+      ping("POLSON'S MUM", "And a turnstile"),
+      ping("POLSON", "Mork."),
+    ]);
+    synth.stopMusic();
+  }
+
+  /** The Mouth Workout. Hold to stretch his jaw open, release in the green to CHEW VERY HARD. */
+  private async polsonMouth() {
+    if (!backdrop(this, "tv_livingroom", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x3b2f2a);
+    G.s.flags.polson_fat = Math.max(25, (G.s.flags.polson_fat as number) ?? 0);
+    if (this.textures.exists("p_sofa")) this.add.image(330, 430, "p_sofa").setScale(2.6).setDepth(5);
+    const pol = this.fatPolson(330, 360);
+    const me = this.add.sprite(800, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    void me;
+    // the cake: one big four-tier stack
+    const cake = this.add.container(600, 430).setDepth(9);
+    const tiers = [
+      [0, 0, 220, 50, 0xf5d0a9],
+      [0, -50, 180, 46, 0xf9a8d4],
+      [0, -96, 140, 42, 0xf5d0a9],
+      [0, -138, 100, 38, 0xf9a8d4],
+    ] as const;
+    for (const [x, y, w, h, c] of tiers) {
+      cake.add(this.add.rectangle(x, y, w, h, c).setOrigin(0.5, 1).setStrokeStyle(3, 0x7c2d12));
+      cake.add(this.add.rectangle(x, y - h, w, 8, 0xffffff).setOrigin(0.5, 0));
+    }
+    for (let i = -2; i <= 2; i++) cake.add(this.add.rectangle(i * 16, -186, 4, 18, 0xfde047).setOrigin(0.5, 1));
+    cake.add(this.add.text(0, -20, "HAPPY TUESDAY POLSON", { fontFamily: FONT, fontSize: "11px", color: "#7c2d12" }).setOrigin(0.5));
+    synth.music("hub");
+    await this.talk([
+      dir("Polson Towers. Polson is on the sofa. Polson is most of the sofa."),
+      dir("In front of him: the cake. Four tiers. It has its own postcode."),
+      say("POLSON", "Right. Gym's out. Too many turnstiles. Too much… standing."),
+      say("POLSON", "So I've designed my own routine. Cutting-edge. You won't have heard of it."),
+      say("POLSON", "The mouth workout."),
+      say(G.s.player, "The what."),
+      say("POLSON", "Mouth workout. By stretching my mouth open — really wide, full range of motion — and chewing very hard, I'm burning calories."),
+      say("POLSON", "And building strong oral muscles. Nobody trains the oral muscles. Biggest muscle group in the face, mate. Neglected."),
+      say(G.s.player, "So you're eating a cake."),
+      say("POLSON", "I'm using the cake as resistance. The cake is the equipment. Spot me."),
+      dir("HOW IT WORKS: HOLD (tap and hold, or hold SPACE) to stretch Polson's mouth open. RELEASE in the GREEN zone to chew very hard. Too early: a nibble. Too late: jaw lock."),
+    ]);
+    const res = await new Promise<{ reps: number; burned: number; ate: number }>((resolve) => {
+      const W = 300;
+      const X0 = 480 - W / 2;
+      this.add.rectangle(480, 150, W + 6, 26).setStrokeStyle(3, 0xffffff).setDepth(60);
+      let lo = 0.55;
+      let hi = 0.8;
+      const green = this.add.rectangle(X0 + W * lo, 150, W * (hi - lo), 20, 0x22c55e, 0.55).setOrigin(0, 0.5).setDepth(60);
+      const fill = this.add.rectangle(X0, 150, 0, 20, 0xffd23f).setOrigin(0, 0.5).setDepth(61);
+      this.add.text(480, 120, "JAW STRETCH", { fontFamily: FONT, fontSize: "12px", color: "#fff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(60);
+      const hud = this.add.text(480, 60, "", { fontFamily: "Impact, sans-serif", fontSize: "20px", color: "#fff", stroke: "#000", strokeThickness: 5, align: "center" }).setOrigin(0.5).setDepth(60);
+      const mouthY = pol.y - pol.displayHeight * 0.18;
+      const mouth = this.add.ellipse(pol.x + 2, mouthY, 8, 2, 0x3b0a0a).setDepth(20);
+      const lines = ["FULL RANGE OF MOTION.", "Feel that burn.", "Strong oral muscles.", "That's a calorie gone, that.", "CHEW. HARD.", "Squeeze at the top.", "Jaw day. Never skip jaw day.", "Engage the core. The cheek core.", "One more rep. One more slice.", "Mork."];
+      const bubble = (txt: string, col = "#111") => {
+        const b = this.add.text(pol.x, pol.y - pol.displayHeight / 2 - 26, txt, { fontFamily: FONT, fontSize: "13px", color: col, backgroundColor: "#ffffffee", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(70);
+        this.tween({ targets: b, y: b.y - 18, alpha: 0, delay: 800, duration: 400 }).then(() => b.destroy());
+      };
+      let holding = false;
+      let stretch = 0;
+      let reps = 0;
+      let burned = 0;
+      let ate = 0;
+      let left = 30;
+      let over = false;
+      const NEED = 12;
+      const sx0 = pol.scaleX;
+      const newZone = () => {
+        const w = Phaser.Math.FloatBetween(0.12, 0.25);
+        lo = Phaser.Math.FloatBetween(0.35, 0.95 - w);
+        hi = lo + w;
+        green.setPosition(X0 + W * lo, 150).setSize(W * hi - W * lo, 20);
+      };
+      const down = () => {
+        if (this.box.active || over) return;
+        holding = true;
+      };
+      const up = () => {
+        if (!holding || over) return;
+        holding = false;
+        const v = stretch;
+        stretch = 0;
+        if (v < 0.08) return;
+        if (v >= lo && v <= hi) {
+          reps++;
+          burned += 0.4;
+          ate += Phaser.Math.Between(780, 1240);
+          synth.play(reps % 2 ? "gulp" : "slurp");
+          bubble(lines[reps % lines.length]);
+          this.cameras.main.shake(120, 0.004 + reps * 0.0005);
+          for (let i = 0; i < 3; i++) this.time.delayedCall(i * 110, () => mouth.setSize(12, i % 2 ? 2 : 9));
+          cake.setScale(Math.max(0.08, 1 - reps / NEED));
+          this.tweens.add({ targets: pol, scaleX: sx0 * (1 + reps * 0.035), duration: 220, ease: "Back.out" });
+          newZone();
+          if (reps >= NEED) end();
+        } else if (v < lo) {
+          synth.play("tap_fail");
+          ate += 90;
+          bubble("A nibble. Weak.", "#b45309");
+        } else {
+          synth.play("tap_fail");
+          bubble("JAW LOCK", "#ef4444");
+          pol.setTint(0xffaaaa);
+          this.time.delayedCall(500, () => pol.clearTint());
+        }
+      };
+      const kd = () => down();
+      const ku = () => up();
+      this.input.keyboard?.on("keydown-SPACE", kd);
+      this.input.keyboard?.on("keyup-SPACE", ku);
+      this.input.on("pointerdown", down);
+      this.input.on("pointerup", up);
+      const timer = this.time.addEvent({ delay: 1000, loop: true, callback: () => { if (!this.box.active && --left <= 0) end(); } });
+      const tick = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          if (holding) {
+            stretch += 0.018;
+            if (stretch > 1.05) {
+              holding = false;
+              stretch = 0;
+              synth.play("tap_fail");
+              bubble("JAW LOCK", "#ef4444");
+            }
+          }
+          fill.width = W * Math.min(1, stretch);
+          mouth.setSize(8 + stretch * 12, 2 + stretch * 14);
+          hud.setText(`REPS ${reps}/${NEED}    CALORIES BURNED: ${burned.toFixed(1)}    CALORIES EATEN: ${ate.toLocaleString()}    ${left}s`);
+        },
+      });
+      const end = () => {
+        if (over) return;
+        over = true;
+        tick.remove();
+        timer.remove();
+        this.input.keyboard?.off("keydown-SPACE", kd);
+        this.input.keyboard?.off("keyup-SPACE", ku);
+        this.input.off("pointerdown", down);
+        this.input.off("pointerup", up);
+        mouth.setSize(8, 2);
+        this.time.delayedCall(900, () => resolve({ reps, burned, ate }));
+      };
+    });
+    G.s.flags.polson_fat = ((G.s.flags.polson_fat as number) ?? 0) + res.reps * 2;
+    this.caption(res.reps >= 12 ? "CAKE: DESTROYED" : res.reps >= 6 ? "SOLID JAW SESSION" : "WARM-UP SET", "#ffd23f", 30);
+    await this.wait(900);
+    await this.talk([
+      say("POLSON", `${res.reps} reps. ${res.burned.toFixed(1)} calories burned. That's a deficit, that.`),
+      say(G.s.player, `You ate ${res.ate.toLocaleString()} calories.`),
+      say("POLSON", "Of resistance, mate. That's all resistance. You don't count the equipment."),
+      say("POLSON", "Feel this jaw. Go on. Feel it. Rock solid. Strong oral muscles."),
+      dir("You do not feel his jaw."),
+      say("POLSON", "Same time tomorrow. Bigger cake. Progressive overload."),
+      dir("Polson tries to stand up to see you out. Polson remains seated. The sofa has accepted him as one of its own."),
+      ping("POLSON'S MUM", "Did someone deliver a cake the size of a fridge to the house"),
+      ping("POLSON'S MUM", "He's meant to be getting trim"),
+      ping("POLSON", "I am getting trim. Trimming the cake. Mork."),
+      ping("KREZMAR", "Is there any cake left"),
+      ping("POLSON", "No"),
+    ]);
+    synth.stopMusic();
+  }
+
   // ---------------------------------------------------------------- WAHOOGA (Benn goes home)
 
   private async wahooga() {
@@ -1016,7 +1280,7 @@ export class VignetteScene extends Phaser.Scene {
   }
 
   /** Stuff Polson's face. Food slides down the table: shove it in as it reaches his mouth. Skip the salad. */
-  private bulkPolson(pol: Phaser.GameObjects.Sprite) {
+  private bulkPolson(pol: Phaser.GameObjects.Sprite, add = false) {
     return new Promise<void>((resolve) => {
       const MOUTH_X = pol.x + 30;
       const sx0 = pol.scaleX;
@@ -1107,7 +1371,7 @@ export class VignetteScene extends Phaser.Scene {
             hud.destroy();
             help.destroy();
             zone.destroy();
-            G.s.flags.polson_fat = Math.max((G.s.flags.polson_fat as number) ?? 0, eaten);
+            G.s.flags.polson_fat = add ? ((G.s.flags.polson_fat as number) ?? 0) + eaten : Math.max((G.s.flags.polson_fat as number) ?? 0, eaten);
             this.caption(eaten >= 12 ? "MAXIMUM BULK" : eaten >= 7 ? "BULKED" : "LIGHT BULK", "#ffd23f", 30);
             this.time.delayedCall(1200, () => resolve());
           }

@@ -625,7 +625,7 @@ export class HubScene extends Phaser.Scene {
       // the bulk is permanent
       if (id === "POLSON" && s.flags.polson_fat) {
         const n = this.npcs[this.npcs.length - 1];
-        const k = 1 + Math.min(12, s.flags.polson_fat as number) * 0.05;
+        const k = 1 + Math.min(60, s.flags.polson_fat as number) * 0.04;
         n.spr.setScale(n.spr.scaleX * k, n.spr.scaleY * (1 + (k - 1) * 0.2));
       }
     }
