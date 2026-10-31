@@ -3,6 +3,8 @@ import { synth } from "../audio/Synth";
 import { TOUCH } from "../ui/TouchControls";
 import { activeMods } from "../../data/historicalRevisions";
 import { G } from "../G";
+import { addWrist, wristLook } from "../gfx/Wrist";
+import { CHARACTERS } from "../../data/characters";
 import type { Player } from "./Player";
 
 /**
@@ -70,6 +72,9 @@ export function startWonk(p: Player, now: number) {
   }
   const hero = sc.add.sprite(320, 300, p.spr.texture.key, 0).setScale(5.5);
   ui.add(hero);
+  // the wrist, going like the clappers under the bar
+  const wrist = addWrist(sc, 306, 340, { ...wristLook(p.id, CHARACTERS as any), scale: 2.2 });
+  ui.add(wrist.obj);
   // keep it decent: a big censor bar over the business end
   const bar = sc.add.rectangle(320, 352, 170, 54, 0x000000);
   const barT = sc.add.text(320, 352, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
@@ -106,6 +111,7 @@ export function startWonk(p: Player, now: number) {
   const press = () => {
     if (done) return;
     flap(fl);
+    wrist.kick();
     presses.push(t);
     synth.wonkTick(gauge);
     hero.setY(300 + (Math.random() - 0.5) * 6);

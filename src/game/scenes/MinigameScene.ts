@@ -7,6 +7,7 @@ import { synth } from "../audio/Synth";
 import { FONT, button, title } from "../ui/theme";
 import { OVER, fall, flap, randomZone, type Flappy } from "../combat/Wonk";
 import { VIRAL_CHART } from "../../content/charts/viral";
+import { addWrist, type Wrist } from "../gfx/Wrist";
 import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
@@ -501,6 +502,7 @@ export class MinigameScene extends Phaser.Scene {
       };
     };
     // ----- the wonk
+    let wrists: Wrist[] = [];
     const wonk = () => {
       push(HER, "ok ur actually so fit. wanna… 👀", "#f9a8d4");
       this.time.delayedCall(1100, () => {
@@ -510,7 +512,12 @@ export class MinigameScene extends Phaser.Scene {
       });
     };
     const startWonk = () => {
-      // both cameras: CENSORED
+      // both cameras: CENSORED, with a wrist going under each bar
+      const wristL = addWrist(this, 232, 194, { skin: 0x8d5524, scale: 2.2, speed: 120 });
+      const wristR = addWrist(this, 704, 194, { skin: 0xd9a27f, scale: 2, speed: 130, flip: true });
+      wristL.obj.setDepth(29);
+      wristR.obj.setDepth(29);
+      wrists = [wristL, wristR];
       const bars = [245, 715].map((x) => {
         const c = this.add.container(x, 200).setDepth(30);
         c.add(this.add.rectangle(0, 0, 220, 70, 0x000000));
@@ -545,6 +552,7 @@ export class MinigameScene extends Phaser.Scene {
       const tap = () => {
         if (done) return;
         flap(g);
+        wrists[0]?.kick();
         synth.play(Math.random() < 0.5 ? "slurp" : "select");
       };
       this.mash(tap);
@@ -563,6 +571,7 @@ export class MinigameScene extends Phaser.Scene {
         fall(g, 16);
         fill.setSize(22, GH * g.gauge);
         const inZone = g.gauge >= zone.lo && g.gauge <= zone.hi;
+        wrists[1]?.setSpeed(inZone ? 70 : 130);
         fill.setFillStyle(inZone ? 0x22c55e : g.gauge > OVER ? 0xef4444 : 0xffd23f);
         if (inZone) {
           mine += 16 / 90;
@@ -594,6 +603,7 @@ export class MinigameScene extends Phaser.Scene {
     const krezz = async (bars: Phaser.GameObjects.Container[], lblL: Phaser.GameObjects.Text, lblR: Phaser.GameObjects.Text) => {
       lblL.destroy();
       lblR.destroy();
+      wrists.forEach((w) => w.destroy());
       synth.play("boom");
       synth.shout("yee", 1);
       this.cameras.main.flash(500, 255, 255, 255);

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { addWrist, wristLook, type Wrist } from "../gfx/Wrist";
 import { randomZone, flap, fall, OVER, type WonkZone } from "../combat/Wonk";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
@@ -640,6 +641,9 @@ export class ClubScene extends Phaser.Scene {
         const spr = this.add.sprite(x0 + i * gap, 250, `spr_${id}`, 0).setScale(3.2);
         spr.setData("x0", spr.x);
         ui.add(spr);
+        const wrist = addWrist(this, spr.x - 8, 278, { ...wristLook(id, CHARACTERS as any), scale: 1.6, speed: 90 + Math.random() * 60 });
+        ui.add(wrist.obj);
+        spr.setData("wrist", wrist);
         ui.add(this.add.text(spr.x, 150, id === s.player ? "YOU" : CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: id === s.player ? "14px" : "11px", color: id === s.player ? "#ffd23f" : "#ffd1e8", fontStyle: "bold" }).setOrigin(0.5));
         // gauge under each
         ui.add(this.add.rectangle(spr.x, 420, 26, 140, 0x000000, 0.85).setStrokeStyle(id === s.player ? 3 : 1, id === s.player ? 0xffd23f : 0xffffff, 0.8));
@@ -663,6 +667,7 @@ export class ClubScene extends Phaser.Scene {
       const press = () => {
         if (done || you.result) return;
         flap(you);
+        (you.spr.getData("wrist") as Wrist | undefined)?.kick();
         synth.wonkTick(you.gauge);
       };
       const onKey = (e: KeyboardEvent) => {
@@ -705,7 +710,10 @@ export class ClubScene extends Phaser.Scene {
               if (t >= r.nextFlap) {
                 const mid = (r.zone.lo + r.zone.hi) / 2;
                 const go = r.plan === "over" ? Math.random() < 0.5 : r.plan === "under" ? r.gauge < r.zone.lo - 0.15 : r.vel <= 0 && r.gauge < mid + (Math.random() - 0.5) * (0.25 - r.skill * 0.15);
-                if (go) flap(r);
+                if (go) {
+                  flap(r);
+                  (r.spr.getData("wrist") as Wrist | undefined)?.kick();
+                }
                 r.nextFlap = t + 90 + Math.random() * 160 / r.skill;
               }
             }

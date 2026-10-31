@@ -11,6 +11,7 @@ import { animateWalker, backdrop } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
 import { flap, fall, randomZone } from "../combat/Wonk";
 import { maybeFinishArc } from "../systems/arcs";
+import { addWrist, wristLook } from "../gfx/Wrist";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
 export class VignetteScene extends Phaser.Scene {
@@ -336,10 +337,14 @@ export class VignetteScene extends Phaser.Scene {
     const fillR = this.add.rectangle(GX, GY + GH, 40, 0, 0xff4fa3).setOrigin(0.5, 1);
     ui.add(fillR);
     const censor = this.add.rectangle(380, 330, 200, 60, 0x000000);
-    ui.add([this.add.sprite(380, 290, "spr_CRONGUS", 0).setScale(4), censor, this.add.text(380, 330, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5)]);
+    const wrist = addWrist(this, 366, 326, { ...wristLook("CRONGUS", CHARACTERS as any), scale: 2 });
+    ui.add([this.add.sprite(380, 290, "spr_CRONGUS", 0).setScale(4), wrist.obj, censor, this.add.text(380, 330, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5)]);
     const status = this.add.text(380, 420, "", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffe4ec", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
     ui.add(status);
-    const press = () => flap(g0);
+    const press = () => {
+      flap(g0);
+      wrist.kick();
+    };
     this.input.keyboard?.on("keydown-SPACE", press);
     this.input.on("pointerdown", press);
     let t = 0;
