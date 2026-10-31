@@ -1,0 +1,7 @@
+node_modules/
+dist/
+# Private chat exports are reference material only. Never commit or bundle them.
+source/
+K*.json
+*.chat.json
+CHAT_INDEX.txt

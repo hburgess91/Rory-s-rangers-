@@ -1,0 +1,5138 @@
+{
+ "chars": {
+  "spr_KREBON": {
+   "file": "chars/KREBON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_BOGGOR": {
+   "file": "chars/BOGGOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_COP": {
+   "file": "chars/COP.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_CRONGUS": {
+   "file": "chars/CRONGUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_DRONGUS": {
+   "file": "chars/DRONGUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_EDEN": {
+   "file": "chars/EDEN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_FLENKY": {
+   "file": "chars/FLENKY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_FOLK0": {
+   "file": "chars/FOLK0.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_FOLK1": {
+   "file": "chars/FOLK1.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_FOLK2": {
+   "file": "chars/FOLK2.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_FOLK3": {
+   "file": "chars/FOLK3.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_GARY": {
+   "file": "chars/GARY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_GRONNY": {
+   "file": "chars/GRONNY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_GRUNGUS": {
+   "file": "chars/GRUNGUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_JOURNALIST": {
+   "file": "chars/JOURNALIST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "npc_journo": {
+   "file": "chars/JOURNALIST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KID0": {
+   "file": "chars/KID0.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KID1": {
+   "file": "chars/KID1.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KID2": {
+   "file": "chars/KID2.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KREBLIS": {
+   "file": "chars/KREBLIS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KREZMAR": {
+   "file": "chars/KREZMAR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_KREZWONK": {
+   "file": "chars/KREZWONK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_MIKEY": {
+   "file": "chars/MIKEY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_MOLLOR": {
+   "file": "chars/MOLLOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_POLSON": {
+   "file": "chars/POLSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_PROCTUS": {
+   "file": "chars/PROCTUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SANCHZ": {
+   "file": "chars/SANCHZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SANMIK": {
+   "file": "chars/SANMIK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SCROMBUS": {
+   "file": "chars/SCROMBUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SWIG": {
+   "file": "chars/SWIG.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "npc_swig": {
+   "file": "chars/SWIG.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_TV_ADVISOR": {
+   "file": "chars/TV_ADVISOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_ANNOUNCER": {
+   "file": "chars/TV_ANNOUNCER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_BARRY_SNODGRASS": {
+   "file": "chars/TV_BARRY_SNODGRASS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_BENDY_KRENDY": {
+   "file": "chars/TV_BENDY_KRENDY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_BOUNCER": {
+   "file": "chars/TV_BOUNCER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_CHANCELLOR": {
+   "file": "chars/TV_CHANCELLOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_CHEERLEADERS": {
+   "file": "chars/TV_CHEERLEADERS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_CHRISTOPHER_THICK": {
+   "file": "chars/TV_CHRISTOPHER_THICK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_COMMENTATOR": {
+   "file": "chars/TV_COMMENTATOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_COOKIE_MONSTER": {
+   "file": "chars/TV_COOKIE_MONSTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_CO_COMMENTATOR": {
+   "file": "chars/TV_CO_COMMENTATOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_CO_HOST": {
+   "file": "chars/TV_CO_HOST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DANCER1": {
+   "file": "chars/TV_DANCER1.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DANCER2": {
+   "file": "chars/TV_DANCER2.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DAVE": {
+   "file": "chars/TV_DAVE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DAVID_DICKINSON": {
+   "file": "chars/TV_DAVID_DICKINSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DONALD_TRUMP": {
+   "file": "chars/TV_DONALD_TRUMP.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_DR_JAMESON": {
+   "file": "chars/TV_DR_JAMESON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_ESTATE_SPOKESPERSON": {
+   "file": "chars/TV_ESTATE_SPOKESPERSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_EXECUTIVE": {
+   "file": "chars/TV_EXECUTIVE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_FLAT_TYRE_FROLLICK": {
+   "file": "chars/TV_FLAT_TYRE_FROLLICK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_FOSTER": {
+   "file": "chars/TV_FOSTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_GOKU": {
+   "file": "chars/TV_GOKU.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_GROZZ": {
+   "file": "chars/TV_GROZZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_HOST": {
+   "file": "chars/TV_HOST.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JENNY_CUMMING": {
+   "file": "chars/TV_JENNY_CUMMING.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JEREMY_CORBYN": {
+   "file": "chars/TV_JEREMY_CORBYN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JEZ": {
+   "file": "chars/TV_JEZ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JOE": {
+   "file": "chars/TV_JOE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JOE_BIDEN": {
+   "file": "chars/TV_JOE_BIDEN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JOHN": {
+   "file": "chars/TV_JOHN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JUDGE_KRELMOR": {
+   "file": "chars/TV_JUDGE_KRELMOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_JUROR_NUMBER_2": {
+   "file": "chars/TV_JUROR_NUMBER_2.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_KEIR_STARMER": {
+   "file": "chars/TV_KEIR_STARMER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_KRELBERT": {
+   "file": "chars/TV_KRELBERT.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_MADISON": {
+   "file": "chars/TV_MADISON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_MARC": {
+   "file": "chars/TV_MARC.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_MARGE_PLUNKETT": {
+   "file": "chars/TV_MARGE_PLUNKETT.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_MARY": {
+   "file": "chars/TV_MARY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_MINTY": {
+   "file": "chars/TV_MINTY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_NEWSREADER": {
+   "file": "chars/TV_NEWSREADER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_OFFICER": {
+   "file": "chars/TV_OFFICER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_OFFICIAL": {
+   "file": "chars/TV_OFFICIAL.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PEGGY": {
+   "file": "chars/TV_PEGGY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PHEZON": {
+   "file": "chars/TV_PHEZON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PHIL": {
+   "file": "chars/TV_PHIL.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PRESIDENT_HAN": {
+   "file": "chars/TV_PRESIDENT_HAN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PRIME_MINISTER": {
+   "file": "chars/TV_PRIME_MINISTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PROFESSOR_GUTTRIDGE": {
+   "file": "chars/TV_PROFESSOR_GUTTRIDGE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_PROSECUTOR": {
+   "file": "chars/TV_PROSECUTOR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_REPORTER": {
+   "file": "chars/TV_REPORTER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_RISHI_SUNAK": {
+   "file": "chars/TV_RISHI_SUNAK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_RONSON": {
+   "file": "chars/TV_RONSON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SCRIMBLE": {
+   "file": "chars/TV_SCRIMBLE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SHEZLEIGH": {
+   "file": "chars/TV_SHEZLEIGH.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SIMON": {
+   "file": "chars/TV_SIMON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SINGER": {
+   "file": "chars/TV_SINGER.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SQUID": {
+   "file": "chars/TV_SQUID.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SUE": {
+   "file": "chars/TV_SUE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_SUSAN_NIPWOOD": {
+   "file": "chars/TV_SUSAN_NIPWOOD.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_VICAR": {
+   "file": "chars/TV_VICAR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_VJ": {
+   "file": "chars/TV_VJ.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_TV_WOMAN": {
+   "file": "chars/TV_WOMAN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  }
+ },
+ "images": {
+  "bld_ABANDONED": {
+   "file": "buildings/ABANDONED.png"
+  },
+  "bld_ARCHIVE": {
+   "file": "buildings/ARCHIVE.png"
+  },
+  "bld_BANK": {
+   "file": "buildings/BANK.png"
+  },
+  "bld_BAN_TRIBUNAL": {
+   "file": "buildings/BAN_TRIBUNAL.png"
+  },
+  "bld_BOGGOR": {
+   "file": "buildings/BOGGOR.png"
+  },
+  "bld_BONKY_TEMPLE": {
+   "file": "buildings/BONKY_TEMPLE.png"
+  },
+  "bld_BOOTH": {
+   "file": "buildings/BOOTH.png"
+  },
+  "bld_CITADEL": {
+   "file": "buildings/CITADEL.png"
+  },
+  "bld_FIXER_UPPER": {
+   "file": "buildings/FIXER_UPPER.png"
+  },
+  "bld_GYM": {
+   "file": "buildings/GYM.png"
+  },
+  "bld_HOME": {
+   "file": "buildings/HOME.png"
+  },
+  "bld_MINISTRY": {
+   "file": "buildings/MINISTRY.png"
+  },
+  "bld_OLD_FLAT": {
+   "file": "buildings/OLD_FLAT.png"
+  },
+  "bld_POLICE": {
+   "file": "buildings/POLICE.png"
+  },
+  "bld_PUB": {
+   "file": "buildings/PUB.png"
+  },
+  "bld_STRIP_CLUB": {
+   "file": "buildings/STRIP_CLUB.png"
+  },
+  "bld_TOWN_HALL": {
+   "file": "buildings/TOWN_HALL.png"
+  },
+  "bld_UNIVERSITY": {
+   "file": "buildings/UNIVERSITY.png"
+  },
+  "bld_WILDERN": {
+   "file": "buildings/WILDERN.png"
+  },
+  "bg_abandoned": {
+   "file": "backdrops/bg_abandoned.png"
+  },
+  "bg_archive": {
+   "file": "backdrops/bg_archive.png"
+  },
+  "bg_booth": {
+   "file": "backdrops/bg_booth.png"
+  },
+  "bg_charselect": {
+   "file": "backdrops/bg_charselect.png"
+  },
+  "bg_citadel": {
+   "file": "backdrops/bg_citadel.png"
+  },
+  "bg_city": {
+   "file": "backdrops/bg_city.png"
+  },
+  "bg_club": {
+   "file": "backdrops/bg_club.png"
+  },
+  "bg_ending": {
+   "file": "backdrops/bg_ending.png"
+  },
+  "bg_exile": {
+   "file": "backdrops/bg_exile.png"
+  },
+  "bg_fgm": {
+   "file": "backdrops/bg_fgm.png"
+  },
+  "bg_fixer": {
+   "file": "backdrops/bg_fixer.png"
+  },
+  "bg_flat": {
+   "file": "backdrops/bg_flat.png"
+  },
+  "bg_gig": {
+   "file": "backdrops/bg_gig.png"
+  },
+  "bg_gym": {
+   "file": "backdrops/bg_gym.png"
+  },
+  "bg_press": {
+   "file": "backdrops/bg_press.png"
+  },
+  "bg_pub": {
+   "file": "backdrops/bg_pub.png"
+  },
+  "bg_restaurant": {
+   "file": "backdrops/bg_restaurant.png"
+  },
+  "bg_runescape": {
+   "file": "backdrops/bg_runescape.png"
+  },
+  "bg_title": {
+   "file": "backdrops/bg_title.png"
+  },
+  "bg_townhall": {
+   "file": "backdrops/bg_townhall.png"
+  },
+  "bg_wahooga": {
+   "file": "backdrops/bg_wahooga.png"
+  },
+  "hd_bassist": {
+   "file": "props/d_bassist.png"
+  },
+  "d_bassist": {
+   "file": "props/d_bassist.png"
+  },
+  "hd_billboard": {
+   "file": "props/d_billboard.png"
+  },
+  "d_billboard": {
+   "file": "props/d_billboard.png"
+  },
+  "hd_bra": {
+   "file": "props/d_bra.png"
+  },
+  "d_bra": {
+   "file": "props/d_bra.png"
+  },
+  "hd_busstop": {
+   "file": "props/d_busstop.png"
+  },
+  "d_busstop": {
+   "file": "props/d_busstop.png"
+  },
+  "hd_camera": {
+   "file": "props/d_camera.png"
+  },
+  "d_camera": {
+   "file": "props/d_camera.png"
+  },
+  "hd_candy": {
+   "file": "props/d_candy.png"
+  },
+  "d_candy": {
+   "file": "props/d_candy.png"
+  },
+  "hd_car": {
+   "file": "props/d_car.png"
+  },
+  "d_car": {
+   "file": "props/d_car.png"
+  },
+  "hd_climber": {
+   "file": "props/d_climber.png"
+  },
+  "d_climber": {
+   "file": "props/d_climber.png"
+  },
+  "hd_crates": {
+   "file": "props/d_crates.png"
+  },
+  "d_crates": {
+   "file": "props/d_crates.png"
+  },
+  "hd_drummer": {
+   "file": "props/d_drummer.png"
+  },
+  "d_drummer": {
+   "file": "props/d_drummer.png"
+  },
+  "hd_fence": {
+   "file": "props/d_fence.png"
+  },
+  "d_fence": {
+   "file": "props/d_fence.png"
+  },
+  "hd_flowerbed": {
+   "file": "props/d_flowerbed.png"
+  },
+  "d_flowerbed": {
+   "file": "props/d_flowerbed.png"
+  },
+  "hd_foodtruck": {
+   "file": "props/d_foodtruck.png"
+  },
+  "d_foodtruck": {
+   "file": "props/d_foodtruck.png"
+  },
+  "hd_fountain": {
+   "file": "props/d_fountain.png"
+  },
+  "d_fountain": {
+   "file": "props/d_fountain.png"
+  },
+  "hd_hedge": {
+   "file": "props/d_hedge.png"
+  },
+  "d_hedge": {
+   "file": "props/d_hedge.png"
+  },
+  "hd_neonsign": {
+   "file": "props/d_neonsign.png"
+  },
+  "d_neonsign": {
+   "file": "props/d_neonsign.png"
+  },
+  "hd_newsstand": {
+   "file": "props/d_newsstand.png"
+  },
+  "d_newsstand": {
+   "file": "props/d_newsstand.png"
+  },
+  "hd_phonebooth": {
+   "file": "props/d_phonebooth.png"
+  },
+  "d_phonebooth": {
+   "file": "props/d_phonebooth.png"
+  },
+  "hd_picnic": {
+   "file": "props/d_picnic.png"
+  },
+  "d_picnic": {
+   "file": "props/d_picnic.png"
+  },
+  "hd_portal": {
+   "file": "props/d_portal.png"
+  },
+  "d_portal": {
+   "file": "props/d_portal.png"
+  },
+  "hd_pot": {
+   "file": "props/d_pot.png"
+  },
+  "d_pot": {
+   "file": "props/d_pot.png"
+  },
+  "hd_roundabout": {
+   "file": "props/d_roundabout.png"
+  },
+  "d_roundabout": {
+   "file": "props/d_roundabout.png"
+  },
+  "hd_sandpit": {
+   "file": "props/d_sandpit.png"
+  },
+  "d_sandpit": {
+   "file": "props/d_sandpit.png"
+  },
+  "hd_scooter": {
+   "file": "props/d_scooter.png"
+  },
+  "d_scooter": {
+   "file": "props/d_scooter.png"
+  },
+  "hd_seesaw": {
+   "file": "props/d_seesaw.png"
+  },
+  "d_seesaw": {
+   "file": "props/d_seesaw.png"
+  },
+  "hd_slide": {
+   "file": "props/d_slide.png"
+  },
+  "d_slide": {
+   "file": "props/d_slide.png"
+  },
+  "hd_stall": {
+   "file": "props/d_stall.png"
+  },
+  "d_stall": {
+   "file": "props/d_stall.png"
+  },
+  "hd_statue": {
+   "file": "props/d_statue.png"
+  },
+  "d_statue": {
+   "file": "props/d_statue.png"
+  },
+  "hd_swings": {
+   "file": "props/d_swings.png"
+  },
+  "d_swings": {
+   "file": "props/d_swings.png"
+  },
+  "hd_thong": {
+   "file": "props/d_thong.png"
+  },
+  "d_thong": {
+   "file": "props/d_thong.png"
+  },
+  "hd_vendingbike": {
+   "file": "props/d_vendingbike.png"
+  },
+  "d_vendingbike": {
+   "file": "props/d_vendingbike.png"
+  },
+  "hd_c_industrial_0": {
+   "file": "props/dec_industrial_0.png"
+  },
+  "dec_industrial_0": {
+   "file": "props/dec_industrial_0.png"
+  },
+  "hd_c_industrial_1": {
+   "file": "props/dec_industrial_1.png"
+  },
+  "dec_industrial_1": {
+   "file": "props/dec_industrial_1.png"
+  },
+  "hd_c_mansion_0": {
+   "file": "props/dec_mansion_0.png"
+  },
+  "dec_mansion_0": {
+   "file": "props/dec_mansion_0.png"
+  },
+  "hd_c_mansion_1": {
+   "file": "props/dec_mansion_1.png"
+  },
+  "dec_mansion_1": {
+   "file": "props/dec_mansion_1.png"
+  },
+  "hd_c_mansion_2": {
+   "file": "props/dec_mansion_2.png"
+  },
+  "dec_mansion_2": {
+   "file": "props/dec_mansion_2.png"
+  },
+  "hd_c_network_0": {
+   "file": "props/dec_network_0.png"
+  },
+  "dec_network_0": {
+   "file": "props/dec_network_0.png"
+  },
+  "hd_c_network_1": {
+   "file": "props/dec_network_1.png"
+  },
+  "dec_network_1": {
+   "file": "props/dec_network_1.png"
+  },
+  "hd_c_prison_0": {
+   "file": "props/dec_prison_0.png"
+  },
+  "dec_prison_0": {
+   "file": "props/dec_prison_0.png"
+  },
+  "hd_c_prison_1": {
+   "file": "props/dec_prison_1.png"
+  },
+  "dec_prison_1": {
+   "file": "props/dec_prison_1.png"
+  },
+  "hd_c_school_0": {
+   "file": "props/dec_school_0.png"
+  },
+  "dec_school_0": {
+   "file": "props/dec_school_0.png"
+  },
+  "hd_c_school_1": {
+   "file": "props/dec_school_1.png"
+  },
+  "dec_school_1": {
+   "file": "props/dec_school_1.png"
+  },
+  "hd_c_school_2": {
+   "file": "props/dec_school_2.png"
+  },
+  "dec_school_2": {
+   "file": "props/dec_school_2.png"
+  },
+  "hd_c_temple_0": {
+   "file": "props/dec_temple_0.png"
+  },
+  "dec_temple_0": {
+   "file": "props/dec_temple_0.png"
+  },
+  "hd_c_temple_1": {
+   "file": "props/dec_temple_1.png"
+  },
+  "dec_temple_1": {
+   "file": "props/dec_temple_1.png"
+  },
+  "hd_c_wiki_0": {
+   "file": "props/dec_wiki_0.png"
+  },
+  "dec_wiki_0": {
+   "file": "props/dec_wiki_0.png"
+  },
+  "hd_c_wiki_1": {
+   "file": "props/dec_wiki_1.png"
+  },
+  "dec_wiki_1": {
+   "file": "props/dec_wiki_1.png"
+  },
+  "hd__bullet": {
+   "file": "props/fx_bullet.png"
+  },
+  "fx_bullet": {
+   "file": "props/fx_bullet.png",
+   "hd": 0.8
+  },
+  "hd__fairy": {
+   "file": "props/fx_fairy.png"
+  },
+  "fx_fairy": {
+   "file": "props/fx_fairy.png"
+  },
+  "hd__flask": {
+   "file": "props/fx_flask.png"
+  },
+  "fx_flask": {
+   "file": "props/fx_flask.png",
+   "hd": 1.0
+  },
+  "hd__gas": {
+   "file": "props/fx_gas.png"
+  },
+  "fx_gas": {
+   "file": "props/fx_gas.png"
+  },
+  "hd__gas2": {
+   "file": "props/fx_gas2.png"
+  },
+  "fx_gas2": {
+   "file": "props/fx_gas2.png"
+  },
+  "hd__paper": {
+   "file": "props/fx_paper.png"
+  },
+  "fx_paper": {
+   "file": "props/fx_paper.png",
+   "hd": 0.6667
+  },
+  "hd__poo": {
+   "file": "props/fx_poo.png"
+  },
+  "fx_poo": {
+   "file": "props/fx_poo.png"
+  },
+  "hd__poo_drop": {
+   "file": "props/fx_poo_drop.png"
+  },
+  "fx_poo_drop": {
+   "file": "props/fx_poo_drop.png"
+  },
+  "hd__rocket": {
+   "file": "props/fx_rocket.png"
+  },
+  "fx_rocket": {
+   "file": "props/fx_rocket.png"
+  },
+  "hd__splat_white": {
+   "file": "props/fx_splat_white.png"
+  },
+  "fx_splat_white": {
+   "file": "props/fx_splat_white.png"
+  },
+  "hd__turret": {
+   "file": "props/fx_turret.png"
+  },
+  "fx_turret": {
+   "file": "props/fx_turret.png",
+   "hd": 0.6207
+  },
+  "hd_n_archive": {
+   "file": "props/gen_archive.png"
+  },
+  "gen_archive": {
+   "file": "props/gen_archive.png"
+  },
+  "hd_n_boss": {
+   "file": "props/gen_boss.png"
+  },
+  "gen_boss": {
+   "file": "props/gen_boss.png"
+  },
+  "hd_n_fridge": {
+   "file": "props/gen_fridge.png"
+  },
+  "gen_fridge": {
+   "file": "props/gen_fridge.png"
+  },
+  "hd_n_tap": {
+   "file": "props/gen_tap.png"
+  },
+  "gen_tap": {
+   "file": "props/gen_tap.png"
+  },
+  "hd_ammo": {
+   "file": "props/p_ammo.png"
+  },
+  "p_ammo": {
+   "file": "props/p_ammo.png"
+  },
+  "hd_anvil": {
+   "file": "props/p_anvil.png"
+  },
+  "p_anvil": {
+   "file": "props/p_anvil.png"
+  },
+  "hd_barbell": {
+   "file": "props/p_barbell.png"
+  },
+  "p_barbell": {
+   "file": "props/p_barbell.png",
+   "hd": 0.5128
+  },
+  "hd_bed": {
+   "file": "props/p_bed.png"
+  },
+  "p_bed": {
+   "file": "props/p_bed.png",
+   "hd": 0.6038
+  },
+  "hd_bench": {
+   "file": "props/p_bench.png"
+  },
+  "p_bench": {
+   "file": "props/p_bench.png"
+  },
+  "hd_bertha": {
+   "file": "props/p_bertha.png"
+  },
+  "p_bertha": {
+   "file": "props/p_bertha.png",
+   "hd": 0.5763
+  },
+  "hd_bin": {
+   "file": "props/p_bin.png"
+  },
+  "p_bin": {
+   "file": "props/p_bin.png",
+   "hd": 0.5
+  },
+  "hd_board": {
+   "file": "props/p_board.png"
+  },
+  "p_board": {
+   "file": "props/p_board.png",
+   "hd": 0.8372
+  },
+  "hd_bongo": {
+   "file": "props/p_bongo.png"
+  },
+  "p_bongo": {
+   "file": "props/p_bongo.png",
+   "hd": 0.7273
+  },
+  "hd_bottle": {
+   "file": "props/p_bottle.png"
+  },
+  "p_bottle": {
+   "file": "props/p_bottle.png",
+   "hd": 0.6667
+  },
+  "hd_carpet_roll": {
+   "file": "props/p_carpet_roll.png"
+  },
+  "p_carpet_roll": {
+   "file": "props/p_carpet_roll.png"
+  },
+  "hd_coin": {
+   "file": "props/p_coin.png"
+  },
+  "p_coin": {
+   "file": "props/p_coin.png",
+   "hd": 0.5714
+  },
+  "hd_crobley": {
+   "file": "props/p_crobley.png"
+  },
+  "p_crobley": {
+   "file": "props/p_crobley.png",
+   "hd": 0.7143
+  },
+  "hd_food": {
+   "file": "props/p_food.png"
+  },
+  "p_food": {
+   "file": "props/p_food.png",
+   "hd": 0.5882
+  },
+  "hd_fridge": {
+   "file": "props/p_fridge.png"
+  },
+  "p_fridge": {
+   "file": "props/p_fridge.png",
+   "hd": 0.5946
+  },
+  "hd_gate": {
+   "file": "props/p_gate.png"
+  },
+  "p_gate": {
+   "file": "props/p_gate.png"
+  },
+  "hd_gun_crate": {
+   "file": "props/p_gun_crate.png"
+  },
+  "p_gun_crate": {
+   "file": "props/p_gun_crate.png"
+  },
+  "hd_kreltower": {
+   "file": "props/p_kreltower.png"
+  },
+  "p_kreltower": {
+   "file": "props/p_kreltower.png",
+   "hd": 0.6452
+  },
+  "hd_krezz": {
+   "file": "props/p_krezz.png"
+  },
+  "p_krezz": {
+   "file": "props/p_krezz.png",
+   "hd": 0.6667
+  },
+  "hd_lamp": {
+   "file": "props/p_lamp.png"
+  },
+  "p_lamp": {
+   "file": "props/p_lamp.png"
+  },
+  "hd_meeting_table": {
+   "file": "props/p_meeting_table.png"
+  },
+  "p_meeting_table": {
+   "file": "props/p_meeting_table.png"
+  },
+  "hd_phone": {
+   "file": "props/p_phone.png"
+  },
+  "p_phone": {
+   "file": "props/p_phone.png",
+   "hd": 0.7143
+  },
+  "hd_piano": {
+   "file": "props/p_piano.png"
+  },
+  "p_piano": {
+   "file": "props/p_piano.png"
+  },
+  "hd_pigeon": {
+   "file": "props/p_pigeon.png"
+  },
+  "p_pigeon": {
+   "file": "props/p_pigeon.png",
+   "hd": 0.6667
+  },
+  "hd_plane": {
+   "file": "props/p_plane.png"
+  },
+  "p_plane": {
+   "file": "props/p_plane.png",
+   "hd": 0.5
+  },
+  "hd_puddle": {
+   "file": "props/p_puddle.png"
+  },
+  "p_puddle": {
+   "file": "props/p_puddle.png",
+   "hd": 0.5357
+  },
+  "hd_rubble": {
+   "file": "props/p_rubble.png"
+  },
+  "p_rubble": {
+   "file": "props/p_rubble.png",
+   "hd": 1.0811
+  },
+  "hd_scroll": {
+   "file": "props/p_scroll.png"
+  },
+  "p_scroll": {
+   "file": "props/p_scroll.png",
+   "hd": 0.7
+  },
+  "hd_sign": {
+   "file": "props/p_sign.png"
+  },
+  "p_sign": {
+   "file": "props/p_sign.png",
+   "hd": 0.5
+  },
+  "hd_sofa": {
+   "file": "props/p_sofa.png"
+  },
+  "p_sofa": {
+   "file": "props/p_sofa.png"
+  },
+  "hd_table": {
+   "file": "props/p_table.png"
+  },
+  "p_table": {
+   "file": "props/p_table.png",
+   "hd": 0.7385
+  },
+  "hd_tap": {
+   "file": "props/p_tap.png"
+  },
+  "p_tap": {
+   "file": "props/p_tap.png",
+   "hd": 0.5517
+  },
+  "hd_terminal": {
+   "file": "props/p_terminal.png"
+  },
+  "p_terminal": {
+   "file": "props/p_terminal.png",
+   "hd": 0.5091
+  },
+  "hd_token": {
+   "file": "props/p_token.png"
+  },
+  "p_token": {
+   "file": "props/p_token.png",
+   "hd": 0.7778
+  },
+  "hd_treadmill": {
+   "file": "props/p_treadmill.png"
+  },
+  "p_treadmill": {
+   "file": "props/p_treadmill.png"
+  },
+  "hd_tree": {
+   "file": "props/p_tree.png"
+  },
+  "p_tree": {
+   "file": "props/p_tree.png",
+   "hd": 0.8136
+  },
+  "hd_tree2": {
+   "file": "props/p_tree2.png"
+  },
+  "p_tree2": {
+   "file": "props/p_tree2.png"
+  },
+  "hd_tv": {
+   "file": "props/p_tv.png"
+  },
+  "p_tv": {
+   "file": "props/p_tv.png",
+   "hd": 0.2821
+  },
+  "hd_valve": {
+   "file": "props/p_valve.png"
+  },
+  "p_valve": {
+   "file": "props/p_valve.png",
+   "hd": 0.625
+  },
+  "hd_valve_open": {
+   "file": "props/p_valve_open.png"
+  },
+  "p_valve_open": {
+   "file": "props/p_valve_open.png",
+   "hd": 0.5263
+  },
+  "hd_vending": {
+   "file": "props/p_vending.png"
+  },
+  "p_vending": {
+   "file": "props/p_vending.png",
+   "hd": 0.4762
+  },
+  "hd_wonking": {
+   "file": "props/p_wonking.png"
+  },
+  "p_wonking": {
+   "file": "props/p_wonking.png",
+   "hd": 0.5479
+  },
+  "hd_wpn_pistol": {
+   "file": "props/p_wpn_pistol.png"
+  },
+  "p_wpn_pistol": {
+   "file": "props/p_wpn_pistol.png"
+  },
+  "hd_wpn_rail": {
+   "file": "props/p_wpn_rail.png"
+  },
+  "p_wpn_rail": {
+   "file": "props/p_wpn_rail.png"
+  },
+  "hd_wpn_rocket": {
+   "file": "props/p_wpn_rocket.png"
+  },
+  "p_wpn_rocket": {
+   "file": "props/p_wpn_rocket.png"
+  },
+  "hd_wpn_shotgun": {
+   "file": "props/p_wpn_shotgun.png"
+  },
+  "p_wpn_shotgun": {
+   "file": "props/p_wpn_shotgun.png"
+  },
+  "hd_wpn_smg": {
+   "file": "props/p_wpn_smg.png"
+  },
+  "p_wpn_smg": {
+   "file": "props/p_wpn_smg.png"
+  },
+  "hd_llar_industrial": {
+   "file": "props/pillar_industrial.png"
+  },
+  "pillar_industrial": {
+   "file": "props/pillar_industrial.png"
+  },
+  "hd_llar_mansion": {
+   "file": "props/pillar_mansion.png"
+  },
+  "pillar_mansion": {
+   "file": "props/pillar_mansion.png"
+  },
+  "hd_llar_network": {
+   "file": "props/pillar_network.png"
+  },
+  "pillar_network": {
+   "file": "props/pillar_network.png"
+  },
+  "hd_llar_prison": {
+   "file": "props/pillar_prison.png"
+  },
+  "pillar_prison": {
+   "file": "props/pillar_prison.png"
+  },
+  "hd_llar_school": {
+   "file": "props/pillar_school.png"
+  },
+  "pillar_school": {
+   "file": "props/pillar_school.png"
+  },
+  "hd_llar_temple": {
+   "file": "props/pillar_temple.png"
+  },
+  "pillar_temple": {
+   "file": "props/pillar_temple.png"
+  },
+  "hd_llar_wiki": {
+   "file": "props/pillar_wiki.png"
+  },
+  "pillar_wiki": {
+   "file": "props/pillar_wiki.png"
+  },
+  "hd_carpet": {
+   "file": "props/r_carpet.png"
+  },
+  "r_carpet": {
+   "file": "props/r_carpet.png"
+  },
+  "hd_cheese": {
+   "file": "props/r_cheese.png"
+  },
+  "r_cheese": {
+   "file": "props/r_cheese.png"
+  },
+  "hd_crack": {
+   "file": "props/r_crack.png"
+  },
+  "r_crack": {
+   "file": "props/r_crack.png"
+  },
+  "hd_damp": {
+   "file": "props/r_damp.png"
+  },
+  "r_damp": {
+   "file": "props/r_damp.png"
+  },
+  "hd_hole": {
+   "file": "props/r_hole.png"
+  },
+  "r_hole": {
+   "file": "props/r_hole.png"
+  },
+  "hd_mould": {
+   "file": "props/r_mould.png"
+  },
+  "r_mould": {
+   "file": "props/r_mould.png"
+  },
+  "hd_wiring": {
+   "file": "props/r_wiring.png"
+  },
+  "r_wiring": {
+   "file": "props/r_wiring.png"
+  },
+  "tile_rubber": {
+   "file": "tiles/tile_rubber.png"
+  },
+  "tv_antarctica": {
+   "file": "backdrops/tv_antarctica.png"
+  },
+  "tv_archive": {
+   "file": "backdrops/tv_archive.png"
+  },
+  "tv_boardroom": {
+   "file": "backdrops/tv_boardroom.png"
+  },
+  "tv_bunker": {
+   "file": "backdrops/tv_bunker.png"
+  },
+  "tv_cave": {
+   "file": "backdrops/tv_cave.png"
+  },
+  "tv_cell": {
+   "file": "backdrops/tv_cell.png"
+  },
+  "tv_cellar": {
+   "file": "backdrops/tv_cellar.png"
+  },
+  "tv_church": {
+   "file": "backdrops/tv_church.png"
+  },
+  "tv_cockpit": {
+   "file": "backdrops/tv_cockpit.png"
+  },
+  "tv_conference_hall": {
+   "file": "backdrops/tv_conference_hall.png"
+  },
+  "tv_courtroom": {
+   "file": "backdrops/tv_courtroom.png"
+  },
+  "tv_debate_stage": {
+   "file": "backdrops/tv_debate_stage.png"
+  },
+  "tv_default": {
+   "file": "backdrops/tv_default.png"
+  },
+  "tv_downing_st": {
+   "file": "backdrops/tv_downing_st.png"
+  },
+  "tv_emergency": {
+   "file": "backdrops/tv_emergency.png"
+  },
+  "tv_forest": {
+   "file": "backdrops/tv_forest.png"
+  },
+  "tv_ice_cream": {
+   "file": "backdrops/tv_ice_cream.png"
+  },
+  "tv_kids_studio": {
+   "file": "backdrops/tv_kids_studio.png"
+  },
+  "tv_livingroom": {
+   "file": "backdrops/tv_livingroom.png"
+  },
+  "tv_newsdesk": {
+   "file": "backdrops/tv_newsdesk.png"
+  },
+  "tv_nyc_skyline": {
+   "file": "backdrops/tv_nyc_skyline.png"
+  },
+  "tv_office_night": {
+   "file": "backdrops/tv_office_night.png"
+  },
+  "tv_oval_office": {
+   "file": "backdrops/tv_oval_office.png"
+  },
+  "tv_pitch": {
+   "file": "backdrops/tv_pitch.png"
+  },
+  "tv_polling": {
+   "file": "backdrops/tv_polling.png"
+  },
+  "tv_polson_ext": {
+   "file": "backdrops/tv_polson_ext.png"
+  },
+  "tv_press": {
+   "file": "backdrops/tv_press.png"
+  },
+  "tv_pubbar": {
+   "file": "backdrops/tv_pubbar.png"
+  },
+  "tv_shopping": {
+   "file": "backdrops/tv_shopping.png"
+  },
+  "tv_smash": {
+   "file": "backdrops/tv_smash.png"
+  },
+  "tv_stadium": {
+   "file": "backdrops/tv_stadium.png"
+  },
+  "tv_street_day": {
+   "file": "backdrops/tv_street_day.png"
+  },
+  "tv_supermarket": {
+   "file": "backdrops/tv_supermarket.png"
+  },
+  "tv_townhall_cam": {
+   "file": "backdrops/tv_townhall_cam.png"
+  },
+  "hd_ll_industrial": {
+   "file": "props/wall_industrial.png"
+  },
+  "wall_industrial": {
+   "file": "props/wall_industrial.png"
+  },
+  "hd_ll_mansion": {
+   "file": "props/wall_mansion.png"
+  },
+  "wall_mansion": {
+   "file": "props/wall_mansion.png"
+  },
+  "hd_ll_network": {
+   "file": "props/wall_network.png"
+  },
+  "wall_network": {
+   "file": "props/wall_network.png"
+  },
+  "hd_ll_prison": {
+   "file": "props/wall_prison.png"
+  },
+  "wall_prison": {
+   "file": "props/wall_prison.png"
+  },
+  "hd_ll_school": {
+   "file": "props/wall_school.png"
+  },
+  "wall_school": {
+   "file": "props/wall_school.png"
+  },
+  "hd_ll_temple": {
+   "file": "props/wall_temple.png"
+  },
+  "wall_temple": {
+   "file": "props/wall_temple.png"
+  },
+  "hd_ll_wiki": {
+   "file": "props/wall_wiki.png"
+  },
+  "wall_wiki": {
+   "file": "props/wall_wiki.png"
+  },
+  "tile_school": {
+   "file": "tiles/tile_school.png"
+  },
+  "tile_mansion": {
+   "file": "tiles/tile_mansion.png"
+  },
+  "tile_network": {
+   "file": "tiles/tile_network.png"
+  },
+  "tile_industrial": {
+   "file": "tiles/tile_industrial.png"
+  },
+  "tile_temple": {
+   "file": "tiles/tile_temple.png"
+  },
+  "tile_prison": {
+   "file": "tiles/tile_prison.png"
+  },
+  "tile_wiki": {
+   "file": "tiles/tile_wiki.png"
+  },
+  "tile_hall": {
+   "file": "tiles/tile_hall.png"
+  },
+  "tile_pub": {
+   "file": "tiles/tile_pub.png"
+  },
+  "tile_cobble": {
+   "file": "tiles/tile_cobble.png"
+  },
+  "tile_sea": {
+   "file": "tiles/tile_sea.png"
+  },
+  "tile_pier": {
+   "file": "tiles/tile_pier.png"
+  },
+  "tile_meadow": {
+   "file": "tiles/tile_meadow.png"
+  },
+  "tile_grass": {
+   "file": "tiles/tile_grass.png"
+  },
+  "tile_road": {
+   "file": "tiles/tile_road.png"
+  },
+  "p_croc": {
+   "file": "props/p_croc.png"
+  },
+  "p_tank": {
+   "file": "props/p_tank.png"
+  },
+  "p_gabor": {
+   "file": "props/p_gabor.png"
+  },
+  "p_genie": {
+   "file": "props/p_genie.png"
+  },
+  "p_hottub": {
+   "file": "props/p_hottub.png"
+  },
+  "p_begour": {
+   "file": "props/p_begour.png"
+  },
+  "sm_hangout": {
+   "file": "backdrops/sm_hangout.png"
+  },
+  "sm_street": {
+   "file": "backdrops/sm_street.png"
+  },
+  "sm_jobcentre": {
+   "file": "backdrops/sm_jobcentre.png"
+  },
+  "sm_rooftop": {
+   "file": "backdrops/sm_rooftop.png"
+  },
+  "p_truck": {
+   "file": "props/p_truck.png"
+  },
+  "p_copcar": {
+   "file": "props/p_copcar.png"
+  },
+  "p_swatvan": {
+   "file": "props/p_swatvan.png"
+  },
+  "p_heli": {
+   "file": "props/p_heli.png"
+  },
+  "p_jam": {
+   "file": "props/p_jam.png"
+  },
+  "p_rik": {
+   "file": "props/p_rik.png"
+  },
+  "sm_road": {
+   "file": "backdrops/sm_road.png"
+  },
+  "sm_bigtub": {
+   "file": "backdrops/sm_bigtub.png"
+  },
+  "p_reinhardt": {
+   "file": "props/p_reinhardt.png"
+  },
+  "p_tankc": {
+   "file": "props/p_tankc.png"
+  },
+  "p_flirt": {
+   "file": "props/p_flirt.png"
+  },
+  "p_lantern": {
+   "file": "props/p_lantern.png"
+  },
+  "p_fruity": {
+   "file": "props/p_fruity.png"
+  },
+  "p_sausage_s": {
+   "file": "props/p_sausage_s.png"
+  },
+  "p_sausage_m": {
+   "file": "props/p_sausage_m.png"
+  },
+  "p_fueltank": {
+   "file": "props/p_fueltank.png"
+  },
+  "p_boy": {
+   "file": "props/p_boy.png"
+  },
+  "p_dad": {
+   "file": "props/p_dad.png"
+  },
+  "p_grandad": {
+   "file": "props/p_grandad.png"
+  },
+  "p_kidcandy": {
+   "file": "props/p_kidcandy.png"
+  },
+  "p_mgun": {
+   "file": "props/p_mgun.png"
+  },
+  "cf_floor": {
+   "file": "backdrops/cf_floor.png"
+  },
+  "cf_flirt": {
+   "file": "backdrops/cf_flirt.png"
+  },
+  "cf_chinese": {
+   "file": "backdrops/cf_chinese.png"
+  },
+  "cf_men": {
+   "file": "backdrops/cf_men.png"
+  },
+  "cf_destruction": {
+   "file": "backdrops/cf_destruction.png"
+  },
+  "cf_core": {
+   "file": "backdrops/cf_core.png"
+  },
+  "cr_park": {
+   "file": "backdrops/cr_park.png"
+  },
+  "cr_factory_ext": {
+   "file": "backdrops/cr_factory_ext.png"
+  },
+  "cr_crater": {
+   "file": "backdrops/cr_crater.png"
+  },
+  "cf_packing": {
+   "file": "backdrops/cf_packing.png"
+  },
+  "cf_sausage": {
+   "file": "backdrops/cf_sausage.png"
+  },
+  "nu_warehouse": {
+   "file": "backdrops/nu_warehouse.png"
+  },
+  "nu_reef": {
+   "file": "backdrops/nu_reef.png"
+  },
+  "p_dash": {
+   "file": "props/p_dash.png"
+  },
+  "p_camgirl": {
+   "file": "props/p_camgirl.png"
+  },
+  "cam_her": {
+   "file": "backdrops/cam_her.png"
+  },
+  "cam_sanmik": {
+   "file": "backdrops/cam_sanmik.png"
+  },
+  "p_camgirl_bra": {
+   "file": "props/p_camgirl_bra.png"
+  },
+  "p_sm_shirtless": {
+   "file": "props/p_sm_shirtless.png"
+  },
+  "p_sm_boxers": {
+   "file": "props/p_sm_boxers.png"
+  }
+ },
+ "sheets": {
+  "boss_banhammer": {
+   "file": "combat/boss_banhammer.png",
+   "frameWidth": 160,
+   "frameHeight": 192,
+   "hd": 0.5
+  },
+  "boss_brand": {
+   "file": "combat/boss_brand.png",
+   "frameWidth": 80,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "boss_cronster": {
+   "file": "combat/boss_cronster.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
+  },
+  "boss_drongus": {
+   "file": "combat/boss_drongus.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "boss_feedback": {
+   "file": "combat/boss_feedback.png",
+   "frameWidth": 160,
+   "frameHeight": 128,
+   "hd": 0.5
+  },
+  "boss_flatmate": {
+   "file": "combat/boss_flatmate.png",
+   "frameWidth": 80,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "boss_hoard": {
+   "file": "combat/boss_hoard.png",
+   "frameWidth": 112,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "boss_krozno": {
+   "file": "combat/boss_krozno.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
+  },
+  "boss_lorelord": {
+   "file": "combat/boss_lorelord.png",
+   "frameWidth": 128,
+   "frameHeight": 160,
+   "hd": 0.4167
+  },
+  "boss_machine": {
+   "file": "combat/boss_machine.png",
+   "frameWidth": 192,
+   "frameHeight": 160,
+   "hd": 0.5
+  },
+  "boss_rival": {
+   "file": "combat/boss_rival.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "boss_salmon": {
+   "file": "combat/boss_salmon.png",
+   "frameWidth": 144,
+   "frameHeight": 96,
+   "hd": 0.5
+  },
+  "boss_spectre": {
+   "file": "combat/boss_spectre.png",
+   "frameWidth": 144,
+   "frameHeight": 160,
+   "hd": 0.5
+  },
+  "boss_troll": {
+   "file": "combat/boss_troll.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "en_ai_portrait": {
+   "file": "combat/en_ai_portrait.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_bandit": {
+   "file": "combat/en_bandit.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_bandit_gunner": {
+   "file": "combat/en_bandit_gunner.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_betrayer": {
+   "file": "combat/en_betrayer.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_blocked_brute": {
+   "file": "combat/en_blocked_brute.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_cheese_mite": {
+   "file": "combat/en_cheese_mite.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_citation": {
+   "file": "combat/en_citation.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_cultist": {
+   "file": "combat/en_cultist.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_decree_drone": {
+   "file": "combat/en_decree_drone.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_deleted_text": {
+   "file": "combat/en_deleted_text.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_dinner_lady": {
+   "file": "combat/en_dinner_lady.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_friend_crawler": {
+   "file": "combat/en_friend_crawler.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_guard_ghost": {
+   "file": "combat/en_guard_ghost.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_gym_bro": {
+   "file": "combat/en_gym_bro.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_hammerling": {
+   "file": "combat/en_hammerling.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_invoice": {
+   "file": "combat/en_invoice.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_krez_leak": {
+   "file": "combat/en_krez_leak.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_krezbian": {
+   "file": "combat/en_krezbian.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_mould": {
+   "file": "combat/en_mould.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_mould_pizza": {
+   "file": "combat/en_mould_pizza.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_pending_orb": {
+   "file": "combat/en_pending_orb.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_pipe_gremlin": {
+   "file": "combat/en_pipe_gremlin.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_plushie": {
+   "file": "combat/en_plushie.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_record": {
+   "file": "combat/en_record.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_roadie": {
+   "file": "combat/en_roadie.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_smolt": {
+   "file": "combat/en_smolt.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_soldier": {
+   "file": "combat/en_soldier.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_tray_turret": {
+   "file": "combat/en_tray_turret.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_trinket": {
+   "file": "combat/en_trinket.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_trolley": {
+   "file": "combat/en_trolley.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_unread": {
+   "file": "combat/en_unread.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_vending_mimic": {
+   "file": "combat/en_vending_mimic.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_wiki_fragment": {
+   "file": "combat/en_wiki_fragment.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_wisp": {
+   "file": "combat/en_wisp.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "boss_jam": {
+   "file": "combat/boss_jam.png",
+   "frameWidth": 124,
+   "frameHeight": 127,
+   "hd": 0.378
+  },
+  "boss_rik": {
+   "file": "combat/boss_rik.png",
+   "frameWidth": 119,
+   "frameHeight": 124,
+   "hd": 0.3871
+  },
+  "boss_reinhardt": {
+   "file": "combat/boss_reinhardt.png",
+   "frameWidth": 108,
+   "frameHeight": 128,
+   "hd": 0.375
+  },
+  "boss_tankc": {
+   "file": "combat/boss_tankc.png",
+   "frameWidth": 123,
+   "frameHeight": 105,
+   "hd": 0.4571
+  },
+  "boss_flirt": {
+   "file": "combat/boss_flirt.png",
+   "frameWidth": 126,
+   "frameHeight": 95,
+   "hd": 0.5053
+  },
+  "boss_lantern": {
+   "file": "combat/boss_lantern.png",
+   "frameWidth": 108,
+   "frameHeight": 103,
+   "hd": 0.466
+  },
+  "boss_fruity": {
+   "file": "combat/boss_fruity.png",
+   "frameWidth": 82,
+   "frameHeight": 121,
+   "hd": 0.3967
+  }
+ }
+}
