@@ -62,5 +62,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
   // Arena minions
   roadie: { id: "roadie", name: "Roadie", behavior: "chaser", hp: 40, speed: 115, damage: 10, size: 15, color: 0x1f2937, accent: 0xe5e7eb, shape: "humanoid", coins: 5, krezz: 4 },
   gym_bro: { id: "gym_bro", name: "Gym Bro", behavior: "charger", hp: 60, speed: 85, damage: 14, size: 18, color: 0xf97316, accent: 0x111827, shape: "brute", coins: 7, krezz: 5 },
+  // The SanMikverse (Catford, allegedly)
+  catford_fox: { id: "catford_fox", name: "Catford Fox", behavior: "swarm", hp: 18, speed: 150, damage: 7, size: 11, color: 0xf97316, accent: 0xffffff, shape: "mite", coins: 2, krezz: 2 },
+  imaginary_mandem: { id: "imaginary_mandem", name: "Imaginary Mandem", behavior: "blinker", hp: 46, speed: 105, damage: 13, size: 16, color: 0x6b21a8, accent: 0xe9d5ff, shape: "ghost", label: "?", coins: 6, krezz: 5 },
+  corn_turd: { id: "corn_turd", name: "Turd (Has Got Corn In It)", behavior: "bomber", hp: 34, speed: 100, damage: 20, size: 14, color: 0x7c4a1e, accent: 0xfde047, shape: "blob", label: ":", coins: 4, krezz: 4 },
+  jobcentre: { id: "jobcentre", name: "Job Centre Plus Advisor", behavior: "shooter", hp: 50, speed: 70, damage: 11, size: 16, color: 0x1e40af, accent: 0xfacc15, shape: "humanoid", label: "JC", projectile: { speed: 210, damage: 10, color: 0xf1f5f9, rate: 1300, spread: 0.2, count: 2 }, coins: 6, krezz: 5 },
+  wet_pizza: { id: "wet_pizza", name: "Wet Pizza", behavior: "charger", hp: 52, speed: 90, damage: 14, size: 17, color: 0xf59e0b, accent: 0xdc2626, shape: "brute", coins: 6, krezz: 5 },
+  hottub_bubble: { id: "hottub_bubble", name: "Hot Tub Bubble (Origin Unknown)", behavior: "orbiter", hp: 30, speed: 110, damage: 8, size: 13, color: 0xbae6fd, accent: 0xffffff, shape: "bubble", projectile: { speed: 190, damage: 8, color: 0xe0f2fe, rate: 1200 }, coins: 4, krezz: 4 },
+  pepsi_normal: { id: "pepsi_normal", name: "Pepsi Normal", behavior: "charger", hp: 40, speed: 120, damage: 12, size: 13, color: 0x1d4ed8, accent: 0xef4444, shape: "box", label: "P", coins: 5, krezz: 4 },
   invoice: { id: "invoice", name: "Unpaid Bill", behavior: "swarm", hp: 16, speed: 140, damage: 7, size: 11, color: 0xffffff, accent: 0xdc2626, shape: "page", label: "£", coins: 2, krezz: 2 },
 };

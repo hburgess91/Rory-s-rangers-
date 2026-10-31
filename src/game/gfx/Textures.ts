@@ -355,6 +355,9 @@ export function generatePortraits(scene: Phaser.Scene) {
 /** Named speakers who aren't in CHARACTERS but have a generated sprite. */
 const SPEAKER_SPRITES: Record<string, string> = {
   "BOGGOR CRANSTIL": "spr_BOGGOR",
+  "UNCLE RIK": "spr_FOLK2",
+  "DOREEN (SANCHZ NATION)": "spr_FOLK1",
+  "SANMIK & SANCHZ": "spr_SANMIK",
   DESTINY: "spr_TV_DANCER1",
   CRYSTAL: "spr_TV_DANCER2",
   "BIG DEREK": "spr_TV_BOUNCER",
@@ -432,6 +435,8 @@ export function portraitKey(scene: Phaser.Scene, speaker: string): string | null
   }
   const s = speaker.toUpperCase();
   if (s === "NARRATOR" || s === "") return null;
+  const art = s.includes("GABOR") ? "p_gabor" : s === "GENIE" ? "p_genie" : s.includes("BEGOUR") ? "p_begour" : "";
+  if (art && scene.textures.exists(art)) return art;
   const named = SPEAKER_SPRITES[s] ?? (scene.textures.exists(`spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`) ? `spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}` : scene.textures.exists(`spr_${s}`) ? `spr_${s}` : "");
   if (named) {
     const p = spritePortrait(scene, named, 0x3d2a6b);

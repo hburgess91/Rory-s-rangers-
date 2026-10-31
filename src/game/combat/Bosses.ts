@@ -981,6 +981,60 @@ export class HoardBoss extends Boss {
   }
 }
 
+// ----------------------------------------------------------------- BEGOUR THE BEAR (the SanMikverse)
+
+export class BegourBoss extends Boss {
+  chargeUntil = 0;
+  chargeAngle = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "begour", x, y, 2000, w.sc.textures.exists("boss_begour") ? "boss_begour" : "boss_flatmate", 32, 0x6b4423, 32, 48);
+    this.setScale(3);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const ts = this.world.enemyTimeScale;
+    this.setFrame(Math.floor(now / 220) % 3);
+    if (now < this.chargeUntil) {
+      this.moveToward(this.x + Math.cos(this.chargeAngle) * 100, this.y + Math.sin(this.chargeAngle) * 100, 520 * ts);
+      return;
+    }
+    this.moveToward(p.x, p.y, (this.phase === 2 ? 95 : this.phase ? 80 : 65) * ts);
+    if (now < this.nextPattern) return;
+    const crowd = this.world.enemies.filter((e) => !e.dead && !e.isBoss).length;
+    let pick = this.patternIdx++ % 5;
+    if (crowd >= 12 && pick === 3) pick = 1;
+    this.taunt();
+    if (pick === 0) {
+      // the fart: three green clouds, then a fourth right on you
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.enemyAoe(p.x + (Math.random() - 0.5) * 260, p.y + (Math.random() - 0.5) * 200, 80, 14, 900 + i * 150, 0x84cc16);
+      this.world.sc.time.delayedCall(600, () => { if (this.active) this.world.enemyAoe(p.x, p.y, 70, 16, 800, 0x65a30d); });
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "SMELL MY FART", "#84cc16", 18);
+      this.nextPattern = now + 2000;
+    } else if (pick === 1) {
+      // he rings you. The ringtone is bullets.
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "☎ RING RING. IT'S BEGOUR.", "#fca5a5", 16);
+      for (let k = 0; k < (this.phase ? 3 : 2); k++) this.world.sc.time.delayedCall(k * 380, () => { if (this.active) this.ring(this.phase ? 16 : 12, 180, 10, 0xfca5a5, k * 0.3); });
+      this.nextPattern = now + 2200;
+    } else if (pick === 2) {
+      this.chargeAngle = Math.atan2(p.y - this.y, p.x - this.x);
+      this.world.enemyLine(this.x, this.y, this.chargeAngle, 520, 80, 0, 800 * this.world.telegraphMult);
+      this.halt();
+      this.world.sc.time.delayedCall(800 * this.world.telegraphMult, () => (this.chargeUntil = this.world.now() + 700));
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "BEAR HUG (NOT A NICE ONE)", "#fbbf24", 15);
+      this.nextPattern = now + 2500;
+    } else if (pick === 3) {
+      const kinds = this.phase === 2 ? ["corn_turd", "imaginary_mandem"] : ["catford_fox", "corn_turd"];
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy(kinds[i % 2], this.x + (i - 1.5) * 60, this.y + 60, { minion: true });
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "CATFORD FOX CREW, ASSEMBLE", "#f97316", 15);
+      this.nextPattern = now + 2600;
+    } else {
+      // corn. Lots of corn.
+      this.fan(this.phase ? 9 : 7, 0.18, 230, 9, 0xfde047);
+      this.nextPattern = now + 1500;
+    }
+  }
+}
+
 export function createBoss(id: string, w: CombatWorld, x: number, y: number): Boss {
   switch (id) {
     case "hoard":
@@ -1007,6 +1061,8 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
       return new FlatmateBoss(w, x, y);
     case "rival":
       return new RivalBoss(w, x, y);
+    case "begour":
+      return new BegourBoss(w, x, y);
     default:
       return new DrongusBoss(w, x, y);
   }

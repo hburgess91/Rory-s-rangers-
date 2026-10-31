@@ -4654,6 +4654,18 @@
   },
   "p_tank": {
    "file": "props/p_tank.png"
+  },
+  "p_gabor": {
+   "file": "props/p_gabor.png"
+  },
+  "p_genie": {
+   "file": "props/p_genie.png"
+  },
+  "p_hottub": {
+   "file": "props/p_hottub.png"
+  },
+  "p_begour": {
+   "file": "props/p_begour.png"
   }
  },
  "sheets": {
@@ -4944,6 +4956,12 @@
    "frameWidth": 32,
    "frameHeight": 32,
    "hd": 0.5
+  },
+  "boss_begour": {
+   "file": "combat/boss_begour.png",
+   "frameWidth": 118,
+   "frameHeight": 114,
+   "hd": 0.4211
   }
  }
 }

@@ -40,13 +40,20 @@ export class VignetteScene extends Phaser.Scene {
       polson_cctv: () => this.polsonCctv(),
       polson_gym2: () => this.polsonGym2(),
       polson_mouth: () => this.polsonMouth(),
+      sanmik_lampe: () => this.sanmikLampe(),
+      sanmik_nation: () => this.sanmikNation(),
       wahooga: () => this.wahooga(),
     };
     await (run[data.id] ?? (async () => undefined))();
     G.s.flags[`vig_${data.id}`] = true;
     G.save();
     this.cameras.main.fadeOut(500);
-    const next = data.id === "wahooga" ? () => switchTo(this, "CharSelect", { swap: true }) : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
+    const next =
+      data.id === "wahooga"
+        ? () => switchTo(this, "CharSelect", { swap: true })
+        : data.id === "sanmik_lampe"
+          ? () => switchTo(this, "Dungeon", { dungeon: "arena_sanmik", room: 0 })
+          : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, next);
   }
 
@@ -1053,6 +1060,258 @@ export class VignetteScene extends Phaser.Scene {
       ping("KREZMAR", "Is there any cake left"),
       ping("POLSON", "No"),
     ]);
+    synth.stopMusic();
+  }
+
+  // ---------------------------------------------------------------- THE SANMIKVERSE
+
+  private sanmikSprites(lx: number, rx: number, y: number) {
+    const mk = (key: string, fb: string, x: number, tint: number) => {
+      const sp = this.add.sprite(x, y, this.textures.exists(key) ? key : fb, 0).setScale(3).setDepth(10);
+      if (!this.textures.exists(key)) sp.setTint(tint);
+      return sp;
+    };
+    return { mik: mk("spr_SANMIK", "spr_MIKEY", lx, 0xb0c4ff), chz: mk("spr_SANCHZ", "spr_POLSON", rx, 0xffe08a) };
+  }
+
+  /** Mash to do a thing. Resolves after `need` taps. */
+  private mashFor(need: number, label: string, onTap: (n: number) => void) {
+    return new Promise<void>((resolve) => {
+      let n = 0;
+      const help = this.add.text(480, 150, label, { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(300);
+      const tap = () => {
+        if (this.box.active || n >= need) return;
+        n++;
+        onTap(n);
+        if (n >= need) {
+          this.input.keyboard?.off("keydown-SPACE", tap);
+          this.input.off("pointerdown", tap);
+          help.destroy();
+          this.time.delayedCall(300, () => resolve());
+        }
+      };
+      this.input.keyboard?.on("keydown-SPACE", tap);
+      this.input.on("pointerdown", tap);
+    });
+  }
+
+  private async sanmikLampe() {
+    if (!backdrop(this, "bg_gig", { dim: 0.25, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1a0f1f);
+    const { mik, chz } = this.sanmikSprites(330, 640, 360);
+    const me = this.add.sprite(820, 380, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    // the lamp
+    const lamp = this.add.container(470, 400).setDepth(20);
+    lamp.add(this.add.ellipse(0, 0, 56, 24, 0xd4a017).setStrokeStyle(2, 0x7c5a00));
+    lamp.add(this.add.triangle(38, -6, 0, 0, 30, -10, 0, 8, 0xd4a017));
+    lamp.add(this.add.ellipse(0, -14, 22, 12, 0xe8b923));
+    synth.music("ggg8");
+    await this.talk([
+      dir("The back room of the Krezz Arms, after the gig. SanMik is lying face-down on the stage 'cooling down'. SanChz is eating the setlist."),
+      say("SANMIK", "Yee. 'Ello me dearies. How you all fucking doing, you fucking pricks."),
+      say("SANMIK", "Found this in the skip out the back. Magic lamp. Looks like a naughty little dildo and it smells like rank fanny juice. Proper vintage."),
+      say("SANCHZ", "Rub it."),
+      say("SANMIK", "I'm gonna rub it like I rubbed one out last night, yee. Hehehe."),
+      say(G.s.player, "Please don't say it like that."),
+    ]);
+    await this.mashFor(12, "TAP / SPACE: help SanMik rub the lamp (sorry)", (n) => {
+      synth.play(n % 2 ? "select" : "hit");
+      lamp.setAngle(n % 2 ? -8 : 8);
+      mik.x = 400 + (n % 2) * 8;
+      if (n % 3 === 0) {
+        const puff = this.add.circle(500 + Math.random() * 20, 380, 10, 0x9b59ff, 0.6).setDepth(25);
+        this.tween({ targets: puff, y: 250, radius: 40, alpha: 0, duration: 900 }).then(() => puff.destroy());
+      }
+    });
+    lamp.setAngle(0);
+    synth.play("explode");
+    this.cameras.main.shake(400, 0.01);
+    this.cameras.main.flash(300, 155, 89, 255);
+    const genie = this.textures.exists("p_genie") ? this.add.image(500, 400, "p_genie").setOrigin(0.5, 1).setScale(0.2).setDepth(30) : this.add.ellipse(500, 300, 90, 160, 0x3b82f6).setScale(0.2).setDepth(30);
+    await this.tween({ targets: genie, scale: this.textures.exists("p_genie") ? 2.2 : 1, y: 380, duration: 900, ease: "Back.out" });
+    this.tweens.add({ targets: genie, y: 370, yoyo: true, repeat: -1, duration: 900, ease: "Sine.inOut" });
+    await this.talk([
+      say("GENIE", "GREETINGS, SANMIK. I AM A MAGICAL GENIE, RELEASED FROM MY MYSTICAL SLEEP AFTER TEN THOUSAND LONG BLOODY YEARS."),
+      say("GENIE", "AS A REWARD, I WILL GRANT YOU THREE WISHES."),
+      say("SANMIK", "You fucking what? You fucking prick, I'll fucking sherk you. Catford Fox Crew."),
+      say("SANMIK", "Is that you SanChz? Dressed up like a magical flying cunt like you always do?"),
+      say("SANCHZ", "I'm over here, mate. I'm eating the setlist."),
+      say("GENIE", "I AM NOT SANCHZ. NOW. WHAT ARE YOUR WISHES?"),
+      say("SANMIK", "Ooh. Well that's a tough question. Yee. Mm. Let me see."),
+      say("SANMIK", "Number one: a fucking pet goat."),
+      say("SANMIK", "Number two: a Pepsi Max."),
+      say(G.s.player, "Mikey. Think about this. You can have anything—"),
+      say("SANMIK", "And number three… a Pepsi normal."),
+      say("GENIE", "…"),
+      say("GENIE", "WHAT A BLOODY FUCKING WASTE. YOU COULD HAVE LEARNED TO BLOODY FUCKING FLY."),
+      say("GENIE", "BUT. YOUR WISHES ARE MY COMMAND."),
+    ]);
+    synth.play("coin");
+    const cans = [this.add.rectangle(380, 300, 14, 26, 0x111827).setStrokeStyle(2, 0x3b82f6).setDepth(31), this.add.rectangle(400, 300, 14, 26, 0x1d4ed8).setStrokeStyle(2, 0xef4444).setDepth(31)];
+    this.tween({ targets: cans, y: 330, duration: 400, ease: "Bounce.out" });
+    const goat = this.textures.exists("p_gabor") ? this.add.image(560, 420, "p_gabor").setOrigin(0.5, 1).setScale(0.1).setDepth(28) : this.add.ellipse(560, 400, 60, 40, 0xffffff).setDepth(28);
+    await this.tween({ targets: goat, scale: 1.4, duration: 500, ease: "Back.out" });
+    this.tweens.add({ targets: goat, angle: 5, yoyo: true, repeat: -1, duration: 300 });
+    await this.talk([
+      say("SANMIK", "Yee — ooh yee, I got it. Uhh. Yee. Mate, this Pepsi Max is GREAT."),
+      say("GABOR THE GOAT", "Yee! It's Gabor the Goat! I'm your new best friend, SanMik! Let's have fun!"),
+      say("SANMIK", "Shut the fuck up, you little neeky cunt, or I'll make a fucking curry out of you."),
+      say("GABOR THE GOAT", "…Okay SanMik. You're my best friend."),
+      say("SANCHZ", "Can I have the Pepsi normal."),
+      say("SANMIK", "No."),
+      say("GENIE", "ONE MORE THING. I HAVE SPENT TEN THOUSAND YEARS IN A LAMP THAT SMELLS OF FANNY JUICE. SOMEBODY IS PAYING FOR THAT."),
+      say("GENIE", "WELCOME… TO THE SANMIKVERSE."),
+    ]);
+    // everyone up the spout
+    synth.play("explode");
+    this.cameras.main.shake(900, 0.02);
+    const all = [mik, chz, me, goat, ...cans];
+    await Promise.all(all.map((o, i) => this.tween({ targets: o, x: 505, y: 395, scale: 0.05, angle: 720, delay: i * 120, duration: 900, ease: "Quad.in" })));
+    this.cameras.main.flash(500, 255, 255, 255);
+    this.caption("THE SANMIKVERSE", "#ff6bb0", 44);
+    await this.wait(1200);
+    await this.talk([
+      dir("You land face-first in something soft. It's a pizza. It's a wet pizza."),
+      say("SANMIK", "(somewhere nearby) CATFORD! Yee! I'm HOME, blud!"),
+    ]);
+    synth.stopMusic();
+  }
+
+  private async sanmikNation() {
+    if (!backdrop(this, "bg_townhall", { dim: 0.2, depth: -10 })) this.sky(0x9ec5e8, 0xe8d8b0);
+    const { mik, chz } = this.sanmikSprites(220, 740, 330);
+    const kre = this.add.sprite(480, 300, "spr_KREBLIS", 0).setScale(2.6).setDepth(9);
+    const me = this.add.sprite(480, 430, `spr_${G.s.player}`, 0).setScale(3).setDepth(12);
+    const leftCrowd = [0, 1, 2].map((i) => this.add.sprite(110 + i * 50, 410 + (i % 2) * 14, `spr_FOLK${i}`, 0).setScale(2.4).setDepth(11));
+    const rightCrowd = [1, 2, 3].map((i) => this.add.sprite(760 + i * 50, 410 + (i % 2) * 14, `spr_FOLK${i}`, 0).setScale(2.4).setDepth(11).setFlipX(true));
+    const goat = this.textures.exists("p_gabor") ? this.add.image(480, 470, "p_gabor").setOrigin(0.5, 1).setScale(1.1).setDepth(13) : this.add.ellipse(480, 450, 50, 30, 0xffffff).setDepth(13);
+    const banner = (x: number, t: string, c: number) => {
+      this.add.rectangle(x, 120, 300, 40, c).setStrokeStyle(3, 0x000000).setDepth(8);
+      this.add.text(x, 120, t, { fontFamily: "Impact, sans-serif", fontSize: "20px", color: "#ffffff", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(9);
+    };
+    banner(210, "SANMIK NATION", 0xdc2626);
+    banner(750, "SANCHZ NATION", 0x2563eb);
+    const chant = (ps: Phaser.GameObjects.Sprite[], t: string) => this.people(ps, t);
+    await this.talk([
+      dir("Krelford Town Hall. On the left steps: SanMik, a megaphone, three confused pensioners and a hand-painted banner. On the right steps: SanChz, a different megaphone, three different confused pensioners and a different banner."),
+      dir("In the middle: Gabor the Goat, wearing a rosette from each side."),
+      say("KREBLIS", "Krelmergency. I repeat. Krelmergency. There are two nations on my steps and neither of them has filled in the form."),
+      say(G.s.player, "What happened?"),
+      say("GABOR THE GOAT", "SanChz drank the Pepsi Normal. The wish one. SanMik said it was a declaration of war. Then they both declared war. Then they both declared nations."),
+    ]);
+    synth.music("ggg4");
+    for (let i = 0; i < 2; i++) {
+      chant([mik, ...leftCrowd], "SANMIK NATION!");
+      this.caption("🎤 WE ALL WANT TO LIVE IN A SANMIK NATION", "#ff6b6b", 22);
+      await this.wait(1300);
+      chant([chz, ...rightCrowd], "SANCHZ NATION!");
+      this.caption("🎤 WE ALL WANT TO LIVE IN A SANCHZ NATION", "#7fb3ff", 22);
+      await this.wait(1300);
+    }
+    this.lastCaption?.destroy();
+    await this.talk([
+      say("SANMIK", "Yee. I know you're thinking it, but I've got the balls to say it. SanChz, you're a fucking cunt. Stop being a stupid little cunt. You and your men are all fucking cunts."),
+      say("SANCHZ", "I haven't got any men. I've got Doreen."),
+      say("DOREEN (SANCHZ NATION)", "I thought this was the bus queue."),
+      say("SANMIK", "From now on, SanMik's your god. All you ladies of Krelford, form an orderly queue. My kids will be the government."),
+      say("SANMIK", "Lil Leroy: Chancellor. Munky: Home Secretary. Princess: Foreign Office. And Cancelle Culchure: Minister for Culture."),
+      say("KREBLIS", "You named a child Cancelle Culchure."),
+      say("SANMIK", "Spelt proper. It's French."),
+      say("SANCHZ", "SanChz Nation policy one: hot tubs on the NHS. Policy two: Doreen gets her bus. Policy three: mork."),
+    ]);
+    for (let i = 0; i < 3; i++) {
+      chant([mik, chz, ...leftCrowd, ...rightCrowd], "WIN THE WAR!");
+      this.caption("WIN THE WAR! WIN THE WAR!", "#ffd23f", 30);
+      await this.wait(700);
+    }
+    this.lastCaption?.destroy();
+    await this.talk([
+      dir("Both nations begin to advance. Very slowly. Doreen has a hip."),
+      say(G.s.player, "STOP. Both of you. There's only one place the San Brothers have ever settled anything."),
+      say("SANMIK", "…"),
+      say("SANCHZ", "…"),
+      say("SANMIK & SANCHZ", "THE HOT TUB."),
+    ]);
+    // the summit
+    this.cameras.main.flash(300, 255, 255, 255);
+    leftCrowd.concat(rightCrowd).forEach((p) => p.setVisible(false));
+    kre.setPosition(820, 330);
+    me.setPosition(140, 400);
+    goat.setPosition(860, 470);
+    const tub = this.textures.exists("p_hottub") ? this.add.image(480, 470, "p_hottub").setOrigin(0.5, 1).setScale(2.6).setDepth(20) : this.add.rectangle(480, 420, 300, 120, 0x7c4a1e).setDepth(20);
+    mik.setPosition(420, 300).setDepth(19);
+    chz.setPosition(545, 300).setDepth(19);
+    this.tweens.add({ targets: [mik, chz], y: 292, yoyo: true, repeat: -1, duration: 400, ease: "Sine.inOut" });
+    const bubbles = this.time.addEvent({ delay: 140, loop: true, callback: () => {
+      const b = this.add.circle(380 + Math.random() * 200, 330, 4 + Math.random() * 6, 0xe0f2fe, 0.8).setDepth(21);
+      this.tween({ targets: b, y: 230, alpha: 0, duration: 900 }).then(() => b.destroy());
+    } });
+    void tub;
+    synth.music("ggg13");
+    this.caption("THE HOT TUB SUMMIT", "#7fdfff", 32);
+    await this.wait(1000);
+    await this.talk([
+      say("SANMIK", "It's SanMik (in the hot tub)."),
+      say("SANCHZ", "With SanChz (in the hot tub)."),
+      say("SANMIK", "Splash SanChz (in the hot tub)."),
+      say("SANCHZ", "Splashes me back (in the hot tub)."),
+      say("SANMIK", "…I'm sorry I called you a magical flying cunt, SanChz."),
+      say("SANCHZ", "I'm sorry I drank your Pepsi Normal. It was flat. You wasted a wish on a flat drink."),
+      say("SANMIK", "We all want to live… in a SanMik AND SanChz nation."),
+      say("SANCHZ", "The San Brothers. Mork."),
+      say("KREBLIS", "Krelmergency over. I repeat. Krelmergency ov—"),
+      dir("A figure is approaching the hot tub. Waddling. Clenching."),
+      say("UNCLE RIK", "'Ello. It's Uncle Rik. I need a shit real bad. Yee."),
+      say("SANMIK", "Rik. Rik, no. RIK. YOU MUSTN'T WEE OR POO (IN THE HOT TUB)—"),
+    ]);
+    const rik = this.add.sprite(-40, 380, "spr_FOLK2", 0).setScale(3).setDepth(22).setTint(0xd6b48a);
+    await this.tween({ targets: rik, x: 480, y: 290, duration: 900, ease: "Quad.in" });
+    synth.play("explode");
+    this.cameras.main.shake(500, 0.02);
+    bubbles.remove();
+    const splash = this.add.circle(480, 340, 20, 0x7c4a1e, 0.85).setDepth(30);
+    this.tween({ targets: splash, radius: 200, alpha: 0, duration: 900 });
+    this.tween({ targets: mik, x: -80, y: 200, angle: -540, duration: 900 });
+    this.tween({ targets: chz, x: 1040, y: 200, angle: 540, duration: 900 });
+    this.caption("HOT TUB: CONDEMNED", "#a16207", 34);
+    await this.wait(1100);
+    await this.talk([
+      say("UNCLE RIK", "Ahh. That's better. Lovely and warm."),
+      dir("The water in the hot tub is now a colour that Krelford Council will later describe as 'a biohazard and a crime'. A crouton bobs to the surface. It is not a crouton."),
+      say("GABOR THE GOAT", "Can I go in?"),
+      say("EVERYONE", "NO."),
+    ]);
+    // the celebration
+    this.children.removeAll(true);
+    this.lastCaption = undefined;
+    if (!backdrop(this, "bg_townhall", { dim: 0.2, depth: -10 })) this.sky(0x9ec5e8, 0xe8d8b0);
+    const m2 = this.add.sprite(480, 360, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(3.4).setDepth(10);
+    const c2 = this.add.sprite(640, 370, this.textures.exists("spr_SANCHZ") ? "spr_SANCHZ" : "spr_POLSON", 0).setScale(3.2).setDepth(10);
+    const hat = this.add.triangle(480, 300, 0, 18, 12, 0, 24, 18, 0xdc2626).setDepth(11);
+    this.add.circle(492, 300, 4, 0xffffff).setDepth(12);
+    synth.music("ggg12");
+    await this.talk([
+      dir("That evening, on the Town Hall steps, the San Brothers hold a joint state ceremony to found the United SanMik & SanChz Nation (population: 2, and a goat)."),
+      dir("To mark the occasion, SanMik removes his tracksuit to reveal a red velvet Santa G-string. It is October. Nobody asked."),
+    ]);
+    this.tweens.add({ targets: [m2, hat], angle: { from: -10, to: 10 }, yoyo: true, repeat: -1, duration: 160 });
+    this.tweens.add({ targets: m2, scaleX: 3.7, yoyo: true, repeat: -1, duration: 160 });
+    this.tweens.add({ targets: c2, y: 360, yoyo: true, repeat: -1, duration: 300 });
+    this.caption("🎄 I LOVE CHRISTMAS 🎄", "#ff6b6b", 30);
+    await this.wait(1500);
+    await this.talk([
+      say("SANMIK", "Yee! I'm the fucking best! Michael Jackson is second best! I am also best dressed!"),
+      say(G.s.player, "You're in a G-string."),
+      say("SANMIK", "Best dressed, blud."),
+      say("SANCHZ", "Everyone knows he's solid. No cunt touches him."),
+      dir("Gabor the Goat headbutts SanMik in the bum. SanMik falls down the Town Hall steps, all of them, one at a time, still twerking."),
+      say("GABOR THE GOAT", "Sorry SanMik. I love you. You're my best friend."),
+      ping("DRONGUS", "Who let Mikey start a country"),
+      ping("DRONGUS", "And why is there a goat in the group chat"),
+      ping("MIKEY", "Can someone react to my message pls"),
+      ping("MIKEY", "The nation one"),
+      dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour has not been heard from, apart from the occasional silent phone call and a faint smell."),
+    ]);
+    G.s.flags.sanmik_nation = true;
     synth.stopMusic();
   }
 

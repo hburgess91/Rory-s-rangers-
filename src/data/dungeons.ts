@@ -3,13 +3,16 @@ import type { Cond } from "./types";
 export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki";
 
 export interface PropDef {
-  kind: "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
+  kind: "talker" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
   x: number; // 0..1 of room width
   y: number; // 0..1 of room height
   id?: string;
   label?: string;
   speaker?: string;
   cond?: Cond;
+  /** talker: sprite/image key to draw, and what they say when you press E. */
+  image?: string;
+  lines?: { s: string; t: string; dir?: boolean }[];
 }
 
 export interface RoomDef {
@@ -444,6 +447,125 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     arenaFlag: "arc_kw_rival",
     returnAt: "GYM",
     rooms: [{ name: "The Free Weights Section", w: 1200, h: 760, theme: "industrial", boss: "rival" }],
+  },
+  arena_sanmik: {
+    id: "arena_sanmik",
+    chapter: 0,
+    name: "THE SANMIKVERSE (CATFORD, ALLEGEDLY)",
+    music: "sanmik",
+    arenaFlag: "sanmik_catford",
+    returnAt: "PUB",
+    rooms: [
+      {
+        name: "Catford High Street (SanMikverse)",
+        w: 1300,
+        h: 760,
+        theme: "industrial",
+        waves: [[["catford_fox", 10]], [["imaginary_mandem", 3], ["catford_fox", 6]], [["corn_turd", 5], ["imaginary_mandem", 2]]],
+        props: [
+          {
+            kind: "talker",
+            x: 0.18,
+            y: 0.25,
+            image: "p_gabor",
+            label: "GABOR THE GOAT",
+            lines: [
+              { s: "GABOR THE GOAT", t: "Yee, it's Gabor the Goat! I'm SanMik's new best friend! He threatened to make a curry out of me. It's the nicest thing anyone's ever said to me." },
+              { s: "GABOR THE GOAT", t: "Kick me. Go on. Just a little one. I deserve it." },
+              { s: "NARRATOR", t: "You do not kick the goat. The goat looks disappointed.", dir: true },
+            ],
+          },
+          {
+            kind: "talker",
+            x: 0.82,
+            y: 0.25,
+            image: "spr_SANMIK",
+            label: "SANMIK",
+            lines: [
+              { s: "SANMIK", t: "Yee. Welcome to Catford, blud. The mythic locus. My manor. Everyone knows I'm solid. No cunt touches me." },
+              { s: "SANMIK", t: "That's my crew. The Catford Fox Crew. Hundreds of mandem. You can't see them because they're very good at hiding." },
+              { s: "SANMIK", t: "I'm the fucking best. Michael Jackson is second best. I am also best dressed. Gok Wan is the second best dressed." },
+              { s: "NARRATOR", t: "A fox bites SanMik on the ankle. He pretends it's one of his.", dir: true },
+            ],
+          },
+        ],
+        enterLines: [
+          { s: "NARRATOR", t: "THE SANMIKVERSE. It looks like Catford, if Catford had been described to a sketch artist by a man on three energy drinks. The sky is the colour of Pepsi Max. Everything smells faintly of corn.", dir: true },
+          { s: "SANMIK", t: "CATFORD! Yee! Big up all da manz! All the fucking haters, go and suck your nans!" },
+          { s: "NARRATOR", t: "The foxes have heard him. The foxes do not big him up.", dir: true },
+        ],
+      },
+      {
+        name: "Job Centre Plus (Catford Branch)",
+        w: 1200,
+        h: 720,
+        theme: "industrial",
+        waves: [[["jobcentre", 3], ["catford_fox", 5]], [["jobcentre", 2], ["pepsi_normal", 4], ["imaginary_mandem", 2]]],
+        props: [
+          {
+            kind: "talker",
+            x: 0.5,
+            y: 0.2,
+            image: "spr_SANCHZ",
+            label: "MC POLSONATOR (signing on)",
+            lines: [
+              { s: "SANCHZ", t: "MC Polsonator. Signing on. Big up the Job Centre Plus." },
+              { s: "SANCHZ", t: "She asked what I've done to look for work. I said I've been in a hot tub. She said that's not work. I said it's not NOT work." },
+              { s: "SANCHZ", t: "Mork." },
+              { s: "SANMIK", t: "Oi SanChz. Ask her if she's got any jobs for a legend. Manager of something. Norwich, maybe." },
+            ],
+          },
+        ],
+        enterLines: [
+          { s: "NARRATOR", t: "The Catford Job Centre Plus. A sign says 'NO HOT TUBS'. Somebody has crossed out 'NO'.", dir: true },
+          { s: "SANCHZ", t: "This is where I do my bars. And my forms." },
+          { s: "NARRATOR", t: "The advisors rise from behind their desks. They have clipboards. They have questions about your availability.", dir: true },
+        ],
+      },
+      {
+        name: "In Tha Hot Tub",
+        w: 1200,
+        h: 720,
+        theme: "mansion",
+        waves: [[["hottub_bubble", 5], ["wet_pizza", 2]], [["wet_pizza", 4], ["corn_turd", 4]]],
+        props: [
+          {
+            kind: "talker",
+            x: 0.5,
+            y: 0.22,
+            image: "p_hottub",
+            label: "THE HOT TUB",
+            lines: [
+              { s: "SANMIK", t: "It's SanMik (in the hot tub)… with SanChz (in the hot tub)… lots of bubbles (in the hot tub)… lots of trouble (in the hot tub)…" },
+              { s: "SANCHZ", t: "No girls are (in the hot tub)…" },
+              { s: "SANMIK", t: "Feeling horny (in the hot tub)…" },
+              { s: "NARRATOR", t: "A slice of pizza drifts past. It is very wet. SanMik eats it anyway. 'Wet pizza (in the hot tub)', he says, with his mouth full. 'Dreams come true (in the hot tub).'", dir: true },
+              { s: "SANCHZ", t: "Hot tub's broken (in the hot tub)." },
+              { s: "SANMIK", t: "Get an engineer (in the hot tub)." },
+            ],
+          },
+          {
+            kind: "talker",
+            x: 0.14,
+            y: 0.7,
+            image: "spr_FOLK2",
+            label: "UNCLE RIK",
+            lines: [
+              { s: "UNCLE RIK", t: "'Ello. It's Uncle Rik. I need a shit real bad. Yee." },
+              { s: "SANMIK", t: "NOT IN THE HOT TUB RIK. You mustn't wee or poo in the hot tub. It's in the song." },
+              { s: "UNCLE RIK", t: "…What song?" },
+              { s: "NARRATOR", t: "Uncle Rik waddles off towards the bushes, clenching. Nobody follows him. Nobody will ever follow him.", dir: true },
+            ],
+          },
+        ],
+        enterLines: [
+          { s: "NARRATOR", t: "A back garden in Catford. In the middle: a hot tub, bubbling furiously. Steam. Pizza. Something brown bobbing in the corner that everyone has agreed to call 'a crouton'.", dir: true },
+          { s: "SANMIK", t: "Ooh yee SanChz, turn them bubbles on. I love it when they go right up my— " },
+          { s: "NARRATOR", t: "The bubbles have come out of the hot tub. The bubbles are hostile.", dir: true },
+        ],
+      },
+      { name: "Begour's Den (behind the Catford Cat)", w: 1200, h: 760, theme: "temple", boss: "begour" },
+    ],
   },
   arena_cronster: {
     id: "arena_cronster",

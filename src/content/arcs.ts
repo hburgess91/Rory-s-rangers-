@@ -1238,6 +1238,60 @@ export const ARCS: Arc[] = [
       },
     ],
   },
+  {
+    id: "arc_sanmik",
+    player: "ALL",
+    minChapter: 4,
+    title: "Welcome to the SanMikverse",
+    blurb: "SanMik (Mikey in an afro wig) has found a magic lamp in the skip behind the Krezz Arms. It smells of rank fanny juice. He has rubbed it.",
+    reward: { coins: 400, desc: "A signed copy of 'Peener 4eva' on CD-R, labelled in biro. The biro has gone through the CD." },
+    steps: [
+      {
+        id: "lamp",
+        text: "SanMik has found 'a magic lamp' after his gig. Go to the Krezz Arms back room before he rubs it.",
+        at: "PUB",
+        step: { kind: "vignette", id: "sanmik_lampe", intro: [ping("MIKEY", "Found a magic lamp in the skip"), ping("MIKEY", "Looks like a naughty little dildo"), ping("MIKEY", "Gonna rub it. Come watch. Can someone react to my message pls")] },
+      },
+      {
+        id: "catford",
+        text: "You're in the SanMikverse. Fight through 'Catford' and find whoever's behind it. (The lamp in the Krezz Arms back room takes you back in.)",
+        at: "PUB",
+        step: { kind: "arena", dungeon: "arena_sanmik", intro: [dir("The lamp is on the bar, still glowing. It smells of corn. You rub it. Against your better judgement, you rub it.")] },
+      },
+      {
+        id: "norwich",
+        text: "SanMik is 'the new manager of Norwich'. The Champions League final is on the Krezz Arms telly. Go and watch.",
+        at: "PUB",
+        step: {
+          kind: "minigame",
+          mode: "norwich",
+          intro: [
+            dir("The Krezz Arms telly. The Champions League final: NORWICH UNITED vs REAL MADRID. The Norwich manager is wearing an afro wig and white sunglasses."),
+            say("KREZMAR", "Is that Mikey."),
+            say("CRONGUS", "How is Mikey the manager of Norwich."),
+            dir("On the telly, SanMik holds up a sheet of A4. It says: 'IF NORWICH LOSE THEN THAT'S ILLEGAL. — THE LAW WHAT I WROTE'."),
+          ],
+          success: [
+            say("SANMIK", "(on the telly) YEE! Two goals in ten fucking seconds! Better than Messi! Better than Pele! Better than Heskey!"),
+            say("SANMIK", "Pundit one, you're a cunt. Pundit two, you're a cunt. Pundit three… you're alright."),
+            dir("Norwich win the Champions League. Also, somehow, the Premier League. SanMik runs the length of the pitch with his shirt over his head and straight into a steward."),
+            ping("DRONGUS", "Mikey won the champions league ??"),
+            ping("DRONGUS", "Still hasn't reacted to the song though"),
+          ],
+          fail: [
+            dir("Real Madrid win. On the telly, SanMik tears up the A4 law and eats it."),
+            say("SANMIK", "(on the telly) That's ILLEGAL. Replay. REPLAY. I'm getting my uncle."),
+          ],
+        },
+      },
+      {
+        id: "nation",
+        text: "SanMik and SanChz have fallen out over the last Pepsi Normal. Both of them have started a nation. On the Town Hall steps. Sort it out.",
+        at: "TOWN_HALL",
+        step: { kind: "vignette", id: "sanmik_nation", intro: [dir("There is chanting coming from the Town Hall steps. Two lots of chanting. Different chanting. And a goat.")] },
+      },
+    ],
+  },
 ];
 
 export function arcFor(player: PlayableId): Arc | undefined {

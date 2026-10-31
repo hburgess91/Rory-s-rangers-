@@ -384,6 +384,17 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.interactables.push({ x, y: y + 20, r: 60, label: "Make an accusation", enabled: () => !G.s.flags.cheesegate_solved, use: () => this.accuse() });
         break;
       }
+      case "talker": {
+        const key = p.image ?? `spr_${p.speaker}`;
+        const big = key.startsWith("p_");
+        const tex = this.textures.exists(key) ? key : "p_sign";
+        const spr = key.startsWith("spr_") ? this.add.sprite(x, y, tex, 0).setScale(2.2) : this.add.image(x, y, tex).setScale(big ? 1.2 : 2);
+        spr.setDepth(y);
+        if (key === "p_gabor") this.tweens.add({ targets: spr, angle: 4, yoyo: true, repeat: -1, duration: 500 });
+        this.add.text(x, y - spr.displayHeight / 2 - 10, p.label ?? "", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(y + 1);
+        this.interactables.push({ x, y: y + 20, r: 70, label: `Talk to ${p.label ?? "them"}`, use: () => this.talk((p.lines ?? []).map((l) => (l.dir ? dir(l.t) : say(l.s, l.t)))) });
+        break;
+      }
       case "npc": {
         this.add.sprite(x, y, `spr_${p.speaker}`, 0).setScale(2.2).setDepth(y);
         this.add.text(x, y - 46, "POLSON (MORK MODE)", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(y + 1);
