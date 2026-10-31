@@ -4702,6 +4702,72 @@
   },
   "sm_bigtub": {
    "file": "backdrops/sm_bigtub.png"
+  },
+  "p_reinhardt": {
+   "file": "props/p_reinhardt.png"
+  },
+  "p_tankc": {
+   "file": "props/p_tankc.png"
+  },
+  "p_flirt": {
+   "file": "props/p_flirt.png"
+  },
+  "p_lantern": {
+   "file": "props/p_lantern.png"
+  },
+  "p_fruity": {
+   "file": "props/p_fruity.png"
+  },
+  "p_sausage_s": {
+   "file": "props/p_sausage_s.png"
+  },
+  "p_sausage_m": {
+   "file": "props/p_sausage_m.png"
+  },
+  "p_fueltank": {
+   "file": "props/p_fueltank.png"
+  },
+  "p_boy": {
+   "file": "props/p_boy.png"
+  },
+  "p_dad": {
+   "file": "props/p_dad.png"
+  },
+  "p_grandad": {
+   "file": "props/p_grandad.png"
+  },
+  "p_kidcandy": {
+   "file": "props/p_kidcandy.png"
+  },
+  "p_mgun": {
+   "file": "props/p_mgun.png"
+  },
+  "cf_floor": {
+   "file": "backdrops/cf_floor.png"
+  },
+  "cf_flirt": {
+   "file": "backdrops/cf_flirt.png"
+  },
+  "cf_chinese": {
+   "file": "backdrops/cf_chinese.png"
+  },
+  "cf_men": {
+   "file": "backdrops/cf_men.png"
+  },
+  "cf_destruction": {
+   "file": "backdrops/cf_destruction.png"
+  },
+  "cf_core": {
+   "file": "backdrops/cf_core.png"
+  },
+  "cr_park": {
+   "file": "backdrops/cr_park.png"
+  },
+  "cr_factory_ext": {
+   "file": "backdrops/cr_factory_ext.png"
+  },
+  "cr_crater": {
+   "file": "backdrops/cr_crater.png"
   }
  },
  "sheets": {
@@ -5004,6 +5070,36 @@
    "frameWidth": 119,
    "frameHeight": 124,
    "hd": 0.3871
+  },
+  "boss_reinhardt": {
+   "file": "combat/boss_reinhardt.png",
+   "frameWidth": 108,
+   "frameHeight": 128,
+   "hd": 0.375
+  },
+  "boss_tankc": {
+   "file": "combat/boss_tankc.png",
+   "frameWidth": 123,
+   "frameHeight": 105,
+   "hd": 0.4571
+  },
+  "boss_flirt": {
+   "file": "combat/boss_flirt.png",
+   "frameWidth": 126,
+   "frameHeight": 95,
+   "hd": 0.5053
+  },
+  "boss_lantern": {
+   "file": "combat/boss_lantern.png",
+   "frameWidth": 108,
+   "frameHeight": 103,
+   "hd": 0.466
+  },
+  "boss_fruity": {
+   "file": "combat/boss_fruity.png",
+   "frameWidth": 82,
+   "frameHeight": 121,
+   "hd": 0.3967
   }
  }
 }

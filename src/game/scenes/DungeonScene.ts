@@ -777,6 +777,177 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.emit("rule", null);
   }
 
+  // ------------------------------------------------------------------ Reinhardt Crobley: the end
+
+  /** Cartoon blood: little red bits that arc, fall and leave splats on the floor. */
+  private gore(x: number, y: number, n: number, power = 1, upward = false) {
+    const floor = this.side ? this.groundY : this.bounds.bottom;
+    for (let i = 0; i < n; i++) {
+      const sz = 2 + Math.random() * 5;
+      const r = this.add.rectangle(x, y, sz, sz, Math.random() < 0.7 ? 0xdc2626 : 0x7f1d1d).setDepth(960);
+      let vx = (Math.random() - 0.5) * 9 * power;
+      let vy = upward ? -(6 + Math.random() * 9) * power : (Math.random() - 0.8) * 9 * power;
+      const ev = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          vy += 0.45;
+          r.x += vx;
+          r.y += vy;
+          vx *= 0.99;
+          if (r.y >= floor - 2) {
+            ev.remove();
+            const splat = this.add.ellipse(r.x, floor - 1, 6 + Math.random() * 14, 3 + Math.random() * 3, 0xb91c1c, 0.9).setDepth(6);
+            this.tweens.add({ targets: splat, alpha: 0.5, delay: 6000, duration: 4000 });
+            r.destroy();
+          }
+        },
+      });
+      this.time.delayedCall(4000, () => {
+        ev.remove();
+        if (r.active) r.destroy();
+      });
+    }
+  }
+
+  private screenSplat(n = 4) {
+    for (let i = 0; i < n; i++) {
+      const sp = this.add.circle(80 + Math.random() * 800, 60 + Math.random() * 300, 30 + Math.random() * 60, 0xb91c1c, 0.75).setScrollFactor(0).setDepth(990);
+      this.tweens.add({ targets: sp, y: sp.y + 140, scaleY: 1.6, alpha: 0, delay: 700, duration: 2200, onComplete: () => sp.destroy() });
+    }
+  }
+
+  private bigText(t: string, color: string, size = 46, y = 150) {
+    const tx = this.add.text(480, y, t, { fontFamily: "Impact, sans-serif", fontSize: `${size}px`, color, stroke: "#000", strokeThickness: 8 }).setOrigin(0.5).setScrollFactor(0).setDepth(995).setScale(0.2);
+    this.tweens.add({ targets: tx, scale: 1, duration: 220, ease: "Back.out" });
+    this.tweens.add({ targets: tx, alpha: 0, delay: 1400, duration: 400, onComplete: () => tx.destroy() });
+  }
+
+  /** An entirely unnecessary, deeply cartoonish death. */
+  private async reinhardtDeath(b: Boss) {
+    const x = b.x;
+    const y = b.y;
+    const key = b.texture.key;
+    // textures carry an "hd" factor that setScale multiplies in, so undo it for the stand-ins
+    const sc = b.scaleX / (((b.texture.customData as { hd?: number } | undefined)?.hd) ?? 1);
+    this.tweens.killTweensOf(b);
+    b.setVisible(false);
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    cam.pan(x, y, 400, "Sine.easeInOut");
+    cam.zoomTo(1.5, 400);
+    const wait = (ms: number) => new Promise<void>((r) => this.time.delayedCall(ms, () => r()));
+    const body = this.add.image(x, y, key, 0).setScale(sc).setDepth(955).setFlipX(b.flipX);
+    await wait(450);
+    // he takes every bullet he ever fired, all at once
+    this.bigText("OVERKILL", "#ef4444");
+    for (let i = 0; i < 12; i++) {
+      this.time.delayedCall(i * 70, () => {
+        synth.play(i % 3 ? "hit" : "crit");
+        body.setAngle((Math.random() - 0.5) * 20).setX(x + (Math.random() - 0.5) * 16);
+        this.gore(x + (Math.random() - 0.5) * 40, y - 10 + (Math.random() - 0.5) * 60, 8, 1);
+        cam.shake(60, 0.01);
+      });
+    }
+    await wait(950);
+    // the head comes off
+    const fw = body.frame.width;
+    const fh = body.frame.height;
+    const head = this.add.image(x, y, key, 0).setScale(sc).setDepth(958).setFlipX(b.flipX).setCrop(0, 0, fw, fh * 0.32);
+    body.setCrop(0, fh * 0.32, fw, fh * 0.68);
+    synth.play("explode");
+    this.screenSplat(5);
+    this.bigText("HEADSHOT", "#fde047", 40, 200);
+    this.tweens.add({ targets: head, y: y - 260, x: x + 140, angle: 720, duration: 900, ease: "Quad.out", yoyo: false });
+    // neck fountain
+    const neck = { x, y: y - (fh * sc) * 0.18 };
+    const fountain = this.time.addEvent({ delay: 45, loop: true, callback: () => this.gore(neck.x, neck.y, 5, 0.8, true) });
+    this.tweens.add({ targets: body, angle: { from: -6, to: 6 }, yoyo: true, repeat: 6, duration: 110 });
+    await wait(1300);
+    // the body bursts into chunks
+    fountain.remove();
+    synth.play("explode");
+    synth.play("boom");
+    this.screenSplat(7);
+    this.bigText("CROBLITERATED", "#f472b6", 50, 220);
+    cam.flash(250, 200, 0, 0);
+    cam.shake(400, 0.03);
+    body.destroy();
+    const cols = 3;
+    const rows = 3;
+    for (let cx = 0; cx < cols; cx++)
+      for (let cy = 0; cy < rows; cy++) {
+        const chunk = this.add.image(x, y, key, 0).setScale(sc).setDepth(957).setFlipX(b.flipX).setCrop((fw / cols) * cx, fh * 0.32 + ((fh * 0.68) / rows) * cy, fw / cols, (fh * 0.68) / rows);
+        const tx = x + (cx - 1) * (120 + Math.random() * 160);
+        this.tweens.add({ targets: chunk, x: tx, y: (this.side ? this.groundY : y + 80) - 20, angle: (Math.random() - 0.5) * 900, duration: 700 + Math.random() * 300, ease: "Quad.in" });
+      }
+    this.gore(x, y, 120, 1.8);
+    // a single sausage rolls out of the wreckage
+    const sausage = this.add.text(x, y, "🌭", { fontSize: "34px" }).setOrigin(0.5).setDepth(959);
+    this.tweens.add({ targets: sausage, x: x - 220, angle: -720, y: (this.side ? this.groundY : y + 80) - 18, duration: 1400, ease: "Quad.out" });
+    await wait(900);
+    // the head lands. it has one last thing to say
+    this.tweens.killTweensOf(head);
+    head.setPosition(x + 180, (this.side ? this.groundY : y + 80) - 30).setAngle(-90);
+    await this.talk([say("REINHARDT CROBLEY", "(the head, on the floor) heh… heh… heh… you'll never… prove… I…")]);
+    // a giant fibreglass Crobley falls from the ceiling. directly onto it.
+    const giant = this.add.image(head.x, -200 + cam.worldView.y, this.textures.exists("p_crobley") ? "p_crobley" : "p_coin").setScale(9).setDepth(961);
+    await new Promise<void>((r) => this.tweens.add({ targets: giant, y: head.y - 30, duration: 500, ease: "Quad.in", onComplete: () => r() }));
+    synth.play("smash");
+    synth.play("explode");
+    cam.shake(500, 0.04);
+    this.screenSplat(10);
+    this.gore(head.x, head.y, 80, 2);
+    head.destroy();
+    this.bigText("FLAWLESS NIBBLE", "#ffd23f", 48, 180);
+    await wait(1500);
+    this.tweens.add({ targets: giant, alpha: 0, duration: 800 });
+    cam.zoomTo(1, 500);
+    cam.startFollow(this.player.spr, true, 0.12, 0.12);
+    await wait(600);
+  }
+
+  /** The central fuel tank: shoot it, and everything ends. */
+  private fuelTankFinale() {
+    return new Promise<void>((resolve) => {
+      const r = this.room;
+      const x = r.w / 2;
+      const y = this.side ? this.groundY - 70 : r.h / 2;
+      const tex = this.textures.exists("p_fueltank") ? "p_fueltank" : undefined;
+      const tank = new Enemy(this, "fuel_tank", x, y, 1, undefined, tex);
+      if (tex) tank.setScale(2.6);
+      (tank.body as Phaser.Physics.Arcade.Body).setImmovable(true);
+      tank.hpBar = this.add.graphics().setDepth(800);
+      this.enemies.push(tank);
+      this.enemyGroup.add(tank);
+      (tank.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+      this.tweens.add({ targets: tank, scaleX: tank.scaleX * 1.04, yoyo: true, repeat: -1, duration: 300 });
+      const label = this.add.text(x, y - 110, "▼ SHOOT IT ▼", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#facc15", stroke: "#000", strokeThickness: 6 }).setOrigin(0.5).setDepth(900);
+      this.tweens.add({ targets: label, y: label.y - 10, yoyo: true, repeat: -1, duration: 400 });
+      this.talk([
+        dir("Reinhardt Crobley is everywhere and nowhere. Mostly everywhere. In the middle of the Core, the central fuel tank hums."),
+        dir("SHOOT THE FUEL TANK to destroy this entire forsaken fucking place, and ensure that even if Reinhardt comes back to life he will never be able to spread right-wing propaganda ever again!"),
+      ]).then(() => {
+        this.busy = false;
+        this.toast("THE CENTRAL FUEL TANK", "Shoot it. Destroy this entire forsaken fucking place.");
+      });
+      this.events.once("fuel-tank-dead", async (tx: number, ty: number) => {
+        this.busy = true;
+        label.destroy();
+        for (let i = 0; i < 14; i++)
+          this.time.delayedCall(i * 120, () => {
+            synth.play("explode");
+            const c = this.add.circle(tx + (Math.random() - 0.5) * 300, ty + (Math.random() - 0.5) * 200, 20, i % 2 ? 0xfde047 : 0xf97316, 0.9).setDepth(970);
+            this.tweens.add({ targets: c, radius: 160, alpha: 0, duration: 600, onComplete: () => c.destroy() });
+            this.cameras.main.shake(150, 0.02);
+          });
+        await new Promise<void>((r2) => this.time.delayedCall(1700, () => r2()));
+        this.cameras.main.flash(600, 255, 255, 255);
+        resolve();
+      });
+    });
+  }
+
   // ------------------------------------------------------------------ bosses
 
   private async startBoss() {
@@ -798,6 +969,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const bb = b.body as Phaser.Physics.Arcade.Body;
       bb.setCollideWorldBounds(true);
       if ((b as any).sideGravity) bb.setGravityY(1500);
+      // fit the hitbox to the art so big bosses stand on the floor rather than hovering over it
+      const fw = b.frame.width;
+      const fh = b.frame.height;
+      bb.setSize(fw * 0.6, fh * 0.85).setOffset(fw * 0.2, fh * 0.15);
       if (r.boss === "rik") b.setPosition(r.w / 2, this.groundY - 120);
     }
     b.setAlpha(0);
@@ -838,6 +1013,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (const sh of [...this.shots]) this.killShot(sh);
     this.rule = null;
     G.emit("rule", null);
+    if (b.bossId === "reinhardt") {
+      await this.reinhardtDeath(b);
+      await this.fuelTankFinale();
+    }
     if (this.dungeon.arenaFlag) {
       await this.talk(BOSS_TEXT[b.bossId].outro);
       s.flags[this.dungeon.arenaFlag] = true;
@@ -845,7 +1024,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       s.hp = maxHp(s);
       s.phase = "hub";
       G.save();
-      const vig = b.bossId === "flatmate" ? "flatmate" : b.bossId === "rival" ? "rival" : b.bossId === "rik" ? "sanmik_finale" : null;
+      const vig = b.bossId === "flatmate" ? "flatmate" : b.bossId === "rival" ? "rival" : b.bossId === "rik" ? "sanmik_finale" : b.bossId === "reinhardt" ? "crobley_boom" : null;
       this.time.delayedCall(800, () => {
         this.transitioning = true;
         if (vig) switchTo(this, "Vignette", { id: vig, returnAt: this.dungeon.returnAt });
@@ -1360,6 +1539,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const up = addFart(4);
       if (up) this.fartLevelUp(up);
     }
+    if (e.def.id === "fuel_tank") {
+      this.events.emit("fuel-tank-dead", e.x, e.y);
+      return;
+    }
     this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
     if (e instanceof Boss) {
       this.boss = null;
@@ -1556,6 +1739,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private talk(lines: Line[]): Promise<void> {
     this.paused = true;
     const t0 = Date.now();
+    // "YOU" in boss scripts means whoever you're playing as
+    lines = lines.map((l) => (l.s === "YOU" ? { ...l, s: G.s.player } : l));
     return runDialogue(this, lines).then(() => {
       if (G.rt.timerEnd) G.rt.timerEnd += Date.now() - t0;
       this.controls?.swallow();
@@ -1640,7 +1825,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       }
       e.setDepth(e.y);
       // contact damage
-      if (!this.busy && now > e.contactCd && !this.player.isHidden() && Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y) < e.radius + 10) {
+      if (!this.busy && e.def.damage > 0 && now > e.contactCd && !this.player.isHidden() && Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y) < e.radius + 10) {
         e.contactCd = now + 700;
         this.damagePlayer(e.contactDamage(), e);
       }

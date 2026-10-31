@@ -11,6 +11,7 @@ import type { SpriteLook } from "../../data/characters";
 import { bump } from "../systems/stats";
 import { switchTo } from "../Flow";
 import { DUNGEONS } from "../../data/dungeons";
+import { completeStep, currentArcSteps } from "../systems/arcs";
 
 const DUNGEON_MUSIC: Record<string, string> = Object.fromEntries(Object.values(DUNGEONS).map((d) => [d.id, d.music]));
 
@@ -227,6 +228,7 @@ export class TVScene extends Phaser.Scene {
         label: `${ch}  ${avail.length ? `(${avail.length})` : "[LOCKED PROGRAMME]"}`,
         dim: !avail.length,
         action: () => {
+          if (this.crobleyBreak()) return;
           if (!avail.length) {
             this.flashCard(eps[0]?.unlockHint ?? "Not broadcasting yet.");
             return;
@@ -237,6 +239,18 @@ export class TVScene extends Phaser.Scene {
     });
     items.push({ label: "⏏ Turn off", dim: false, action: () => this.exit() });
     this.renderList(this.fromTitle ? "KRELWORLD MEDIA ARCHIVE" : "KRELTV — CHANNEL GUIDE", items);
+  }
+
+  /** While the Crobley story is breaking, every channel is the Crobley story. */
+  private crobleyBreak() {
+    if (this.fromTitle) return false;
+    const c = currentArcSteps(G.s).find((x) => x.arc.id === "arc_crobley" && x.step.id === "tv");
+    if (!c) return false;
+    completeStep(G.s, c.arc, c.step);
+    G.save();
+    synth.stopMusic();
+    switchTo(this, "Vignette", { id: "crobley_news", returnAt: this.caller === "Pub" ? "PUB" : "HOME" });
+    return true;
   }
 
   private showEpisodes(ch: string) {

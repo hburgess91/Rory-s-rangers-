@@ -71,6 +71,11 @@ export const ENEMIES: Record<string, EnemyDef> = {
   hottub_bubble: { id: "hottub_bubble", name: "Hot Tub Bubble (Origin Unknown)", behavior: "orbiter", hp: 30, speed: 110, damage: 8, size: 13, color: 0xbae6fd, accent: 0xffffff, shape: "bubble", projectile: { speed: 190, damage: 8, color: 0xe0f2fe, rate: 1200 }, coins: 4, krezz: 4 },
   jam_donut: { id: "jam_donut", name: "Jam Donut (Avenging Sister)", behavior: "chaser", hp: 34, speed: 130, damage: 10, size: 13, color: 0xd6a35c, accent: 0xdc2626, shape: "blob", label: "o", coins: 4, krezz: 4 },
   biofilm: { id: "biofilm", name: "Biofilm", behavior: "chaser", hp: 40, speed: 95, damage: 11, size: 14, color: 0x84cc16, accent: 0x3f6212, shape: "blob", coins: 4, krezz: 4 },
+  crobley_minion: { id: "crobley_minion", name: "Brainwashed Crobley", behavior: "swarm", hp: 26, speed: 145, damage: 9, size: 12, color: 0xf9a8d4, accent: 0x9d174d, shape: "blob", label: "o", coins: 3, krezz: 3 },
+  crobage: { id: "crobage", name: "Crobage (Sausage)", behavior: "charger", hp: 70, speed: 90, damage: 15, size: 17, color: 0xb45309, accent: 0xfcd34d, shape: "brute", coins: 7, krezz: 5 },
+  crobley_guard: { id: "crobley_guard", name: "Crobley Corp Security", behavior: "shooter", hp: 60, speed: 80, damage: 12, size: 16, color: 0x111827, accent: 0xf9a8d4, shape: "humanoid", label: "C", projectile: { speed: 240, damage: 11, color: 0xf472b6, rate: 1200, spread: 0.18, count: 3 }, coins: 8, krezz: 6 },
+  candy_drone: { id: "candy_drone", name: "Jingle Drone", behavior: "orbiter", hp: 40, speed: 110, damage: 9, size: 14, color: 0xfbcfe8, accent: 0xdb2777, shape: "drone", label: "♪", projectile: { speed: 220, damage: 9, color: 0xfbcfe8, rate: 1300 }, coins: 5, krezz: 5 },
+  fuel_tank: { id: "fuel_tank", name: "THE CENTRAL FUEL TANK", behavior: "spawner", hp: 120, speed: 0, damage: 0, size: 30, color: 0xfacc15, accent: 0x111827, shape: "box", label: "!", coins: 0, krezz: 0 },
   pepsi_normal: { id: "pepsi_normal", name: "Pepsi Normal", behavior: "charger", hp: 40, speed: 120, damage: 12, size: 13, color: 0x1d4ed8, accent: 0xef4444, shape: "box", label: "P", coins: 5, krezz: 4 },
   invoice: { id: "invoice", name: "Unpaid Bill", behavior: "swarm", hp: 16, speed: 140, damage: 7, size: 11, color: 0xffffff, accent: 0xdc2626, shape: "page", label: "£", coins: 2, krezz: 2 },
 };

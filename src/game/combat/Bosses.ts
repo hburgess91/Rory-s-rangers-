@@ -1118,6 +1118,285 @@ export class RikBoss extends Boss {
   }
 }
 
+// ----------------------------------------------------------------- THE CROBLEY FACTORY
+
+/** Shared bits for the side-on Crobley bosses: walk along the floor towards you. */
+abstract class CrobleyBoss extends Boss {
+  sideGravity = true;
+  protected walk(speed: number, keep = 140) {
+    const p = this.world.player;
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    const dir = p.x < this.x ? -1 : 1;
+    this.setFlipX(dir < 0);
+    const vx = Math.abs(p.x - this.x) > keep ? dir * speed * this.world.enemyTimeScale : 0;
+    if (this.world.side) body.setVelocityX(vx);
+    else body.setVelocity(vx, 0);
+  }
+  protected hop(v = -700) {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (this.world.side && (body.blocked.down || body.touching.down)) body.setVelocityY(v);
+  }
+  protected say(t: string, color = "#ffffff") {
+    this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, t, color, 15);
+  }
+}
+
+/** Flirts with everyone. Mostly you. */
+export class FlirtCrobleyBoss extends CrobleyBoss {
+  dashUntil = 0;
+  dashDir = 1;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "flirt", x, y, 2000, w.sc.textures.exists("boss_flirt") ? "boss_flirt" : "boss_flatmate", 32, 0xf472b6, 32, 48);
+    this.setScale(2.6);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    this.setFrame(Math.floor(now / 230) % 3);
+    if (now < this.dashUntil) {
+      (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.dashDir * 520);
+      return;
+    }
+    this.walk(this.phase ? 110 : 85, 180);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 4;
+    this.taunt();
+    if (pick === 0) {
+      // blown kisses: hearts that drift after you
+      for (let i = 0; i < (this.phase ? 6 : 4); i++)
+        this.world.sc.time.delayedCall(i * 140, () => {
+          if (!this.active) return;
+          this.world.shoot(this.x, this.y - 20, { owner: "enemy", damage: 9, speed: 200, angle: Math.atan2(p.y - this.y, p.x - this.x) + (Math.random() - 0.5) * 0.6, color: 0xf472b6, scale: 1.8, life: 3200, homing: 1.1 });
+        });
+      this.say("MWAH! MWAH!", "#f9a8d4");
+      this.nextPattern = now + 1800;
+    } else if (pick === 1) {
+      // "come here, handsome": a lunge
+      this.dashDir = p.x < this.x ? -1 : 1;
+      this.world.enemyLine(this.x, this.y, this.dashDir > 0 ? 0 : Math.PI, 600, 60, 0, 650 * this.world.telegraphMult);
+      this.world.sc.time.delayedCall(650 * this.world.telegraphMult, () => (this.dashUntil = this.world.now() + 700));
+      this.say("COME HERE, HANDSOME", "#f9a8d4");
+      this.nextPattern = now + 2300;
+    } else if (pick === 2) {
+      // a wink so powerful it has a blast radius
+      this.world.enemyAoe(p.x, p.y, 90, 14, 800, 0xec4899);
+      this.world.enemyAoe(p.x + 160, p.y, 70, 12, 1000, 0xec4899);
+      this.world.enemyAoe(p.x - 160, p.y, 70, 12, 1000, 0xec4899);
+      this.say("*WINK*", "#f9a8d4");
+      this.nextPattern = now + 2000;
+    } else {
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy("crobley_minion", this.x + (i - 1) * 60, this.y, { minion: true });
+      this.say("BOYS? BOYS! SHE'S BEING MEAN TO ME", "#f9a8d4");
+      this.nextPattern = now + 2400;
+    }
+  }
+}
+
+/** Gary from Basingstoke. Did not ask for any of this. */
+export class ChineseCrobleyBoss extends CrobleyBoss {
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "lantern", x, y, 2200, w.sc.textures.exists("boss_lantern") ? "boss_lantern" : "boss_flatmate", 32, 0xdc2626, 32, 48);
+    this.setScale(2.6);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const gy = this.world.groundY ?? this.world.bounds.bottom;
+    this.setFrame(Math.floor(now / 260) % 3);
+    this.walk(this.phase ? 80 : 60, 220);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 4;
+    this.taunt();
+    if (pick === 0) {
+      // the fireworks Reinhardt insisted on: up, then down on you
+      for (let i = 0; i < (this.phase ? 5 : 4); i++) {
+        const tx = p.x + (i - 2) * 110;
+        this.world.enemyAoe(tx, Math.min(gy - 20, p.y), 70, 14, 900 + i * 160, [0xef4444, 0xfacc15, 0x22c55e, 0x60a5fa, 0xe879f9][i % 5]);
+      }
+      this.say("FIREWORKS. AGAIN. FINE.", "#fca5a5");
+      this.nextPattern = now + 2200;
+    } else if (pick === 1) {
+      // the plastic gong: a shockwave along the floor. Jump.
+      this.world.shake(250, 0.012);
+      this.world.enemyLine(this.x, gy - 14, 0, 900, 36, 16, 700 * this.world.telegraphMult);
+      this.world.enemyLine(this.x, gy - 14, Math.PI, 900, 36, 16, 700 * this.world.telegraphMult);
+      this.say("*BONG* (it's plastic)", "#fde68a");
+      this.nextPattern = now + 2100;
+    } else if (pick === 2) {
+      // paper lanterns, floating after you, slowly
+      for (let i = 0; i < (this.phase ? 5 : 3); i++) this.world.shoot(this.x, this.y - 40, { owner: "enemy", damage: 11, speed: 120, angle: -Math.PI / 2 + (i - 1) * 0.7, color: 0xef4444, scale: 2.6, life: 4500, homing: 1.4 });
+      this.say("THEY'RE NOT EVEN PROPER LANTERNS", "#fca5a5");
+      this.nextPattern = now + 2000;
+    } else {
+      this.fan(this.phase ? 9 : 7, 0.2, 240, 10, 0xfacc15);
+      this.say("I'M FROM BASINGSTOKE", "#fde68a");
+      this.nextPattern = now + 1600;
+    }
+  }
+}
+
+/** Fabulous. Knows it. Reinhardt wrote him as a joke; the joke is very much on Reinhardt. */
+export class FruityCrobleyBoss extends CrobleyBoss {
+  strutUntil = 0;
+  strutDir = 1;
+  posingUntil = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "fruity", x, y, 2300, w.sc.textures.exists("boss_fruity") ? "boss_fruity" : "boss_flatmate", 32, 0xf472b6, 32, 48);
+    this.setScale(2.6);
+  }
+  incoming(amount: number, opts?: { source?: string }): number {
+    return this.world.now() < this.posingUntil ? amount * 0.15 : super.incoming(amount, opts);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    this.setFrame(Math.floor(now / 200) % 3);
+    if (now < this.posingUntil) {
+      (this.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
+      this.setTint(0xfde68a);
+      return;
+    }
+    if (now < this.strutUntil) {
+      (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.strutDir * 480);
+      return;
+    }
+    this.walk(this.phase ? 130 : 100, 160);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 5;
+    this.taunt();
+    if (pick === 0) {
+      // disco ball: a spinning ring of glitter
+      for (let k = 0; k < 3; k++) this.world.sc.time.delayedCall(k * 260, () => this.active && this.ring(this.phase ? 16 : 12, 190, 9, [0xf0abfc, 0x93c5fd, 0xfde68a][k], k * 0.25));
+      this.say("DISCO, DARLING", "#f0abfc");
+      this.nextPattern = now + 2000;
+    } else if (pick === 1) {
+      this.strutDir = p.x < this.x ? -1 : 1;
+      this.world.enemyLine(this.x, this.y, this.strutDir > 0 ? 0 : Math.PI, 700, 60, 0, 600 * this.world.telegraphMult);
+      this.world.sc.time.delayedCall(600 * this.world.telegraphMult, () => (this.strutUntil = this.world.now() + 800));
+      this.say("CATWALK!", "#f0abfc");
+      this.nextPattern = now + 2300;
+    } else if (pick === 2) {
+      // glitter beam
+      this.world.enemyLine(this.x, this.y - 10, Math.atan2(p.y - this.y, p.x - this.x), 900, 46, 18, 800 * this.world.telegraphMult);
+      this.say("SERVE.", "#fde68a");
+      this.nextPattern = now + 1900;
+    } else if (pick === 3) {
+      this.posingUntil = now + 1500;
+      this.say("VOGUE (YOU CAN'T TOUCH THIS)", "#fde68a");
+      this.nextPattern = now + 2200;
+    } else {
+      this.hop(-820);
+      this.world.sc.time.delayedCall(800, () => {
+        if (!this.active || this.dead) return;
+        this.clearTint();
+        this.world.shake(200, 0.01);
+        this.ring(this.phase ? 14 : 10, 220, 10, 0xf472b6, 0);
+      });
+      this.say("DEATH DROP", "#f0abfc");
+      this.nextPattern = now + 2100;
+    }
+    if (now >= this.posingUntil) this.clearTint();
+  }
+}
+
+/** A candy in a tank. Loves freedom. Fires it at you. */
+export class TankCrobleyBoss extends CrobleyBoss {
+  rollUntil = 0;
+  rollDir = 1;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "tank", x, y, 2800, w.sc.textures.exists("boss_tankc") ? "boss_tankc" : "boss_flatmate", 32, 0x4d7c0f, 32, 48);
+    this.setScale(3);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const gy = this.world.groundY ?? this.world.bounds.bottom;
+    this.setFrame(Math.floor(now / 150) % 3);
+    if (now < this.rollUntil) {
+      (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.rollDir * 600);
+      return;
+    }
+    this.walk(this.phase ? 75 : 55, 260);
+    if (now < this.nextPattern) return;
+    const pick = this.patternIdx++ % 5;
+    this.taunt();
+    if (pick === 0) {
+      // cannon: a shell lobbed at where you are
+      for (let i = 0; i < (this.phase ? 3 : 2); i++) this.world.enemyAoe(p.x + (i - 0.5) * 140 * (this.phase ? 1 : 0.5), Math.min(gy - 20, p.y), 95, 20, 1000 + i * 250, 0xf97316);
+      this.say("BOOM. FREEDOM.", "#fdba74");
+      this.nextPattern = now + 2100;
+    } else if (pick === 1) {
+      for (let k = 0; k < 6; k++) this.world.sc.time.delayedCall(k * 110, () => this.active && this.world.shoot(this.x, this.y - 30, { owner: "enemy", damage: 8, speed: 320, angle: Math.atan2(p.y - this.y, p.x - this.x) + (k - 3) * 0.06, color: 0xfacc15, life: 2500 }));
+      this.say("RAT-A-TAT AMERICA", "#fde68a");
+      this.nextPattern = now + 1700;
+    } else if (pick === 2) {
+      this.rollDir = p.x < this.x ? -1 : 1;
+      this.world.enemyLine(this.x, this.y, this.rollDir > 0 ? 0 : Math.PI, 900, 80, 0, 800 * this.world.telegraphMult);
+      this.world.sc.time.delayedCall(800 * this.world.telegraphMult, () => (this.rollUntil = this.world.now() + 1200));
+      this.say("RAMMING SPEED (JUMP!)", "#fdba74");
+      this.nextPattern = now + 2700;
+    } else if (pick === 3) {
+      // air support: a line of strikes walking across the floor
+      this.say("AIR SUPPORT INBOUND", "#93c5fd");
+      const b = this.world.bounds;
+      for (let i = 0; i < 9; i++) this.world.enemyAoe(b.left + 80 + ((b.width - 160) * i) / 8, gy - 30, 70, 16, 900 + i * 150, 0xef4444);
+      this.nextPattern = now + 2800;
+    } else {
+      for (let i = 0; i < (this.phase ? 3 : 2); i++) this.world.spawnEnemy("crobage", this.x + (i ? 90 : -90), this.y, { minion: true });
+      this.say("REINFORCEMENTS!", "#fdba74");
+      this.nextPattern = now + 2500;
+    }
+  }
+}
+
+/** Reinhardt Crobley. CEO. Son. Suspect. Squawk-intolerant. */
+export class ReinhardtBoss extends CrobleyBoss {
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "reinhardt", x, y, 3600, w.sc.textures.exists("boss_reinhardt") ? "boss_reinhardt" : "boss_flatmate", 32, 0x111827, 32, 48);
+    this.setScale(3);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const gy = this.world.groundY ?? this.world.bounds.bottom;
+    this.setFrame(Math.floor(now / 220) % 3);
+    this.walk(this.phase === 2 ? 120 : this.phase ? 95 : 75, 240);
+    if (this.phase === 2) this.setTint(0xffaaaa);
+    if (now < this.nextPattern) return;
+    const crowd = this.world.enemies.filter((e) => !e.dead && !e.isBoss).length;
+    let pick = this.patternIdx++ % 5;
+    if (crowd >= 10 && pick === 3) pick = 0;
+    this.taunt();
+    if (pick === 0) {
+      // the machine gun, sprayed in an arc
+      const base = Math.atan2(p.y - this.y, p.x - this.x);
+      const n = this.phase === 2 ? 14 : 10;
+      for (let k = 0; k < n; k++) this.world.sc.time.delayedCall(k * 70, () => this.active && this.world.shoot(this.x, this.y - 20, { owner: "enemy", damage: 8, speed: 360, angle: base + (k - n / 2) * 0.07, color: 0xfde047, life: 2400 }));
+      this.say("HEH HEH HEH", "#fca5a5");
+      this.nextPattern = now + 1900;
+    } else if (pick === 1) {
+      // he can't hear you over the squawking: a sonic ring
+      this.ring(this.phase ? 18 : 14, 200, 10, 0xe5e7eb, Math.random());
+      this.world.sc.time.delayedCall(350, () => this.active && this.ring(this.phase ? 18 : 14, 160, 10, 0xe5e7eb, Math.random()));
+      this.say("ALL I HEAR IS SQUAWKING", "#e5e7eb");
+      this.nextPattern = now + 1900;
+    } else if (pick === 2) {
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.enemyAoe(p.x + (i - 1) * 120, Math.min(gy - 20, p.y), 75, 18, 900 + i * 180, 0xfacc15);
+      this.say("CORN GRENADES", "#fde047");
+      this.nextPattern = now + 2100;
+    } else if (pick === 3) {
+      for (let i = 0; i < (this.phase ? 4 : 3); i++) this.world.spawnEnemy(i % 2 ? "crobage" : "crobley_guard", this.x + (i - 1.5) * 80, this.y, { minion: true });
+      this.say("CROBAGES! TO ME!", "#fdba74");
+      this.nextPattern = now + 2600;
+    } else {
+      this.hop(-760);
+      this.world.sc.time.delayedCall(850, () => {
+        if (!this.active || this.dead) return;
+        this.world.shake(300, 0.016);
+        this.world.enemyLine(this.x, gy - 14, 0, 700, 40, 18, 150);
+        this.world.enemyLine(this.x, gy - 14, Math.PI, 700, 40, 18, 150);
+      });
+      this.say("JUST LIKE MY FATHER", "#fca5a5");
+      this.nextPattern = now + 2300;
+    }
+  }
+}
+
 export function createBoss(id: string, w: CombatWorld, x: number, y: number): Boss {
   switch (id) {
     case "hoard":
@@ -1148,6 +1427,16 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
       return new JamQueenBoss(w, x, y);
     case "rik":
       return new RikBoss(w, x, y);
+    case "flirt":
+      return new FlirtCrobleyBoss(w, x, y);
+    case "lantern":
+      return new ChineseCrobleyBoss(w, x, y);
+    case "fruity":
+      return new FruityCrobleyBoss(w, x, y);
+    case "tank":
+      return new TankCrobleyBoss(w, x, y);
+    case "reinhardt":
+      return new ReinhardtBoss(w, x, y);
     default:
       return new DrongusBoss(w, x, y);
   }

@@ -435,7 +435,27 @@ export function portraitKey(scene: Phaser.Scene, speaker: string): string | null
   }
   const s = speaker.toUpperCase();
   if (s === "NARRATOR" || s === "") return null;
-  const art = s.includes("GABOR") ? "p_gabor" : s === "GENIE" ? "p_genie" : s.includes("BEGOUR") ? "p_begour" : "";
+  const art = s.includes("GABOR")
+    ? "p_gabor"
+    : s === "GENIE"
+      ? "p_genie"
+      : s.includes("BEGOUR")
+        ? "p_begour"
+        : s.includes("REINHARDT")
+          ? "p_reinhardt"
+          : s.startsWith("FLIRT CROBLEY")
+            ? "p_flirt"
+            : s.startsWith("CHINESE CROBLEY")
+              ? "p_lantern"
+              : s.startsWith("FRUITY CROBLEY")
+                ? "p_fruity"
+                : s.startsWith("TANK CROBLEY")
+                  ? "p_tankc"
+                  : s.includes("JAM QUEEN")
+                    ? "p_jam"
+                    : s === "UNCLE RIK" && scene.scene.key === "Dungeon"
+                      ? "p_rik"
+                      : "";
   if (art && scene.textures.exists(art)) return art;
   const named = SPEAKER_SPRITES[s] ?? (scene.textures.exists(`spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}`) ? `spr_TV_${s.replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "")}` : scene.textures.exists(`spr_${s}`) ? `spr_${s}` : "");
   if (named) {

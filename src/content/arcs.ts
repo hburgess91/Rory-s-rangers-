@@ -1266,6 +1266,58 @@ export const ARCS: Arc[] = [
       },
     ],
   },
+  {
+    id: "arc_crobley",
+    player: "ALL",
+    minChapter: 5,
+    title: "Nibble On A Crobley",
+    blurb: "The Crobley Corporation has been taken over by Reinhardt Crobley. Something is very wrong with the new advert. Something is very wrong with Reinhardt.",
+    reward: { coins: 500, desc: "A lifetime supply of Crobleys, recovered from the crater. Slightly singed. Still nibble-able." },
+    steps: [
+      {
+        id: "tv",
+        text: "Something huge is on KrelTV, on every channel. Watch it: any telly (home, the Krezz Arms, the big screen by the Tap).",
+        at: "HOME",
+        step: { kind: "vignette", id: "crobley_news", intro: [dir("You put the telly on. Every channel is showing the same thing.")] },
+      },
+      {
+        id: "brief",
+        text: "Briefing with the lads in the FGM War Room (under the Archive): what do we do about Reinhardt Crobley?",
+        at: "ARCHIVE",
+        step: {
+          kind: "dialogue",
+          lines: [
+            dir("The FGM War Room. Somebody has pinned a photo of Reinhardt Crobley to the corkboard and drawn devil horns on it. Somebody else has drawn a second set of horns on the first set."),
+            say("KREBLIS", "Krelmergency. I repeat. Krelmergency. A man shot a newsreader on live telly and then confessed to killing his dad. On the six o'clock news."),
+            say("KREZMAR", "And the cameraman. Don't forget the cameraman. Nobody ever remembers the cameraman."),
+            say("SCROMBUS", "The advert though. Did you hear the jingle? I heard it. We all heard it. It even SAYS we heard it."),
+            say("KREZWONK", "I foresaw this. I foresaw it the moment he called his alter ego 'someone very close to me… you might even say… myself'."),
+            say("GRONNY", "Crobson was a good man. He gave out free Crobleys at my school. Every Christmas. Corn addiction my arse."),
+            say("FLENKY", "I mean… he's got a point though. The woke stuff has gone too far.", { cond: { notPlayer: "FLENKY" } }),
+            say("CRONGUS", "I mean… he's got a point though. The woke stuff has gone too far.", { cond: { player: "FLENKY" } }),
+            dir("Silence. Everyone turns slowly to look at him."),
+            say("KREBLIS", "He shot a newsreader."),
+            say("FLENKY", "Yeah, no, that bit's bad. I'm just saying. The woke stuff.", { cond: { notPlayer: "FLENKY" } }),
+            say("CRONGUS", "Yeah, no, that bit's bad. I'm just saying. The woke stuff.", { cond: { player: "FLENKY" } }),
+            say("KREZMAR", "Noted. Ignored. Right: Sergeant Swig's doing a press conference at the Constabulary. Let's see what the police are doing about it."),
+            say("SCROMBUS", "Nothing. They're going to do nothing. I'll bet you a Crobley."),
+          ],
+        },
+      },
+      {
+        id: "presser",
+        text: "Sergeant Swig is holding a press conference about the live-TV murder. Go to the Krelford Constabulary with the lads.",
+        at: "POLICE",
+        step: { kind: "vignette", id: "crobley_presser", intro: [dir("The Constabulary briefing room is packed. Every journalist in Krelford is here. Most of them are wearing stab vests. They've met Swig before.")] },
+      },
+      {
+        id: "factory",
+        text: "Storm the Crobley Factory (the gate on the east edge of town). Kill Reinhardt. Save Crobley Corp.",
+        at: "CROBLEY_FACTORY",
+        step: { kind: "arena", dungeon: "crobley_factory", intro: [dir("The gates of the Crobley Factory. The lock has been shot off. By the lads. Just now. They seem very pleased with themselves."), say("KREZMAR", "In you go. We'll handle the… other bit. The bringing-Crobson-back bit. Krezwonk knows a guy.")] },
+      },
+    ],
+  },
 ];
 
 export function arcFor(player: PlayableId): Arc | undefined {

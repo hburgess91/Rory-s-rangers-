@@ -43,6 +43,9 @@ export class VignetteScene extends Phaser.Scene {
       sanmik_lampe: () => this.sanmikLampe(),
       sanmik_nation: () => this.sanmikNation(),
       sanmik_finale: () => this.sanmikFinale(),
+      crobley_news: () => this.crobleyNews(),
+      crobley_presser: () => this.crobleyPresser(),
+      crobley_boom: () => this.crobleyBoom(),
       wahooga: () => this.wahooga(),
     };
     await (run[data.id] ?? (async () => undefined))();
@@ -1393,6 +1396,584 @@ export class VignetteScene extends Phaser.Scene {
       dir("The lamp glows. Pop. You're behind the Krezz Arms bins, slightly damp, smelling faintly of lavender and biofilm."),
     ]);
     G.s.flags.sanmik_tub_fixed = true;
+    synth.stopMusic();
+  }
+
+  // ---------------------------------------------------------------- THE CROBLEY AFFAIR
+
+  /** An image if we have it, otherwise a labelled blob so the scene still reads. */
+  private art(x: number, y: number, key: string, scale: number, fallbackColor = 0xf9a8d4, label = "") {
+    if (this.textures.exists(key)) return (key.startsWith("spr_") ? this.add.image(x, y, key, 0) : this.add.image(x, y, key)).setScale(scale);
+    const c = this.add.container(x, y);
+    c.add(this.add.circle(0, 0, 24 * scale, fallbackColor));
+    if (label) c.add(this.add.text(0, 0, label, { fontFamily: FONT, fontSize: "10px", color: "#000" }).setOrigin(0.5));
+    return c as unknown as Phaser.GameObjects.Image;
+  }
+
+  private tweet(x: number, y: number, text: string, when: string) {
+    const c = this.add.container(x, y).setDepth(300);
+    c.add(this.add.rectangle(0, 0, 560, 150, 0xffffff).setStrokeStyle(2, 0xd1d5db));
+    if (this.textures.exists("p_reinhardt")) c.add(this.add.image(-240, -40, "p_reinhardt").setScale(0.45));
+    else c.add(this.add.circle(-240, -40, 22, 0x111827));
+    c.add(this.add.text(-205, -62, "Reinhardt Crobley ✔", { fontFamily: FONT, fontSize: "16px", color: "#111", fontStyle: "bold" }));
+    c.add(this.add.text(-205, -42, `@ReinhardtCrobley · ${when}`, { fontFamily: FONT, fontSize: "12px", color: "#6b7280" }));
+    c.add(this.add.text(-255, -10, text, { fontFamily: FONT, fontSize: "16px", color: "#111", wordWrap: { width: 510 } }));
+    c.add(this.add.text(-255, 52, "💬 41.2K   🔁 88K   ❤ 212K", { fontFamily: FONT, fontSize: "12px", color: "#6b7280" }));
+    c.setScale(0.2);
+    this.tweens.add({ targets: c, scale: 1, duration: 300, ease: "Back.out" });
+    return c;
+  }
+
+  /** The studio set: desk, newsreader, Reinhardt. */
+  private crobleyStudio() {
+    if (!backdrop(this, "tv_newsdesk", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x0f1b3d);
+    const journo = this.add.sprite(300, 320, "npc_journo", 0).setScale(4.2).setDepth(10);
+    const rein = this.art(660, 330, "p_reinhardt", 2, 0x111827, "REINHARDT").setDepth(10).setFlipX(true);
+    const bug = this.add.text(940, 20, "KRELTV NEWS · LIVE", { fontFamily: FONT, fontSize: "13px", color: "#fff", backgroundColor: "#dc2626", padding: { x: 6, y: 3 } }).setOrigin(1, 0).setDepth(400);
+    void bug;
+    const ticker = this.add.text(960, 515, "BREAKING: CROBLEY CORP CONTROVERSY · NEW ADVERT 'DEEPLY OFFENSIVE' SAY EVERYONE WITH EARS · CEO: 'IT CLEARLY SAYS NIBBLE ON A CROBLEY' · FOUNDER'S DEATH 'MURDER-ADJACENT' · ", { fontFamily: FONT, fontSize: "14px", color: "#fff", backgroundColor: "#991b1b", padding: { x: 4, y: 3 } }).setDepth(400);
+    this.tweens.add({ targets: ticker, x: -1800, duration: 30000, repeat: -1 });
+    // menace: a slow red pulse whenever he's in shot
+    const menace = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 0).setDepth(350).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    this.tweens.add({ targets: menace, fillAlpha: 0.35, yoyo: true, repeat: -1, duration: 1800, ease: "Sine.inOut" });
+    const glint = this.add.star(rein.x - 18, rein.y - 70, 4, 2, 7, 0xffffff).setDepth(20).setAlpha(0);
+    this.tweens.add({ targets: glint, alpha: 1, angle: 90, yoyo: true, repeat: -1, duration: 400, repeatDelay: 3000 });
+    return { journo, rein };
+  }
+
+  private async crobleyNews() {
+    // the channel flips, and flips, and it's always the same thing
+    const stat = this.add.rectangle(480, 270, 960, 540, 0x111111).setDepth(500);
+    const noise = this.add.graphics().setDepth(501);
+    const fuzz = this.time.addEvent({ delay: 50, loop: true, callback: () => {
+      noise.clear();
+      for (let i = 0; i < 300; i++) noise.fillStyle(Math.random() < 0.5 ? 0xffffff : 0x666666, 0.6).fillRect(Math.random() * 960, Math.random() * 540, 4, 3);
+    } });
+    const chans = ["CH 1: GB KREWS", "CH 2: KRELSPORTS", "CH 3: KIDS' KREL", "CH 4: THE COOKING CHANNEL", "CH 5: SHOPPING"];
+    const lbl = this.add.text(480, 270, "", { fontFamily: "monospace", fontSize: "30px", color: "#22c55e", backgroundColor: "#000000aa", padding: { x: 10, y: 6 } }).setOrigin(0.5).setDepth(502);
+    for (const c of chans) {
+      lbl.setText(`${c}\n▶ BREAKING NEWS: CROBLEY`);
+      synth.play("select");
+      await this.wait(550);
+    }
+    fuzz.remove();
+    noise.destroy();
+    stat.destroy();
+    lbl.destroy();
+    const { journo, rein } = this.crobleyStudio();
+    const cam = this.cameras.main;
+    synth.music("ominous");
+    this.caption("BREAKING NEWS", "#ef4444", 40);
+    await this.wait(900);
+    this.lastCaption?.destroy();
+    await this.talk([
+      say("JOURNALIST", "Good evening. Tonight: chaos at the Crobley Corporation, makers of Krelworld's best-loved children's sweet, the humble, circular Crobley."),
+      say("JOURNALIST", "For forty years, families have hummed along to the famous advert. You know the one. 'Nibble on a Crobley.'"),
+      say("JOURNALIST", "But last month, founder Crobson Crobley — beloved, generous, a man who once gave away a free Crobley to every child in Krelford — was found dead in what police describe as 'murder-adjacent' circumstances."),
+      say("JOURNALIST", "The official cause: Mr Crobley is said to have 'unalived himself' as a result of a long-standing corn addiction."),
+      say("JOURNALIST", "However, suspicion immediately turned to his son, Reinhardt, who inherited the company — after posting this, one day before his father's death."),
+    ]);
+    const t1 = this.tweet(480, 170, "I have decided to unalive my father ha ha just joking…. Unless ?", "1 day before");
+    await this.talk([dir("The tweet sits there on the screen. Nobody in the studio says anything for a while.")]);
+    t1.destroy();
+    const t2 = this.tweet(480, 170, "my account got hacked by my alter ego … I mean .. some one very close to me … you might even say .. myself…", "1 hour later");
+    await this.talk([say("JOURNALIST", "He later explained the post as follows.")]);
+    t2.destroy();
+    await this.talk([
+      say("JOURNALIST", "Now Reinhardt Crobley — known for his controversial views on, well, everything — is under fire again, this time over the company's new advert, and its new characters."),
+      say("JOURNALIST", "Critics say the classic jingle now contains deeply offensive language. Viewers have also complained about four new characters, said to be built on crude and offensive stereotypes."),
+      say("JOURNALIST", "Mr Crobley joins me now. Reinhardt — good evening."),
+    ]);
+    cam.zoomTo(1.25, 1200);
+    cam.pan(rein.x - 60, rein.y - 40, 1200);
+    await this.wait(1300);
+    await this.talk([
+      say("REINHARDT CROBLEY", "…"),
+      say("REINHARDT CROBLEY", "Anyone with two bloody working ears can hear it clearly says 'nibble on a Crobley'!"),
+      say("REINHARDT CROBLEY", "These fucking woke-gone-mad type people are off their bloody rocker!"),
+    ]);
+    cam.zoomTo(1, 700);
+    cam.pan(480, 270, 700);
+    await this.wait(750);
+    await this.talk([say("JOURNALIST", "Well. Let's let the viewers decide. Here is the new Crobley advert, in full.")]);
+    synth.stopMusic();
+    await this.crobleyAdvert();
+    // back to the studio
+    await this.talk([
+      say("JOURNALIST", "…"),
+      say("JOURNALIST", "Come on, Reinhardt. We all heard it. It even says we heard it."),
+      say("REINHARDT CROBLEY", "The only thing I can hear is a high-pitched squawking noise coming out of your fucking mouth."),
+      say("REINHARDT CROBLEY", "I've had it!"),
+    ]);
+    // the machine gun
+    const gun = this.art(rein.x - 40, rein.y - 10, "p_mgun", 1.6, 0x111827, "GUN").setDepth(15).setFlipX(true);
+    gun.setScale(0.1);
+    await this.tween({ targets: gun, scale: this.textures.exists("p_mgun") ? 1.6 : 1, duration: 250, ease: "Back.out" });
+    synth.play("telegraph");
+    await this.wait(400);
+    for (let i = 0; i < 16; i++) {
+      this.time.delayedCall(i * 70, () => {
+        synth.play("shoot");
+        cam.shake(60, 0.008);
+        const fl = this.add.star(gun.x - 50, gun.y, 5, 6, 16, 0xfde047).setDepth(16);
+        this.time.delayedCall(50, () => fl.destroy());
+        for (let k = 0; k < 4; k++) {
+          const b = this.add.rectangle(journo.x + (Math.random() - 0.5) * 30, journo.y - 20 + (Math.random() - 0.5) * 50, 4, 4, 0xdc2626).setDepth(14);
+          this.tween({ targets: b, x: b.x - 60 - Math.random() * 80, y: b.y + 40 + Math.random() * 60, alpha: 0, duration: 600 }).then(() => b.destroy());
+        }
+      });
+    }
+    this.tweens.add({ targets: journo, angle: -80, x: journo.x - 60, y: journo.y + 50, delay: 900, duration: 400 });
+    await this.wait(1400);
+    this.add.ellipse(journo.x - 30, 410, 140, 18, 0x991b1b, 0.85).setDepth(11);
+    await this.talk([dir("The newsreader goes down behind the desk. Somewhere, a producer screams. Reinhardt slowly turns. Towards the camera.")]);
+    // he turns it on us
+    cam.zoomTo(1.6, 600);
+    cam.pan(rein.x - 40, rein.y - 30, 600);
+    await this.wait(700);
+    for (let i = 0; i < 10; i++) {
+      this.time.delayedCall(i * 70, () => {
+        synth.play("shoot");
+        cam.flash(40, 255, 240, 160);
+      });
+    }
+    await this.wait(800);
+    // the camera hits the floor
+    const crack = this.add.graphics().setScrollFactor(0).setDepth(600);
+    crack.lineStyle(3, 0xffffff, 0.9);
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + Math.random() * 0.3;
+      crack.lineBetween(560, 230, 560 + Math.cos(a) * (200 + Math.random() * 300), 230 + Math.sin(a) * (200 + Math.random() * 200));
+    }
+    synth.play("smash");
+    cam.zoomTo(1, 10);
+    await this.tween({ targets: cam, rotation: Math.PI / 2, duration: 500, ease: "Bounce.out" });
+    await this.talk([
+      say("REINHARDT CROBLEY", "(off camera) HEH HEH HEH!"),
+      say("REINHARDT CROBLEY", "(off camera) Just like I killed my father!"),
+      say("REINHARDT CROBLEY", "(off camera) The police won't suspect a thing! I have bribed them all!!"),
+      say("REINHARDT CROBLEY", "(off camera) …Is that light still on? Is that thing still—"),
+    ]);
+    cam.setRotation(0);
+    crack.destroy();
+    this.children.removeAll(true);
+    this.lastCaption = undefined;
+    // technical difficulties
+    const bars = [0xffffff, 0xfacc15, 0x22d3ee, 0x22c55e, 0xe879f9, 0xef4444, 0x2563eb];
+    bars.forEach((c, i) => this.add.rectangle(i * (960 / 7), 0, 960 / 7 + 1, 540, c).setOrigin(0));
+    this.add.text(480, 270, "WE ARE EXPERIENCING\nTECHNICAL DIFFICULTIES", { fontFamily: "Impact, sans-serif", fontSize: "44px", color: "#fff", stroke: "#000", strokeThickness: 8, align: "center" }).setOrigin(0.5);
+    synth.play("ding");
+    await this.wait(1500);
+    await this.talk([
+      dir("You stare at the test card for a long time."),
+      ping("KREBLIS", "Did everyone just see that"),
+      ping("KREZMAR", "He shot the cameraman too"),
+      ping("KREZMAR", "Nobody ever remembers the cameraman"),
+      ping("SCROMBUS", "The jingle though"),
+      ping("SCROMBUS", "We all heard it"),
+      ping("KREBLIS", "War Room. Now."),
+    ]);
+  }
+
+  /** The new Crobley advert. 80 seconds. Set to the jingle. */
+  private async crobleyAdvert() {
+    const layer = this.add.container(0, 0).setDepth(700);
+    const timers: Phaser.Time.TimerEvent[] = [];
+    let skipped = false;
+    const clear = () => layer.removeAll(true);
+    const bg = (key: string, tint?: number) => {
+      if (this.textures.exists(key)) {
+        const src = this.textures.get(key).getSourceImage();
+        const img = this.add.image(480, 270, key).setScale(Math.max(960 / src.width, 540 / src.height));
+        if (tint) img.setTint(tint);
+        layer.add(img);
+      } else layer.add(this.add.rectangle(480, 270, 960, 540, tint ?? 0x7dd3fc));
+    };
+    const name = (t: string, color: string) => {
+      const n = this.add.text(480, 80, t, { fontFamily: "Impact, sans-serif", fontSize: "54px", color, stroke: "#fff", strokeThickness: 8 }).setOrigin(0.5).setScale(0.2).setAngle(-6);
+      layer.add(n);
+      this.tweens.add({ targets: n, scale: 1, duration: 350, ease: "Back.out" });
+      this.tweens.add({ targets: n, angle: 6, yoyo: true, repeat: -1, duration: 500 });
+    };
+    const jingle = (y = 470) => {
+      const j = this.add.text(480, y, "♪ Nibble on a Crobley ♪", { fontFamily: "Comic Sans MS, cursive", fontSize: "32px", color: "#db2777", stroke: "#fff", strokeThickness: 6 }).setOrigin(0.5);
+      layer.add(j);
+      this.tweens.add({ targets: j, scale: 1.08, yoyo: true, repeat: -1, duration: 320 });
+    };
+    const put = (x: number, y: number, key: string, scale: number, color?: number, label?: string) => {
+      const o = this.art(x, y, key, scale, color, label);
+      layer.add(o);
+      return o;
+    };
+    const boom = (x: number, y: number) => {
+      synth.play("explode");
+      for (let i = 0; i < 3; i++) {
+        const c = this.add.circle(x + (Math.random() - 0.5) * 50, y + (Math.random() - 0.5) * 40, 14, i % 2 ? 0xfde047 : 0xf97316);
+        layer.add(c);
+        this.tweens.add({ targets: c, radius: 90, alpha: 0, duration: 500 + i * 100 });
+      }
+      this.cameras.main.shake(200, 0.012);
+    };
+    const sausages = (n: number) => {
+      clear();
+      layer.add(this.add.rectangle(480, 270, 960, 540, 0x1c1917));
+      layer.add(this.add.ellipse(480, 470, 600, 60, 0xfde68a, 0.25));
+      for (let i = 0; i < n; i++) {
+        const x = 480 + (i - (n - 1) / 2) * 220;
+        const small = put(x, 420, "p_sausage_s", 1.2, 0xf9a8d4, "sausage");
+        const big = put(x, 300, "p_sausage_m", 0.4, 0xb45309, "SAUSAGE").setAlpha(0);
+        this.tweens.add({ targets: small, scale: 3, y: 340, duration: 1600, ease: "Quad.in" });
+        this.time.delayedCall(1500, () => {
+          small.setAlpha(0);
+          big.setAlpha(1);
+          synth.play("crit");
+          this.tweens.add({ targets: big, scale: 4.2, duration: 500, ease: "Back.out" });
+          this.tweens.add({ targets: big, angle: 4, yoyo: true, repeat: -1, duration: 180, delay: 500 });
+        });
+      }
+    };
+    const admire = (elder: string, tint?: number) => {
+      clear();
+      bg("cr_park", tint);
+      const rays = this.add.star(600, 250, 16, 60, 420, 0xfff7c2, 0.35);
+      layer.add(rays);
+      this.tweens.add({ targets: rays, angle: 360, duration: 8000 });
+      const man = put(600, 300, elder, 4.2, 0x1e3a8a, "DAD");
+      const boy = put(380, 380, "p_boy", 3, 0x60a5fa, "boy");
+      this.tweens.add({ targets: man, y: 290, yoyo: true, repeat: -1, duration: 900 });
+      for (let i = 0; i < 6; i++) this.time.delayedCall(i * 500, () => {
+        if (skipped) return;
+        const sp = this.add.text(boy.x + 30 + Math.random() * 60, boy.y - 70, "✨", { fontSize: "26px" });
+        layer.add(sp);
+        this.tweens.add({ targets: sp, y: sp.y - 60, alpha: 0, duration: 900 });
+      });
+    };
+    const kids = () => {
+      clear();
+      bg("cr_park");
+      jingle();
+      for (let i = 0; i < 3; i++) {
+        const k = put(240 + i * 240, 380, i === 1 ? "p_kidcandy" : `spr_KID${i}`, i === 1 ? 3.2 : 3.2, 0x60a5fa, "kid");
+        this.tweens.add({ targets: k, y: 360, yoyo: true, repeat: -1, duration: 300 + i * 40 });
+      }
+      for (let i = 0; i < 8; i++) {
+        const c = put(Math.random() * 960, -40, "p_crobley", 2.2, 0xf9a8d4, "");
+        this.tweens.add({ targets: c, y: 600, angle: 360, duration: 3000 + Math.random() * 2000, delay: i * 500, repeat: -1 });
+      }
+      const logo = this.add.text(480, 150, "CROBLEY®", { fontFamily: "Impact, sans-serif", fontSize: "72px", color: "#f472b6", stroke: "#fff", strokeThickness: 10 }).setOrigin(0.5);
+      layer.add(logo);
+      this.tweens.add({ targets: logo, scale: 1.1, yoyo: true, repeat: -1, duration: 400 });
+    };
+    const flirt = () => {
+      clear();
+      bg("cf_flirt");
+      name("FLIRT CROBLEY!", "#ec4899");
+      const f = put(-100, 360, "p_flirt", 2.4, 0xf472b6, "FLIRT");
+      this.tweens.add({ targets: f, x: 420, duration: 900, ease: "Back.out" });
+      const dad = put(760, 340, "p_dad", 3.6, 0x1e3a8a, "dad");
+      void dad;
+      for (let i = 0; i < 10; i++) this.time.delayedCall(800 + i * 380, () => {
+        if (skipped) return;
+        const h = this.add.text(f.x + 40, f.y - 40, "❤", { fontSize: "28px", color: "#ec4899" });
+        layer.add(h);
+        this.tweens.add({ targets: h, x: [760, 900, 480][i % 3], y: [300, 120, 80][i % 3], alpha: 0, duration: 1100 });
+      });
+      const wink = this.add.text(420, 220, "*wink*", { fontFamily: FONT, fontSize: "26px", color: "#fff", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5);
+      layer.add(wink);
+      this.tweens.add({ targets: wink, alpha: 0.2, yoyo: true, repeat: -1, duration: 500 });
+    };
+    const lantern = () => {
+      clear();
+      bg("cf_chinese");
+      name("CHINESE CROBLEY!", "#dc2626");
+      const c = put(440, 360, "p_lantern", 2.4, 0xdc2626, "GARY");
+      const gong = this.add.circle(680, 330, 60, 0xd97706).setStrokeStyle(6, 0x78350f);
+      layer.add(gong);
+      for (let i = 0; i < 4; i++) this.time.delayedCall(900 + i * 1800, () => {
+        if (skipped) return;
+        synth.play("ding");
+        this.tweens.add({ targets: gong, scale: 1.15, yoyo: true, duration: 120 });
+        for (let k = 0; k < 3; k++) {
+          const fw = this.add.circle(200 + Math.random() * 560, 120 + Math.random() * 120, 6, [0xef4444, 0xfacc15, 0x22c55e][k]);
+          layer.add(fw);
+          this.tweens.add({ targets: fw, radius: 60, alpha: 0, duration: 700 });
+        }
+      });
+      const sigh = this.add.text(c.x, c.y - 120, "(sigh)", { fontFamily: FONT, fontSize: "20px", color: "#fff", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setAlpha(0);
+      layer.add(sigh);
+      this.tweens.add({ targets: sigh, alpha: 1, delay: 4000, duration: 400 });
+    };
+    const fruity = () => {
+      clear();
+      bg("cf_men");
+      name("FRUITY CROBLEY!", "#c026d3");
+      const f = put(200, 360, "p_fruity", 2.4, 0xf0abfc, "FRUITY");
+      this.tweens.add({ targets: f, x: 760, yoyo: true, repeat: -1, duration: 1400, ease: "Sine.inOut", onYoyo: () => f.setFlipX(!f.flipX), onRepeat: () => f.setFlipX(!f.flipX) });
+      for (let i = 0; i < 24; i++) this.time.delayedCall(i * 160, () => {
+        if (skipped) return;
+        const g = this.add.star(Math.random() * 960, Math.random() * 400, 4, 3, 8, [0xf0abfc, 0xfde68a, 0x93c5fd][i % 3]);
+        layer.add(g);
+        this.tweens.add({ targets: g, angle: 180, alpha: 0, duration: 800 });
+      });
+    };
+    const tankIntro = () => {
+      clear();
+      bg("cf_destruction");
+      name("TANK CROBLEY!", "#15803d");
+      const t = put(-150, 380, "p_tankc", 2.6, 0x4d7c0f, "TANK");
+      this.tweens.add({ targets: t, x: 420, duration: 1600, ease: "Quad.out" });
+      for (let i = 0; i < 4; i++) this.time.delayedCall(1800 + i * 1100, () => !skipped && boom(650 + Math.random() * 250, 320 + Math.random() * 80));
+      const fr = this.add.text(480, 200, "FREEDOM!", { fontFamily: "Impact, sans-serif", fontSize: "48px", color: "#fff", stroke: "#1d4ed8", strokeThickness: 8 }).setOrigin(0.5).setAlpha(0);
+      layer.add(fr);
+      this.tweens.add({ targets: fr, alpha: 1, delay: 2400, duration: 300 });
+    };
+    const massacre = () => {
+      clear();
+      bg("cr_park");
+      jingle();
+      const others = [put(520, 380, "p_flirt", 1.8, 0xf472b6, "FLIRT"), put(680, 380, "p_lantern", 1.8, 0xdc2626, "GARY"), put(840, 380, "p_fruity", 1.8, 0xf0abfc, "FRUITY")];
+      const t = put(-150, 390, "p_tankc", 2.2, 0x4d7c0f, "TANK");
+      this.tweens.add({ targets: t, x: 180, duration: 1000, ease: "Quad.out" });
+      others.forEach((o, i) => this.time.delayedCall(1600 + i * 3000, () => {
+        if (skipped) return;
+        const shell = this.add.circle(t.x + 120, t.y - 40, 8, 0x111827);
+        layer.add(shell);
+        this.tweens.add({ targets: shell, x: o.x, y: o.y - 20, duration: 300, onComplete: () => {
+          shell.destroy();
+          boom(o.x, o.y - 20);
+          this.tweens.add({ targets: o, x: o.x + 300, y: -200, angle: 1080, duration: 1200, ease: "Quad.out" });
+        } });
+      }));
+    };
+    const ending = () => {
+      clear();
+      layer.add(this.add.rectangle(480, 270, 960, 540, 0x000000));
+      const t = this.add.text(480, 270, "YOU HEARD WHAT\nYOU THOUGHT YOU HEARD", { fontFamily: "Impact, sans-serif", fontSize: "56px", color: "#ffffff", align: "center" }).setOrigin(0.5).setAlpha(0);
+      layer.add(t);
+      this.tweens.add({ targets: t, alpha: 1, duration: 1200 });
+    };
+    const plan: [number, () => void][] = [
+      [0, kids],
+      [11, () => sausages(1)],
+      [15, flirt],
+      [25, () => admire("p_dad")],
+      [29, lantern],
+      [39, () => sausages(3)],
+      [43, fruity],
+      [53, () => admire("p_grandad", 0xffcc99)],
+      [57, tankIntro],
+      [66, massacre],
+      [76.5, () => sausages(2)],
+      [78.5, ending],
+    ];
+    synth.music("crobley", true);
+    const advert = this.add.text(20, 20, "ADVERTISEMENT", { fontFamily: FONT, fontSize: "12px", color: "#fff", backgroundColor: "#00000088", padding: { x: 4, y: 2 } }).setDepth(800);
+    const skipHint = this.add.text(940, 520, "TAB: skip advert", { fontFamily: FONT, fontSize: "11px", color: "#fff", backgroundColor: "#00000066", padding: { x: 4, y: 2 } }).setOrigin(1, 1).setDepth(800);
+    await new Promise<void>((resolve) => {
+      for (const [t, fn] of plan) timers.push(this.time.delayedCall(t * 1000, () => !skipped && fn()));
+      const done = () => {
+        if (skipped) return;
+        skipped = true;
+        timers.forEach((x) => x.remove());
+        this.input.keyboard?.off("keydown-TAB", skip);
+        resolve();
+      };
+      const skip = () => done();
+      this.input.keyboard?.on("keydown-TAB", skip);
+      timers.push(this.time.delayedCall(81500, done));
+    });
+    synth.stopMusic();
+    advert.destroy();
+    skipHint.destroy();
+    layer.destroy(true);
+    synth.music("ominous");
+  }
+
+  /** Sergeant Swig, a bag of money, and a press conference that goes the usual way. */
+  private async crobleyPresser() {
+    if (!backdrop(this, "bg_press", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1e2a44);
+    this.add.text(480, 50, "KRELFORD CONSTABULARY · PRESS CONFERENCE\n'THE SO-CALLED LIVE TELEVISION MURDER'", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", align: "center", backgroundColor: "#1e3a8acc", padding: { x: 10, y: 4 } }).setOrigin(0.5);
+    this.add.rectangle(480, 330, 140, 90, 0x5a3a20).setDepth(20);
+    const swig = this.add.sprite(480, 280, "npc_swig", 0).setScale(3).setDepth(15);
+    const beer = this.add.text(420, 278, "🍺", { fontSize: "26px" }).setDepth(21);
+    const pile = this.art(540, 290, "p_crobley", 1.4, 0xf9a8d4).setDepth(21);
+    void pile;
+    const bag = this.add.container(640, 320).setDepth(22);
+    bag.add(this.add.ellipse(0, 0, 90, 80, 0x8b6b3e).setStrokeStyle(3, 0x3f2d16));
+    bag.add(this.add.text(0, -4, "£££\nMONEY FROM\nREINHARDT", { fontFamily: FONT, fontSize: "10px", color: "#fef3c7", align: "center", fontStyle: "bold" }).setOrigin(0.5));
+    const press: Phaser.GameObjects.Sprite[] = [];
+    for (let i = 0; i < 7; i++) {
+      const tex = i === 3 ? "npc_journo" : `spr_FOLK${i % 4}`;
+      press.push(this.add.sprite(250 + i * 85, 470 + (i % 2) * 12, tex, 0).setScale(tex === "npc_journo" ? 1.7 : 2.4).setDepth(30 + i));
+    }
+    const lads = PLAYABLE_ORDER.filter((p) => p !== G.s.player).slice(0, 2);
+    [G.s.player, ...lads].forEach((id, i) => this.add.sprite(60 + i * 50, 440 + i * 10, `spr_${id}`, 0).setScale(2.4).setDepth(40));
+    synth.music("ominous");
+    const munch = () => {
+      synth.play("gulp");
+      swig.setFrame(3);
+      this.time.delayedCall(140, () => swig.setFrame(0));
+    };
+    await this.talk([
+      dir("Sergeant Swig takes the podium. He is holding a can of beer. There are three more cans on the lectern. There is a family-size bag of Crobleys. There is a large sack, next to him, with 'MONEY FROM REINHARDT' written on it in marker pen."),
+      say("SERGEANT SWIG", "Right. Questions. Make it quick, I've got a Crobley on the go."),
+      say("REPORTER", "Sergeant, millions of people watched Reinhardt Crobley shoot a newsreader on live television—"),
+      say("SERGEANT SWIG", "Did they though?"),
+    ]);
+    munch();
+    await this.talk([
+      say("SERGEANT SWIG", "You can't believe everything you see these days. Deep fakes. Filters. Woke cameras."),
+      say("SERGEANT SWIG", "I've done my own independent research. Hours of it. On my phone. And from what I can see, it seems that everyone here is lying."),
+      say("REPORTER", "He confessed. On camera. He said 'just like I killed my father'."),
+      say("SERGEANT SWIG", "Out of context."),
+    ]);
+    munch();
+    synth.play("slurp");
+    await this.talk([
+      say("REPORTER", "Sergeant — what's in the bag?"),
+      dir("Everyone looks at the bag. The bag says MONEY FROM REINHARDT."),
+      say("SERGEANT SWIG", "What bag."),
+      say("REPORTER", "The bag next to you. It says 'money from Reinhardt'."),
+      say("SERGEANT SWIG", "That's just a coincidence. You'd have to be so stupid to think anything of that. Honestly. So stupid."),
+    ]);
+    munch();
+    await this.talk([
+      dir("A female journalist in the second row stands up. She has a notepad. She has the look of someone who is about to ask a very good question."),
+      say("JOURNALIST", "Sergeant Swig, is the Krelford Constabulary being paid by Reinhardt Crobley to ignore a murder—"),
+      say("SERGEANT SWIG", "Sorry. I couldn't hear anything. Just a squawking noise."),
+      dir("The room erupts. Booing. Shouting. Somebody throws a Crobley."),
+      say("SERGEANT SWIG", "Right. I'm fucking fed up!"),
+    ]);
+    swig.setFrame(3);
+    this.caption("BANG BANG BANG", "#ffd23f", 34);
+    for (let i = 0; i < 12; i++) {
+      this.time.delayedCall(i * 150, () => {
+        synth.play("shoot");
+        this.cameras.main.shake(100, 0.01);
+        const target = press[Math.floor(Math.random() * press.length)];
+        const fl = this.add.circle(510, 300, 10, 0xffd23f).setDepth(40);
+        this.tween({ targets: fl, x: target.x, y: target.y - 20, duration: 120 }).then(() => fl.destroy());
+      });
+    }
+    press.forEach((p, i) => this.tweens.add({ targets: p, x: i % 2 ? p.x + 700 : p.x - 700, duration: 1400, delay: 200 + i * 60 }));
+    this.tween({ targets: beer, y: 600, angle: 360, duration: 900 });
+    await this.wait(2200);
+    this.lastCaption?.destroy();
+    synth.stopMusic();
+    const [a, b] = lads;
+    await this.talk([
+      dir("When the smoke clears, the press pool is gone. Swig is eating a Crobley. The bag is still there."),
+      say(a, "Well. Looks like the police are going to do fuck all."),
+      say(b, "Shocker."),
+      say(G.s.player, "We need to take matters into our own hands."),
+      say(a, "We need to kill Reinhardt Crobley."),
+      say(b, "Bring Crobson Crobley back to life."),
+      say(G.s.player, "And return the Crobley Corporation to its rightful owner."),
+      say("SERGEANT SWIG", "(mouth full) I didn't hear that. Couldn't hear a thing. Squawking."),
+      dir("NEW OBJECTIVE: storm the Crobley Factory. The gate is on the east edge of Krelford."),
+    ]);
+  }
+
+  /** The whole factory goes up. Then an awkward conversation. */
+  private async crobleyBoom() {
+    const hasExt = !!backdrop(this, "cr_factory_ext", { depth: -10 });
+    let giant: Phaser.GameObjects.Image | null = null;
+    const g = this.add.graphics().setDepth(5);
+    if (!hasExt) {
+      this.sky(0x1e1b4b, 0xdb2777);
+      g.fillStyle(0x7c2d12, 1).fillRect(220, 220, 520, 260);
+      g.fillStyle(0x9d174d, 1).fillRect(260, 120, 50, 110).fillRect(400, 90, 50, 140).fillRect(640, 130, 50, 100);
+      giant = this.art(480, 200, "p_crobley", 4, 0xf9a8d4).setDepth(6);
+      this.add.rectangle(480, 500, 960, 80, 0x1f2937).setDepth(4);
+    }
+    const me = this.add.sprite(300, 480, `spr_${G.s.player}`, 0).setScale(2.6).setDepth(20);
+    synth.music("ominous");
+    await this.talk([dir("You sprint out of the factory gates. Behind you, a low rumble. Then a higher rumble. Then a rumble that sounds a lot like a child singing 'Nibble on a Crobley', very slowly, underwater.")]);
+    await this.tween({ targets: me, x: 900, duration: 900 });
+    me.setFlipX(true);
+    // it goes, from the inside out
+    const cam = this.cameras.main;
+    const fire = (x: number, y: number, big: number) => {
+      const core = this.add.circle(x, y, 10, 0xfff7c2, 1).setDepth(31);
+      const ring = this.add.circle(x, y, 14, 0xf97316, 0.95).setDepth(30);
+      const smoke = this.add.circle(x, y - 10, 18, 0x3f3f46, 0.8).setDepth(29);
+      this.tween({ targets: core, radius: 40 * big, alpha: 0, duration: 380 }).then(() => core.destroy());
+      this.tween({ targets: ring, radius: 80 * big, alpha: 0, duration: 650 }).then(() => ring.destroy());
+      this.tween({ targets: smoke, radius: 70 * big, y: y - 140 * big, alpha: 0, duration: 1800 }).then(() => smoke.destroy());
+      for (let k = 0; k < 6; k++) {
+        const sp = this.add.rectangle(x, y, 3, 3, 0xfde047).setDepth(32);
+        this.tween({ targets: sp, x: x + (Math.random() - 0.5) * 300 * big, y: y + (Math.random() - 0.8) * 260 * big, alpha: 0, duration: 700 + Math.random() * 500 }).then(() => sp.destroy());
+      }
+    };
+    for (let i = 0; i < 28; i++) {
+      this.time.delayedCall(i * 120, () => {
+        synth.play("explode");
+        cam.shake(160, 0.012 + i * 0.0012);
+        fire(180 + Math.random() * 600, 120 + Math.random() * 300, 0.8 + i / 28);
+      });
+    }
+    // the mascot gets launched into orbit
+    const mascot = giant ?? (this.textures.exists("p_crobley") ? this.add.image(480, 150, "p_crobley").setScale(3).setDepth(33).setAlpha(0) : null);
+    this.time.delayedCall(2000, () => mascot && (mascot.setAlpha(1), this.tween({ targets: mascot, y: -300, x: 700, angle: 1440, duration: 2200, ease: "Quad.out" })));
+    await this.wait(3500);
+    synth.play("boom");
+    cam.flash(1200, 255, 255, 255);
+    cam.shake(900, 0.04);
+    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff, 1).setDepth(100);
+    this.caption("KA-BLOOEY", "#fde047", 64);
+    // it rains Crobleys and sausages
+    for (let i = 0; i < 40; i++) {
+      this.time.delayedCall(600 + i * 80, () => {
+        const t = this.add.text(Math.random() * 960, -30, Math.random() < 0.5 ? "🌭" : "🍬", { fontSize: "22px" }).setDepth(140);
+        this.tween({ targets: t, y: 560, angle: 360, duration: 1400 + Math.random() * 800 }).then(() => t.destroy());
+      });
+    }
+    // the dust settles: what's left is a crater
+    g.clear();
+    if (!backdrop(this, "cr_crater", { depth: -5 })) this.add.rectangle(480, 270, 960, 540, 0x3f1d1d).setDepth(-5);
+    await this.wait(900);
+    await this.tween({ targets: white, alpha: 0, duration: 1600 });
+    white.destroy();
+    for (let i = 0; i < 6; i++) {
+      const sm = this.add.circle(200 + i * 110, 330, 30, 0x52525b, 0.5).setDepth(8);
+      this.tweens.add({ targets: sm, y: 120, radius: 90, alpha: 0, duration: 4000, repeat: -1, delay: i * 500 });
+    }
+    await this.wait(1500);
+    this.lastCaption?.destroy();
+    // the lads, and someone under a blanket
+    const lads = PLAYABLE_ORDER.filter((p) => p !== G.s.player).slice(0, 3);
+    lads.forEach((id, i) => this.add.sprite(120 + i * 70, 470, `spr_${id}`, 0).setScale(2.6).setDepth(22));
+    const crobson = this.add.sprite(340, 472, "spr_FOLK2", 0).setScale(2.6).setDepth(22).setTint(0xc7d2fe);
+    this.add.text(340, 410, "CROBSON CROBLEY\n(RECENTLY RESURRECTED)", { fontFamily: FONT, fontSize: "10px", color: "#e0e7ff", backgroundColor: "#000000aa", align: "center", padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(23);
+    this.tweens.add({ targets: crobson, angle: 3, yoyo: true, repeat: -1, duration: 700 });
+    me.setPosition(560, 470);
+    const [a, b, c] = lads;
+    await this.talk([
+      say(a, "LADS! LADS! We did it! Krezwonk's guy came through!"),
+      say(b, "Say hello to Crobson Crobley! Back from the dead! Founder! Legend! Rightful owner of the Crobley Corporation!"),
+      say("CROBSON CROBLEY", "Hello lads. Thank you. What a strange experience. I'm very much looking forward to getting back to work. To my factory. My life's work."),
+      dir("Everyone turns, slowly, to look at the smouldering crater where the factory used to be. A single Crobley rolls out of it, on fire, and stops at Crobson's feet."),
+      say(G.s.player, "…Oh. Oh no. I completely forgot you were doing that."),
+      say(G.s.player, "I have — very sadly, and very unfortunately — destroyed the entire factory."),
+      say("CROBSON CROBLEY", "…"),
+      say(c, "…"),
+      say(a, "Right."),
+      say(b, "So he's got no factory."),
+      say(a, "No factory, no company, no Crobleys."),
+      say(c, "So what's he going to do? Just… live? With nothing?"),
+      dir("A very long pause. Somewhere, a sausage pops in the embers."),
+      say(b, "…We're going to have to re-kill him, aren't we."),
+      say("CROBSON CROBLEY", "I'm sorry, you're going to WHAT?"),
+      say(a, "It's the kind thing to do, Crobson."),
+      say(c, "Krezwonk's guy does returns. Probably."),
+      say("CROBSON CROBLEY", "I've only been alive for twenty minutes!"),
+      dir("You walk away slowly, before anyone can ask you to help. Behind you, a scuffle. Then the sound of a resurrection being politely refunded."),
+      ping("DRONGUS", "Did someone blow up the Crobley factory"),
+      ping("DRONGUS", "I was going to do an ad with them"),
+      ping("DRONGUS", "Nibble on a Crobley ft. Drongus"),
+      ping("DRONGUS", "Nobody reacted to that idea either"),
+    ]);
+    G.s.flags.crobley_factory_destroyed = true;
     synth.stopMusic();
   }
 

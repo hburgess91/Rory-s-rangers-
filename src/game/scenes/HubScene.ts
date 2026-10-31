@@ -64,6 +64,7 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
   { id: "PORTAL", name: "??? THE SYMBOL OF WAHOOGAH", x: 90, y: 1250 },
+  { id: "CROBLEY_FACTORY", name: "→ THE CROBLEY FACTORY", x: 2500, y: 460 },
 ];
 
 /** The playground (Boggor's view). Kids, sweeties, screaming. */
@@ -1515,6 +1516,13 @@ You are required by law to sign the Sex Offenders Register.`, {
           if (q) await this.turnIn(q);
         }
         this.openMenu("tribunal");
+        return;
+      case "CROBLEY_FACTORY":
+        if (s.flags.crobley_factory_destroyed) {
+          await this.talk([dir("Where the Crobley Factory used to be, there is a smoking crater the size of a football pitch. It still smells faintly of candy and sausage. A single Crobley lies at the bottom, nibbled."), say(s.player, "Very sad. Very unfortunate.")]);
+          return;
+        }
+        await this.talk([dir("The gates of the Crobley Factory. Pink chimneys. Purple smoke. A giant fibreglass Crobley on the roof, grinning. Over the gate, a new sign: 'YOU HEARD WHAT YOU THOUGHT YOU HEARD'."), dir("The gates are locked. Not yet.")]);
         return;
       default:
         await this.talk([dir(`${b.name}. Not now. The lore says not yet.`)]);
