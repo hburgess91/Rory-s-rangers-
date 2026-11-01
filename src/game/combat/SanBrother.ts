@@ -75,7 +75,7 @@ export class SanBrother {
     const lines = BARKS[this.id];
     const t = text ?? lines[Math.floor(Math.random() * lines.length)];
     this.world.floatText(this.spr.x, this.spr.y - 56, t, this.id === "SANMIK" ? "#b0c4ff" : "#ffe08a", 13);
-    if (/^(YEE|Yee|YEGH)/.test(t) || Math.random() < 0.3) synth.shout(this.id === "SANMIK" ? "yee" : "yegh", 0.8);
+    if (/^(YEE|Yee|YEGH)/.test(t) || Math.random() < 0.75) synth.shout(this.id === "SANMIK" ? "yee" : "yegh", 0.8);
   }
 
   update(now: number, dt: number) {
@@ -147,7 +147,7 @@ export class SanBrother {
     }
     if (now >= this.nextBark) {
       this.bark();
-      this.nextBark = now + 4500 + Math.random() * 5500;
+      this.nextBark = now + 2400 + Math.random() * 3200;
     }
   }
 
