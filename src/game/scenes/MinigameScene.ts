@@ -1632,6 +1632,8 @@ export class MinigameScene extends Phaser.Scene {
   // ---------------------------------------------------------------- DO THE CROCODILE (SanMik, "Jerk My Gherk")
 
   private crocodile() {
+    // ends at the natural break in the song (the drop-out around 2:25), not the very end
+    const CROC_END = 146;
     const BPM = 89;
     const BEAT = 60 / BPM;
     const PHASE = 0.017;
@@ -1705,7 +1707,7 @@ export class MinigameScene extends Phaser.Scene {
       if (bar < 12 && beat % 2) continue; // gentle start: every other beat
       if (bar >= 56 || beat % 2 === 0 || bar >= 30) {
         const t = PHASE + beat * BEAT;
-        if (t > 186) break;
+        if (t > CROC_END - 1.5) break;
         const k = pattern[pi++ % pattern.length];
         const c = this.add.container(-200, 120).setDepth(150);
         const col = k === "C" ? 0x22c55e : k === "L" ? 0x38bdf8 : 0xf472b6;
@@ -1817,7 +1819,7 @@ export class MinigameScene extends Phaser.Scene {
         if (t > 30) leave.setVisible(true);
         this.hud.setText(`🐊 ${hits}   COMBO ${combo}   MISSED ${missed}`);
         const pr = synth.fileProgress();
-        if ((pr.d && pr.ended) || t > 189) void done();
+        if ((pr.d && pr.ended) || t > CROC_END) void done();
       },
     });
   }
