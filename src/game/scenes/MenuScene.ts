@@ -22,7 +22,7 @@ const BANK_PERKS = [
   { id: "pk_krezz", name: "Krezz Regeneration Serum", desc: "Krezz refills 30% faster per level (specials come back sooner).", cost: 190, max: 3 },
   { id: "pk_meter", name: "Pre-Workout (Bootleg)", desc: "Wonk and Fart meters fill 30% faster per level.", cost: 160, max: 2 },
   { id: "pk_ibs", name: "Prescription Beans", desc: "IBS Attack hits 25% harder per level, and the Fart meter fills 15% faster. Doctor's orders. Not a real doctor.", cost: 210, max: 3 },
-  { id: "pk_jet", name: "Krez Kream Deluxe", desc: "The Krezz jet stream (a perfect Wonk) hits 25% harder per level, and the Wonk meter fills 15% faster.", cost: 210, max: 3 },
+  { id: "pk_jet", name: "STD KREZZ", desc: "Your Krezz jet stream (a perfect Wonk) is now riddled with little scowling bacteria. Hits 25% harder per level; Wonk meter fills 15% faster.", cost: 210, max: 3 },
   { id: "pk_autoaim", name: "Auto-Aim (Krezz-Assist)", desc: "Your attacks and guns lock onto the nearest enemy automatically.", cost: 300, max: 1 },
   { id: "pk_spd", name: "Fresh Trainers", desc: "+7% movement speed per level. Krunch-approved. Smell of new.", cost: 140, max: 3 },
   { id: "pk_dmg", name: "Krunch Gym Membership", desc: "+8% damage from everything per level. You don't go. You just have it.", cost: 160, max: 3 },

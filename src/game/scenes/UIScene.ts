@@ -61,7 +61,7 @@ export class UIScene extends Phaser.Scene {
       callback: () => {
         if (!DRONGUS_STATUSES.length || !G.s.flags.met_emergency || Date.now() < G.rt.nextStatusAt) return;
         G.rt.nextStatusAt = Date.now() + 100000 + Math.random() * 110000;
-        if (!G.rt.statusDeck.length) G.rt.statusDeck = Phaser.Utils.Array.Shuffle(DRONGUS_STATUSES.map((_, i) => i));
+        if (!G.rt.statusDeck.length) G.rt.statusDeck = Phaser.Utils.Array.Shuffle(DRONGUS_STATUSES.flatMap((st, i) => (st.top ? [i, i] : [i])));
         const st = DRONGUS_STATUSES[G.rt.statusDeck.pop()!];
         this.onEvent("fbstatus", { text: st.t, year: st.y });
       },

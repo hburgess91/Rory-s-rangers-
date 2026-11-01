@@ -242,14 +242,15 @@ export class VignetteScene extends Phaser.Scene {
         say(spy, "There he goes. Up to some sick shit. Stay low."),
       ]);
     }
+    // the song starts as soon as we're at the door
+    synth.music("bbp", true);
     await this.talk([dir("The abandoned building. A faint smell of custard. And something underneath the custard that the custard is trying to cover up.")]);
     this.time.addEvent({ delay: 140, repeat: 14, callback: () => animateWalker(luke, 1, 0, true, this.time.now) });
     await this.tween({ targets: luke, x: 480, duration: 2000 });
     await this.talk([say("CRONGUS", "Hello? Is the… is the bread and butter pudding here?"), dir("Something inside says 'yes'. It is not clear what said it.")]);
     await this.tween({ targets: luke, alpha: 0, scale: 2.6, duration: 600 });
     door.setFillStyle(0x000000);
-    await this.wait(1600);
-    synth.music("bbp", true);
+    await this.wait(600);
     const moans = ["mmmm", "mm fuck yes", "MMMMMM", "MMM FUCK YES", "mmmmmmmm…", "oh", "fuck yes…", "OHHH", "mmmMMMMM", "…mmm", "MM. FUCK. YES.", "MMMMMMMMMMM"];
     for (let i = 0; i < 14; i++) {
       this.time.delayedCall(i * 380, () => {

@@ -607,6 +607,14 @@ export class MinigameScene extends Phaser.Scene {
       wrists.forEach((w) => w.destroy());
       synth.play("boom");
       synth.shout("yee", 1);
+      // a whole avalanche of YEEs, overlapping, with little YEE!s flying across the screen
+      for (let i = 1; i < 22; i++) {
+        this.time.delayedCall(i * (90 + Math.random() * 110), () => {
+          synth.shout("yee", 0.55 + Math.random() * 0.45);
+          const y = this.add.text(80 + Math.random() * 800, 80 + Math.random() * 360, ["YEE!", "YEEE!", "YEEEEE!", "yee", "YEE YEE!"][Math.floor(Math.random() * 5)], { fontFamily: "Impact, sans-serif", fontSize: `${18 + Math.floor(Math.random() * 26)}px`, color: "#b0c4ff", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(58).setAngle((Math.random() - 0.5) * 40);
+          this.tweens.add({ targets: y, y: y.y - 60, alpha: 0, scale: 1.4, duration: 900, onComplete: () => y.destroy() });
+        });
+      }
       this.cameras.main.flash(500, 255, 255, 255);
       this.cameras.main.shake(500, 0.02);
       const big = (x: number, t: string, c: string) => {

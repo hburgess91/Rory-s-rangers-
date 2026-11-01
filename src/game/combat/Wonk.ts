@@ -329,4 +329,65 @@ function jetStream(p: Player, now: number) {
     },
   });
   splats(p, 10, 26);
+  // STD KREZZ: angry little bacteria riding the stream
+  const lvl = G.s.upgrades.pk_jet ?? 0;
+  if (lvl > 0) bacteria(p, () => ang, lvl);
+}
+
+/** Scowling monster bacteria that swim down the jet stream and nibble whatever they hit. */
+function bacteria(p: Player, angle: () => number, lvl: number) {
+  const w = p.world;
+  const sc = w.sc;
+  if (!sc.textures.exists("fx_bacteria")) {
+    const g = sc.make.graphics({ x: 0, y: 0 }, false);
+    // a lumpy green germ with a tail, angry eyebrows and a frown
+    g.lineStyle(2, 0x3f6212, 1);
+    g.beginPath();
+    g.moveTo(4, 14);
+    for (let i = 0; i <= 6; i++) g.lineTo(4 - i * 0.6, 14 + Math.sin(i) * 3 + i);
+    g.strokePath();
+    g.fillStyle(0x4d7c0f, 1).fillEllipse(17, 13, 24, 18);
+    g.fillStyle(0x84cc16, 1).fillEllipse(17, 12, 21, 15);
+    for (const [x, y] of [[7, 5], [27, 6], [9, 21], [26, 20], [17, 3]]) g.fillStyle(0x84cc16, 1).fillCircle(x, y, 2.5);
+    g.fillStyle(0xffffff, 1).fillCircle(13, 11, 3.2).fillCircle(21, 11, 3.2);
+    g.fillStyle(0xdc2626, 1).fillCircle(13.5, 11.5, 1.6).fillCircle(20.5, 11.5, 1.6);
+    g.lineStyle(2, 0x1a2e05, 1).lineBetween(9, 6, 15, 9).lineBetween(25, 6, 19, 9);
+    g.lineStyle(2, 0x1a2e05, 1);
+    g.beginPath();
+    g.arc(17, 20, 4, Math.PI * 1.15, Math.PI * 1.85);
+    g.strokePath();
+    g.generateTexture("fx_bacteria", 34, 26);
+    g.destroy();
+  }
+  const n = 5 + lvl * 4;
+  for (let i = 0; i < n; i++) {
+    sc.time.delayedCall(i * 70, () => {
+      const a = angle();
+      const b = sc.add.image(p.x, p.y, "fx_bacteria").setDepth(592).setScale(0.9 + Math.random() * 0.6).setFlipX(Math.cos(a) < 0);
+      const side = (Math.random() - 0.5) * 50;
+      const dist = 500 + Math.random() * 500;
+      const st = { t: 0 };
+      const hit = new Set<unknown>();
+      sc.tweens.add({
+        targets: st,
+        t: 1,
+        duration: 900 + Math.random() * 400,
+        onUpdate: () => {
+          const d = dist * st.t;
+          const wob = Math.sin(st.t * 18 + i) * 10 + side;
+          const x = p.x + Math.cos(a) * d - Math.sin(a) * wob;
+          const y = p.y + Math.sin(a) * d + Math.cos(a) * wob;
+          b.setPosition(x, y).setAngle(Math.sin(st.t * 30 + i) * 25);
+          for (const e of w.enemies) {
+            if (e.dead || hit.has(e)) continue;
+            if (Math.abs(e.x - x) < e.radius + 12 && Math.abs(e.y - y) < e.radius + 12) {
+              hit.add(e);
+              w.damageEnemy(e, p.dmg(6, w.now()) * (1 + 0.25 * lvl) + (e.isBoss ? e.maxHp * 0.002 : 0), { noWonk: true, label: "INFECTED" });
+            }
+          }
+        },
+        onComplete: () => sc.tweens.add({ targets: b, alpha: 0, scale: 0.2, duration: 200, onComplete: () => b.destroy() }),
+      });
+    });
+  }
 }

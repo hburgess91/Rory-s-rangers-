@@ -133,6 +133,8 @@ export class BeepBeepScene extends Phaser.Scene {
     title(this, 110, 24, "BEEP BEEP", 22, "#f472b6").setDepth(520);
     this.keys = this.input.keyboard!.addKeys("A,D,W,S,LEFT,RIGHT,UP,DOWN,SPACE") as Record<string, Phaser.Input.Keyboard.Key>;
     this.box = new DialogueBox(this, 1000, 0.3);
+    // the song kicks in straight away, under the briefing
+    synth.music("beepbeep", true);
     this.box
       .play([
         dir("A stolen Range Rover, idling on Catford High Street. SanChz nicked it. SanMik has made you drive it. The sat-nav has been set to THE BANK OF CATFORD, via THE PAVEMENT."),
@@ -143,7 +145,6 @@ export class BeepBeepScene extends Phaser.Scene {
       ])
       .then(() => {
         this.running = true;
-        synth.music("beepbeep", true);
         this.banner.setText(LYRICS[0]);
       });
   }
