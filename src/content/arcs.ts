@@ -1283,5 +1283,6 @@ export function arcFor(player: PlayableId): Arc | undefined {
 
 /** The player's own story first, then the shared ones. */
 export function arcsFor(player: PlayableId): Arc[] {
-  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)];
+  // the Vegas quest is retired
+  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)].filter((a) => a.id !== "arc_vegas");
 }

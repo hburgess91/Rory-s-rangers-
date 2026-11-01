@@ -1697,9 +1697,11 @@ export class MinigameScene extends Phaser.Scene {
     const quiet = new Set([28, 29, 54, 55]);
     const pattern: ("L" | "R" | "C")[] = ["L", "R", "L", "C", "R", "L", "R", "C"];
     let pi = 0;
-    for (let beat = 16; beat < 69 * 4; beat++) {
+    // the moves start straight away (sparse for the first few bars)
+    for (let beat = 4; beat < 69 * 4; beat++) {
       const bar = Math.floor(beat / 4);
       if (quiet.has(bar)) continue;
+      if (beat < 16 && beat % 4) continue;
       if (bar < 12 && beat % 2) continue; // gentle start: every other beat
       if (bar >= 56 || beat % 2 === 0 || bar >= 30) {
         const t = PHASE + beat * BEAT;
@@ -1768,8 +1770,12 @@ export class MinigameScene extends Phaser.Scene {
     });
     this.hud.setY(452).setDepth(210);
     const leave = this.add.text(940, 14, "[ LEAVE ]", { fontFamily: FONT, fontSize: "13px", color: "#86efac", backgroundColor: "#000000aa", padding: { x: 6, y: 3 } }).setOrigin(1, 0).setDepth(300).setInteractive({ useHandCursor: true }).setVisible(false);
+    let ending = false;
     const done = async () => {
-      if (this.ended) return;
+      // only once (the song end, the timer and LEAVE can all fire)
+      if (this.ended || ending) return;
+      ending = true;
+      this.time.removeAllEvents();
       const total = hits + missed + notes.filter((n) => !n.done && n.t < songT()).length;
       const acc = total ? hits / total : 0;
       synth.stopMusic();
@@ -1804,8 +1810,8 @@ export class MinigameScene extends Phaser.Scene {
         if (beatNow !== (this as any)._lastBeat) {
           (this as any)._lastBeat = beatNow;
           const bar = Math.floor(beatNow / 4);
-          if (beatNow >= 16 && !quiet.has(bar)) lyric.setText(lyrics[Math.floor(bar / 2) % lyrics.length]);
-          else lyric.setText(beatNow < 16 ? "get ready. be serious." : "");
+          if (beatNow >= 4 && !quiet.has(bar)) lyric.setText(lyrics[Math.floor(bar / 2) % lyrics.length]);
+          else lyric.setText(beatNow < 4 ? "get ready. be serious." : "");
         }
         drawArms();
         if (t > 30) leave.setVisible(true);

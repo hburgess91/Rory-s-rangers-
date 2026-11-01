@@ -1387,7 +1387,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const ch = chapterDef(s.chapter);
     synth.play("door");
     if (!(b.id === ch.dungeonDoor && !dungeonOpen().open)) this.discover(b.id, b.name);
-    if (b.id === ch.dungeonDoor) {
+    // a side-quest step waiting at the dungeon building goes first
+    if (b.id === ch.dungeonDoor && !(arcStepAt(s, b.id) && !this.buildingBusy(b.id))) {
       const o = dungeonOpen();
       if (!o.open) {
         G.emit("toast", { title: "LOCKED", text: o.why ?? "Not yet." });
