@@ -3,7 +3,7 @@ import { G } from "../G";
 import { synth } from "../audio/Synth";
 import { DialogueBox } from "../ui/DialogueBox";
 import { FONT, title } from "../ui/theme";
-import { runChain, switchTo } from "../Flow";
+import { runChain, switchTo, fadeThen } from "../Flow";
 import { dir, gabor, say } from "../../content/dsl";
 import { damageMult } from "../systems/stats";
 import { TOUCH } from "../ui/TouchControls";
@@ -483,8 +483,7 @@ export class DriveScene extends Phaser.Scene {
     this.ended = true;
     G.s.flags.sm_drive_done = true;
     G.save();
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+    fadeThen(this, 250, () => {
       if (this.resume) runChain(this, this.chain, this.resume);
       else switchTo(this, "Hub", { at: "PUB" });
     });

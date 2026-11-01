@@ -24,6 +24,20 @@ export function switchTo(from: Phaser.Scene, key: string, data?: any) {
   from.scene.start(key, data);
 }
 
+/** Fade the camera out, then run `fn`. If the fade can't start (another one is running) it still moves on. */
+export function fadeThen(scene: Phaser.Scene, ms: number, fn: () => void) {
+  let done = false;
+  const go = () => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+  const cam = scene.cameras.main;
+  cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, go);
+  cam.fadeOut(ms);
+  window.setTimeout(go, ms + 150);
+}
+
 /** In-level detours: "drive" and "beepbeep" are their own scenes; anything else is a minigame mode. Then back into the level. */
 export function runChain(from: Phaser.Scene, chain: string[], resume: { dungeon: string; room: number }) {
   const [next, ...rest] = chain;

@@ -3,7 +3,7 @@ import { G } from "../G";
 import { synth } from "../audio/Synth";
 import { DialogueBox } from "../ui/DialogueBox";
 import { FONT, title } from "../ui/theme";
-import { runChain, switchTo } from "../Flow";
+import { runChain, switchTo, fadeThen } from "../Flow";
 import { dir, say } from "../../content/dsl";
 
 // Pseudo-3D road (OutRun style): the track is a list of segments; each frame we project the ones in front of you.
@@ -177,8 +177,7 @@ export class BeepBeepScene extends Phaser.Scene {
         ]
       : [say("SANMIK", "That's not enough people, blud. That's barely a crowd."), say("SANCHZ", "Go round again. They've all got back up."), dir("Everyone you hit has got back up. They are queuing to be hit again. It's the SanMikverse. Try again.")];
     this.box.play(lines).then(() => {
-      this.cameras.main.fadeOut(400);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      fadeThen(this, 250, () => {
         if (!win) return this.scene.restart(this.startData);
         G.s.flags.sm_beepbeep_done = true;
         G.save();

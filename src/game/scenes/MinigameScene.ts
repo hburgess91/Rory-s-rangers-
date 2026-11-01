@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
-import { runChain, switchTo } from "../Flow";
+import { runChain, switchTo, fadeThen } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, button, title } from "../ui/theme";
 import { OVER, fall, flap, randomZone, type Flappy } from "../combat/Wonk";
@@ -131,16 +131,14 @@ export class MinigameScene extends Phaser.Scene {
       if (success && this.mode === "norwich") lines.push(...NORWICH_AFTER);
       if (!success) lines.push(dir("Again. SanMik has written a new law: the final gets replayed until Norwich win."));
       await this.box.play(lines);
-      this.cameras.main.fadeOut(400);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      fadeThen(this, 250, () => {
         if (!success) return this.scene.restart(this.startData);
         runChain(this, this.chain, this.resume!);
       });
       return;
     }
     await this.box.play(lines);
-    this.cameras.main.fadeOut(400);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: this.returnAt, from: "minigame" }));
+    fadeThen(this, 250, () => switchTo(this, "Hub", { at: this.returnAt, from: "minigame" }));
   }
 
   // ---------------------------------------------------------------- BULLY MIKEY
@@ -628,7 +626,7 @@ export class MinigameScene extends Phaser.Scene {
         const c = this.add.text(Math.random() * 960, -20, ["💦", "✨", "💖", "🎉"][i % 4], { fontSize: "22px" }).setDepth(55);
         this.tweens.add({ targets: c, y: 560, angle: 360, duration: 1500 + Math.random() * 1500, delay: i * 40 });
       }
-      await new Promise<void>((r) => this.time.delayedCall(2600, () => r()));
+      await new Promise<void>((r) => this.time.delayedCall(1500, () => r()));
       this.finish(true, [
         say(HER, "SanMik you're so sexy. Sexy. Sex me."),
         say("SANMIK", "Yee. I know that. The girls know that. We all know that."),

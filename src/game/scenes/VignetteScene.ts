@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
-import { switchTo } from "../Flow";
+import { switchTo, fadeThen } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, gabor, ping, say } from "../../content/dsl";
@@ -52,14 +52,13 @@ export class VignetteScene extends Phaser.Scene {
     await (run[data.id] ?? (async () => undefined))();
     G.s.flags[`vig_${data.id}`] = true;
     G.save();
-    this.cameras.main.fadeOut(500);
     const next =
       data.id === "wahooga"
         ? () => switchTo(this, "CharSelect", { swap: true })
         : data.id === "sanmik_lampe"
           ? () => switchTo(this, "Dungeon", { dungeon: "arena_sanmik", room: 0 })
           : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, next);
+    fadeThen(this, 250, next);
   }
 
   private wait(ms: number) {
@@ -2365,7 +2364,7 @@ export class VignetteScene extends Phaser.Scene {
             }
           }
           hud.setText(`EATEN ${eaten}   ON THE FLOOR ${wasted}`);
-          if (spawned >= TOTAL && foods.every((f) => f.done)) {
+          if (spawned >= TOTAL && foods.every((f) => f.done || f.t.x < MOUTH_X - 20)) {
             tick.remove();
             spawn.remove();
             this.input.keyboard?.off("keydown-SPACE", shove);
@@ -2375,7 +2374,11 @@ export class VignetteScene extends Phaser.Scene {
             zone.destroy();
             G.s.flags.polson_fat = add ? ((G.s.flags.polson_fat as number) ?? 0) + eaten : Math.max((G.s.flags.polson_fat as number) ?? 0, eaten);
             this.caption(eaten >= 12 ? "MAXIMUM BULK" : eaten >= 7 ? "BULKED" : "LIGHT BULK", "#ffd23f", 30);
-            this.time.delayedCall(1200, () => resolve());
+            this.time.delayedCall(500, () => {
+              this.lastCaption?.destroy();
+              this.lastCaption = undefined;
+              resolve();
+            });
           }
         },
       });
