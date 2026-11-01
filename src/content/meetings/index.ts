@@ -1,3 +1,4 @@
+import { withAnyOtherBusiness } from "../archive/grotesque";
 import type { MeetingScript } from "../../data/types";
 import { EMERGENCY_REACTION_SESSION, FOUNDING_CABINET, KRAZY_FACT_EMERGENCY, LORE_APPRECIATION_INQUIRY } from "./chapterOneMeetings";
 import {
@@ -10,7 +11,7 @@ import {
 } from "./laterMeetings";
 
 export const MEETINGS: Record<string, MeetingScript> = Object.fromEntries(
-  [
+  withAnyOtherBusiness([
     LORE_APPRECIATION_INQUIRY,
     EMERGENCY_REACTION_SESSION,
     FOUNDING_CABINET,
@@ -21,5 +22,5 @@ export const MEETINGS: Record<string, MeetingScript> = Object.fromEntries(
     FLENKY_CONSTITUTIONAL_CRISIS,
     KREBON_QUESTION,
     FINAL_READING,
-  ].map((m) => [m.id, m]),
+  ]).map((m) => [m.id, m]),
 );

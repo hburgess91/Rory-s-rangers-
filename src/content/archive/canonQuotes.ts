@@ -1,4 +1,5 @@
 import type { CanonLine } from "../../data/types";
+import { GROTESQUE } from "./grotesqueQuotes";
 
 // Curated, verbatim-ish lines from the group chat exports (K1-K4).
 // Only what the game needs is copied here. The raw exports are never bundled.
@@ -258,6 +259,9 @@ const LIST: CanonLine[] = [
   L("hope_she_doesnt", "CRONGUS", "Let's hope she doesn't in that case", 1662646330000, ["ban", "flenky", "queen"], "FGM_ULTRA"),
   L("frothy_krelmor", "MIKEY", "Frothy krelmor", 1653416650470, ["proctus", "krelmor"], "FGM_ULTRA"),
 ];
+
+// the harder-edged lines (see grotesque.ts)
+for (const g of GROTESQUE) LIST.push(L(g.id, g.speaker as CanonLine["speaker"], g.text, g.ts, [...g.tags, "grotesque", g.theme]));
 
 export const CANON: Record<string, CanonLine> = Object.fromEntries(LIST.map((l) => [l.id, l]));
 export const CANON_LIST = LIST;

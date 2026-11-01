@@ -1,5 +1,6 @@
 import type { ArchiveEntry } from "../../data/types";
 import { adapt, canon, dir, ping, say } from "../dsl";
+import { ANNEX_ENTRIES } from "./grotesque";
 
 // The Krelworld Historical Archive. Each entry has the official Krelworld version,
 // the original record (replayable as a reenactment), and sometimes a contradiction.
@@ -274,6 +275,7 @@ export const ARCHIVE: ArchiveEntry[] = [
     original: [canon("new_sheriff"), canon("disheartening")],
     footnote: "The cabinet reconvened to go and fight him.",
   },
+  ...ANNEX_ENTRIES,
 ];
 
 

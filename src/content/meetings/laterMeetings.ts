@@ -1,3 +1,4 @@
+import { leakExtras } from "../archive/grotesque";
 import type { Line, SpeakerId } from "../../data/types";
 import type { MeetingScript } from "../../data/types";
 import { canon, dir, ping, react, say } from "../dsl";
@@ -9,6 +10,7 @@ export function leakPreview(when: string, quotes: [SpeakerId, string][], after: 
     ping("DRONGUS", "Here's a little preview of what the public's getting 👀"),
     dir("The podium screen fills with a screenshot. The group chat. Real messages. Timestamps and everything.", { sfx: "notify" }),
     ...quotes.map(([sp, t]) => say(sp, t)),
+    ...leakExtras(),
     dir("SCREENSHOT ENDS. Nobody looks at anybody."),
     ...after,
   ];
