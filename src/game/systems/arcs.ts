@@ -1,3 +1,4 @@
+import { GUNS, gunMax } from "../combat/Guns";
 import type { GameState } from "../../data/types";
 import { ARCS, arcFor, arcsFor, type Arc, type ArcStep } from "../../content/arcs";
 import { DUNGEONS } from "../../data/dungeons";
@@ -57,6 +58,12 @@ export function maybeFinishArc(s: GameState): string | null {
     if (!a.steps.every((st) => stepDone(s, a, st))) continue;
     s.flags[`${a.id}_done`] = true;
     s.coins += a.reward.coins;
+    if (a.reward.gun && GUNS[a.reward.gun]) {
+      // a new gun, or a full refill of it if you already have one
+      s.guns = s.guns ?? {};
+      s.guns[a.reward.gun] = gunMax(GUNS[a.reward.gun], s);
+      s.gun = a.reward.gun;
+    }
     out.push(`${a.title} complete: +${a.reward.coins} Krezzcoin. ${a.reward.desc}`);
   }
   return out.length ? out.join(" ") : null;
@@ -66,7 +73,6 @@ export { ARCS, arcFor, arcsFor };
 
 /** The chapter whose dungeon a side quest must be finished before. Krebon's story (which swaps your character) is never required. */
 const DUE: Record<string, number> = {
-  arc_boggor: 3,
   arc_polson_fit: 3,
   arc_crocodile: 3,
   arc_koeman: 3,
@@ -79,7 +85,8 @@ const DUE: Record<string, number> = {
   arc_50p: 6,
 };
 export function arcDue(a: Arc): number | null {
-  if (a.id === "arc_krebon") return null;
+  // optional: Krebon's story (it swaps your character) and Boggor's photos
+  if (a.id === "arc_krebon" || a.id === "arc_boggor") return null;
   if (DUE[a.id]) return DUE[a.id];
   return a.player === "ALL" ? Math.max(2, a.minChapter ?? 2) : 2;
 }

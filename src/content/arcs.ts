@@ -34,7 +34,8 @@ export interface Arc {
   title: string;
   blurb: string;
   steps: ArcStep[];
-  reward: { coins: number; desc: string };
+  /** gun: a weapon handed over at the end (a full refill if you already have it). */
+  reward: { coins: number; desc: string; gun?: string };
 }
 
 export const ARCS: Arc[] = [
@@ -663,7 +664,7 @@ export const ARCS: Arc[] = [
     minChapter: 2,
     title: "Supple Structures",
     blurb: "Boggor Cranstil, the hunched old man in the dark house by the playground, wants photographs of the playground equipment.",
-    reward: { coins: 250, desc: "A signed copy of 'Supple Structures: A Photographic Journey' by B. Cranstil. It's mostly slides." },
+    reward: { coins: 250, gun: "sniper", desc: "A signed copy of 'Supple Structures: A Photographic Journey' by B. Cranstil (it's mostly slides), and Boggor's old telephoto rig, converted: POLSON'S LONG LENS, a sniper rifle. Fully loaded. 'I won't be needing it. I've got all the photos I need.'" },
     steps: [
       {
         id: "meet",
