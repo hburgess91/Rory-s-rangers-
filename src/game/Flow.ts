@@ -56,7 +56,7 @@ export function startNewRun(from: Phaser.Scene, player: PlayableId, ngPlus = 0) 
   G.newRun(player, ngPlus);
   switchTo(from, "Meeting", {
     id: "lore_appreciation_inquiry",
-    next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", music: "meeting", next: { scene: "Hub" } } },
+    next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", music: "meeting", next: { scene: "Meeting", data: { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } } } } },
   });
 }
 
@@ -67,7 +67,12 @@ export function continueRun(from: Phaser.Scene) {
     return true;
   }
   if (G.s.chapter === 1 && !G.s.flags.prologue_done) {
-    switchTo(from, "Meeting", { id: "lore_appreciation_inquiry", next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", next: { scene: "Hub" } } } });
+    switchTo(from, "Meeting", { id: "lore_appreciation_inquiry", next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", next: { scene: "Meeting", data: { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } } } } } });
+    return true;
+  }
+  // the song went unanswered: straight on into the emergency session
+  if (G.s.chapter === 1 && !G.s.flags.met_emergency) {
+    switchTo(from, "Meeting", { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } });
     return true;
   }
   switchTo(from, "Hub");
