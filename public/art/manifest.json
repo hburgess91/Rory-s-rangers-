@@ -5136,6 +5136,11 @@
    "frameWidth": 82,
    "frameHeight": 121,
    "hd": 0.3967
+  },
+  "spr_POLSON_FAT": {
+   "file": "chars/POLSON_FAT.png",
+   "frameWidth": 112,
+   "frameHeight": 64
   }
  }
 }
