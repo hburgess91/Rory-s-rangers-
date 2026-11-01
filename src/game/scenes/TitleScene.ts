@@ -61,6 +61,7 @@ export class TitleScene extends Phaser.Scene {
     items.push(["HISTORICAL ARCHIVE", () => switchTo(this, "Archive", { fromTitle: true })]);
     items.push(["SETTINGS", () => this.scene.launch("Menu", { mode: "settings", caller: "Title" })]);
     items.forEach(([t, fn], i) => button(this, W / 2, 222 + i * 46, t, fn, { w: 320 }));
+    button(this, 90, 24, "🛠 DEBUG", () => switchTo(this, "DebugSkip"), { w: 140, h: 30, size: 13 });
 
     label(this, 12, H - 22, "WASD · Mouse · Click · Space · E · Q · B · R · Esc", 11, "#6d6a85");
     label(this, W - 12, H - 22, "v1.0 · No reactions were harmed", 11, "#6d6a85").setOrigin(1, 0);
