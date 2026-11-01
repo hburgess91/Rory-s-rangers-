@@ -147,6 +147,8 @@ export class SideLevel {
   triggersDone() {
     // a tower opens as soon as you reach the top landing
     if (this.room.tower && this.room.exitAt && this.sc.player && this.sc.player.y < this.sc.groundY - this.room.exitAt[1] + 20) return true;
+    // the trip: no need to kill anyone, just get to the far end
+    if (this.room.trip && this.sc.player && this.sc.player.x > this.room.w - 420) return true;
     return this.hasTriggers && !this.lock && this.pendingSpawns === 0 && this.triggers.every((t) => t.fired) && this.sc.enemies.every((e) => e.dead);
   }
 
@@ -318,7 +320,7 @@ export class SideLevel {
       tr.fired = true;
       this.trigCount++;
       // every other wave locks the screen (not during a chase)
-      const locking = !this.room.tower && this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
+      const locking = !this.room.tower && !this.room.trip && this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
       if (locking) {
         const cam = sc.cameras.main;
         const l = Math.max(0, cam.scrollX);
@@ -428,6 +430,122 @@ export class SideLevel {
       sc.tweens.add({ targets: beam, angle: { from: -35, to: 35 }, yoyo: true, repeat: -1, duration: 2600 + i * 500, ease: "Sine.inOut" });
     }
     this.trip = trip;
+    this.wonderFlowers();
+    sc.time.delayedCall(2500, () => this.wonder());
+  }
+
+  // ---------------------------------------------------------------- wonder: talking flowers and big surreal moments
+
+  private flowerLines = [
+    "Yee!", "WOW!", "You're doing amazing!", "I can taste the bass!", "Love you, mate!", "Everything is music!", "Is SanChz a dolphin now?",
+    "MDMAZING!", "It gets weirder!", "Keep going!", "Have you got any water?", "I'm a flower!", "The walls are breathing!", "Big up the goat!",
+    "Hug a bouncer!", "Your aura is purple!", "I've had four as well!", "Who's on the decks? It's a goat.", "Don't look at the floor!", "Wonderful!",
+  ];
+
+  /** Talking flowers along the floor: bob to the beat, chat when you pass. */
+  private wonderFlowers() {
+    const sc = this.sc;
+    const gy = sc.groundY;
+    const kinds = ["🌸", "🌼", "🌷", "🌻", "🍄", "🌺"];
+    const flowers: { t: Phaser.GameObjects.Text; said: number }[] = [];
+    for (let x = 260; x < this.room.w - 200; x += 300 + Math.random() * 120) {
+      if (this.inGap(x, 40)) continue;
+      const t = sc.add.text(x, gy + 2, kinds[Math.floor(Math.random() * kinds.length)], { fontSize: "34px" }).setOrigin(0.5, 1).setDepth(7);
+      // bounce on the beat (MDMAzing is roughly 128bpm)
+      sc.tweens.add({ targets: t, scaleY: { from: 1, to: 1.25 }, scaleX: { from: 1, to: 0.9 }, yoyo: true, repeat: -1, duration: 234, ease: "Sine.inOut" });
+      sc.tweens.add({ targets: t, angle: { from: -10, to: 10 }, yoyo: true, repeat: -1, duration: 468, ease: "Sine.inOut" });
+      flowers.push({ t, said: 0 });
+    }
+    sc.time.addEvent({
+      delay: 250,
+      loop: true,
+      callback: () => {
+        const p = sc.player;
+        if (!p) return;
+        const now = sc.now();
+        for (const f of flowers) {
+          if (now - f.said < 6000 || Math.abs(f.t.x - p.x) > 140) continue;
+          f.said = now;
+          this.flowerSay(f.t.x, f.t.y - 44, this.flowerLines[Math.floor(Math.random() * this.flowerLines.length)]);
+        }
+      },
+    });
+  }
+
+  private flowerSay(x: number, y: number, line: string) {
+    const sc = this.sc;
+    const b = sc.add.text(x, y, line, { fontFamily: "Arial Rounded MT Bold, Arial, sans-serif", fontSize: "14px", color: "#111827", backgroundColor: "#ffffff", padding: { x: 8, y: 4 }, fontStyle: "bold" }).setOrigin(0.5, 1).setDepth(905).setScale(0);
+    sc.tweens.add({ targets: b, scale: 1, duration: 180, ease: "Back.out" });
+    sc.tweens.add({ targets: b, alpha: 0, y: y - 20, delay: 1700, duration: 400, onComplete: () => b.destroy() });
+  }
+
+  private wonderIdx = 0;
+
+  /** Every so often the trip goes up a level: a WONDER! moment. */
+  private wonder() {
+    const sc = this.sc;
+    if (!this.trip || !sc.scene.isActive()) return;
+    const cam = sc.cameras.main;
+    const kinds = ["stampede", "starfall", "dance", "sing", "bloom"];
+    const kind = kinds[this.wonderIdx++ % kinds.length];
+    const titles: Record<string, string> = { stampede: "GOAT STAMPEDE!", starfall: "IT'S RAINING STARS!", dance: "EVERYBODY DANCE!", sing: "THE FLOWERS ARE SINGING!", bloom: "THE WAREHOUSE IS BLOOMING!" };
+    // a rainbow burst and the title, like the world just changed the rules
+    const burst = sc.add.graphics().setScrollFactor(0).setDepth(940).setBlendMode(Phaser.BlendModes.ADD);
+    const cols = [0xf87171, 0xfb923c, 0xfacc15, 0x4ade80, 0x22d3ee, 0x818cf8, 0xe879f9];
+    cols.forEach((c, i) => burst.lineStyle(10, c, 0.6).strokeCircle(0, 0, 40 + i * 12));
+    burst.setPosition(480, 270);
+    sc.tweens.add({ targets: burst, scale: 6, alpha: 0, duration: 900, ease: "Cubic.out", onComplete: () => burst.destroy() });
+    const w = sc.add.text(480, 150, "✨ WONDER! ✨", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#fde047", stroke: "#7c3aed", strokeThickness: 9 }).setOrigin(0.5).setScrollFactor(0).setDepth(960).setScale(0);
+    const sub = sc.add.text(480, 205, titles[kind], { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff", stroke: "#db2777", strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(960).setAlpha(0);
+    sc.tweens.add({ targets: w, scale: 1, angle: { from: -15, to: 0 }, duration: 380, ease: "Back.out" });
+    sc.tweens.add({ targets: sub, alpha: 1, delay: 250, duration: 250 });
+    sc.tweens.add({ targets: [w, sub], alpha: 0, delay: 2000, duration: 500, onComplete: () => { w.destroy(); sub.destroy(); } });
+    synth.play("ding");
+    const dur = 6000;
+    if (kind === "stampede") {
+      // a herd of giant YEE goats charges across the back of the rave
+      for (let i = 0; i < 14; i++) {
+        const g = sc.add.text(-120 - i * 90 - Math.random() * 60, 300 + Math.random() * 150, Math.random() < 0.8 ? "🐐" : "🦄", { fontSize: `${60 + Math.floor(Math.random() * 50)}px` }).setScrollFactor(0).setDepth(-5).setFlipX(true).setAlpha(0.9);
+        sc.tweens.add({ targets: g, x: 1200, duration: 3200 + Math.random() * 800, delay: i * 120, onComplete: () => g.destroy() });
+        sc.tweens.add({ targets: g, y: g.y - 26, yoyo: true, repeat: -1, duration: 160 });
+      }
+      cam.shake(2600, 0.003);
+    } else if (kind === "starfall") {
+      sc.time.addEvent({ delay: 70, repeat: Math.floor(dur / 70), callback: () => {
+        const st = sc.add.text(Math.random() * 980, -30, Math.random() < 0.6 ? "⭐" : "✨", { fontSize: `${18 + Math.floor(Math.random() * 26)}px` }).setScrollFactor(0).setDepth(895);
+        sc.tweens.add({ targets: st, y: 580, x: st.x - 80, angle: 360, duration: 1800 + Math.random() * 1200, onComplete: () => st.destroy() });
+      } });
+    } else if (kind === "dance") {
+      // the whole rave (enemies included) stops fighting and dances for a bit
+      sc.events.emit("prophecy", dur);
+      for (const e of sc.enemies) if (!e.dead && e.active) sc.tweens.add({ targets: e, angle: { from: -20, to: 20 }, yoyo: true, repeat: Math.floor(dur / 468), duration: 234, onComplete: () => { if (e.active) e.setAngle(0); } });
+      const disco = sc.add.text(480, 40, "🪩", { fontSize: "70px" }).setOrigin(0.5).setScrollFactor(0).setDepth(899);
+      sc.tweens.add({ targets: disco, angle: 360, repeat: Math.floor(dur / 1500), duration: 1500, onComplete: () => disco.destroy() });
+      for (let i = 0; i < 6; i++) {
+        const sp = sc.add.circle(480, 70, 10, cols[i], 0.35).setScrollFactor(0).setDepth(898).setBlendMode(Phaser.BlendModes.ADD);
+        sc.tweens.add({ targets: sp, x: { from: 100 + i * 150, to: 860 - i * 150 }, y: { from: 120 + (i % 3) * 120, to: 480 - (i % 3) * 100 }, scale: 4, yoyo: true, repeat: 3, duration: 900 + i * 120, onComplete: () => sp.destroy() });
+      }
+    } else if (kind === "sing") {
+      const p = sc.player;
+      const words = ["M", "D", "M", "A", "ZING!", "YEEEE!"];
+      words.forEach((wd, i) => sc.time.delayedCall(i * 469, () => {
+        for (let k = -2; k <= 2; k++) this.flowerSay(p.x + k * 190, sc.groundY - 50 - Math.abs(k) * 6, wd);
+      }));
+      for (let i = 0; i < 18; i++) {
+        const n = sc.add.text(Math.random() * 960, 540, ["♪", "♫", "♬"][i % 3], { fontSize: "34px", color: "#" + cols[i % cols.length].toString(16).padStart(6, "0") }).setScrollFactor(0).setDepth(896);
+        sc.tweens.add({ targets: n, y: -30, x: n.x + Math.sin(i) * 120, duration: 3000 + Math.random() * 1500, delay: i * 150, onComplete: () => n.destroy() });
+      }
+    } else if (kind === "bloom") {
+      // giant flowers grow up out of the floor behind you and sway, then wilt
+      for (let i = 0; i < 9; i++) {
+        const f = sc.add.text(60 + i * 110, 560, ["🌻", "🌸", "🌺", "🌷", "🍄"][i % 5], { fontSize: `${110 + Math.floor(Math.random() * 60)}px` }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(-4).setAlpha(0.85);
+        sc.tweens.add({ targets: f, y: 470 + Math.random() * 40, duration: 700, delay: i * 90, ease: "Back.out" });
+        sc.tweens.add({ targets: f, angle: { from: -8, to: 8 }, yoyo: true, repeat: 6, duration: 469, delay: 700 });
+        sc.tweens.add({ targets: f, y: 700, delay: dur, duration: 600, onComplete: () => f.destroy() });
+      }
+      if (this.trip.reef) sc.tweens.add({ targets: this.trip.reef, alpha: 0.85, yoyo: true, duration: 1500, hold: 2500 });
+    }
+    sc.time.delayedCall(dur + 4000, () => this.wonder());
   }
 
   private updateTrip(dt: number) {

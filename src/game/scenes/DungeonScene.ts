@@ -302,6 +302,19 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         g.fillStyle(0xd4a017, 1).fillRect(x - w / 2, y - 9, w, 3);
         for (let cx = x - w / 2 + 14; cx < x + w / 2 - 6; cx += 28) g.fillStyle(0x1f1226, 1).fillTriangle(cx - 9, y + 9, cx + 9, y + 9, cx, y + 22);
         g.lineStyle(1, 0x000000, 0.6).strokeRect(x - w / 2, y - 7, w, 16);
+      } else if (r.trip) {
+        // wonder platforms: rainbow jelly, wobbling to the beat
+        const c = this.add.container(x, y).setDepth(4);
+        const cols = [0xf472b6, 0xfacc15, 0x4ade80, 0x22d3ee, 0xa78bfa];
+        const g = this.add.graphics();
+        g.fillStyle(0x000000, 0.35).fillRoundedRect(-w / 2 + 3, -6, w, 18, 9);
+        g.fillStyle(cols[Math.floor(fx * 37) % cols.length], 1).fillRoundedRect(-w / 2, -9, w, 18, 9);
+        g.fillStyle(0xffffff, 0.45).fillRoundedRect(-w / 2 + 8, -7, w - 16, 5, 3);
+        for (let dx = -w / 2 + 16; dx < w / 2 - 8; dx += 24) g.fillStyle(0xffffff, 0.8).fillCircle(dx, 3, 2.5);
+        c.add(g);
+        const eyes = this.add.text(0, -2, "◕‿◕", { fontFamily: FONT, fontSize: "11px", color: "#111827" }).setOrigin(0.5);
+        c.add(eyes);
+        this.tweens.add({ targets: c, scaleY: { from: 1, to: 1.3 }, scaleX: { from: 1, to: 0.96 }, yoyo: true, repeat: -1, duration: 234, delay: Math.floor(fx * 1000) % 234, ease: "Sine.inOut" });
       } else {
         this.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(0xb0a0c0);
         this.add.rectangle(x, y - 7, w, 3, 0xffd23f, 0.8).setDepth(5);

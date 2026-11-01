@@ -752,7 +752,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         pitName: "THE VOID (EUPHORIC)",
         movers: [[0.305, 130, 110, 0, 70, 2200], [0.58, 150, 110, 80, 0, 2800], [0.7, 260, 120, 0, 60, 2000]],
         hazards: [{ kind: "steam", x: 0.18, period: 2600 }, { kind: "steam", x: 0.44, period: 2400 }, { kind: "steam", x: 0.82, period: 2200 }],
-        triggers: [[0.05, [["loved_up", 7]]], [0.2, [["rave_bouncer", 2], ["loved_up", 5], ["glowstick_lobber", 2]]], [0.38, [["comedown", 3], ["loved_up", 5], ["speaker_turret", 1]]], [0.55, [["rave_bouncer", 3], ["comedown", 2], ["glowstick_lobber", 2]]], [0.72, [["loved_up", 8], ["comedown", 3], ["glowstick_lobber", 2]]], [0.86, [["rave_bouncer", 3], ["comedown", 3], ["loved_up", 5], ["speaker_turret", 1]]]],
+        triggers: [[0.05, [["loved_up", 4]]], [0.22, [["loved_up", 3], ["glowstick_lobber", 1]]], [0.4, [["comedown", 1], ["loved_up", 3]]], [0.58, [["rave_bouncer", 1], ["loved_up", 3]]], [0.76, [["comedown", 2], ["glowstick_lobber", 1]]]],
         enterLines: [
           { s: "NARRATOR", t: "THE NU WAREHOUSE. A derelict warehouse on the edge of Catford, shaking at the seams. Lasers. Smoke. Five hundred people in bucket hats. On the decks, playing it for the ninth time in a row: 'MDMAzing'.", dir: true },
           { s: "SANMIK", t: "Yee. Here. Have this." },
@@ -760,7 +760,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
           { s: "SANMIK", t: "Magic pill. Basically a vitamin. Gets you in the zone, innit. Can't fix a hot tub without being in the zone." },
           { s: "SANCHZ", t: "YEGHHH. I've had four." },
           { s: "NARRATOR", t: "You take the magic pill.", dir: true },
-          { s: "NARRATOR", t: "For a moment, nothing. Then the bass drops, and so does the floor of reality. The warehouse is still here, but it is also, somehow, the bottom of the ocean. A jellyfish is dancing with a bouncer. The lasers taste purple. You love everyone. You must still, unfortunately, fight some of them.", dir: true },
+          { s: "NARRATOR", t: "For a moment, nothing. Then the bass drops, and so does the floor of reality. The warehouse is still here, but it is also, somehow, the bottom of the ocean. A jellyfish is dancing with a bouncer. The lasers taste purple. You love everyone. A flower says hello. You say hello back. Some of the ravers still want a fight, but you don't have to stop for them: just dance your way to the far end.", dir: true },
           { s: "SANMIK", t: "SEE?! MDMAZING! YEEEEE!" },
         ],
       },
