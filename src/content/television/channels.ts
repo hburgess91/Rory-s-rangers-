@@ -21,13 +21,13 @@ const ep = (id: string, channel: string, show: string, title: string, n: number,
 
 export const NEWS_1 = ep(
   "news_1",
-  "KRELFORD NEWS AT SIX",
+  "GB KREWS 24",
   "Krelford News at Six",
   "The Great Silence",
   1,
   `
 [MUSIC news start]
-# KRELFORD NEWS AT SIX
+# GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. Our top story tonight: the Supreme Leader has posted a new song, and nobody has reacted.
@@ -44,13 +44,13 @@ NEWSREADER: Good night.
 
 export const NEWS_2 = ep(
   "news_2",
-  "KRELFORD NEWS AT SIX",
+  "GB KREWS 24",
   "Krelford News at Six",
   "Cheesegate",
   2,
   `
 [MUSIC news start]
-# KRELFORD NEWS AT SIX
+# GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. The Tap is flowing again following what the cabinet are calling "the salmon thing".
@@ -69,13 +69,13 @@ NEWSREADER: Fascinating. Sport now. There is no sport. Krelball is cancelled unt
 
 export const NEWS_3 = ep(
   "news_3",
-  "KRELFORD NEWS AT SIX",
+  "GB KREWS 24",
   "Krelford News at Six",
   "Boner Control",
   3,
   `
 [MUSIC news start]
-# KRELFORD NEWS AT SIX
+# GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. The Ministry of Boner Control has gone dark, and pussy juice pressure across the nation has fallen forty percent.
@@ -89,13 +89,13 @@ NEWSREADER: Threat level today: purple. We have been asked to clarify whether pu
 
 export const NEWS_4 = ep(
   "news_4",
-  "KRELFORD NEWS AT SIX",
+  "GB KREWS 24",
   "Krelford News at Six",
   "Banned",
   4,
   `
 [MUSIC news start]
-# KRELFORD NEWS AT SIX
+# GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. Tonight: four thousand citizens have been banned by the Bonky Cult, including a man for having parents.
@@ -109,13 +109,13 @@ NEWSREADER: Good night.
 
 export const NEWS_5 = ep(
   "news_5",
-  "KRELFORD NEWS AT SIX",
+  "GB KREWS 24",
   "Krelford News at Six",
   "Who The Fuck Is Krebon",
   5,
   `
 [MUSIC news start]
-# KRELFORD NEWS AT SIX
+# GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. Krezteua d'If has reopened, and is said to be filling with "versions of history".
@@ -128,13 +128,13 @@ NEWSREADER: A restaurant menu bearing the words "Krebon — real butter" has bee
 
 export const CABINET_LIVE = ep(
   "cabinet_live",
-  "CABINET PROCEEDINGS LIVE",
+  "GB KREWS 24",
   "Cabinet Proceedings Live",
   "Highlights: The Ministries",
   1,
   `
 [MUSIC news start]
-# CABINET PROCEEDINGS LIVE
+# GB KREWS 24: CABINET PROCEEDINGS LIVE
 INT. TOWNHALL CAM - DAY
 [MUSIC news fade]
 ANNOUNCER: Welcome to Cabinet Proceedings Live, where we bring you the best of Krelworld democracy.
@@ -146,31 +146,6 @@ ANNOUNCER: Ministerial highlights include the creation of the Ministry of Krunch
 KREZMAR: We have no defence minister?!
 DRONGUS: I was distracted by the need for all the other ministers.
 ANNOUNCER: The Ministry of Defence remains vacant. Join us next week for more of the same.
-`,
-);
-
-export const KRELLBALL = ep(
-  "krellball",
-  "KRELLBALL HIGHLIGHTS",
-  "Krellball Highlights",
-  "The Big One",
-  1,
-  `
-[MUSIC sport start]
-# KRELLBALL HIGHLIGHTS
-EXT. KRELLBALL PITCH - DAY
-[MUSIC sport fade]
-COMMENTATOR: Welcome to Krellball, the big one, as Krezwonk once said.
-COMMENTATOR: For new viewers, the rules of Krellball have not been written yet. The wiki will be updated at some point.
-COMMENTATOR: And Gronny G is in goal. In shorts. It's minus six. He's not moving. Is that tactics?
-CO-COMMENTATOR: That's just Gronny.
-COMMENTATOR: Krezmar on the ball! He's stopped. He's opening a fizzy bongo. That's a yellow card. No. That's encouraged.
-CO-COMMENTATOR: Flenky's been sent off. He wasn't playing. He was standing near the pitch.
-[CHEERING]
-COMMENTATOR: GOAL! I think! Someone's scored something! The cheerleaders begin the official chant!
-CHEERLEADERS: Squeeze your legs until you scrom! While you watch Wallace and Grom!
-[CHEERING]
-COMMENTATOR: Final score: purple. We'll let you decide if that's high or low.
 `,
 );
 
@@ -199,32 +174,6 @@ ANNOUNCER: Umami Punani. Taste the fun!
 HOST: Also available: Krezpy Kream Drongnuts. Chocolate Cronstons. Crobleys. Every nan had them in her choccy drawer!
 HOST: Lines are open. Nobody is calling. Nobody ever calls.
 `,
-);
-
-export const EMERGENCY = ep(
-  "emergency",
-  "EMERGENCY DRONGUS BROADCAST",
-  "Emergency Drongus Broadcast",
-  "Nuclear Attack Notice (Pop Punk Version)",
-  1,
-  `
-[SFX alarm]
-# EMERGENCY BROADCAST
-INT. EMERGENCY CARD - NIGHT
-DRONGUS: This is an emergency broadcast from your Supreme Leader.
-DRONGUS: This is a three minute warning.
-[MUSIC punk start]
-SINGER (pop punk): Three minutes left, the sirens are wailing!
-SINGER (pop punk): If you're not inside you're better off dead!
-(Guitar solo. An extremely long guitar solo.)
-SINGER (pop punk): Your skin will peel like a fizzy bongo label! Your krez will glow like Krezz 2.0!
-SINGER (pop punk): If you're not inside you're better off dead!
-[MUSIC punk stop]
-DRONGUS: This has been a public service announcement. It is in the running for Krezzmas number one.
-DRONGUS: Please react.
-DRONGUS: Hello?
-`,
-  { unlockFlag: "met_emergency", unlockHint: "Broadcasts after the Emergency Reaction Session" },
 );
 
 export const KRONSTER_DOC = ep(
@@ -275,69 +224,13 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-export const ANTHEM_BROADCAST = ep(
-  "anthem_broadcast",
-  "KMTV (KRELWORLD MUSIC TELEVISION)",
-  "KMTV",
-  "The Star Spangled Banner (Krelworld Edition) — State Broadcast",
-  1,
-  `
-# KMTV PRESENTS: THE NATIONAL ANTHEM
-INT. CITADEL PARADE GROUND - DAWN
-VJ: By order of the Supreme Leader, all citizens must stand for the national anthem. Yes, you. On your sofa. Stand up.
-[MUSIC anthem start]
-(The Krelworld Guard stand to attention in perfect rows. A giant portrait of Drongus unfurls from the Citadel. It is airbrushed. Heavily.)
-(A flypast of three pigeons in formation. One of them is wearing the word TOWN.)
-(Close-up: a single tear rolls down a guardsman's face. He has been standing here since 2021.)
-(Drongus salutes himself in a mirror.)
-(Fireworks spell out PLEASE REACT. The R doesn't light.)
-VJ: That was the national anthem. Reactions from the public: zero.
-DRONGUS: Zero ??
-[MUSIC anthem stop]
-`,
-  { unlockFlag: "ch6_intro", unlockHint: "Broadcasts once the Citadel opens (Chapter 6)" },
-);
+const EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
 
-export const CRAZY_VIDEO = ep(
-  "crazy_video",
-  "KMTV (KRELWORLD MUSIC TELEVISION)",
-  "KMTV",
-  "Krazy For The Krelworld (Official Music Video)",
-  2,
-  `
-# KRAZY FOR THE KRELWORLD (OFFICIAL VIDEO)
-EXT. KRELFORD HIGH STREET - DAY
-VJ: World premiere. The Supreme Leader's latest single. He has asked us to remind viewers that the react button is right there.
-[MUSIC crazy start]
-(Drongus struts down the high street in sunglasses. Townsfolk dance behind him with visible reluctance.)
-(Cut to: the Great Tap. Pussy juice fountains in time with the beat.)
-(Kreblis appears in the background holding a sign that says 'STRANGE'.)
-(Krezwonk lurks in every shot. Nobody cast him. Nobody can explain it.)
-(Mikey tries to get in shot. Mikey is cropped out.)
-(Proctus Krelmor does the dance one beat late, every time, with total commitment.)
-(Wide shot of the Kreltower at sunset. A plane flies harmlessly past it. The director holds the shot slightly too long.)
-(Final shot: the song's view counter. Seen by 9.)
-VJ: Absolute tune. Our studio has decided not to react to it as a mark of respect.
-[MUSIC crazy stop]
-`,
-  { unlockFlag: "met_emergency", unlockHint: "Premieres after the Emergency Reaction Session" },
-);
+/** Number each channel's episodes in order, now that some channels have been folded together. */
+const counts: Record<string, number> = {};
+export const ALL_EPISODES: TVEpisode[] = EPISODES.map((e) => ({ ...e, episodeNumber: (counts[e.channel] = (counts[e.channel] ?? 0) + 1) }));
 
-export const ALL_EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, KRELLBALL, SHOPPING, TCC_EP07, EMERGENCY, KRONSTER_DOC, LORE_HOUR, ANTHEM_BROADCAST, CRAZY_VIDEO, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES];
-
-export const CHANNELS: string[] = [
-  "KRELFORD NEWS AT SIX",
-  "CABINET PROCEEDINGS LIVE",
-  "KRELLBALL HIGHLIGHTS",
-  "WONKING MACHINE SHOPPING NETWORK",
-  "THICK CUMMING COCK",
-  "EMERGENCY DRONGUS BROADCAST",
-  "KRELWORLD DOCUMENTARIES",
-  "KMTV (KRELWORLD MUSIC TELEVISION)",
-  "BBK ONE",
-  "CHANNEL KREZ",
-  "GB KREWS 24",
-];
+export const CHANNELS: string[] = ["GB KREWS 24", "CHANNEL KREZ", "BBK ONE", "WONKING MACHINE SHOPPING NETWORK", "KRELWORLD DOCUMENTARIES"];
 
 /** Which set a shot uses. The TV renderer draws these procedurally. */
 export function setKeyFor(set: string): string {
