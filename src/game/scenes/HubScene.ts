@@ -553,6 +553,25 @@ export class HubScene extends Phaser.Scene {
     return `bld_${b.id}`;
   }
 
+  /** The wreck of Crobley Corp HQ keeps smouldering: smoke drifting up, embers winking. */
+  private smoulder(b: Building) {
+    const top = b.y - b.h * 0.1;
+    this.time.addEvent({
+      delay: 260,
+      loop: true,
+      callback: () => {
+        const x = b.x + (Math.random() - 0.5) * b.w * 0.7;
+        const y = top + Math.random() * b.h * 0.35;
+        const puff = this.add.circle(x, y, 6 + Math.random() * 8, Math.random() < 0.5 ? 0x3f3f46 : 0x52525b, 0.55).setDepth(b.y + b.h / 2 + 2);
+        this.tweens.add({ targets: puff, y: y - 120 - Math.random() * 80, x: x + 20 + Math.random() * 40, radius: 26 + Math.random() * 14, alpha: 0, duration: 3200 + Math.random() * 1600, onComplete: () => puff.destroy() });
+      },
+    });
+    for (let i = 0; i < 12; i++) {
+      const e = this.add.circle(b.x + (Math.random() - 0.5) * b.w * 0.7, b.y + (Math.random() - 0.2) * b.h * 0.5, 2, 0xff8a1f).setDepth(b.y + b.h / 2 + 1).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: e, alpha: 0.15, scale: 0.6, yoyo: true, repeat: -1, duration: 400 + Math.random() * 700, delay: Math.random() * 600 });
+    }
+  }
+
   private fitBuildingsToArt() {
     for (const b of BUILDINGS) {
       const key = this.buildingKey(b);
@@ -575,14 +594,15 @@ export class HubScene extends Phaser.Scene {
       let name = b.name;
       if (b.id === "TOWN_HALL" && G.s.chapter === 1 && !G.s.flags.ch1_clear) name = "KRELFORD ____ HALL";
       if (b.id === "HOME") name = `${CHARACTERS[G.s.player].name}'S HOUSE`;
-      if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed) name = "CROBLEY CORP HQ (BURNED OUT)";
+      if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed) name = "CROBLEY CORP HQ (SMOULDERING WRECK)";
       this.add
         .text(b.x, b.y + b.h / 2 + 6, name, { fontFamily: FONT, fontSize: "11px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 }, align: "center", wordWrap: { width: Math.max(160, b.w) } })
         .setOrigin(0.5, 0)
         .setDepth(b.y + b.h / 2 + 1);
       // the walkable line is the front wall: everything above it is roof and facade
       this.colliders.add(this.add.rectangle(b.x, b.y + b.h * 0.12, b.w * 0.86, b.h * 0.7, 0, 0));
-      this.neonGlow(b.x, b.y - b.h * 0.25, Math.max(60, b.w * 0.45));
+      if (key === "bld_CROBLEY_FACTORY_RUIN") this.smoulder(b);
+      else this.neonGlow(b.x, b.y - b.h * 0.25, Math.max(60, b.w * 0.45));
       void img;
       return;
     }
@@ -1331,7 +1351,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "BOOTH":
         return "The Booth (Bully Mikey · vent your frustration)";
       case "CROBLEY_FACTORY":
-        return s.flags.crobley_factory_destroyed ? "The burned-out husk of Crobley Corp HQ" : "Crobley Corp HQ";
+        return s.flags.crobley_factory_destroyed ? "The smouldering wreck of Crobley Corp HQ" : "Crobley Corp HQ";
       case "UNIVERSITY":
         return "Enter Krelford University";
       case "GYM":
@@ -1517,7 +1537,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       case "CROBLEY_FACTORY":
         if (s.flags.crobley_factory_destroyed) {
-          await this.talk([dir("The burned-out husk of Crobley Corp HQ. Black walls. No roof. The giant fibreglass Crobley on top has melted into something that looks like it's screaming. It still smells faintly of candy and sausage. A single Crobley lies in the ash by the gate, nibbled."), say(s.player, "Very sad. Very unfortunate.")]);
+          await this.talk([dir("Crobley Corp HQ is gone. Not burned down: gone. A blackened footprint, a few knee-high stumps of wall, and a lot of very hot ash. The giant fibreglass Crobley head from the roof lies on its side in the rubble, still grinning. It still smells of candy and sausage. A single Crobley lies in the ash by where the gate was, nibbled."), say(s.player, "Very sad. Very unfortunate.")]);
           return;
         }
         await this.talk([dir("The gates of the Crobley Factory. Pink chimneys. Purple smoke. A giant fibreglass Crobley on the roof, grinning. Over the gate, a new sign: 'YOU HEARD WHAT YOU THOUGHT YOU HEARD'."), dir("The gates are locked. Not yet.")]);
