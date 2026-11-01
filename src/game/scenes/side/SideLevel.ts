@@ -122,7 +122,9 @@ export class SideLevel {
         this.belts.push({ x0: x, x1: x + w, dir: hz.dir ?? 1, strip });
       }
     }
-    this.triggers = (r.triggers ?? []).map(([fx, wave]) => ({ x: r.w * fx, wave, fired: false }));
+    // in a tower, a trigger's position is how high you've climbed (stored as the y you have to get above)
+    const climb = r.exitAt ? r.exitAt[1] : r.h - 200;
+    this.triggers = (r.triggers ?? []).map(([fx, wave]) => ({ x: r.tower ? gy - fx * climb : r.w * fx, wave, fired: false }));
     if (r.chase) {
       const wall = sc.add.container(-400, 0).setDepth(30);
       const col = r.chase.color ?? 0x991b1b;
@@ -150,7 +152,8 @@ export class SideLevel {
   private perchNear(x: number): { x: number; y: number } | null {
     const r = this.room;
     const gy = this.sc.groundY;
-    const opts = (r.platforms ?? []).map(([fx, h, w]) => ({ x: r.w * fx, y: gy - h - 26, w })).filter((p) => Math.abs(p.x - x) < 520 && !this.inGap(p.x));
+    const py = this.sc.player.y;
+    const opts = (r.platforms ?? []).map(([fx, h, w]) => ({ x: r.w * fx, y: gy - h - 26, w })).filter((p) => (r.tower ? Math.abs(p.y - py) < 320 && p.y < py + 60 : Math.abs(p.x - x) < 520) && !this.inGap(p.x));
     if (!opts.length) return null;
     const p = opts[Math.floor(Math.random() * opts.length)];
     return { x: p.x + (Math.random() - 0.5) * (p.w * 0.5), y: p.y };
@@ -302,11 +305,11 @@ export class SideLevel {
     }
     // run and gun: push forward, more turn up
     for (const tr of this.triggers) {
-      if (tr.fired || p.x < tr.x || this.lock) continue;
+      if (tr.fired || this.lock || (this.room.tower ? p.y > tr.x : p.x < tr.x)) continue;
       tr.fired = true;
       this.trigCount++;
       // every other wave locks the screen (not during a chase)
-      const locking = this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
+      const locking = !this.room.tower && this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
       if (locking) {
         const cam = sc.cameras.main;
         const l = Math.max(0, cam.scrollX);
@@ -333,12 +336,27 @@ export class SideLevel {
             if (this.inGap(x, 30)) x = lk.l + (lk.r - lk.l) / 2;
           }
           let sx = x + (i % 3) * 30;
+          if (this.room.tower) {
+            // up here: on a ledge near your height (walkers), or in the air around you (flyers)
+            const near = (this.room.platforms ?? []).map(([fx, h, w]) => ({ x: this.room.w * fx, y: gy - h - 30, w })).filter((pl) => Math.abs(pl.y - p.y) < 300 && Math.abs(pl.x - p.x) > 120);
+            if (flyer) {
+              sx = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * Phaser.Math.Between(220, 380), 60, this.room.w - 60);
+              y = p.y - Phaser.Math.Between(80, 240);
+            } else if (near.length) {
+              const pl = near[Math.floor(Math.random() * near.length)];
+              sx = pl.x + (Math.random() - 0.5) * pl.w * 0.6;
+              y = pl.y;
+            } else {
+              sx = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * 250, 60, this.room.w - 60);
+              y = p.y - 200;
+            }
+          }
           if (d?.behavior === "turret") {
             const perch = this.perchNear(x);
             if (perch) {
               sx = perch.x;
               y = perch.y;
-            } else y = gy - 30;
+            } else y = this.room.tower ? p.y - 150 : gy - 30;
           }
           this.pendingSpawns++;
           if (locking && lk) lk.pending++;

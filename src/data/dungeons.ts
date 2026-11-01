@@ -57,6 +57,12 @@ export interface RoomDef {
   bossRush?: { boss: string; backdrop?: string; hp?: number }[];
   /** Boss HP multiplier for this room (e.g. an easier first fight in a rush). */
   bossHp?: number;
+  /** This room alone is side-on (in a top-down dungeon). */
+  view?: "side";
+  /** A tall side-on room you climb: run-and-gun triggers fire by height (0..1 of the climb), the exit is at the top. */
+  tower?: boolean;
+  /** Where the exit door sits in a side room: [x 0..1, height above the ground]. */
+  exitAt?: [number, number];
   /** Room music (overrides the dungeon's). */
   music?: string;
   /** The magic pill: colours, sea creatures, the room breathes. */
@@ -80,6 +86,55 @@ export interface DungeonDef {
   returnAt?: string;
   /** "side": a side-scrolling platformer (gravity, jumping, exit on the right). */
   view?: "side";
+}
+
+/** The Cronster's tower: a tall side-on climb, platform to platform, to the Squeezing Room at the top. */
+function cuddleTower(): RoomDef {
+  const H = 3300;
+  const platforms: [number, number, number][] = [];
+  const movers: [number, number, number, number, number, number][] = [];
+  const xs = [0.2, 0.5, 0.8, 0.55, 0.25, 0.45, 0.75];
+  for (let i = 0; i < 26; i++) {
+    const h = 115 + i * 112;
+    const fx = xs[i % xs.length];
+    // every so often the next step is a moving one
+    if (i % 5 === 4) movers.push([fx, h, 130, i % 2 ? 150 : 0, i % 2 ? 0 : 50, 2400 + (i % 3) * 400]);
+    else platforms.push([fx, h, i % 3 === 0 ? 170 : 220]);
+    // a little side ledge now and then, for breathing room
+    if (i % 4 === 2) platforms.push([fx < 0.5 ? 0.88 : 0.12, h + 40, 120]);
+  }
+  // the landing at the top, where the Squeezing Room door is
+  platforms.push([0.5, 115 + 26 * 112, 760]);
+  const top = 115 + 26 * 112;
+  return {
+    name: "The Cuddle Tower",
+    view: "side",
+    tower: true,
+    w: 960,
+    h: H,
+    theme: "mansion",
+    music: "cronny",
+    platforms,
+    movers,
+    exitAt: [0.5, top],
+    triggers: [
+      [0.02, [["plushie", 4]]],
+      [0.12, [["leaping_plushie", 2], ["plushie", 3]]],
+      [0.22, [["candy_drone", 2], ["plushie", 3]]],
+      [0.32, [["jingle_turret", 1], ["leaping_plushie", 2]]],
+      [0.42, [["crobley_minion", 6], ["candy_drone", 1]]],
+      [0.52, [["gobstopper", 2], ["plushie", 3]]],
+      [0.62, [["leaping_plushie", 3], ["jingle_turret", 1]]],
+      [0.72, [["candy_drone", 3], ["crobley_minion", 5]]],
+      [0.82, [["gobstopper", 2], ["leaping_plushie", 2]]],
+      [0.93, [["plushie", 6], ["candy_drone", 2], ["jingle_turret", 1]]],
+    ],
+    enterLines: [
+      { s: "NARRATOR", t: "The trail of chocolate wrappers ends at a door with a heart-shaped letterbox. Behind it: a tower. A very tall, very pink tower. Every wall is covered in drawings of people being cuddled. Some of them are of you.", dir: true },
+      { s: "NARRATOR", t: "A note pinned to the first step, in disturbingly cheery handwriting: 'Come up to the top, love. Ol' Cronny's waiting. I'll cuddle you, squeeze you, and extract all your lovely juices :)'", dir: true },
+      { s: "NARRATOR", t: "CLIMB: W jump (again in the air to double jump) · A / D move · S drop through · shoot as normal. The Squeezing Room is at the very top.", dir: true },
+    ],
+  };
 }
 
 /** Begour's café: the SanMikverse hang-out (no fighting). */
@@ -822,17 +877,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     arenaFlag: "cronster_caught",
     returnAt: "POLICE",
     rooms: [
-      {
-        name: "The Cuddle Corridor",
-        w: 1200,
-        h: 720,
-        theme: "mansion",
-        waves: [[["cheese_mite", 8]], [["friend_crawler", 5]]],
-        enterLines: [
-          { s: "NARRATOR", t: "The trail of chocolate wrappers ends at a door with a heart-shaped letterbox. Inside, every wall is covered in drawings of people being cuddled. Some of them are of you.", dir: true },
-          { s: "NARRATOR", t: "A note on the floor, in disturbingly cheery handwriting: 'I'll cuddle you, squeeze you, and extract all your lovely juices :)'", dir: true },
-        ],
-      },
+      cuddleTower(),
       { name: "The Squeezing Room", w: 1100, h: 720, theme: "mansion", boss: "cronster" },
     ],
   },

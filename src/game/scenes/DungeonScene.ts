@@ -184,10 +184,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     // a previous room's trip doesn't carry over
     this.cameras.main.setRotation(0).setZoom(1);
     (this.cameras.main as any).postFX?.clear?.();
-    this.side = this.dungeon.view === "side";
+    this.side = (r.view ?? this.dungeon.view) === "side";
     this.groundY = r.h - 56;
     this.platforms = null;
     this.sideBg = null;
+    this.towerBg = null;
     this.sideLevel = this.side ? new SideLevel(this as any, r) : null;
     if (this.side) {
       // with holes in the floor, the floor is made of blocks and the world carries on underneath
@@ -301,12 +302,45 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     this.sideLevel?.build(this.platforms);
     this.obstacles = this.physics.add.staticGroup();
-    this.door = this.add.image(r.w - 70, gy - 30, "p_door_locked").setScale(2.2).setDepth(6);
-    this.doorZone = new Phaser.Geom.Rectangle(r.w - 130, gy - 110, 110, 110);
-    this.add.text(r.w - 70, gy - 78, r.boss ? "" : "EXIT →", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
+    const dx = r.exitAt ? r.w * r.exitAt[0] : r.w - 70;
+    const dy = r.exitAt ? gy - r.exitAt[1] - 7 : gy;
+    this.door = this.add.image(dx, dy - 30, "p_door_locked").setScale(2.2).setDepth(6);
+    this.doorZone = new Phaser.Geom.Rectangle(dx - 60, dy - 110, 120, 110);
+    this.add.text(dx, dy - 78, r.boss ? "" : r.tower ? "THE SQUEEZING ROOM ↑" : "EXIT →", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
+    if (r.tower) this.decorateTower();
     const t = this.add.text(480, 200, r.name.toUpperCase(), { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setScrollFactor(0).setDepth(950).setShadow(3, 3, "#000", 0);
     this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
     for (const p of r.props ?? []) if (evalCond(p.cond, G.s)) this.addProp(p);
+  }
+
+  private towerBg: Phaser.GameObjects.TileSprite | null = null;
+
+  /** The Cuddle Tower: pink walls going up forever, cuddle drawings, floor numbers, hearts. */
+  private decorateTower() {
+    const r = this.room;
+    const gy = this.groundY;
+    this.towerBg = this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0).setScrollFactor(0).setDepth(-12).setTint(0x9d4b73).setAlpha(0.85);
+    // a far wall that scrolls slower, with windows full of night
+    for (let y = gy - 200; y > 0; y -= 330) {
+      for (const x of [140, 820]) {
+        this.add.rectangle(x, y, 70, 110, 0x0b1026).setDepth(-8).setStrokeStyle(6, 0x4a1d33);
+        this.add.circle(x - 12, y - 22, 3, 0xfef3c7).setDepth(-7);
+      }
+    }
+    const scrawls = ["CUDDLE ME", "SQUEEZE", "OL' CRONNY ♥", "GIVE US A CUD", "JUICES :)", "COME UP LOVE", "HUG HUG HUG", "♥ ♥ ♥"];
+    let k = 0;
+    for (let y = gy - 120; y > 80; y -= 170) {
+      const x = 160 + ((k * 337) % 640);
+      // a crayon drawing of two stick people cuddling, in a frame
+      const g = this.add.graphics().setDepth(-6);
+      g.fillStyle(0xfdf2f8, 0.9).fillRect(x - 34, y - 26, 68, 52).lineStyle(3, 0x7c2d4a).strokeRect(x - 34, y - 26, 68, 52);
+      g.lineStyle(2, 0x111827).strokeCircle(x - 10, y - 10, 6).strokeCircle(x + 10, y - 10, 6).lineBetween(x - 10, y - 4, x - 10, y + 14).lineBetween(x + 10, y - 4, x + 10, y + 14).lineBetween(x - 10, y + 2, x + 10, y + 2);
+      g.fillStyle(0xef4444).fillCircle(x - 3, y - 18, 3).fillCircle(x + 3, y - 18, 3).fillTriangle(x - 6, y - 17, x + 6, y - 17, x, y - 10);
+      this.add.text(x + (k % 2 ? 110 : -110), y + 20, scrawls[k % scrawls.length], { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#fbcfe8" }).setOrigin(0.5).setDepth(-6).setAngle((k % 3) * 4 - 4).setAlpha(0.7);
+      k++;
+    }
+    // floor numbers so you can see how far you've come
+    for (let f = 1; f * 336 < r.h - 300; f++) this.add.text(40, gy - f * 336, `FLOOR ${f}`, { fontFamily: "Impact, sans-serif", fontSize: "14px", color: "#ffffff" }).setDepth(-5).setAlpha(0.5);
   }
 
   private buildRoom() {
@@ -647,7 +681,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     } else if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
     else if (r.triggers?.length) {
       // run and gun: enemies turn up as you push right
-      if (this.roomIdx > 0 || r.triggers.length) this.toast("RUN AND GUN", "Push right. They'll come to you.");
+      if (this.roomIdx > 0 || r.triggers.length) this.toast(r.tower ? "CLIMB" : "RUN AND GUN", r.tower ? "Jump from platform to platform. The Squeezing Room is at the very top." : "Push right. They'll come to you.");
     } else {
       this.roomCleared = true;
       this.markCleared();
@@ -755,7 +789,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (r.boss) return;
     this.door.setTexture("p_door");
-    this.toast("ROOM CLEAR", this.side ? "The exit is open (far right →)." : "The exit is open (top of the room).");
+    this.toast("ROOM CLEAR", this.room.tower ? "The door at the top is open." : this.side ? "The exit is open (far right →)." : "The exit is open (top of the room).");
   }
 
   private exitOpen() {
@@ -1898,6 +1932,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;
       leadCamera(this.cameras.main, pb.velocity.x, this.side ? 0 : pb.velocity.y, dt, 0.12, 36);
       if (this.sideBg) this.sideBg.tilePositionX = (this.cameras.main.scrollX * 0.35) / this.sideBgScale;
+      if (this.towerBg) this.towerBg.tilePositionY = this.cameras.main.scrollY * 0.4;
     }
     // intoxication decays slowly
     s.intoxication = Math.max(0, s.intoxication - dt * 0.0006);
