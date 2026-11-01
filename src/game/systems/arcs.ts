@@ -66,7 +66,6 @@ export { ARCS, arcFor, arcsFor };
 
 /** The chapter whose dungeon a side quest must be finished before. Krebon's story (which swaps your character) is never required. */
 const DUE: Record<string, number> = {
-  arc_wake_polson: 2,
   arc_boggor: 3,
   arc_polson_fit: 3,
   arc_crocodile: 3,

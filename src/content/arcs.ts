@@ -867,53 +867,6 @@ export const ARCS: Arc[] = [
     ],
   },
   {
-    id: "arc_wake_polson",
-    player: "ALL",
-    minChapter: 2,
-    title: "Operation Wake Up Polson",
-    blurb: "Polson has been asleep since Tuesday. Mikey has named it an operation. Wake him, then prove you know him.",
-    reward: { coins: 180, desc: "Polson is awake. For now. +180 Krezzcoin." },
-    steps: [
-      {
-        id: "wake",
-        text: "Operation Wake Up Polson. Go round to Polson Road.",
-        at: "POLSON_ROAD",
-        step: {
-          kind: "dialogue",
-          lines: [
-            dir("Polson's front door. Mikey is already here, in a hi-vis tabard that says OPERATION WAKE UP POLSON."),
-            say("MIKEY", "He's been asleep since Tuesday. He silently went upstairs and fell asleep. Classic."),
-            dir("You knock. Nothing. You knock again. From inside, very faintly: 'mork'."),
-            say("MIKEY", "Operation wake up Polson. Phase one: noise."),
-            dir("Mikey plays 'Do The Crocodile' through a Bluetooth speaker pressed against the letterbox."),
-            say("POLSON", "(from upstairs) WHAT. WHAT IS IT. IS IT THE PLAYSTATION. HAVE THEY NICKED MY PLAYSTATION."),
-            dir("Polson opens the door. He then closes it. He then slams it ten times to check it's locked. You are both outside."),
-            say("MIKEY", "It's fucking locked Polson."),
-            say("POLSON", "Just checking."),
-          ],
-        },
-      },
-      {
-        id: "bingo",
-        text: "Polson Bingo at the Krezz Arms. Prove you know the man.",
-        at: "PUB",
-        step: {
-          kind: "quiz",
-          need: 3,
-          intro: [dir("The Krezz Arms. Mikey has printed bingo cards. Every square is a Polson habit."), say("MIKEY", "Polson Bingo. Four squares. Get three and you're a true friend. Get less and you're basically Eden.")],
-          questions: [
-            { q: "What does Polson do 10 to 15 times every time he leaves the house?", options: ["Slams the door to check it's locked", "Says goodbye to the hamster", "Checks the weather"], correct: 0, wrong: "No. He slams the door. Every time. Ten to fifteen times." },
-            { q: "Polson paid £60 extra on the Eurostar. What did he call Standard Premier?", options: ["Economy plus", "First class", "A mistake"], correct: 1, wrong: "First class. He called it first class. That's how tiers work Polson." },
-            { q: "Where does Polson tip the leftover food?", options: ["The bin", "The food waste caddy", "'The grinder' (there is no grinder)"], correct: 2, wrong: "The grinder. There has never been a grinder." },
-            { q: "One night away. What does Polson pack it in?", options: ["A small overnight bag", "The big suitcase", "A Tesco bag for life"], correct: 1, wrong: "The big suitcase. Always. 'Options.'" },
-          ],
-          success: [say("MIKEY", "HOUSE. You know him. God help you."), say("POLSON", "(arriving) What's this? Is this about me?? Are you ashamed of me? 😅")],
-          fail: [say("MIKEY", "Basically Eden. Go again.")],
-        },
-      },
-    ],
-  },
-  {
     id: "arc_koeman",
     player: "ALL",
     minChapter: 3,

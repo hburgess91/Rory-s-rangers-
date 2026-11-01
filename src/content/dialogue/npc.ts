@@ -107,7 +107,7 @@ const PLAYER_SPECIFIC: Record<string, Partial<Record<PlayableId, string>>> = {
     KREZWONK: "Krezwonk. Should we all like then unlike? Still a good idea.",
     SCROMBUS: "Scrombus. New lad. You'd have loved the FGM days.",
     KREBON: "Krebon. Cost/benefit? Fragmar was all benefit.",
-    CRONGUS: "Lulon. Operation Wake Up Polson? Revival?",
+    CRONGUS: "Lulon. Revival tour?",
     GRONNY: "Gronny! Trousers! Where are they!",
   },
   PROCTUS: {
@@ -208,7 +208,7 @@ export const NPC_TALK: Record<string, TalkSet[]> = {
     ...playerSpecificSets("CRONGUS"),
     T(36, { ngPlus: true }, [say("CRONGUS", "Is it just me or is the salmon back? I didn't say anything this time. I swear.")], "ng_CRONGUS"),
     T(10, ch(1), [canon("salmon_diet", { s: "CRONGUS" }), say("CRONGUS", "That was 2022. If this salmon thing is my fault I want it struck from the record.")]),
-    T(10, ch(2), [say("CRONGUS", "Operation wake up Polson? Revival tour? No? Fine.")]),
+    T(10, ch(2), [say("CRONGUS", "Revival tour? No? Fine.")]),
     T(10, ch(3), [say("CRONGUS", "The Ministry of Boner Control. As Children's Minister I'm recusing myself.")]),
     T(10, ch(4), [say("CRONGUS", "The Bonky Cult's got a children's wing. I've been asked to attend. I've declined.")]),
     T(10, ch(5), [say("CRONGUS", "A child died, Krezwonk said. In the lore. As Children's Minister I've opened an inquiry.")]),
