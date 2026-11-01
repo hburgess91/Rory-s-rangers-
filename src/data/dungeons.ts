@@ -316,7 +316,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     id: "polson_towers",
     chapter: 2,
     name: "POLSON TOWERS",
-    music: "mansion",
+    music: "stockport",
     rooms: [
       {
         name: "Polson Towers — The Hallway",
@@ -368,7 +368,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         theme: "mansion",
         boss: "hoard",
         enterLines: [
-          { s: "NARRATOR", t: "The living room. Everything Eden ever bought, kept, was given, or found, piled into one shape. Underneath it, somewhere, is Polson's sofa. And the router.", dir: true },
+          { s: "NARRATOR", t: "The living room. Everything Eden ever bought, kept, was given, or found, piled into one shape. Underneath it, somewhere, is Polson's sofa. And the router. And something that throbs.", dir: true },
           { s: "POLSON", t: "(on the phone) That's all of it. All of her stuff. If it goes... it's just my house again. Just me." },
           { s: "POLSON", t: "(on the phone) Fifty percent towards breaking up. Fifty-five. Clear it. Clear the lot." },
         ],

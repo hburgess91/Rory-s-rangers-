@@ -55,6 +55,8 @@ export const MUSIC_FILES: Record<string, string> = {
   sanmik: "audio/ggg8.mp3",
   boss_rik: "audio/ggg13.mp3",
   boss_jam: "audio/bpd_menace.mp3",
+  boss_hoard: "audio/erotic_stockport.mp3",
+  stockport: "audio/erotic_stockport.mp3",
   norwich: "audio/norwich.mp3",
   crobley: "audio/crobley.mp3",
   majek_lampe: "audio/majek_lampe.mp3",
@@ -639,7 +641,11 @@ export class Synth {
   }
 
   private playFile(id: string, force: boolean, startFrac = 0) {
-    if (!force && this.elId === id && this.el && !this.el.ended) return;
+    // same song under another name (e.g. a dungeon track that carries on into its boss): keep playing
+    if (!force && this.el && !this.el.ended && MUSIC_FILES[this.elId] === MUSIC_FILES[id]) {
+      this.elId = id;
+      return;
+    }
     this.stopFile();
     const el = new Audio(MUSIC_FILES[id]);
     if (startFrac > 0) el.addEventListener("loadedmetadata", () => (el.currentTime = el.duration * startFrac), { once: true });

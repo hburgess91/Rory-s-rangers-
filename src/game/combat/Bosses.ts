@@ -929,7 +929,7 @@ export class RivalBoss extends Boss {
   }
 }
 
-// ----------------------------------------------------------------- THE HOARD (Polson Towers)
+// ----------------------------------------------------------------- THE CYST (Polson Towers; boss id is still "hoard")
 
 export class HoardBoss extends Boss {
   constructor(w: CombatWorld, x: number, y: number) {
@@ -956,25 +956,26 @@ export class HoardBoss extends Boss {
       this.world.sc.time.delayedCall(1100, () => { if (this.active) this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "DID I NOT JUST TELL YOU?!", "#c084fc", 16); });
       this.nextPattern = now + 2400;
     } else if (pick === 0) {
-      // stuffed toys pour out of it
+      // stuffed toys pour out of the hoard around it
       for (let i = 0; i < (this.phase ? 5 : 3); i++) this.world.spawnEnemy("plushie", this.x + (Math.random() - 0.5) * 120, this.y + 40, { minion: true });
       this.nextPattern = now + 2400;
     } else if (pick === 1) {
-      // boxes and shopping bags, lobbed at you
+      // it squirts pus at you
+      this.world.floatText(this.x, this.y - this.displayHeight / 2 - 30, "SQUELCH!", "#facc15", 16);
       for (let i = 0; i < (this.phase ? 7 : 5); i++) {
         const a = Math.atan2(p.y - this.y, p.x - this.x) + (i - 3) * 0.22;
-        this.world.shoot(this.x, this.y, { owner: "enemy", damage: 11, speed: 170 + Math.random() * 40, angle: a, color: 0xb08d57, scale: 2.4, life: 4000 });
+        this.world.shoot(this.x, this.y, { owner: "enemy", damage: 11, speed: 170 + Math.random() * 40, angle: a, color: 0xfde047, scale: 2.4, life: 4000 });
       }
       this.nextPattern = now + 1700;
     } else if (pick === 2) {
-      // a ring of mould spores
-      this.ring(this.phase ? 16 : 12, 130, 8, 0x9ccc65, Math.random());
+      // it throbs and sheds a ring of hairs and pus
+      this.ring(this.phase ? 16 : 12, 130, 8, this.patternIdx % 2 ? 0xfde047 : 0x1f1f1f, Math.random());
       this.nextPattern = now + 1700;
     } else if (pick === 3) {
       for (let i = 0; i < 2; i++) this.world.spawnEnemy(this.phase ? "mould_pizza" : "mould", this.x + (i ? 80 : -80), this.y + 30, { minion: true });
       this.nextPattern = now + 2300;
     } else if (pick === 5) {
-      // avalanche: the whole heap slides at you
+      // it lunges, dragging a slick of pus
       this.world.enemyLine(this.x, this.y, Math.atan2(p.y - this.y, p.x - this.x), 700, 70, 22, 900);
       this.nextPattern = now + 2200;
     }
