@@ -269,7 +269,8 @@ export class HubScene extends Phaser.Scene {
       s.flags.hijack_alert = true;
       synth.play("alarm");
       await this.talk([
-        say("KREBLIS", "This is a Krelmergency message. I repeat. This is a Krelmergency message."),
+        say("KREBLIS", "This is a Krelmergency message. I repeat. This is a Krelmergency message"),
+        say("KREBLIS", "Hehe…I love saying it"),
         say("KREBLIS", "Flight KR-069 out of Krelford International has been hijacked. The hijacker is wearing a balaclava and a stick-on moustache. It's Krozno. It's obviously Krozno."),
         say("KREBLIS", "The plane is heading for the Kreltower. Which, I'd like to remind everyone, only just got rebuilt."),
         ping("DRONGUS", "Not the Kreltower !!"),
@@ -936,7 +937,7 @@ export class HubScene extends Phaser.Scene {
           collectPickup(G.s, quest, spot);
           synth.play("pickup");
           glow.destroy();
-          await this.talk([dir(`${spot.label}. You file it under Strange Occurrences.`), say("KREBLIS", "Strange. Very strange. History will judge it.")]);
+          await this.talk([dir(`${spot.label}. You file it under Strange Occurrences.`), say("KREBLIS", "Fascinating…"), say("KREBLIS", "History will judge it 👍")]);
           G.emit("toast", { title: "PERSONAL QUEST", text: `${quest.title}: filed (${spot.label})` });
         },
       });

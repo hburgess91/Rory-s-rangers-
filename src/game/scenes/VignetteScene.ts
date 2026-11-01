@@ -131,7 +131,9 @@ export class VignetteScene extends Phaser.Scene {
       this.people(people, "WAHEY");
       await this.wait(1200);
       await this.talk([
-        say("KREBLIS", "Krelmergency over. I repeat. Krelmergency over. The plane is in the Tap."),
+        say("KREBLIS", "Krelmergency over. I repeat. Krelmergency over"),
+        say("KREBLIS", "The plane is in the Tap"),
+        say("KREBLIS", "Mmm…Tap…"),
         say("FLENKY", "Wasn't me. Got out just in time by doing a ninja backflip."),
         say("KREBLIS", "You weren't on it, Jenko."),
         say("FLENKY", "…I was near it."),
@@ -153,7 +155,7 @@ export class VignetteScene extends Phaser.Scene {
     this.tween({ targets: fire, radius: 70, duration: 600 });
     this.people(people, "!!");
     synth.play("gasp");
-    await this.talk([say("KREBLIS", "This is a Krelmergency message. Kreltower has been hit. I repeat. Kreltower has been hit.")]);
+    await this.talk([say("KREBLIS", "This is a Krelmergency message… Kreltower has been hit. I repeat. Kreltower has been hit"), say("KREBLIS", "Thinking about it…"), say("KREBLIS", "Again")]);
     for (let i = 0; i < 16; i++) {
       const smoke = this.add.circle(560 + (Math.random() - 0.5) * 80, 260 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 160, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
@@ -715,7 +717,8 @@ export class VignetteScene extends Phaser.Scene {
     synth.music("hub");
     await this.talk([
       dir("Krunch Gym. You have taken Polson for 'an intense workout'. He is wearing brand new trainers, brand new shorts and a headband. The tags are still on all of them."),
-      say("POLSON", "Right. Let's do this. Intense. Proper intense."),
+      say("POLSON", "Tonight's the night!! Intense workout!!"),
+      say("POLSON", "Make no mistake.. I want to be a monster. A great hulking monster 😅"),
     ]);
     await this.tween({ targets: pol, x: 470, y: 370, duration: 900 });
     synth.play("select");
@@ -731,11 +734,11 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: pol, x: 620, y: 380, duration: 300 });
     pol.setFrame(0);
     await this.talk([
-      say("POLSON", "Phwoar."),
-      say("POLSON", "That's great for the core, that."),
+      say("POLSON", "WAHAHAHA"),
+      say("POLSON", "That's great for the core!! Thoughts?"),
       say(G.s.player, "That was two seconds."),
-      say("POLSON", "Two seconds of pure core, mate. You can't overtrain the core. Ask anyone."),
-      say("POLSON", "Right. Take me home. Via the restaurant. I need to refuel."),
+      say("POLSON", "Two seconds of pure core mr bee!! You can't overtrain the core. Ask the pre-eminent experts"),
+      say("POLSON", "Another day, another gym sesh done!! In other news.. I'm starving 😅 Restaurant? Wbu?"),
     ]);
     // restaurant
     this.children.removeAll(true);
@@ -747,15 +750,15 @@ export class VignetteScene extends Phaser.Scene {
     this.add.sprite(560, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
     void me;
     await this.talk([
-      say("POLSON", "Four burgers. Double. Large pizza, meat feast, extra cheese. Stuffed crust. And the fudge. All the fudge."),
+      say("POLSON", "Four burgers please!! Double. Large pizza, meat feast, extra cheese, stuffed crust. And the fudge. All the fudge 😝"),
       say("WAITER", "All of it?"),
-      say("POLSON", "It's bulking food. Great bulking food. You've got to eat for the gains."),
+      say("POLSON", "It's bulking food!! Great bulking food. All I need is a fuck load of protein 😅"),
     ]);
     await this.bulkPolson(pol2);
     await this.talk([
-      say("POLSON", "Bulked. Absolutely bulked."),
+      say("POLSON", "BULKED!! YES YES YES"),
       dir("Polson is now noticeably, structurally larger. His t-shirt has given up. The chair has given up."),
-      say("POLSON", "Same time tomorrow? Intense workout. Then here."),
+      say("POLSON", "Same time tomorrow? Intense workout then here!! Wbu?"),
       dir("You pay. Obviously you pay. Polson 'left his wallet in his gym bag', which he did not bring."),
       ping("POLSON'S MUM", "Did he eat fudge"),
       ping("POLSON'S MUM", "He's meant to be getting trim"),
@@ -792,18 +795,18 @@ export class VignetteScene extends Phaser.Scene {
     this.time.addEvent({ delay: 500, loop: true, callback: () => pol.setFrame(String(pol.frame.name) === "3" ? 0 : 3) });
     await this.talk([
       dir("14:00. Polson's message: 'At the gym 💪'. CAM 1: Polson is on the sofa. CAM 2: Polson is not at the gym."),
-      ping("POLSON", "Leg day today. Brutal."),
+      ping("POLSON", "Leg day today!! Brutal 😅"),
       dir("CAM 1: Polson opens a family-size bag of crisps with both hands."),
     ]);
     await this.tween({ targets: pol, x: 250, y: 360, duration: 900 });
-    await this.talk([dir("CAM 3: Polson at the fridge. He eats cheese directly from the block. He looks over his shoulder. He eats more cheese."), ping("POLSON", "Just finished my sets. Pumped.")]);
+    await this.talk([dir("CAM 3: Polson at the fridge. He eats cheese directly from the block. He looks over his shoulder. He eats more cheese."), ping("POLSON", "Just finished my sets!! Pumped 💪 Wbu?")]);
     await this.tween({ targets: pol, y: 160, duration: 900 });
     await this.talk([
       dir("16:30. CAM 1: Polson is asleep on the sofa, holding a slice of pizza like a teddy bear."),
-      ping("POLSON", "Done 3 hours. Absolutely destroyed. Core is on fire."),
+      ping("POLSON", "3 hours done!! Absolutely destroyed. Who even spends 3 hours in a fucking gym? Me apparently 😝"),
       say("MIKEY", "(over the War Room comms) FGM to base. Subject has not left the house. Repeat, subject has not left the house. Subject has, however, eaten an entire fudge."),
       ping("KREZMAR", "Why is there no cheese in the War Room"),
-      ping("POLSON", "Mork."),
+      ping("POLSON", "The deed is done 😊"),
       dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Polson's mum will definitely want it."),
     ]);
     synth.stopMusic();
@@ -829,14 +832,14 @@ export class VignetteScene extends Phaser.Scene {
     synth.music("hub");
     await this.talk([
       dir("Krunch Gym. Again. Polson is wearing the same headband. The headband is now under considerable tension."),
-      say("POLSON", "I've been bulking. You can tell. Look at the mass on that."),
+      say("POLSON", "I've been bulking!! Thoughts? Be honest 😅"),
       say(G.s.player, "That's mostly fudge."),
-      say("POLSON", "Fudge is mass, mate. Mass is mass."),
+      say("POLSON", "To be fair fudge is mass mr bee. Mass is mass"),
     ]);
     await this.tween({ targets: pol, x: 480, duration: 900 });
     synth.play("hit");
     this.cameras.main.shake(200, 0.006);
-    await this.talk([dir("Polson enters the turnstile. Polson does not exit the turnstile."), say("POLSON", "It's narrower than last time. They've changed it."), say("POLSON", "Push me. Push me through. This is part of the warm-up.")]);
+    await this.talk([dir("Polson enters the turnstile. Polson does not exit the turnstile."), say("POLSON", "It's narrower than last time!! They've changed it. Abysmal"), say("POLSON", "Push me. Push me through. This is part of the warm-up.")]);
     // mash to shove him through
     await new Promise<void>((resolve) => {
       let pushes = 0;
@@ -870,7 +873,7 @@ export class VignetteScene extends Phaser.Scene {
     });
     this.caption("TURNSTILE: DECOMMISSIONED", "#ffd23f", 26);
     await this.talk([
-      say("POLSON", "See. Warmed up. That's a full body pump, that."),
+      say("POLSON", "Warmed up!! Full body pump!! YES YES YES"),
       dir("Polson lowers himself onto the bench press. The bench press makes a sound benches should not make."),
     ]);
     const bench = this.textures.exists("p_bench") ? this.add.image(700, 420, "p_bench").setScale(2).setDepth(8) : this.add.rectangle(700, 410, 160, 20, 0x374151).setDepth(8);
@@ -882,12 +885,12 @@ export class VignetteScene extends Phaser.Scene {
     this.tween({ targets: pol, y: 410, duration: 200 });
     await this.talk([
       dir("The bench snaps cleanly in half. Polson has not touched a weight."),
-      say("POLSON", "Personal best."),
+      say("POLSON", "PERSONAL BEST!! 😅"),
       say("CHAD DELTOID", "(from the squat rack) Mate, that's a £900 bench."),
-      say("POLSON", "Put it on his tab."),
+      say("POLSON", "Put it on mr bee's tab!! He won't mind. Scout promise"),
       dir("He points at you. Of course he points at you."),
-      say("POLSON", "Right. That's the session. Post-workout window. Got to get the protein in within thirty seconds or the gains evaporate. Science."),
-      say("POLSON", "Restaurant. Quick. QUICK."),
+      say("POLSON", "That's the session!! Post-workout window. I've got to get the protein in within thirty seconds or the gains evaporate. Make no mistake"),
+      say("POLSON", "Restaurant!! Quick!! QUICK!!"),
     ]);
     this.children.removeAll(true);
     this.lastCaption = undefined;
@@ -897,18 +900,18 @@ export class VignetteScene extends Phaser.Scene {
     this.add.sprite(620, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
     await this.talk([
       say("WAITER", "Oh no. Not him again. Last time he ate a chair leg by accident."),
-      say("POLSON", "Protein shake please. Chocolate. Blend a fudge into it. Blend two fudges. And a burger in it."),
+      say("POLSON", "Protein shake please!! Chocolate. Blend a fudge into it. Blend two fudges. And a burger 😝"),
       say("WAITER", "…In the shake?"),
-      say("POLSON", "Liquid gains, mate. Absorbs faster."),
+      say("POLSON", "Liquid gains!! Absorbs faster. If my memory serves correct"),
     ]);
     await this.bulkPolson(pol2, true);
     await this.talk([
-      say("POLSON", "Oh that's hit the spot. I can feel it going straight to the muscles."),
+      say("POLSON", "Oh that's delectable!! I can feel it going straight to the muscles"),
       dir("It is not going to the muscles. It is going everywhere except the muscles."),
-      say("POLSON", "Gonna need a bigger headband."),
+      say("POLSON", "Gonna need a bigger headband 😅"),
       ping("POLSON'S MUM", "Why is there a bill from Krunch Gym for a bench"),
       ping("POLSON'S MUM", "And a turnstile"),
-      ping("POLSON", "Mork."),
+      ping("POLSON", "It was for the core!! Mum I promise"),
     ]);
     synth.stopMusic();
   }
@@ -939,14 +942,14 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([
       dir("Polson Towers. Polson is on the sofa. Polson is most of the sofa."),
       dir("In front of him: the cake. Four tiers. It has its own postcode."),
-      say("POLSON", "Right. Gym's out. Too many turnstiles. Too much… standing."),
-      say("POLSON", "So I've designed my own routine. Cutting-edge. You won't have heard of it."),
-      say("POLSON", "The mouth workout."),
+      say("POLSON", "Gym's out!! Too many turnstiles. Too much standing 😅"),
+      say("POLSON", "So I've designed my own routine!! Cutting edge. Make no mistake"),
+      say("POLSON", "The mouth workout!!"),
       say(G.s.player, "The what."),
-      say("POLSON", "Mouth workout. By stretching my mouth open — really wide, full range of motion — and chewing very hard, I'm burning calories."),
-      say("POLSON", "And building strong oral muscles. Nobody trains the oral muscles. Biggest muscle group in the face, mate. Neglected."),
+      say("POLSON", "Mouth workout!! By stretching my mouth open — really wide, full range of motion — and chewing very hard, I'm burning calories!!"),
+      say("POLSON", "And building strong oral muscles!! Nobody trains the oral muscles. Biggest muscle group in the face. Neglected. Abysmal"),
       say(G.s.player, "So you're eating a cake."),
-      say("POLSON", "I'm using the cake as resistance. The cake is the equipment. Spot me."),
+      say("POLSON", "I'm using the cake as resistance!! The cake is the equipment. Spot me? 😅"),
       dir("HOW IT WORKS: HOLD (tap and hold, or hold SPACE) to stretch Polson's mouth open. RELEASE in the GREEN zone to chew very hard. Too early: a nibble. Too late: jaw lock."),
     ]);
     const res = await new Promise<{ reps: number; burned: number; ate: number }>((resolve) => {
@@ -1056,16 +1059,16 @@ export class VignetteScene extends Phaser.Scene {
     this.caption(res.reps >= 12 ? "CAKE: DESTROYED" : res.reps >= 6 ? "SOLID JAW SESSION" : "WARM-UP SET", "#ffd23f", 30);
     await this.wait(900);
     await this.talk([
-      say("POLSON", `${res.reps} reps. ${res.burned.toFixed(1)} calories burned. That's a deficit, that.`),
+      say("POLSON", `${res.reps} reps. ${res.burned.toFixed(1)} calories burned. That's a deficit!! YES YES YES`),
       say(G.s.player, `You ate ${res.ate.toLocaleString()} calories.`),
-      say("POLSON", "Of resistance, mate. That's all resistance. You don't count the equipment."),
-      say("POLSON", "Feel this jaw. Go on. Feel it. Rock solid. Strong oral muscles."),
+      say("POLSON", "Of resistance mr bee!! That's all resistance. You don't count the equipment"),
+      say("POLSON", "Feel this jaw!! Go on. Rock solid. Strong oral muscles. Thoughts?"),
       dir("You do not feel his jaw."),
-      say("POLSON", "Same time tomorrow. Bigger cake. Progressive overload."),
+      say("POLSON", "Same time tomorrow? Bigger cake!! Progressive overload 😝"),
       dir("Polson tries to stand up to see you out. Polson remains seated. The sofa has accepted him as one of its own."),
       ping("POLSON'S MUM", "Did someone deliver a cake the size of a fridge to the house"),
       ping("POLSON'S MUM", "He's meant to be getting trim"),
-      ping("POLSON", "I am getting trim. Trimming the cake. Mork."),
+      ping("POLSON", "I AM getting trim!! Trimming the cake 😅"),
       ping("KREZMAR", "Is there any cake left"),
       ping("POLSON", "No"),
     ]);
@@ -1204,7 +1207,8 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([
       dir("Krelford Town Hall. On the left steps: SanMik, a megaphone, three confused pensioners and a hand-painted banner. On the right steps: SanChz, a different megaphone, three different confused pensioners and a different banner."),
       dir("In the middle: Gabor the Goat, wearing a rosette from each side."),
-      say("KREBLIS", "Krelmergency. I repeat. Krelmergency. There are two nations on my steps and neither of them has filled in the form."),
+      say("KREBLIS", "Krelmergency… there are two nations on my steps and neither of them has filled in the form"),
+      say("KREBLIS", "Wot a story eh"),
       say(G.s.player, "What happened?"),
       gabor("SanChz drank the Pepsi Normal. The wish one. SanMik said it was a declaration of war. Then they both declared nations. I'm on both sides. They're both shouting at me. It's wonderful. I'm so scared."),
     ]);

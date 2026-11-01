@@ -1279,7 +1279,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.unlockArchive("arch_fragmar");
     await this.talk([
       dir("Sent. In the right order. For the first time in history."),
-      say("POLSON", "(reply, instantly) oh mate no worries!! she'll accept it now. how are you anyway"),
+      say("POLSON", "(reply, instantly) No worries buddy 😊 She'll accept it now!! Wbu?"),
       say("MIKEY", "He replied immediately. Because I was nice to him. That was always the trick."),
       { s: "NARRATOR", t: "", react: { message: "EDEN accepted your friend request.", context: "fragmar_prime", from: "EDEN", outcomes: { LIKE: [say("EDEN", "...👍 back. Weird.")], LAUGH: [say("EDEN", "Why is that funny? Mikey. MIKEY.")], SEEN: [say("EDEN", "Seen. Classic Mikey.")] } } },
       dir("FRAGMAR PRIME COMPLETE. +150 Krezzcoin. Classification: still extremely petty."),
