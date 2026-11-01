@@ -548,7 +548,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
   citadel: {
     id: "citadel",
     chapter: 6,
-    name: "THE GREAT WIKI CITADEL",
+    name: "DA DRONGUS DUNGEON",
     music: "wiki",
     rooms: [
       {

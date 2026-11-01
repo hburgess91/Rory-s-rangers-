@@ -4807,6 +4807,9 @@
   },
   "tw_gothic": {
    "file": "backdrops/tw_gothic.png"
+  },
+  "cum_crystal": {
+   "file": "props/cum_crystal.png"
   }
  },
  "sheets": {

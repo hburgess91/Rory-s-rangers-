@@ -105,7 +105,7 @@ export const EMERGENCY_REACTION_SESSION: MeetingScript = {
     ping("DRONGUS", "In seven days I'm leaking the group chat. The WHOLE thing. Every message since 2009. To the public."),
     ping("DRONGUS", "For attention."),
     ping("DRONGUS", "Every 'Seen by 9'. Every voice note from 3am. Every Krazy Fact. Front page of the Krelford Gazette."),
-    ping("DRONGUS", "And don't bother looking for it. It's in a temple. That's all I'm saying."),
+    ping("DRONGUS", "And don't bother coming to get it. I'm moving somewhere new. Somewhere big. The leak's in a temple at the very top. That's all I'm saying."),
     dir("DRONGUS B. DRIPPIN' has muted the conversation.", { sfx: "notify" }),
     say("SCROMBUS", "He can't leak the chat. There are things in that chat that end careers. I have a career now.", { role: true, proctus: "He can't leak the chat! I'm not in it! Am I in it? Why is everyone looking at me like I'm in it?" }),
     say("MIKEY", "There's a voice note of me doing a camel for four minutes."),

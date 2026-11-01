@@ -7,6 +7,7 @@ import { chapterDef, CHAPTERS } from "../content/chapters/chapters";
 import { evalCond } from "./systems/conditions";
 import { maxHp } from "./systems/stats";
 import { activeMods } from "../data/historicalRevisions";
+import { crystalCount, CRYSTALS_NEEDED } from "./systems/crystals";
 
 export interface Next {
   scene: string;
@@ -134,6 +135,8 @@ export function dungeonOpen(): { open: boolean; why?: string } {
     if (!evalCond(ch.steps[i].done, s)) return { open: false, why: ch.steps[i].text };
   }
   if (s.flags[`ch${s.chapter}_clear`]) return { open: false, why: "Already cleared. Report to the Town Hall." };
+  // Da Drongus Dungeon is sealed until you've got every cum crystal
+  if (ch.dungeonDoor === "CITADEL" && crystalCount(s) < CRYSTALS_NEEDED) return { open: false, why: `DA DRONGUS DUNGEON is sealed. Cum crystals: ${crystalCount(s)}/${CRYSTALS_NEEDED}. Every main boss carries one.` };
   const req = requiredArcSteps(s);
   if (req.length) return { open: false, why: `Not yet. Side quests first (${req.length} left): ${req.map((c) => c.arc.title).join(", ")}. Next: ${req[0].step.text}` };
   return { open: true };

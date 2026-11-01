@@ -1,3 +1,4 @@
+import { carriesCrystal, crystalCount, CRYSTALS_NEEDED, CRYSTAL_BOSSES } from "../systems/crystals";
 import Phaser from "phaser";
 import { DUNGEONS, type DungeonDef, type RoomDef, type PropDef } from "../../data/dungeons";
 import { ENEMIES } from "../../data/enemies";
@@ -1176,6 +1177,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (b.bossId === "krozno") {
       await this.talk(BOSS_TEXT.krozno.outro);
+      await this.crystalGet(b);
       G.rt.timerEnd = 0;
       G.emit("timer", null);
       s.coins += 300;
@@ -1199,6 +1201,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     const txt = BOSS_TEXT[b.bossId];
     await this.talk(txt.outro);
+    await this.crystalGet(b);
     const reward = Math.round(200 * activeMods(s).questRewardMult * (1 + (s.chapter - 1) * 0.25));
     s.coins += reward;
     s.flags[`ch${this.dungeon.chapter}_clear`] = true;
@@ -1905,6 +1908,113 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   // ------------------------------------------------------------------ helpers
+
+  /** THE CUM CRYSTAL IS YOURS! YEAH! Every main boss drops one: a big, loud, sparkly moment. */
+  private crystalGet(b: Boss): Promise<void> {
+    const s = G.s;
+    if (!carriesCrystal(b.bossId) || s.flags[`crystal_${b.bossId}`]) return Promise.resolve();
+    s.flags[`crystal_${b.bossId}`] = true;
+    G.save();
+    const n = crystalCount(s);
+    const D = 9500;
+    const cam = this.cameras.main;
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const keep = <T extends Phaser.GameObjects.GameObject>(o: T) => (objs.push(o), o);
+    const fix = <T extends Phaser.GameObjects.GameObject & { setScrollFactor: (n: number) => T; setDepth: (n: number) => T }>(o: T, d = 0) => keep(o.setScrollFactor(0).setDepth(5000 + d));
+    synth.music("crystal", true);
+    cam.flash(400, 255, 255, 255);
+    cam.shake(400, 0.012);
+    // the room goes dark purple, and light rays spin out from the middle
+    const dim = fix(this.add.rectangle(480, 270, 960, 540, 0x1a0630, 0));
+    this.tweens.add({ targets: dim, fillAlpha: 0.75, duration: 400 });
+    const rays = fix(this.add.container(480, 230), 1);
+    const cols = [0xf472b6, 0xfde047, 0x67e8f9, 0xffffff, 0xc084fc, 0x86efac];
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const t = this.add.triangle(0, 0, 0, 0, Math.cos(a - 0.09) * 700, Math.sin(a - 0.09) * 700, Math.cos(a + 0.09) * 700, Math.sin(a + 0.09) * 700, cols[i % cols.length], 0.3).setOrigin(0, 0).setBlendMode(Phaser.BlendModes.ADD);
+      rays.add(t);
+    }
+    rays.setScale(0);
+    this.tweens.add({ targets: rays, scale: 1, duration: 600, ease: "Back.out" });
+    this.tweens.add({ targets: rays, angle: 360, duration: 9000, repeat: -1 });
+    // the crystal flies out of the boss and up to the middle of the screen
+    const start = cam.getWorldPoint(0, 0);
+    const bx = Phaser.Math.Clamp(b.x - start.x, 40, 920);
+    const by = Phaser.Math.Clamp(b.y - start.y, 40, 500);
+    const glow = fix(this.add.circle(480, 230, 70, 0xfbcfe8, 0.45).setBlendMode(Phaser.BlendModes.ADD), 2);
+    glow.setScale(0);
+    const gem = fix(this.textures.exists("cum_crystal") ? this.add.image(bx, by, "cum_crystal").setScale(0.6) : this.add.text(bx, by, "💎", { fontSize: "40px" }).setOrigin(0.5), 3) as Phaser.GameObjects.Image;
+    this.tweens.add({ targets: gem, x: 480, y: 230, scale: 3.2, duration: 900, ease: "Cubic.out", onComplete: () => {
+      synth.play("ding");
+      cam.flash(250, 255, 240, 250);
+      this.tweens.add({ targets: glow, scale: { from: 0.6, to: 1.5 }, alpha: { from: 0.55, to: 0.25 }, yoyo: true, repeat: -1, duration: 450 });
+      this.tweens.add({ targets: gem, y: 215, yoyo: true, repeat: -1, duration: 700, ease: "Sine.inOut" });
+      this.tweens.add({ targets: gem, scaleX: { from: 3.2, to: -3.2 }, yoyo: true, repeat: -1, duration: 900, ease: "Sine.inOut" });
+      // sparkles burst out
+      for (let i = 0; i < 40; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = fix(this.add.text(480, 230, Math.random() < 0.5 ? "✨" : "⭐", { fontSize: `${14 + Math.floor(Math.random() * 18)}px` }).setOrigin(0.5), 4);
+        this.tweens.add({ targets: sp, x: 480 + Math.cos(a) * (150 + Math.random() * 300), y: 230 + Math.sin(a) * (100 + Math.random() * 220), alpha: 0, angle: 360, duration: 1100 + Math.random() * 700, ease: "Cubic.out" });
+      }
+    } });
+    // the words, letter by letter, bouncing in rainbow
+    const line1 = "THE CUM CRYSTAL IS YOURS!";
+    const w = 30;
+    const x0 = 480 - (line1.length * w) / 2 + w / 2;
+    [...line1].forEach((ch, i) => {
+      const t = fix(this.add.text(x0 + i * w, 400, ch, { fontFamily: "Impact, sans-serif", fontSize: "46px", color: "#" + cols[i % cols.length].toString(16).padStart(6, "0"), stroke: "#2a0f3d", strokeThickness: 8 }).setOrigin(0.5).setScale(0), 6) as Phaser.GameObjects.Text;
+      this.tweens.add({ targets: t, scale: 1, delay: 900 + i * 45, duration: 260, ease: "Back.out", onComplete: () => this.tweens.add({ targets: t, y: 388, yoyo: true, repeat: -1, duration: 300, delay: i * 40, ease: "Sine.inOut" }) });
+    });
+    const yeah = fix(this.add.text(480, 462, "YEAH!", { fontFamily: "Impact, sans-serif", fontSize: "64px", color: "#fde047", stroke: "#db2777", strokeThickness: 10 }).setOrigin(0.5).setScale(0), 6) as Phaser.GameObjects.Text;
+    this.time.delayedCall(2200, () => {
+      synth.play("boom");
+      cam.shake(350, 0.02);
+      this.tweens.add({ targets: yeah, scale: 1.25, angle: { from: -20, to: -6 }, duration: 300, ease: "Back.out", onComplete: () => this.tweens.add({ targets: yeah, scale: 1.05, angle: 6, yoyo: true, repeat: -1, duration: 220 }) });
+    });
+    // the tally: six slots along the top
+    CRYSTAL_BOSSES.forEach((_, i) => {
+      const x = 480 + (i - 2.5) * 56;
+      fix(this.add.rectangle(x, 46, 40, 48, 0x0b0612, 0.9).setStrokeStyle(2, 0xc084fc), 5);
+      if (i < n && this.textures.exists("cum_crystal")) {
+        const c = fix(this.add.image(x, 46, "cum_crystal").setScale(i === n - 1 ? 0 : 0.75), 6) as Phaser.GameObjects.Image;
+        if (i === n - 1) this.tweens.add({ targets: c, scale: 0.75, delay: 1600, duration: 400, ease: "Back.out" });
+      }
+    });
+    const tally = fix(this.add.text(480, 86, n >= CRYSTALS_NEEDED ? "ALL SIX! DA DRONGUS DUNGEON IS OPEN!" : `CUM CRYSTALS: ${n}/${CRYSTALS_NEEDED}  ·  Da Drongus Dungeon's seal weakens`, { fontFamily: FONT, fontSize: "15px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setAlpha(0), 6);
+    this.tweens.add({ targets: tally, alpha: 1, delay: 1700, duration: 300 });
+    // confetti and fireworks the whole way through
+    const confetti = this.time.addEvent({ delay: 40, loop: true, callback: () => {
+      const c = fix(this.add.rectangle(Math.random() * 960, -10, 6, 10, cols[Math.floor(Math.random() * cols.length)]), 4);
+      this.tweens.add({ targets: c, y: 560, x: c.x + (Math.random() - 0.5) * 200, angle: 720, duration: 2200 + Math.random() * 1200, onComplete: () => c.destroy() });
+    } });
+    const fireworks = this.time.addEvent({ delay: 650, loop: true, callback: () => {
+      const fx = 120 + Math.random() * 720;
+      const fy = 80 + Math.random() * 200;
+      const col = cols[Math.floor(Math.random() * cols.length)];
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const p = fix(this.add.circle(fx, fy, 3, col).setBlendMode(Phaser.BlendModes.ADD), 1);
+        this.tweens.add({ targets: p, x: fx + Math.cos(a) * 90, y: fy + Math.sin(a) * 90 + 20, alpha: 0, duration: 800, ease: "Cubic.out", onComplete: () => p.destroy() });
+      }
+    } });
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        confetti.remove();
+        fireworks.remove();
+        this.input.off("pointerdown", skip);
+        this.input.keyboard?.off("keydown", skip);
+        this.tweens.add({ targets: objs, alpha: 0, duration: 400, onComplete: () => { for (const o of objs) o.destroy(); resolve(); } });
+      };
+      const skip = () => { if (this.time.now - t0 > 3000) finish(); };
+      const t0 = this.time.now;
+      this.input.on("pointerdown", skip);
+      this.input.keyboard?.on("keydown", skip);
+      this.time.delayedCall(D, finish);
+    });
+  }
 
   private talk(lines: Line[]): Promise<void> {
     this.paused = true;

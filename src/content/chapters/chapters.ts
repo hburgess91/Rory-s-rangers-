@@ -243,14 +243,14 @@ export const CHAPTERS: ChapterDef[] = [
   },
   {
     n: 6,
-    title: "THE GREAT WIKI CITADEL",
-    subtitle: "Articles As Rooms · Deleted Text · The Reaction Network Terminal",
+    title: "DA DRONGUS DUNGEON",
+    subtitle: "Six Crystals · The Great Wiki Citadel Within · The Reaction Network Terminal",
     dungeon: "citadel",
     dungeonDoor: "CITADEL",
     steps: [
       { id: "s_final", text: "Attend the Final Reading (Town Hall)", done: { flag: "final_reading" }, target: "TOWN_HALL" },
       { id: "s_hijack", text: "KRELMERGENCY: Flight KR-069 has been hijacked. Stop it at Krelford International (south-east gate) before it hits the Kreltower.", done: { flag: "kreltower_resolved" }, target: "AIRPORT" },
-      { id: "s_dungeon", text: "Ascend the Great Wiki Citadel. React to the song.", done: { flag: "ch6_clear" }, target: "CITADEL" },
+      { id: "s_dungeon", text: "Six cum crystals, six slots. Open Da Drongus Dungeon and climb the Great Wiki Citadel inside it. React to the song.", done: { flag: "ch6_clear" }, target: "CITADEL" },
     ],
     intro: [
       dir("CHAPTER SIX. The Citadel gates are open. Through them you can see corridors made of wiki pages. One of the walls is the 'Krezzsplosion' article. It is very long. It is still being edited."),

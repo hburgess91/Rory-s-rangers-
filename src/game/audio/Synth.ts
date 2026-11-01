@@ -57,6 +57,7 @@ export const MUSIC_FILES: Record<string, string> = {
   boss_jam: "audio/bpd_menace.mp3",
   boss_hoard: "audio/erotic_stockport.mp3",
   stockport: "audio/erotic_stockport.mp3",
+  crystal: "audio/crystal_is_yours.mp3",
   norwich: "audio/norwich.mp3",
   crobley: "audio/crobley.mp3",
   majek_lampe: "audio/majek_lampe.mp3",
@@ -70,7 +71,7 @@ export const MUSIC_FILES: Record<string, string> = {
 };
 
 /** Songs that should play once rather than loop. */
-const ONE_SHOT = new Set(["viral", "crobley", "majek_lampe", "anthem", "bbp", "twitcher", "crocodile", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
+const ONE_SHOT = new Set(["crystal", "viral", "crobley", "majek_lampe", "anthem", "bbp", "twitcher", "crocodile", ...Array.from({ length: 13 }, (_, i) => `ggg${i + 1}`)]);
 
 type Wave = OscillatorType;
 

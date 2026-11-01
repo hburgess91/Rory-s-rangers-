@@ -22,9 +22,12 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
+import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
+/** The stormy sky above the top of town (Da Drongus Dungeon sticks up into it). */
+const SKY_H = 380;
 
 interface Building {
   id: string;
@@ -39,7 +42,7 @@ interface Building {
 }
 
 const BUILDINGS: Building[] = [
-  { id: "CITADEL", name: "THE GREAT WIKI CITADEL", x: 1280, y: 110, w: 380, h: 170, wall: 0xf8f9fa, roof: 0x3366cc, door: { x: 1280, y: 195 } },
+  { id: "CITADEL", name: "DA DRONGUS DUNGEON", x: 1280, y: 110, w: 380, h: 170, wall: 0xf8f9fa, roof: 0x3366cc, door: { x: 1280, y: 195 } },
   { id: "TOWN_HALL", name: "KRELFORD TOWN HALL", x: 1280, y: 420, w: 420, h: 230, wall: 0x9a7a5a, roof: 0x6b2737, door: { x: 1280, y: 535 } },
   { id: "ARCHIVE", name: "HISTORICAL ARCHIVE (FGM War Room below)", x: 1900, y: 420, w: 300, h: 200, wall: 0x8a7a5a, roof: 0x3a2f1f, door: { x: 1900, y: 520 } },
   { id: "BAN_TRIBUNAL", name: "BAN TRIBUNAL", x: 660, y: 420, w: 280, h: 190, wall: 0x6b6b7a, roof: 0x7c2d12, door: { x: 660, y: 515 } },
@@ -234,7 +237,8 @@ export class HubScene extends Phaser.Scene {
     this.av = this.physics.add.sprite(start.x, start.y, `spr_${s.player}`, 0).setScale(2).setDepth(start.y);
     feetBody(this.av, 20, 16, this.hd ? 26 : 22).setCollideWorldBounds(true);
     this.physics.add.collider(this.av, this.colliders);
-    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+    // headroom above the map so the top of Da Drongus Dungeon fits on screen
+    this.cameras.main.setBounds(0, -SKY_H, WORLD_W, WORLD_H + SKY_H);
     this.cameras.main.startFollow(this.av, true, 0.12, 0.12);
     this.beatup = new Beatup(this, BUILDINGS.filter((b) => b.door).map((b) => ({ x: b.door!.x, y: b.door!.y + 30, name: b.name })));
     this.events.once("shutdown", () => this.beatup?.destroy());
@@ -261,6 +265,7 @@ export class HubScene extends Phaser.Scene {
       await this.talk(chapterIntroLines(s.chapter, s.player));
       G.save();
     }
+    if (s.flags.met_emergency && !s.flags.drongus_dungeon_risen) await this.riseTower();
     if (s.chapter === 1 && !s.flags.ch1_hub_tip) {
       s.flags.ch1_hub_tip = true;
       G.emit("toast", { title: "KRELFORD", text: "WASD to walk. E to talk/interact. Follow the yellow arrow. Esc for menu (quests, upgrades, save)." });
@@ -314,6 +319,7 @@ export class HubScene extends Phaser.Scene {
 
   private drawWorld() {
     this.add.tileSprite(0, 0, WORLD_W, WORLD_H, "tile_grass").setOrigin(0).setDepth(0);
+    this.drawSky();
     // roads
     this.add.tileSprite(80, 780, WORLD_W - 80, 90, "tile_road").setOrigin(0).setDepth(0);
     this.add.tileSprite(1235, 200, 90, 1500, "tile_road").setOrigin(0).setDepth(0);
@@ -542,6 +548,141 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  // ------------------------------------------------------------- Da Drongus Dungeon
+
+  /** A storm over the top of town: dark cloud, purple glow, the odd fork of lightning. */
+  private drawSky() {
+    const g = this.add.graphics().setDepth(0);
+    g.fillGradientStyle(0x07020f, 0x07020f, 0x2a0f3d, 0x2a0f3d, 1).fillRect(0, -SKY_H, WORLD_W, SKY_H);
+    for (let i = 0; i < 40; i++) g.fillStyle(0x1a0b2a, 0.7).fillEllipse(Math.random() * WORLD_W, -SKY_H + Math.random() * (SKY_H - 40), 160 + Math.random() * 220, 40 + Math.random() * 40);
+    // the edge of the map fades into the dark
+    g.fillGradientStyle(0x2a0f3d, 0x2a0f3d, 0x2a0f3d, 0x2a0f3d, 0.9, 0.9, 0, 0).fillRect(0, 0, WORLD_W, 40);
+  }
+
+  private lightning(x: number, yTop: number, yBot: number) {
+    const g = this.add.graphics().setDepth(4200).setBlendMode(Phaser.BlendModes.ADD);
+    let px = x;
+    let py = yTop;
+    g.lineStyle(4, 0xc084fc, 1);
+    g.beginPath();
+    g.moveTo(px, py);
+    while (py < yBot) {
+      px += (Math.random() - 0.5) * 50;
+      py += 20 + Math.random() * 30;
+      g.lineTo(px, Math.min(py, yBot));
+    }
+    g.strokePath();
+    this.tweens.add({ targets: g, alpha: 0, duration: 260, onComplete: () => g.destroy() });
+  }
+
+  /** The tower when it's up: a purple aura, lightning round the spire, and six crystal slots by the door. */
+  private towerFx(b: Building, img: Phaser.GameObjects.Image) {
+    const top = b.y - b.h / 2;
+    this.neonGlow(b.x, b.y - b.h * 0.1, b.w * 0.6, 0x7c3aed);
+    const eye = this.add.circle(b.x, top + b.h * 0.08, 10, 0xef4444, 0.5).setDepth(4100).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: eye, alpha: 0.1, scale: 1.8, yoyo: true, repeat: -1, duration: 1200 });
+    this.time.addEvent({ delay: 3800, loop: true, callback: () => {
+      if (Math.random() < 0.7) this.lightning(b.x + (Math.random() - 0.5) * 120, top - 200, top + 60 + Math.random() * 80);
+      img.setTintFill(0xe9d5ff);
+      this.time.delayedCall(60, () => img.clearTint());
+    } });
+    // the seal: six slots, lit for every crystal you've got
+    const y = b.y + b.h / 2 - 96;
+    CRYSTAL_BOSSES.forEach((boss, i) => {
+      const x = b.x + (i - 2.5) * 22;
+      const got = hasCrystal(G.s, boss);
+      this.add.rectangle(x, y, 16, 20, 0x0b0612, 1).setStrokeStyle(1, 0x7c3aed).setDepth(b.y + b.h / 2 + 2);
+      if (got && this.textures.exists("cum_crystal")) {
+        const c = this.add.image(x, y, "cum_crystal").setScale(0.3).setDepth(b.y + b.h / 2 + 3);
+        this.tweens.add({ targets: c, alpha: 0.6, yoyo: true, repeat: -1, duration: 700 + i * 90 });
+        this.add.circle(x, y, 12, 0xfbcfe8, 0.25).setBlendMode(Phaser.BlendModes.ADD).setDepth(b.y + b.h / 2 + 3);
+      }
+    });
+  }
+
+  /** Chapter 1: Drongus mutes the chat, the ground splits, and his new home comes up out of it. */
+  private async riseTower() {
+    const s = G.s;
+    const b = BUILDINGS.find((x) => x.id === "CITADEL")!;
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    await this.talk([dir("The ground starts to shake. Car alarms. Dogs. A low, wet rumble from the top of town, like the world's biggest phone vibrating on a table.")]);
+    this.busy = true;
+    synth.stopMusic();
+    cam.stopFollow();
+    const bottom = b.y + b.h / 2;
+    cam.pan(b.x, bottom - 250, 1600, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(1700, r));
+    // the ground cracks
+    const crack = this.add.graphics().setDepth(bottom + 5);
+    crack.lineStyle(5, 0x0b0612, 1);
+    for (let i = 0; i < 7; i++) {
+      crack.beginPath();
+      crack.moveTo(b.x, bottom - 10);
+      let cx = b.x;
+      let cy = bottom - 10;
+      for (let k = 0; k < 4; k++) crack.lineTo((cx += (Math.random() - 0.5) * 120), (cy += (Math.random() - 0.3) * 30));
+      crack.strokePath();
+    }
+    synth.play("boom");
+    cam.shake(5600, 0.012);
+    cam.flash(300, 124, 58, 237);
+    // up it comes: masked at the ground line so it rises out of the earth
+    const key = this.buildingKey(b);
+    const tower = this.add.image(b.x, b.y + b.h, key).setDepth(bottom - 1);
+    const maskG = this.make.graphics({}, false);
+    maskG.fillRect(b.x - b.w, bottom - b.h * 2, b.w * 2, b.h * 2);
+    tower.setMask(maskG.createGeometryMask());
+    this.tweens.add({ targets: tower, y: b.y, duration: 5200, ease: "Sine.out" });
+    const dust = this.time.addEvent({ delay: 70, repeat: 75, callback: () => {
+      const d = this.add.circle(b.x + (Math.random() - 0.5) * b.w * 1.1, bottom - 6, 10 + Math.random() * 14, Math.random() < 0.5 ? 0x6b5a4a : 0x3f3f46, 0.8).setDepth(bottom + 6);
+      this.tweens.add({ targets: d, x: d.x + (Math.random() - 0.5) * 160, y: d.y - 40 - Math.random() * 80, radius: 30, alpha: 0, duration: 1400, onComplete: () => d.destroy() });
+      if (Math.random() < 0.35) {
+        const rock = this.add.rectangle(b.x + (Math.random() - 0.5) * b.w, bottom - 10, 6, 6, 0x2a2433).setDepth(bottom + 7);
+        this.tweens.add({ targets: rock, x: rock.x + (Math.random() - 0.5) * 300, y: rock.y - 120 - Math.random() * 100, angle: 360, duration: 500, yoyo: true, ease: "Quad.out", onComplete: () => rock.destroy() });
+      }
+    } });
+    for (let i = 0; i < 6; i++) this.time.delayedCall(600 + i * 800, () => {
+      this.lightning(b.x + (Math.random() - 0.5) * 200, bottom - b.h - 300, bottom - b.h * Math.random() * 0.6);
+      synth.play("boom");
+    });
+    await new Promise((r) => this.time.delayedCall(5400, r));
+    dust.remove();
+    tower.clearMask(true);
+    tower.destroy();
+    s.flags.drongus_dungeon_risen = true;
+    this.drawBuilding(b);
+    this.interactables.push({ x: b.door!.x, y: b.door!.y + 10, r: 46, label: () => this.doorLabel(b), use: () => this.enterBuilding(b) });
+    // the title
+    synth.play("decree");
+    cam.flash(500, 239, 68, 68);
+    const title = this.add.text(480, 200, "DA DRONGUS DUNGEON", { fontFamily: "Impact, sans-serif", fontSize: "60px", color: "#ef4444", stroke: "#000", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setScale(3).setAlpha(0);
+    this.tweens.add({ targets: title, scale: 1, alpha: 1, duration: 500, ease: "Back.out" });
+    const sub = this.add.text(480, 258, "(population: one Drongus)", { fontFamily: FONT, fontSize: "16px", color: "#e9d5ff", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setAlpha(0);
+    this.tweens.add({ targets: sub, alpha: 1, delay: 600, duration: 400 });
+    await new Promise((r) => this.time.delayedCall(2600, r));
+    this.tweens.add({ targets: [title, sub], alpha: 0, duration: 500, onComplete: () => { title.destroy(); sub.destroy(); } });
+    await this.talk([
+      dir("Where there was an empty plot at the top of town, there is now a tower. It's the biggest thing in Krelford. It's black. It has spikes. It has, for some reason, chains on it. Its one window is an enormous glowing red eye, and the eye is looking at the group chat."),
+      ping("DRONGUS", "Like it?"),
+      ping("DRONGUS", "DA DRONGUS DUNGEON. I'm in it. The lore's in it. The leak's in it. Top floor."),
+      ping("DRONGUS", "Door's sealed with six cum crystals. Don't ask how I made them. I've given one to each of my best boys."),
+      ping("DRONGUS", "Good luck getting them back lmao. You lot can't even get a react back."),
+      say("KREZWONK", "Six crystals. Six bosses. One at the end of every mission. I have foreseen it.", { role: true, proctus: "Six crystals! I foresaw that! I foresaw it about four seconds ago, but it counts." }),
+      say("SCROMBUS", "So every time we put one of his lads down, we take his crystal. Get all six, we walk in the front door."),
+      say("MIKEY", "Why are they called cum crystals"),
+      say("SCROMBUS", "Don't, Mikey."),
+      dir("NEW: CUM CRYSTALS 0/6. Every main boss carries one. Collect all six to open Da Drongus Dungeon."),
+    ]);
+    cam.pan(this.av.x, this.av.y, 900, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(950, r));
+    cam.startFollow(this.av, true, 0.12, 0.12);
+    synth.music("hub");
+    this.busy = false;
+    G.save();
+  }
+
   private nearBuilding(x: number, y: number, pad: number) {
     if (x > PLAYGROUND.x - pad && x < PLAYGROUND.x + PLAYGROUND.w + pad && y > PLAYGROUND.y - pad && y < PLAYGROUND.y + PLAYGROUND.h + pad) return true;
     return BUILDINGS.some((b) => x > b.x - b.w / 2 - pad && x < b.x + b.w / 2 + pad && y > b.y - b.h / 2 - pad && y < b.y + b.h / 2 + pad);
@@ -586,7 +727,13 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  /** Da Drongus Dungeon doesn't exist until it rises out of the ground in Chapter 1. */
+  private towerUp() {
+    return !!G.s.flags.drongus_dungeon_risen;
+  }
+
   private drawBuilding(b: Building) {
+    if (b.id === "CITADEL" && !this.towerUp()) return;
     const key = this.buildingKey(b);
     if (this.hd && this.textures.exists(key)) {
       const img = this.add.image(b.x, b.y, key).setDepth(b.y + b.h / 2 - 1);
@@ -603,6 +750,7 @@ export class HubScene extends Phaser.Scene {
       // the walkable line is the front wall: everything above it is roof and facade
       this.colliders.add(this.add.rectangle(b.x, b.y + b.h * 0.12, b.w * 0.86, b.h * 0.7, 0, 0));
       if (key === "bld_CROBLEY_FACTORY_RUIN") this.smoulder(b);
+      else if (b.id === "CITADEL") this.towerFx(b, img);
       else this.neonGlow(b.x, b.y - b.h * 0.25, Math.max(60, b.w * 0.45));
       void img;
       return;
@@ -938,7 +1086,7 @@ export class HubScene extends Phaser.Scene {
 
   private setupInteractables() {
     for (const b of BUILDINGS) {
-      if (!b.door) continue;
+      if (!b.door || (b.id === "CITADEL" && !this.towerUp())) continue;
       this.interactables.push({ x: b.door.x, y: b.door.y + 10, r: 46, label: () => this.doorLabel(b), use: () => this.enterBuilding(b) });
     }
     for (const gt of GATES) {
@@ -1372,6 +1520,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "AIRPORT":
         return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
       case "CITADEL":
+        return `DA DRONGUS DUNGEON (sealed: ${crystalCount(s)}/${CRYSTALS_NEEDED} cum crystals)`;
       case "WILDERN":
       case "MINISTRY":
       case "BONKY_TEMPLE":
@@ -1399,6 +1548,14 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     if (!this.buildingBusy(b.id) && (await this.runArcStep(b.id))) return;
     switch (b.id) {
+      case "CITADEL": {
+        const n = crystalCount(s);
+        await this.talk([
+          dir(`DA DRONGUS DUNGEON. The door is a slab of black glass with six crystal-shaped slots in it. ${n ? `${n} of them glow${n === 1 ? "s" : ""}.` : "All six are dark."}`),
+          dir(n >= CRYSTALS_NEEDED ? "Every slot is full. The door hums. It's waiting for the right chapter." : `A brass plaque: 'NO ENTRY WITHOUT ${CRYSTALS_NEEDED} CUM CRYSTALS. NO EXCEPTIONS. NOT EVEN FOR THE DRONGI.' Every main boss carries one.`),
+        ]);
+        return;
+      }
       case "BOOTH":
         await this.talk(
           s.player === "MIKEY"

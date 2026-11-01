@@ -48,7 +48,7 @@ export class DebugScene extends Phaser.Scene {
     G.newRun(pl, 0);
     const s = G.s;
     s.chapter = ch;
-    Object.assign(s.flags, { prologue_done: true, ch1_intro: true, ministerial_quests: true, met_emergency: true, founding_seen: true });
+    Object.assign(s.flags, { prologue_done: true, ch1_intro: true, ministerial_quests: true, met_emergency: true, founding_seen: true, drongus_dungeon_risen: true });
     for (let k = 1; k < ch; k++) {
       const c = CHAPTERS[k - 1];
       if (c) for (const st of c.steps) if (st.done?.flag) s.flags[st.done.flag] = true;
