@@ -1,10 +1,11 @@
 import type { ArchiveEntry } from "../../data/types";
 import { adapt, canon, dir, ping, say } from "../dsl";
+import { weaveArchive } from "./grotesque";
 
 // The Krelworld Historical Archive. Each entry has the official Krelworld version,
 // the original record (replayable as a reenactment), and sometimes a contradiction.
 
-export const ARCHIVE: ArchiveEntry[] = [
+export const ARCHIVE: ArchiveEntry[] = weaveArchive([
   {
     id: "arch_motto",
     title: "The Constitution: WONK IT 'TIL YOU KREZ",
@@ -274,7 +275,7 @@ export const ARCHIVE: ArchiveEntry[] = [
     original: [canon("new_sheriff"), canon("disheartening")],
     footnote: "The cabinet reconvened to go and fight him.",
   },
-];
+]);
 
 
 export const ARCHIVE_BY_ID: Record<string, ArchiveEntry> = Object.fromEntries(ARCHIVE.map((a) => [a.id, a]));
