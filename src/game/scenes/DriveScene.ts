@@ -256,7 +256,7 @@ export class DriveScene extends Phaser.Scene {
       spr = this.add.image(fromRight ? 1080 : -120, Phaser.Math.Between(90, 170), this.textures.exists("p_heli") ? "p_heli" : "p_plane").setScale(2.2).setFlipX(!fromRight);
       tx = Phaser.Math.Between(180, 820);
       ty = spr.y;
-      hp = 20;
+      hp = 15;
     } else if (kind === "tank") {
       spr = this.add.image(-220, ROAD_Y + 8, "p_tank").setScale(2.6).setOrigin(0.5, 0.8);
       tx = Phaser.Math.Between(90, 180);
@@ -336,9 +336,9 @@ export class DriveScene extends Phaser.Scene {
       this.streakText.setText(`${this.streak}x STREAK!`).setScale(1.4).setAlpha(1);
       this.tweens.add({ targets: this.streakText, scale: 1, duration: 200 });
     }
-    if (this.kills % 10 === 0) {
-      this.hp = Math.min(100, this.hp + 8);
-      this.pop(this.truck.x, this.truck.y - 150, "+8 TRUCK (gaffer tape)", "#86efac", 14);
+    if (this.kills % 8 === 0) {
+      this.hp = Math.min(100, this.hp + 12);
+      this.pop(this.truck.x, this.truck.y - 150, "+12 TRUCK (gaffer tape)", "#86efac", 14);
     }
     this.sloppy = Math.min(100, this.sloppy + (f.kind === "cop" ? 12 : 22));
     G.s.coins += f.kind === "cop" ? 3 : 7;
@@ -567,20 +567,20 @@ export class DriveScene extends Phaser.Scene {
     // spawning: hordes, ramping up
     if (now >= this.nextSpawn) {
       const live = this.foes.filter((f) => !f.dead && f.kind !== "spikes" && f.kind !== "ramp").length;
-      const cap = 3 + Math.floor(this.t / 12);
+      const cap = Math.min(6, 3 + Math.floor(this.t / 18));
       const helis = this.foes.filter((f) => f.kind === "heli" && !f.dead).length;
       const tanks = this.foes.filter((f) => f.kind === "tank" && !f.dead).length;
       for (let k = 0; k < (this.t > 30 ? 2 : 1) && live + k < cap; k++) {
         const r = Math.random();
-        if (this.t > 20 && r < 0.22 && helis < 1 + Math.floor(this.t / 30)) this.spawn("heli");
-        else if (this.t > 45 && r < 0.3 && tanks < (this.t > 65 ? 2 : 1)) {
+        if (this.t > 20 && r < 0.22 && helis < (this.t > 55 ? 2 : 1)) this.spawn("heli");
+        else if (this.t > 45 && r < 0.3 && tanks < 1) {
           this.spawn("tank");
           this.bark("SANMIK", "Look at that tank! It's pointing its turret at us!");
         } else if (this.t > 10 && r < 0.55) this.spawn("swat");
         else this.spawn("cop");
       }
       if (Math.random() < 0.3) this.spawn("spikes");
-      this.nextSpawn = now + Math.max(700, 2000 - this.t * 18);
+      this.nextSpawn = now + Math.max(1150, 2000 - this.t * 12);
     }
     if (now >= this.nextRamp) {
       this.spawn("ramp");
@@ -608,7 +608,7 @@ export class DriveScene extends Phaser.Scene {
       const tip = this.gunTip();
       const a = aim + (Math.random() - 0.5) * 0.07;
       const b = this.add.rectangle(tip.x, tip.y, 16, 3, 0xfde047).setDepth(40).setRotation(a).setBlendMode(Phaser.BlendModes.ADD);
-      this.bullets.push({ spr: b, vx: Math.cos(a) * 1.3, vy: Math.sin(a) * 1.3, mine: true, dmg: 0.7 * damageMult(G.s), life: 900 });
+      this.bullets.push({ spr: b, vx: Math.cos(a) * 1.3, vy: Math.sin(a) * 1.3, mine: true, dmg: 1.05 * damageMult(G.s), life: 900 });
       const mf = this.add.circle(tip.x, tip.y, 7, 0xfff7ae, 0.9).setDepth(41).setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({ targets: mf, alpha: 0, scale: 1.8, duration: 60, onComplete: () => mf.destroy() });
       // brass
@@ -670,7 +670,7 @@ export class DriveScene extends Phaser.Scene {
       f.bar?.setPosition(f.spr.x, f.spr.y - f.spr.displayHeight * (f.kind === "heli" ? 0.6 : 0.95)).setSize(Math.max(1, 60 * (f.hp / f.maxHp)), 5);
       if (f.kind === "cop" && f.spr.x > this.truck.x - 170 && !f.hit) {
         f.hit = true;
-        this.hurtTruck(6, "RAMMED!");
+        this.hurtTruck(4, "RAMMED!");
         f.tx = Math.max(60, f.tx - 120);
       }
       if (now >= f.nextShot) {
@@ -685,17 +685,17 @@ export class DriveScene extends Phaser.Scene {
           f.hit = false;
           f.nextShot = now + 3000;
         } else {
-          const n = f.kind === "swat" ? 3 : f.kind === "tank" ? 1 : f.kind === "heli" ? 2 : 1;
+          const n = f.kind === "swat" ? 2 : 1;
           for (let i = 0; i < n; i++) {
             const sx = f.spr.x + (f.kind === "heli" ? 0 : 30);
             const sy = f.spr.y - (f.kind === "heli" ? -10 : 40);
             const a = Math.atan2(this.truck.y - 60 - sy, this.truck.x - sx) + (i - (n - 1) / 2) * 0.12;
             const big = f.kind === "tank";
             const b = this.add.circle(sx, sy, big ? 9 : 4, big ? 0xef4444 : 0x93c5fd).setDepth(40);
-            this.bullets.push({ spr: b, vx: Math.cos(a) * (big ? 0.35 : 0.5), vy: Math.sin(a) * (big ? 0.35 : 0.5), mine: false, dmg: big ? 14 : f.kind === "heli" ? 4 : 3, life: 2600 });
+            this.bullets.push({ spr: b, vx: Math.cos(a) * (big ? 0.35 : 0.5), vy: Math.sin(a) * (big ? 0.35 : 0.5), mine: false, dmg: big ? 12 : f.kind === "heli" ? 3 : 2, life: 2600 });
             if (big) this.explode(sx + 20, sy - 10, false);
           }
-          f.nextShot = now + (f.kind === "tank" ? 3200 : f.kind === "heli" ? 1400 : 1900) + Math.random() * 800;
+          f.nextShot = now + (f.kind === "tank" ? 3600 : f.kind === "heli" ? 2200 : 3000) + Math.random() * 1000;
         }
       }
     }
@@ -734,7 +734,7 @@ export class DriveScene extends Phaser.Scene {
         }
       } else if (Math.abs(b.spr.x - this.truck.x) < 110 && b.spr.y > this.truck.y - 110 && b.spr.y < this.truck.y + 10) {
         b.life = 0;
-        this.hurtTruck(b.dmg);
+        this.hurtTruck(Math.max(1, Math.round(b.dmg * 0.6)));
       }
       if (b.spr.x < -50 || b.spr.x > 1010 || b.spr.y < -50 || b.spr.y > 600) b.life = 0;
       if (b.life <= 0) b.spr.destroy();
