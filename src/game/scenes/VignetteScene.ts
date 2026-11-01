@@ -14,6 +14,13 @@ import { maybeFinishArc } from "../systems/arcs";
 import { addWrist, wristLook } from "../gfx/Wrist";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
+/** Polson's belly: how fat he is (polson_fat) -> which of the twelve fat-sheet frames. */
+const Polson = {
+  bellyFrame(fat: number) {
+    return Math.max(0, Math.min(11, Math.round(fat)));
+  },
+};
+
 export class VignetteScene extends Phaser.Scene {
   private box!: DialogueBox;
   private returnAt = "";
@@ -893,6 +900,8 @@ export class VignetteScene extends Phaser.Scene {
   /** Polson at his current (permanent) size. */
   private fatPolson(x: number, y: number, base = 3) {
     const f = Math.min(60, (G.s.flags.polson_fat as number) ?? 0);
+    // past the biggest belly on the sheet he just keeps widening
+    if (this.textures.exists("spr_POLSON_FAT")) return this.add.sprite(x, y, "spr_POLSON_FAT", Polson.bellyFrame(f)).setScale(base * (1 + Math.max(0, f - 11) * 0.025), base).setDepth(10);
     const k = 1 + f * 0.04;
     return this.add.sprite(x, y, "spr_POLSON", 0).setScale(base * k, base * (1 + (k - 1) * 0.2)).setDepth(10);
   }
@@ -981,8 +990,13 @@ export class VignetteScene extends Phaser.Scene {
       say("WAITER", "…In the shake?"),
       say("POLSON", "Liquid gains!! Absorbs faster. If my memory serves correct"),
     ]);
-    await this.bulkPolson(pol2, true);
+    // (one round of feeding is enough: the shake goes straight down)
+    G.s.flags.polson_fat = ((G.s.flags.polson_fat as number) ?? 0) + 8;
+    synth.play("slurp");
+    this.tweens.add({ targets: pol2, scaleX: pol2.scaleX * 1.06, duration: 300, ease: "Back.out" });
+    if (pol2.texture.key === "spr_POLSON_FAT") pol2.setFrame(Polson.bellyFrame((G.s.flags.polson_fat as number) ?? 0));
     await this.talk([
+      dir("He drinks it in one go. The straw collapses. The glass collapses. Something in his shirt gives way."),
       say("POLSON", "Oh that's delectable!! I can feel it going straight to the muscles"),
       dir("It is not going to the muscles. It is going everywhere except the muscles."),
       say("POLSON", "Gonna need a bigger headband 😅"),
@@ -2388,6 +2402,9 @@ export class VignetteScene extends Phaser.Scene {
   private bulkPolson(pol: Phaser.GameObjects.Sprite, add = false) {
     return new Promise<void>((resolve) => {
       const MOUTH_X = pol.x + 30;
+      // the belly does the growing: the fat sheet has twelve sizes of Polson
+      const fat = this.textures.exists("spr_POLSON_FAT");
+      if (fat) pol.setTexture("spr_POLSON_FAT", 0);
       const sx0 = pol.scaleX;
       const sy0 = pol.scaleY;
       const hud = this.add.text(480, 130, "", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(100);
@@ -2401,34 +2418,33 @@ export class VignetteScene extends Phaser.Scene {
         { e: "🍩", name: "KREZPY KREAM", good: true },
         { e: "🥗", name: "SALAD", good: false },
       ];
-      const lines = ["Great bulking food.", "Mmm. Gains.", "That's protein, that is.", "Bulking season.", "Get it in.", "Mork.", "More fudge.", "Clean bulk. Basically."];
+      const lines = ["Great bulking food!!", "Mmm. Gains.", "Protein!!", "Bulking season 😅", "Get it in!!", "Delectable!!", "More fudge!!", "Clean bulk. Basically."];
       type Food = { t: Phaser.GameObjects.Text; good: boolean; done: boolean };
       const foods: Food[] = [];
       let eaten = 0;
       let wasted = 0;
       let spawned = 0;
-      const TOTAL = 18;
+      const TOTAL = 12;
       const say1 = (txt: string, col = "#ffffff") => {
         const b = this.add.text(pol.x, pol.y - pol.displayHeight / 2 - 24, txt, { fontFamily: FONT, fontSize: "13px", color: "#111", backgroundColor: "#ffffffee", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(60);
         b.setColor(col === "#ffffff" ? "#111" : col);
         this.tween({ targets: b, y: b.y - 18, alpha: 0, delay: 700, duration: 400 });
       };
-      const spawn = this.time.addEvent({
-        delay: 900,
-        loop: true,
-        callback: () => {
-          if (spawned >= TOTAL) return;
-          spawned++;
-          const m = Math.random() < 0.18 ? menu[5] : menu[Math.floor(Math.random() * 5)];
-          const t = this.add.text(1000, 300, m.e, { fontSize: "40px" }).setOrigin(0.5).setDepth(40);
-          foods.push({ t, good: m.good, done: false });
-        },
-      });
+      const addFood = () => {
+        if (spawned >= TOTAL) return;
+        spawned++;
+        const m = Math.random() < 0.18 ? menu[5] : menu[Math.floor(Math.random() * 5)];
+        const t = this.add.text(1000, 300, m.e, { fontSize: "40px" }).setOrigin(0.5).setDepth(40);
+        foods.push({ t, good: m.good, done: false });
+      };
+      // the first one is already on its way in
+      addFood();
+      const spawn = this.time.addEvent({ delay: 650, loop: true, callback: addFood });
       const shove = () => {
         if (this.box.active) return;
         const f = foods.find((x) => !x.done && Math.abs(x.t.x - MOUTH_X) < 46);
-        pol.setFrame(3);
-        this.time.delayedCall(120, () => pol.setFrame(0));
+        // chomp: a quick squash, never a different (smaller) pose
+        this.tweens.add({ targets: pol, scaleY: pol.scaleY * 0.94, duration: 70, yoyo: true });
         if (!f) {
           synth.play("tap_fail");
           return;
@@ -2445,8 +2461,11 @@ export class VignetteScene extends Phaser.Scene {
         eaten++;
         synth.play(eaten % 2 ? "gulp" : "slurp");
         say1(lines[eaten % lines.length]);
-        // he grows. Mostly sideways.
-        this.tweens.add({ targets: pol, scaleX: sx0 * (1 + eaten * 0.13), scaleY: sy0 * (1 + eaten * 0.03), duration: 200, ease: "Back.out" });
+        // the belly grows, every single bite
+        if (fat) {
+          pol.setFrame(Math.min(11, eaten));
+          this.tweens.add({ targets: pol, scaleX: sx0 * 1.08, duration: 90, yoyo: true, onComplete: () => pol.setScale(sx0, sy0) });
+        } else this.tweens.add({ targets: pol, scaleX: sx0 * (1 + eaten * 0.13), scaleY: sy0 * (1 + eaten * 0.03), duration: 200, ease: "Back.out" });
         this.cameras.main.shake(80, 0.002 + eaten * 0.0004);
       };
       this.input.keyboard?.on("keydown-SPACE", shove);
@@ -2457,7 +2476,7 @@ export class VignetteScene extends Phaser.Scene {
         callback: () => {
           for (const f of foods) {
             if (f.done) continue;
-            f.t.x -= 4.2;
+            f.t.x -= 5.4;
             if (f.t.x < MOUTH_X - 60) {
               f.done = true;
               if (f.good) {
@@ -2477,7 +2496,7 @@ export class VignetteScene extends Phaser.Scene {
             help.destroy();
             zone.destroy();
             G.s.flags.polson_fat = add ? ((G.s.flags.polson_fat as number) ?? 0) + eaten : Math.max((G.s.flags.polson_fat as number) ?? 0, eaten);
-            this.caption(eaten >= 12 ? "MAXIMUM BULK" : eaten >= 7 ? "BULKED" : "LIGHT BULK", "#ffd23f", 30);
+            this.caption(eaten >= 9 ? "MAXIMUM BULK" : eaten >= 5 ? "BULKED" : "LIGHT BULK", "#ffd23f", 30);
             this.time.delayedCall(500, () => {
               this.lastCaption?.destroy();
               this.lastCaption = undefined;
@@ -2488,5 +2507,6 @@ export class VignetteScene extends Phaser.Scene {
       });
     });
   }
+
 
 }
