@@ -177,6 +177,8 @@ export class SideLevel {
     return this.gaps.some(([a, b]) => x > a - pad && x < b + pad);
   }
 
+  private nextCull = 0;
+
   update(dt: number, busy: boolean) {
     const sc = this.sc;
     const now = sc.now();
@@ -305,6 +307,11 @@ export class SideLevel {
       if (p.x > lk.r - 30) p.spr.x = lk.r - 30;
       if (lk.pending === 0 && lk.spawned.every((e) => !e || e.dead)) this.releaseLock();
     }
+    // towers: anything left well below you gives up the chase (no rewards), so the climb doesn't snowball
+    if (this.room.tower && now > this.nextCull) {
+      this.nextCull = now + 500;
+      for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.y > p.y + 560) e.kill();
+    }
     // run and gun: push forward, more turn up
     for (const tr of this.triggers) {
       if (tr.fired || this.lock || (this.room.tower ? p.y > tr.x : p.x < tr.x)) continue;
@@ -322,8 +329,12 @@ export class SideLevel {
         this.lock = { l, r: rr, spawned: [], pending: 0, banner };
         synth.play("decree");
       }
+      // towers keep the crowd small: a wave only tops the room up to a handful
+      const room = this.room.tower ? Math.max(0, 9 - sc.enemies.filter((e) => !e.dead && !e.isBoss).length) : 99;
+      let budget = room;
       for (const [type, n0] of tr.wave) {
-        const n = Math.max(1, Math.round(n0 * 0.8));
+        const n = Math.min(budget, Math.max(1, Math.round(n0 * 0.8)));
+        budget -= n;
         for (let i = 0; i < n; i++) {
           const d = ENEMIES[type];
           const flyer = !!d && d.behavior !== "leaper" && d.behavior !== "turret" && (d.behavior === "orbiter" || d.behavior === "blinker" || ["bubble", "ghost", "drone", "page"].includes(d.shape));

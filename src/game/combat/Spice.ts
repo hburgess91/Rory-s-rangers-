@@ -73,14 +73,14 @@ export class Spice {
     this.makeTextures();
     if (this.side && r.tower) {
       // supplies on the ledges all the way up: crates, health, loose ammo, and the odd barrel
-      const kinds = ["ammo_crate", "heal", "supply_crate", "ammo", "barrel", "heal", "ammo_crate", "ammo"];
+      const kinds = ["ammo_crate", "heal", "supply_crate", "ammo", "heal", "barrel", "heal", "ammo_crate", "ammo", "heal"];
       let k = 0;
       ((r.platforms ?? []) as [number, number, number][]).forEach(([fx, h]: [number, number, number], i: number) => {
         if (i % 3 !== 1 || h > (r.exitAt?.[1] ?? 1e9) - 50) return;
         const x = r.w * fx + (Math.random() - 0.5) * 50;
         const y = sc.groundY - h - 7;
         const kind = kinds[k++ % kinds.length];
-        if (kind === "heal") sc.dropPickup(x, y - 14, "heal", 25);
+        if (kind === "heal") sc.dropPickup(x, y - 14, "heal", 35);
         else if (kind === "ammo") sc.dropPickup(x, y - 14, "ammo", 1.5);
         else this.add(kind as BreakKind, x, y - 15);
       });

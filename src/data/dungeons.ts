@@ -108,20 +108,20 @@ function cuddleTower(): RoomDef {
   const top = 115 + STEPS * 112;
   platforms.push([0.5, top, 760]);
   const waves: [string, number][][] = [
-    [["plushie", 4]],
-    [["leaping_plushie", 2], ["plushie", 3]],
-    [["candy_drone", 2], ["plushie", 3]],
-    [["jingle_turret", 1], ["leaping_plushie", 2]],
-    [["crobley_minion", 6], ["candy_drone", 1]],
-    [["gobstopper", 2], ["plushie", 3]],
-    [["leaping_plushie", 3], ["jingle_turret", 1]],
-    [["candy_drone", 3], ["crobley_minion", 5]],
-    [["gobstopper", 2], ["leaping_plushie", 2]],
-    [["plushie", 5], ["candy_drone", 2]],
+    [["plushie", 3]],
+    [["leaping_plushie", 1], ["plushie", 2]],
+    [["candy_drone", 1], ["plushie", 2]],
+    [["jingle_turret", 1], ["plushie", 2]],
+    [["crobley_minion", 4]],
+    [["gobstopper", 1], ["plushie", 2]],
+    [["leaping_plushie", 2], ["candy_drone", 1]],
+    [["candy_drone", 2], ["crobley_minion", 3]],
+    [["gobstopper", 1], ["leaping_plushie", 2]],
+    [["plushie", 3], ["candy_drone", 1]],
   ];
-  // twice as many waves over twice the climb
+  // a wave every few floors, with quiet stretches in between
   const triggers: [number, [string, number][]][] = [];
-  for (let i = 0; i < 19; i++) triggers.push([0.02 + i * 0.05, waves[i % waves.length]]);
+  for (let i = 0; i < 13; i++) triggers.push([0.02 + i * 0.075, waves[i % waves.length]]);
   return {
     name: "The Cuddle Tower",
     view: "side",
