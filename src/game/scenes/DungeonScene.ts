@@ -294,9 +294,19 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (const [fx, h, w] of r.platforms ?? []) {
       const x = r.w * fx;
       const y = gy - h;
-      this.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(0xb0a0c0);
-      this.add.rectangle(x, y - 7, w, 3, 0xffd23f, 0.8).setDepth(5);
-      this.add.rectangle(x, y + 7, w, 3, 0x000000, 0.5).setDepth(5);
+      if (r.tower) {
+        // gothic stone ledge: dark stone, gold trim, little corbels underneath
+        const g = this.add.graphics().setDepth(4);
+        g.fillStyle(0x2a1a33, 1).fillRect(x - w / 2, y - 7, w, 16);
+        g.fillStyle(0x3b2547, 1).fillRect(x - w / 2, y - 7, w, 5);
+        g.fillStyle(0xd4a017, 1).fillRect(x - w / 2, y - 9, w, 3);
+        for (let cx = x - w / 2 + 14; cx < x + w / 2 - 6; cx += 28) g.fillStyle(0x1f1226, 1).fillTriangle(cx - 9, y + 9, cx + 9, y + 9, cx, y + 22);
+        g.lineStyle(1, 0x000000, 0.6).strokeRect(x - w / 2, y - 7, w, 16);
+      } else {
+        this.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(0xb0a0c0);
+        this.add.rectangle(x, y - 7, w, 3, 0xffd23f, 0.8).setDepth(5);
+        this.add.rectangle(x, y + 7, w, 3, 0x000000, 0.5).setDepth(5);
+      }
       const plat = this.add.rectangle(x, y, w, 14, 0, 0);
       this.platforms.add(plat);
     }
@@ -319,28 +329,44 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private decorateTower() {
     const r = this.room;
     const gy = this.groundY;
-    this.towerBg = this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0).setScrollFactor(0).setDepth(-12).setTint(0x9d4b73).setAlpha(0.85);
-    // a far wall that scrolls slower, with windows full of night
-    for (let y = gy - 200; y > 0; y -= 330) {
-      for (const x of [140, 820]) {
-        this.add.rectangle(x, y, 70, 110, 0x0b1026).setDepth(-8).setStrokeStyle(6, 0x4a1d33);
-        this.add.circle(x - 12, y - 22, 3, 0xfef3c7).setDepth(-7);
-      }
+    // the gothic wall: crimson stone, pink stained-glass hearts, scrolling a bit slower than you climb
+    if (this.textures.exists("tw_gothic")) {
+      this.towerBg = this.add.tileSprite(0, 0, 960, 540, "tw_gothic").setOrigin(0).setScrollFactor(0).setDepth(-12).setTileScale(2);
+    } else {
+      this.towerBg = this.add.tileSprite(0, 0, 960, 540, "tile_mansion").setOrigin(0).setScrollFactor(0).setDepth(-12).setTint(0x5b1f3a);
     }
-    const scrawls = ["CUDDLE ME", "SQUEEZE", "OL' CRONNY ♥", "GIVE US A CUD", "JUICES :)", "COME UP LOVE", "HUG HUG HUG", "♥ ♥ ♥"];
+    // a little moonlight and gloom
+    this.add.rectangle(0, 0, 960, 540, 0x12051a, 0.25).setOrigin(0).setScrollFactor(0).setDepth(-11);
+    // crimson banners with Cronny's heart, hanging between floors
+    const mottos = ["OL' CRONNY ♥", "GIVE US A CUD", "SQUEEZE", "COME UP LOVE", "♥ ♥ ♥", "JUICES :)"];
     let k = 0;
-    for (let y = gy - 120; y > 80; y -= 170) {
-      const x = 160 + ((k * 337) % 640);
-      // a crayon drawing of two stick people cuddling, in a frame
-      const g = this.add.graphics().setDepth(-6);
-      g.fillStyle(0xfdf2f8, 0.9).fillRect(x - 34, y - 26, 68, 52).lineStyle(3, 0x7c2d4a).strokeRect(x - 34, y - 26, 68, 52);
-      g.lineStyle(2, 0x111827).strokeCircle(x - 10, y - 10, 6).strokeCircle(x + 10, y - 10, 6).lineBetween(x - 10, y - 4, x - 10, y + 14).lineBetween(x + 10, y - 4, x + 10, y + 14).lineBetween(x - 10, y + 2, x + 10, y + 2);
-      g.fillStyle(0xef4444).fillCircle(x - 3, y - 18, 3).fillCircle(x + 3, y - 18, 3).fillTriangle(x - 6, y - 17, x + 6, y - 17, x, y - 10);
-      this.add.text(x + (k % 2 ? 110 : -110), y + 20, scrawls[k % scrawls.length], { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#fbcfe8" }).setOrigin(0.5).setDepth(-6).setAngle((k % 3) * 4 - 4).setAlpha(0.7);
+    for (let y = gy - 260; y > 120; y -= 420) {
+      for (const x of k % 2 ? [90, 870] : [300, 660]) {
+        const g = this.add.graphics().setDepth(-6);
+        g.fillStyle(0x7f1d1d, 1).fillRect(x - 26, y - 70, 52, 120).fillTriangle(x - 26, y + 50, x + 26, y + 50, x, y + 72);
+        g.lineStyle(3, 0xd4a017, 1).strokeRect(x - 26, y - 70, 52, 120);
+        g.fillStyle(0xd4a017, 1).fillRect(x - 34, y - 76, 68, 6);
+        g.fillStyle(0xf472b6, 1).fillCircle(x - 7, y - 20, 9).fillCircle(x + 7, y - 20, 9).fillTriangle(x - 15, y - 16, x + 15, y - 16, x, y + 4);
+        this.add.text(x, y + 30, mottos[k % mottos.length], { fontFamily: "Georgia, serif", fontSize: "9px", color: "#fde68a", fontStyle: "bold", align: "center", wordWrap: { width: 46 } }).setOrigin(0.5).setDepth(-5);
+      }
       k++;
     }
+    // candelabras on the ledges, flames flickering
+    (r.platforms ?? []).forEach(([fx, h, w], i) => {
+      if (i % 2) return;
+      const x = r.w * fx + (i % 4 ? -1 : 1) * (w / 2 - 14);
+      const y = gy - h - 7;
+      const g = this.add.graphics().setDepth(6);
+      g.fillStyle(0x3f3f46, 1).fillRect(x - 2, y - 26, 4, 26).fillRect(x - 12, y - 26, 24, 3).fillRect(x - 8, y - 3, 16, 3);
+      for (const dx of [-11, 0, 11]) {
+        g.fillStyle(0xf5f5f4, 1).fillRect(x + dx - 2, y - 36, 4, 10);
+        const fl = this.add.ellipse(x + dx, y - 40, 5, 9, 0xfbbf24).setDepth(7);
+        const glow = this.add.circle(x + dx, y - 40, 14, 0xf97316, 0.18).setDepth(5).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: [fl, glow], scaleY: { from: 0.85, to: 1.2 }, alpha: { from: 0.75, to: 1 }, yoyo: true, repeat: -1, duration: 160 + ((i * 37 + dx * 7) % 120) });
+      }
+    });
     // floor numbers so you can see how far you've come
-    for (let f = 1; f * 336 < r.h - 300; f++) this.add.text(40, gy - f * 336, `FLOOR ${f}`, { fontFamily: "Impact, sans-serif", fontSize: "14px", color: "#ffffff" }).setDepth(-5).setAlpha(0.5);
+    for (let f = 1; f * 336 < r.h - 300; f++) this.add.text(40, gy - f * 336, `FLOOR ${f}`, { fontFamily: "Georgia, serif", fontSize: "14px", color: "#fde68a", fontStyle: "bold" }).setDepth(-5).setAlpha(0.6);
   }
 
   private buildRoom() {
@@ -1860,7 +1886,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const tex = { coin: "p_coin", krezz: "p_krezz", heal: "p_bottle", crobley: "p_crobley", quest: "p_scroll", bottle: "p_bottle", bongo: "p_bongo", ammo: "p_ammo" }[kind];
     const spr = this.add.image(x, y, this.textures.exists(tex) ? tex : "p_coin").setScale(2).setDepth(15);
     if (kind === "ammo") fitTo(spr, 26);
-    if (this.side && y < this.groundY - 16) this.tweens.add({ targets: spr, y: this.groundY - 14, duration: 200 + (this.groundY - y) * 1.2, ease: "Bounce.out" });
+    if (this.side && !this.room.tower && y < this.groundY - 16) this.tweens.add({ targets: spr, y: this.groundY - 14, duration: 200 + (this.groundY - y) * 1.2, ease: "Bounce.out" });
     else this.tweens.add({ targets: spr, y: y - 8, yoyo: true, duration: 220 });
     this.pickups.push({ spr, kind, value });
   }
@@ -1932,7 +1958,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;
       leadCamera(this.cameras.main, pb.velocity.x, this.side ? 0 : pb.velocity.y, dt, 0.12, 36);
       if (this.sideBg) this.sideBg.tilePositionX = (this.cameras.main.scrollX * 0.35) / this.sideBgScale;
-      if (this.towerBg) this.towerBg.tilePositionY = this.cameras.main.scrollY * 0.4;
+      if (this.towerBg) this.towerBg.tilePositionY = (this.cameras.main.scrollY * 0.5) / this.towerBg.tileScaleY;
     }
     // intoxication decays slowly
     s.intoxication = Math.max(0, s.intoxication - dt * 0.0006);

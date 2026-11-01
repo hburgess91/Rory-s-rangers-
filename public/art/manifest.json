@@ -4804,6 +4804,9 @@
   },
   "bld_CROBLEY_FACTORY_RUIN": {
    "file": "buildings/CROBLEY_FACTORY_RUIN.png"
+  },
+  "tw_gothic": {
+   "file": "backdrops/tw_gothic.png"
   }
  },
  "sheets": {

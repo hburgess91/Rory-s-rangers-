@@ -145,6 +145,8 @@ export class SideLevel {
 
   /** Run-and-gun rooms: done when every trigger has fired and nothing's left alive. */
   triggersDone() {
+    // a tower opens as soon as you reach the top landing
+    if (this.room.tower && this.room.exitAt && this.sc.player && this.sc.player.y < this.sc.groundY - this.room.exitAt[1] + 20) return true;
     return this.hasTriggers && !this.lock && this.pendingSpawns === 0 && this.triggers.every((t) => t.fired) && this.sc.enemies.every((e) => e.dead);
   }
 
