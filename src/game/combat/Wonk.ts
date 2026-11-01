@@ -205,7 +205,7 @@ function overWonk(p: Player, now: number) {
   w.floatText(p.x, p.y - 60, "OVER-WONKED YOUR THANG", "#f9a8d4", 18);
   w.floatText(p.x, p.y - 40, "(a bit early, mate)", "#ffffff", 12);
   splats(p, 3, 18);
-  w.aoe(p.x, p.y, 70, p.dmg(p.def.damage ?? 10, now), { knock: 120, noWonk: true, color: 0xffffff });
+  w.aoe(p.x, p.y, 80, p.dmg(14, now) * 1.5, { knock: 140, noWonk: true, color: 0xffffff });
 }
 
 function underWonk(p: Player, now: number) {
@@ -215,7 +215,7 @@ function underWonk(p: Player, now: number) {
   w.floatText(p.x, p.y - 40, "*dribble*", "#ffffff", 12);
   const d = p.world.sc.add.circle(p.x + Math.cos(p.aim) * 14, p.y + 10, 5, 0xf5f5f0).setDepth(520);
   p.world.sc.tweens.add({ targets: d, y: d.y + 18, alpha: 0, duration: 700, onComplete: () => d.destroy() });
-  w.aoe(p.x, p.y, 90, p.dmg(p.def.damage ?? 10, now) * 2, { knock: 140, noWonk: true, color: 0xffffff });
+  w.aoe(p.x, p.y, 100, p.dmg(14, now) * 2.5, { knock: 160, noWonk: true, color: 0xffffff });
 }
 
 /** White splats: some on the floor, some right on the screen. */
@@ -304,7 +304,8 @@ function jetStream(p: Player, now: number) {
           if (along < 0 || along > st.len || across > WIDTH + e.radius) continue;
           const n = (hit.get(e) ?? 0) + 1;
           hit.set(e, n);
-          const dmg = p.dmg(p.def.damage ?? 10, now) * 2.2 + (e.isBoss ? e.maxHp * 0.011 : 0);
+          const jet = 1 + 0.25 * (G.s.upgrades.pk_jet ?? 0);
+          const dmg = (p.dmg(14, now) * 4.5 + (e.isBoss ? e.maxHp * 0.022 : 0)) * jet;
           w.damageEnemy(e, dmg, { knock: 220, angle: a, crit: n === 1, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });
           if (n === 1) w.burst(e.x, e.y, 0xffffff, 10);
         }

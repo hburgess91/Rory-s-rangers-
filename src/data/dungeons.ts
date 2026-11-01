@@ -51,6 +51,12 @@ export interface RoomDef {
   crusherLabel?: string;
   /** Run and gun: when you get past x (0..1), this lot turns up. Replaces waves. */
   triggers?: [number, [string, number][]][];
+  /** Side-scrolling set piece: something chases you from the left once you pass `at` (0..1). */
+  chase?: { at: number; speed: number; label: string; color?: number };
+  /** Several bosses back to back in the same room (after `boss`), each with its own backdrop. */
+  bossRush?: { boss: string; backdrop?: string; hp?: number }[];
+  /** Boss HP multiplier for this room (e.g. an easier first fight in a rush). */
+  bossHp?: number;
   /** Room music (overrides the dungeon's). */
   music?: string;
   /** The magic pill: colours, sea creatures, the room breathes. */
@@ -220,7 +226,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1300,
         h: 780,
         theme: "school",
-        waves: [[["wisp", 3], ["smolt", 5]], [["tray_turret", 2], ["dinner_lady", 2]]],
+        waves: [[["wisp", 3], ["smolt", 5]], [["tray_turret", 2], ["dinner_lady", 2], ["gravy_lobber", 2]]],
         props: [
           { kind: "wonking_machine", x: 0.5, y: 0.22, id: "wm_cafeteria" },
           { kind: "vending", x: 0.12, y: 0.2, id: "v_caf1" },
@@ -234,7 +240,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1200,
         h: 760,
         theme: "school",
-        waves: [[["smolt", 8], ["wisp", 2]], [["dinner_lady", 3], ["tray_turret", 2]]],
+        waves: [[["smolt", 8], ["wisp", 2]], [["dinner_lady", 3], ["tray_turret", 2]], [["gravy_lobber", 2], ["smolt", 6]]],
         props: [{ kind: "vending", x: 0.88, y: 0.2, id: "v_boiler" }],
       },
       {
@@ -271,7 +277,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1300,
         h: 760,
         theme: "industrial",
-        waves: [[["mould", 3], ["cheese_mite", 6]], [["mould_pizza", 2], ["mould", 3]], [["mould_pizza", 3], ["cheese_mite", 6]]],
+        waves: [[["mould", 3], ["cheese_mite", 6]], [["mould_pizza", 2], ["mould", 3], ["leaping_plushie", 2]], [["mould_pizza", 3], ["cheese_mite", 6]]],
         props: [{ kind: "vending", x: 0.9, y: 0.15, id: "v_kitchen" }],
         enterLines: [
           { s: "NARRATOR", t: "The kitchen. Every surface is takeaway. Some of the takeaway has developed opinions.", dir: true },
@@ -286,7 +292,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1300,
         h: 780,
         theme: "mansion",
-        waves: [[["plushie", 6], ["trinket", 6]], [["plushie", 5], ["mould", 2], ["trinket", 6]]],
+        waves: [[["plushie", 6], ["trinket", 6]], [["plushie", 5], ["mould", 2], ["trinket", 6]], [["leaping_plushie", 3], ["gravy_lobber", 2]]],
         enterLines: [
           { s: "NARRATOR", t: "The bedroom. A mountain of stuffed toys reaches the ceiling. At the summit, a hamster watches you with serene, total calm.", dir: true },
           { s: "POLSON", t: "(on the phone) Is the hamster alright? Tell him I love him." },
@@ -335,7 +341,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1300,
         h: 780,
         theme: "industrial",
-        waves: [[["vending_mimic", 3], ["pipe_gremlin", 4]], [["krezbian", 2]]],
+        waves: [[["vending_mimic", 3], ["pipe_gremlin", 4]], [["krezbian", 2], ["pipe_mortar", 2]]],
         props: [
           { kind: "vending", x: 0.1, y: 0.2, id: "v_hall1" },
           { kind: "vending", x: 0.9, y: 0.2, id: "v_hall2" },
@@ -347,7 +353,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1400,
         h: 820,
         theme: "industrial",
-        waves: [[["krezbian", 3], ["krez_leak", 1]], [["vending_mimic", 2], ["krezbian", 2], ["pipe_gremlin", 3]]],
+        waves: [[["krezbian", 3], ["krez_leak", 1], ["pipe_mortar", 2]], [["vending_mimic", 2], ["krezbian", 2], ["pipe_gremlin", 3]]],
         props: [{ kind: "wonking_machine", x: 0.5, y: 0.2, id: "wm_refinery" }],
         enterLines: [{ s: "NARRATOR", t: "The Krezz Refinery. Crude krezz is processed into Extra Virgin Krezz Oil here. Krezbians — purple, Mad Max, cannons for right arms — have taken the floor.", dir: true }],
       },
@@ -391,7 +397,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 780,
         theme: "temple",
         rule: "dodge",
-        waves: [[["cultist", 5], ["hammerling", 1]], [["decree_drone", 3], ["cultist", 3]]],
+        waves: [[["cultist", 5], ["hammerling", 1], ["decree_turret", 1], ["bonky_bouncer", 2]], [["decree_drone", 3], ["cultist", 3]]],
         enterLines: [{ s: "NARRATOR", t: "Commandment carved over the door: 'THOU SHALT REACT'. Underneath, smaller: 'THOU SHALT NOT DODGE (TODAY)'.", dir: true }],
       },
       {
@@ -400,7 +406,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 800,
         theme: "temple",
         rule: "heal",
-        waves: [[["hammerling", 2], ["decree_drone", 2]], [["cultist", 6], ["hammerling", 1]]],
+        waves: [[["hammerling", 2], ["decree_drone", 2]], [["cultist", 6], ["hammerling", 1]], [["bonky_bouncer", 3], ["decree_turret", 2]]],
         props: [{ kind: "sign", x: 0.5, y: 0.15, label: "THE NUCLEAR OPTION — est. 14/04/2022 by DRONGUS (Archive vandalism: ignore)" }],
       },
       {
@@ -435,7 +441,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 780,
         theme: "prison",
         event: "records",
-        waves: [[["betrayer", 4]], [["guard_ghost", 3], ["betrayer", 2]]],
+        waves: [[["betrayer", 4]], [["guard_ghost", 3], ["betrayer", 2], ["ghost_mortar", 2]]],
         enterLines: [
           { s: "NARRATOR", t: "Six cells. Six Krez Years. Every cell door has a different version of the story nailed to it.", dir: true },
           { s: "NARRATOR", t: "Cell Six has your name on it. Three names, actually: KREZMOND, KREBON, CREAMY DINGUS. Two have been crossed out. A different one each time you look.", dir: true, cond: { player: "KREBON" } },
@@ -448,7 +454,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1400,
         h: 700,
         theme: "prison",
-        waves: [[["betrayer", 3], ["record", 4]], [["guard_ghost", 2], ["betrayer", 3]]],
+        waves: [[["betrayer", 3], ["record", 4], ["ghost_mortar", 2]], [["guard_ghost", 2], ["betrayer", 3]]],
         enterLines: [
           { s: "NARRATOR", t: "The tunnel the Abbé Krezia dug with a spoon. It is very long. He was very patient. He was also, according to some versions, a pigeon.", dir: true },
           { s: "KREBON", t: "Abbé. I'm back. I kept the spoon.", cond: { player: "KREBON" } },
@@ -498,7 +504,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1400,
         h: 820,
         theme: "wiki",
-        waves: [[["deleted_text", 4], ["wiki_fragment", 2]], [["ai_portrait", 2], ["citation", 6]]],
+        waves: [[["deleted_text", 4], ["wiki_fragment", 2], ["edit_leaper", 3]], [["ai_portrait", 2], ["citation", 6]]],
         enterLines: [{ s: "NARRATOR", t: "You are standing inside the Krezzsplosion article. 'Wow … not as if there's an entire page devoted to your precious Krezzsplosion on the wiki'. There is. You're in it.", dir: true }],
       },
       {
@@ -508,7 +514,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         theme: "wiki",
         event: "reaction_terminal",
         exitFlag: "network_restored",
-        waves: [[["ai_portrait", 3], ["deleted_text", 3]], [["unread", 5], ["wiki_fragment", 3]]],
+        waves: [[["ai_portrait", 3], ["deleted_text", 3]], [["unread", 5], ["wiki_fragment", 3], ["edit_leaper", 2]]],
         props: [{ kind: "reaction_terminal", x: 0.5, y: 0.2, id: "rt" }],
         enterLines: [{ s: "NARRATOR", t: "The Talk page. Every argument ever had about Krelworld, at once. At the far end: the REACTION NETWORK TERMINAL. Clear the room, then restore the network (E).", dir: true }],
       },
@@ -518,7 +524,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 860,
         theme: "wiki",
         event: "anthem",
-        waves: [[["soldier", 6]], [["soldier", 4], ["ai_portrait", 2]]],
+        waves: [[["soldier", 6]], [["soldier", 4], ["ai_portrait", 2], ["edit_leaper", 2]]],
         enterLines: [
           { s: "NARRATOR", t: "Drongus's office. A desk the size of a Krelball pitch. Behind it, an oil painting of Drongus painting an oil painting of Drongus. In front of it: his army, in perfect rows, purple uniforms pressed.", dir: true },
         ],
@@ -621,7 +627,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         pitName: "OPEN MANHOLE",
         movers: [[0.29, 120, 110, 0, 60, 2600], [0.575, 140, 120, 70, 0, 3000]],
         hazards: [{ kind: "steam", x: 0.44, period: 3200 }, { kind: "steam", x: 0.83, period: 2800 }],
-        triggers: [[0.04, [["catford_fox", 6]]], [0.22, [["catford_fox", 5], ["imaginary_mandem", 2]]], [0.4, [["corn_turd", 4], ["catford_fox", 4]]], [0.6, [["imaginary_mandem", 3], ["wet_pizza", 2]]], [0.78, [["corn_turd", 4], ["wet_pizza", 2], ["catford_fox", 5]]]],
+        triggers: [[0.04, [["catford_fox", 6]]], [0.22, [["catford_fox", 5], ["imaginary_mandem", 2], ["bone_lobber", 2]]], [0.4, [["corn_turd", 4], ["catford_fox", 4], ["big_dave", 1]]], [0.6, [["imaginary_mandem", 3], ["wet_pizza", 2], ["bone_lobber", 2]]], [0.78, [["corn_turd", 4], ["wet_pizza", 2], ["catford_fox", 5], ["bone_lobber", 2]]]],
         enterLines: [
           { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. Open manholes everywhere, because the council 'is getting to it'. The kebab shop extractor fans vent pure grease steam onto the pavement.", dir: true },
           { s: "SANMIK", t: "YEEE! San Brothers, assemble! SanChz, you're on food. I'm on bars." },
@@ -686,7 +692,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         pitName: "THE VOID (EUPHORIC)",
         movers: [[0.305, 130, 110, 0, 70, 2200], [0.58, 150, 110, 80, 0, 2800], [0.7, 260, 120, 0, 60, 2000]],
         hazards: [{ kind: "steam", x: 0.18, period: 2600 }, { kind: "steam", x: 0.44, period: 2400 }, { kind: "steam", x: 0.82, period: 2200 }],
-        triggers: [[0.05, [["loved_up", 7]]], [0.2, [["rave_bouncer", 2], ["loved_up", 5]]], [0.38, [["comedown", 3], ["loved_up", 5]]], [0.55, [["rave_bouncer", 3], ["comedown", 2]]], [0.72, [["loved_up", 8], ["comedown", 3]]], [0.86, [["rave_bouncer", 3], ["comedown", 3], ["loved_up", 5]]]],
+        triggers: [[0.05, [["loved_up", 7]]], [0.2, [["rave_bouncer", 2], ["loved_up", 5], ["glowstick_lobber", 2]]], [0.38, [["comedown", 3], ["loved_up", 5], ["speaker_turret", 1]]], [0.55, [["rave_bouncer", 3], ["comedown", 2], ["glowstick_lobber", 2]]], [0.72, [["loved_up", 8], ["comedown", 3], ["glowstick_lobber", 2]]], [0.86, [["rave_bouncer", 3], ["comedown", 3], ["loved_up", 5], ["speaker_turret", 1]]]],
         enterLines: [
           { s: "NARRATOR", t: "THE NU WAREHOUSE. A derelict warehouse on the edge of Catford, shaking at the seams. Lasers. Smoke. Five hundred people in bucket hats. On the decks, playing it for the ninth time in a row: 'MDMAzing'.", dir: true },
           { s: "SANMIK", t: "Yee. Here. Have this." },
@@ -721,7 +727,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     rooms: [
       {
         name: "The Factory Floor",
-        w: 4200,
+        w: 3600,
         h: 540,
         theme: "industrial",
         backdrop: "cf_floor",
@@ -732,17 +738,16 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         movers: [[0.22, 120, 110, 0, 70, 2400], [0.455, 140, 120, 90, 0, 2800], [0.68, 130, 110, 0, 80, 2200]],
         hazards: [{ kind: "conveyor", x: 0.04, w: 360, dir: 1 }, { kind: "crusher", x: 0.27, w: 130, period: 2600 }, { kind: "steam", x: 0.34, period: 3000 }, { kind: "conveyor", x: 0.52, w: 420, dir: -1 }, { kind: "crusher", x: 0.6, w: 130, period: 2300, offset: 800 }, { kind: "steam", x: 0.78, period: 2600 }, { kind: "crusher", x: 0.86, w: 130, period: 2500, offset: 1500 }],
         crusherLabel: "CROBLEY PRESS",
-        triggers: [[0.03, [["crobley_minion", 8]]], [0.14, [["crobley_minion", 5], ["candy_drone", 2]]], [0.28, [["crobage", 3], ["crobley_minion", 4]]], [0.4, [["crobley_guard", 3], ["candy_drone", 2]]], [0.55, [["crobage", 3], ["crobley_minion", 6]]], [0.7, [["crobley_guard", 3], ["candy_drone", 3]]], [0.84, [["crobage", 3], ["crobley_guard", 2], ["crobley_minion", 6]]]],
+        triggers: [[0.03, [["crobley_minion", 8]]], [0.14, [["crobley_minion", 5], ["candy_drone", 2], ["gobstopper", 2]]], [0.28, [["crobage", 3], ["crobley_minion", 4], ["leaping_crobage", 2]]], [0.4, [["crobley_guard", 3], ["candy_drone", 2], ["jingle_turret", 1]]], [0.55, [["crobage", 3], ["crobley_minion", 6], ["gobstopper", 2]]], [0.7, [["crobley_guard", 3], ["candy_drone", 3], ["leaping_crobage", 2]]], [0.84, [["crobage", 3], ["crobley_guard", 2], ["crobley_minion", 6], ["jingle_turret", 1]]]],
         enterLines: [
           { s: "NARRATOR", t: "THE CROBLEY FACTORY. Brass machines the size of houses. Conveyor belts of pink Crobleys stretching into the distance. A chocolate river runs straight through the factory floor, uncovered, because Reinhardt fired the health and safety team for being 'woke'.", dir: true },
           { s: "NARRATOR", t: "Over the tannoy, on a loop, a child singing 'Nibble on a Crobley'. The workers have been replaced by brainwashed Crobleys and very large sausages in hi-vis.", dir: true },
           { s: "NARRATOR", t: "RUN AND GUN: push right and they come to you. A / D run · W jump (again in the air to double jump) · S drop through · aim and fire as normal. Don't fall in the chocolate. Don't stand under the presses.", dir: true },
         ],
       },
-      { name: "The Flirt Room", w: 1500, h: 540, theme: "mansion", backdrop: "cf_flirt", platforms: [[0.22, 140, 220], [0.5, 240, 240], [0.78, 140, 220]], boss: "flirt" },
       {
         name: "The Packing Line",
-        w: 3800,
+        w: 3400,
         h: 540,
         theme: "industrial",
         backdrop: "cf_packing",
@@ -753,13 +758,11 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         movers: [[0.27, 130, 110, 0, 80, 2200], [0.555, 150, 120, 80, 0, 2600], [0.81, 130, 110, 0, 70, 2000]],
         hazards: [{ kind: "conveyor", x: 0.02, w: 600, dir: 1 }, { kind: "crusher", x: 0.16, w: 130, period: 2200 }, { kind: "conveyor", x: 0.36, w: 520, dir: -1 }, { kind: "crusher", x: 0.42, w: 130, period: 2000, offset: 600 }, { kind: "crusher", x: 0.66, w: 130, period: 2400, offset: 1200 }, { kind: "conveyor", x: 0.6, w: 480, dir: 1 }, { kind: "steam", x: 0.9, period: 2400 }],
         crusherLabel: "WRAPPER",
-        triggers: [[0.04, [["crobley_minion", 7], ["candy_drone", 2]]], [0.2, [["crobley_guard", 3], ["crobley_minion", 4]]], [0.38, [["candy_drone", 4], ["crobage", 2]]], [0.56, [["crobley_guard", 3], ["crobage", 3]]], [0.74, [["candy_drone", 3], ["crobley_minion", 8]]], [0.88, [["crobley_guard", 4], ["crobage", 3]]]],
+        triggers: [[0.04, [["crobley_minion", 7], ["candy_drone", 2]]], [0.2, [["crobley_guard", 3], ["crobley_minion", 4], ["jingle_turret", 1]]], [0.38, [["candy_drone", 4], ["crobage", 2], ["gobstopper", 2]]], [0.56, [["crobley_guard", 3], ["crobage", 3], ["leaping_crobage", 2]]], [0.74, [["candy_drone", 3], ["crobley_minion", 8], ["jingle_turret", 1]]], [0.88, [["crobley_guard", 4], ["crobage", 3], ["gobstopper", 2]]]],
         enterLines: [
           { s: "NARRATOR", t: "THE PACKING LINE. Every Crobley in Krelworld passes through here to be wrapped, boxed and stamped with Reinhardt's face. The wrappers come down hard. The belts don't stop. The candy chute goes somewhere you don't want to find out about.", dir: true },
         ],
       },
-      { name: "The Chinese Room", w: 1500, h: 540, theme: "temple", backdrop: "cf_chinese", platforms: [[0.22, 140, 220], [0.5, 240, 240], [0.78, 140, 220]], boss: "lantern" },
-      { name: "The Room For Beautiful Men", w: 1500, h: 540, theme: "mansion", backdrop: "cf_men", platforms: [[0.2, 150, 200], [0.5, 250, 260], [0.8, 150, 200]], boss: "fruity" },
       {
         name: "The Sausage Works",
         w: 3800,
@@ -773,13 +776,32 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         movers: [[0.28, 130, 110, 0, 80, 2000], [0.545, 150, 120, 90, 0, 2400], [0.8, 140, 110, 0, 80, 1800]],
         hazards: [{ kind: "crusher", x: 0.14, w: 140, period: 2000 }, { kind: "steam", x: 0.22, period: 2200 }, { kind: "crusher", x: 0.4, w: 140, period: 1900, offset: 700 }, { kind: "conveyor", x: 0.42, w: 300, dir: -1 }, { kind: "steam", x: 0.64, period: 2000 }, { kind: "crusher", x: 0.68, w: 140, period: 2100, offset: 1300 }, { kind: "crusher", x: 0.92, w: 140, period: 1800, offset: 300 }],
         crusherLabel: "MINCER",
-        triggers: [[0.04, [["crobage", 4]]], [0.18, [["crobage", 3], ["crobley_guard", 2]]], [0.36, [["crobage", 4], ["candy_drone", 3]]], [0.55, [["crobley_guard", 4], ["crobage", 3]]], [0.72, [["crobage", 5], ["candy_drone", 3]]], [0.88, [["crobley_guard", 4], ["crobage", 4]]]],
+        chase: { at: 0.45, speed: 175, label: "THE GIANT MINCER", color: 0x7f1d1d },
+        triggers: [[0.04, [["crobage", 4]]], [0.18, [["crobage", 3], ["crobley_guard", 2], ["leaping_crobage", 2]]], [0.36, [["crobage", 4], ["candy_drone", 3], ["gobstopper", 2]]], [0.55, [["crobley_guard", 4], ["crobage", 3], ["jingle_turret", 1]]], [0.72, [["crobage", 5], ["candy_drone", 3], ["leaping_crobage", 2]]], [0.88, [["crobley_guard", 4], ["crobage", 4], ["gobstopper", 2]]]],
         enterLines: [
           { s: "NARRATOR", t: "THE SAUSAGE WORKS. Hidden in the bowels of a children's sweet factory: an entire sausage operation. CROBAGES. Mincers the size of lorries. Chains of sausages swing overhead like bunting. It smells like a barbecue in hell.", dir: true },
           { s: "NARRATOR", t: "A sign on the wall: 'CROBAGES — FOR STRONG BOYS. A REINHARDT CROBLEY COMPANY'. Somebody has added 'SQUAWK' underneath in marker pen. That somebody was probably sacked.", dir: true },
         ],
       },
-      { name: "The Destruction Zone", w: 1800, h: 540, theme: "industrial", backdrop: "cf_destruction", platforms: [[0.18, 150, 220], [0.42, 240, 200], [0.66, 150, 220], [0.86, 250, 180]], boss: "tank" },
+      {
+        name: "The Crobley Showcase",
+        w: 1600,
+        h: 540,
+        theme: "mansion",
+        backdrop: "cf_flirt",
+        platforms: [[0.2, 150, 220], [0.5, 250, 240], [0.8, 150, 220]],
+        boss: "flirt",
+        bossHp: 0.55,
+        bossRush: [
+          { boss: "lantern", backdrop: "cf_chinese", hp: 0.65 },
+          { boss: "fruity", backdrop: "cf_men" },
+          { boss: "tank", backdrop: "cf_destruction" },
+        ],
+        enterLines: [
+          { s: "NARRATOR", t: "THE CROBLEY SHOWCASE. A revolving stage. Four sets, one after another, and four Crobleys waiting in the wings. Reinhardt on the tannoy: 'THE CROBLEYS. ALL OF THEM. ONE AFTER THE OTHER. LIKE THE ADVERT.'", dir: true },
+          { s: "NARRATOR", t: "BOSS RUSH: four in a row, no doors in between. You get some health and ammo back after each one.", dir: true },
+        ],
+      },
       { name: "The Core", w: 1600, h: 540, theme: "industrial", backdrop: "cf_core", platforms: [[0.2, 150, 220], [0.5, 250, 260], [0.8, 150, 220]], boss: "reinhardt" },
     ],
   },

@@ -15,7 +15,8 @@ import { enemyDamageMult, enemyHpMult, maxHp, bump, maxBottles } from "../system
 import { activeMods } from "../../data/historicalRevisions";
 import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban";
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
-import { fitTo, giveAmmo, ownedGuns, rollCrate } from "../combat/Guns";
+import { Spice } from "../combat/Spice";
+import { equipBest, fitTo, giveAmmo, ownedGuns, rollCrate, GUNS, gunMax } from "../combat/Guns";
 import { leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
@@ -111,6 +112,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     super("Dungeon");
   }
 
+  /** Barrels, crates, hostages, elites and room twists. */
+  spice: Spice | null = null;
+  private lastKillStop = 0;
+  private lastMeterHit = 0;
+  /** Kills since the last ammo drop (bad-luck protection). */
+  private ammoDry = 0;
+
+  /** True when every owned gun is under a quarter full. */
+  private ammoLow() {
+    const s = G.s;
+    const owned = ownedGuns(s);
+    return owned.length > 0 && owned.every((id) => (s.guns![id] ?? 0) < gunMax(GUNS[id], s) * 0.25);
+  }
+
   private markCleared() {
     G.s.flags[clearKey(this.dungeon.id, this.roomIdx)] = true;
     G.save();
@@ -153,6 +168,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.rt.dungeonId = this.dungeon.id;
     G.rt.room = this.roomIdx;
     (this as any)._bossHpPct = data.bossHpPct;
+    this.rushIdx = 0;
   }
 
   now() {
@@ -186,6 +202,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.controls = new Controls(this);
     this.player = new Player(this, this.side ? 90 : r.w / 2, this.side ? this.groundY - 40 : r.h - 90);
     if (this.side) (this.player.spr.body as Phaser.Physics.Arcade.Body).setGravityY(1500);
+    // walk in holding the best gun you've got ammo for
+    equipBest(s);
+    this.spice = new Spice(this);
+    this.spice.setup();
     // the meter carries over between rooms; a revision can guarantee a minimum
     this.player.wonk = Math.max(this.player.wonk, activeMods(s).wonkStart);
     // a lad hired at the Central Bank
@@ -622,7 +642,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       await this.startBoss();
       return;
     }
-    if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
+    if (this.spice?.begin()) {
+      // the twist runs the room (e.g. SURVIVE)
+    } else if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
     else if (r.triggers?.length) {
       // run and gun: enemies turn up as you push right
       if (this.roomIdx > 0 || r.triggers.length) this.toast("RUN AND GUN", "Push right. They'll come to you.");
@@ -673,6 +695,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.markCleared();
     synth.play("ding");
     for (let i = 0; i < 6; i++) this.dropPickup(this.player.x + (Math.random() - 0.5) * 140, this.player.y - 40 + (Math.random() - 0.5) * 80, "coin", 3);
+    // every cleared room pays out some ammo
+    if (ownedGuns().length) this.dropPickup(this.player.x + 40, this.player.y - 30, "ammo", 1.5);
     coolBanRisk(G.s, 15);
     this.maybeGunCrate();
     this.checkExit();
@@ -710,7 +734,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
           this.tweens.add({ targets: icon, y: y - 70, duration: 600, ease: "Back.easeOut" });
           this.tweens.add({ targets: icon, alpha: 0, delay: 1600, duration: 400, onComplete: () => icon.destroy() });
           synth.play("cheer");
-          this.toast(`NEW GUN: ${r.gun.name.toUpperCase()}`, `${r.gun.blurb} Now in your hand. ${ownedGuns(s).length === 1 ? "X / GUN button swaps back to fists. Enemies drop ammo." : "X / GUN cycles weapons."}`);
+          this.toast(`NEW GUN: ${r.gun.name.toUpperCase()}`, `${r.gun.blurb} Now in your hand. ${ownedGuns(s).length === 1 ? "X / GUN swaps back to the Fart Blaster (infinite ammo)." : "X / GUN cycles weapons."}`);
         } else if (r.ammoFor) {
           this.floatText(x, y - 40, `+${r.amount} ${r.ammoFor.name.toUpperCase()} AMMO`, "#67e8f9", 14);
           synth.play("pickup");
@@ -778,6 +802,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.bros = [];
     this.sideLevel?.destroy();
     this.sideLevel = null;
+    this.spice?.destroy();
+    this.spice = null;
     this.player?.destroy();
     for (const e of this.enemies) e.destroy();
     this.enemies = [];
@@ -965,13 +991,17 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   // ------------------------------------------------------------------ bosses
 
-  private async startBoss() {
+  /** Which boss of a boss rush we're on (0 = the room's own boss). */
+  private rushIdx = 0;
+
+  private async startBoss(id = this.room.boss!, hpMult = this.room.bossHp ?? 1) {
     const r = this.room;
-    const txt = BOSS_TEXT[r.boss!];
+    const txt = BOSS_TEXT[id];
     this.busy = true;
-    const b = createBoss(r.boss!, this, r.w / 2, r.h / 2 - 100);
+    const b = createBoss(id, this, r.w / 2, r.h / 2 - 100);
     // bosses toughen up as the story goes on (the bank is how you keep up)
-    const bossMult = 1 + Math.max(0, G.s.chapter - 2) * 0.18;
+    const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
+    if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
     b.maxHp = Math.round(b.maxHp * bossMult);
     b.hp = b.maxHp;
     b.dmgMult = (b.dmgMult ?? 1) * (1 + Math.max(0, G.s.chapter - 2) * 0.1);
@@ -988,12 +1018,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const fw = b.frame.width;
       const fh = b.frame.height;
       bb.setSize(fw * 0.6, fh * 0.85).setOffset(fw * 0.2, fh * 0.15);
-      if (r.boss === "rik") b.setPosition(r.w / 2, this.groundY - 120);
+      if (id === "rik") b.setPosition(r.w / 2, this.groundY - 120);
     }
     b.setAlpha(0);
     this.tweens.add({ targets: b, alpha: 1, duration: 800 });
     synth.play("roar");
-    if (!(typeof pct === "number")) await this.talk(txt.intro);
+    if (!(typeof pct === "number") || this.rushIdx > 0) await this.talk(txt.intro);
     this.busy = false;
     b.started = true;
     b.nextPattern = this.now() + 1200;
@@ -1002,6 +1032,30 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async onBossDefeated(b: Boss) {
     this.busy = true;
     const s = G.s;
+    const rush = this.room.bossRush ?? [];
+    if (this.rushIdx < rush.length) {
+      // boss rush: next one up, same room, new set
+      G.emit("boss", null);
+      synth.play("boom");
+      this.shake(500, 0.02);
+      for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
+      for (const sh of [...this.shots]) this.killShot(sh);
+      await this.talk(BOSS_TEXT[b.bossId].outro);
+      this.boss = null;
+      const next = rush[this.rushIdx++];
+      s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.35);
+      this.dropPickup(this.player.x + 30, this.player.y - 20, "ammo", 2);
+      this.toast(`CROBLEY ${this.rushIdx + 1} OF ${rush.length + 1}`, "+35% health. Ammo on the floor. Next one's coming.");
+      this.cameras.main.flash(300, 255, 255, 255);
+      if (next.backdrop && this.sideBg && this.textures.exists(next.backdrop)) {
+        const src = this.textures.get(next.backdrop).getSourceImage();
+        this.sideBgScale = 540 / src.height;
+        this.sideBg.setTexture(next.backdrop).setTileScale(this.sideBgScale);
+      }
+      this.busy = false;
+      this.time.delayedCall(900, () => void this.startBoss(next.boss, next.hp ?? 1));
+      return;
+    }
     if (this.roomIdx < this.dungeon.rooms.length - 1) {
       // a boss half way through: beat it and the door opens
       G.emit("boss", null);
@@ -1470,7 +1524,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   /** Side-scrolling rooms: these float about; everything else walks. */
   private isFlyer(type: string) {
     const d = ENEMIES[type];
-    return !!d && (d.shape === "bubble" || d.shape === "ghost" || d.shape === "drone" || d.shape === "page" || d.behavior === "orbiter" || d.behavior === "blinker");
+    return !!d && d.behavior !== "leaper" && d.behavior !== "turret" && (d.shape === "bubble" || d.shape === "ghost" || d.shape === "drone" || d.shape === "page" || d.behavior === "orbiter" || d.behavior === "blinker");
   }
 
   spawnEnemy(type: string, x: number, y: number, opts: { noDrops?: boolean; minion?: boolean } = {}): Enemy | null {
@@ -1486,10 +1540,15 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     e.setDepth(y);
     this.enemies.push(e);
     this.enemyGroup.add(e);
-    if (this.side && !this.isFlyer(type)) {
+    if (this.side && ENEMIES[type].behavior === "turret") {
+      // perched: no gravity, stays put
+      const tb = e.body as Phaser.Physics.Arcade.Body;
+      tb.setAllowGravity(false).setImmovable(true).setCollideWorldBounds(true);
+    } else if (this.side && !this.isFlyer(type)) {
       e.walker = true;
       (e.body as Phaser.Physics.Arcade.Body).setGravityY(1500).setCollideWorldBounds(true);
     } else if (this.side) (e.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true);
+    this.spice?.onSpawn(e, opts);
     return e;
   }
 
@@ -1529,10 +1588,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (opts.crit) this.hitStop(50);
     }
     if (!opts.noWonk) {
-      this.addWonk(Math.min(4, a * 0.11));
-      // fart meter: fast attackers get less per hit so everyone fills at a similar pace
-      const rate = CHARACTERS[this.player.id]?.attackRate ?? 300;
-      const up = addFart(1.45 * Phaser.Math.Clamp(rate / 300, 0.55, 1.5) * (1 + 0.3 * (G.s.upgrades.pk_meter ?? 0)));
+      // meters fill with time spent landing hits, not raw hit count (so a gatling isn't a cheat code)
+      const now2 = this.now();
+      const k = Phaser.Math.Clamp((now2 - this.lastMeterHit) / 240, 0.15, 1);
+      this.lastMeterHit = now2;
+      const up2 = G.s.upgrades;
+      this.addWonk(Math.min(3, 0.3 + a * 0.05) * k * (1 + 0.15 * (up2.pk_jet ?? 0)));
+      const up = addFart((0.3 + Math.min(1.2, a * 0.03)) * k * (1 + 0.3 * (up2.pk_meter ?? 0)) * (1 + 0.15 * (up2.pk_ibs ?? 0)));
       if (up) this.fartLevelUp(up);
     }
     if (e.hp <= 0) {
@@ -1549,9 +1611,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.enemies = this.enemies.filter((x) => x !== e);
     bump(s, "kills_total");
     if (e.def.counter) bump(s, e.def.counter);
-    if (!e.isBoss) this.addWonk(3);
+    if (!e.isBoss) this.addWonk(2);
+    this.spice?.onKill(e);
+    // a tiny freeze and a pop on every kill (rate-limited so swarms don't stutter)
+    if (!e.isBoss && this.now() - this.lastKillStop > 140) {
+      this.lastKillStop = this.now();
+      this.hitStop(e.def.size >= 16 ? 45 : 25);
+      this.shake(80, e.def.size >= 16 ? 0.004 : 0.002);
+    }
+    if (!e.isBoss) {
+      const ring = this.add.circle(e.x, e.y, 6, 0xffffff, 0).setStrokeStyle(3, e.def.accent, 0.9).setDepth(1400);
+      this.tweens.add({ targets: ring, radius: 30, alpha: 0, duration: 200, onComplete: () => ring.destroy() });
+    }
     if (!(e as any).noFartKill) {
-      const up = addFart(4);
+      const up = addFart(2.6 * (1 + 0.15 * (G.s.upgrades.pk_ibs ?? 0)));
       if (up) this.fartLevelUp(up);
     }
     if (e.def.id === "fuel_tank") {
@@ -1576,7 +1649,15 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (Math.random() < 0.06) this.dropPickup(e.x, e.y, "heal", 12);
       if (mods.crobleys && Math.random() < 0.12) this.dropPickup(e.x, e.y, "crobley", 1);
       if (Math.random() < 0.02) this.dropPickup(e.x, e.y, "bongo", 1);
-      if (ownedGuns().length && Math.random() < (e.isBoss ? 1 : 0.11)) this.dropPickup(e.x + 10, e.y, "ammo", 1);
+      if (ownedGuns().length) {
+        // more often when you're running low; a guaranteed one after a dry spell
+        this.ammoDry++;
+        const chance = e.isBoss ? 1 : this.ammoLow() ? 0.4 : 0.22;
+        if (Math.random() < chance || this.ammoDry >= 6) {
+          this.ammoDry = 0;
+          this.dropPickup(e.x + 10, e.y, "ammo", 1);
+        }
+      }
       if (mods.splitChance && !e.minion && Math.random() < mods.splitChance) {
         const w = this.spawnEnemy(e.def.id, e.x + 20, e.y, { noDrops: true, minion: true });
         if (w) {
@@ -1643,6 +1724,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       }
     }
     if (this.boss instanceof DrongusBoss) this.boss.hitSong(x, y, r);
+    if (dmg > 0) this.spice?.hitAoe(x, y, r, dmg);
     return n;
   }
 
@@ -1786,6 +1868,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.paused || this.dying) return;
     const now = this.now();
     if (!this.busy) this.companion?.update(now);
+    if (!this.busy) this.spice?.update(now, Math.min(delta, 50));
     if (!this.busy) for (const b of this.bros) b.update(now, Math.min(delta, 50));
     this.sideLevel?.update(Math.min(delta, 50), this.busy);
     if (this.sideLevel?.triggersDone() && !this.roomCleared && !this.room.boss && !this.busy) this.onRoomCleared();
@@ -1871,6 +1954,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         continue;
       }
       if (sh.o.owner === "player") {
+        if (this.spice?.hitShot(sh.spr.x, sh.spr.y, sh.o.damage || 30)) {
+          sh.o.onHit?.(sh.spr.x, sh.spr.y);
+          this.killShot(sh);
+          continue;
+        }
         if (this.boss instanceof DrongusBoss && this.boss.hitSong(sh.spr.x, sh.spr.y, 4)) {
           this.killShot(sh);
           continue;

@@ -343,7 +343,7 @@ export class MinigameScene extends Phaser.Scene {
     const startAcapella = () => {
       for (const l of log) l.setVisible(false);
       const LANES = [372, 410, 448, 486];
-      const KEYS = ["D", "F", "J", "K"];
+      const KEYS = ["←", "↓", "↑", "→"];
       const COLS = [0x22c55e, 0xef4444, 0xfacc15, 0x60a5fa];
       const HIT_X = 150;
       const LEAD = 1.6;
@@ -449,6 +449,7 @@ export class MinigameScene extends Phaser.Scene {
         const k = e.key.toUpperCase().replace("ARROW", "");
         if (k in keyMap) judge(keyMap[k]);
       };
+      this.input.keyboard?.addCapture("UP,DOWN,LEFT,RIGHT");
       this.input.keyboard?.on("keydown", onKey);
       const onTap = (p: Phaser.Input.Pointer) => {
         if (p.y < 350) return;

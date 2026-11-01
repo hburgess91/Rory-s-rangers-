@@ -72,6 +72,25 @@ export const GUNS: Record<string, GunDef> = {
 
 export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk"];
 
+/** Strongest first: what you get handed when you walk into a room or run dry. */
+export const GUN_POWER = ["bfk", "rocket", "gatling", "sniper", "rail", "flamer", "shotgun", "smg", "pistol"];
+
+/** The infinite starter every character always has (when no gun is in hand). */
+export const FART_BLASTER = { name: "Fart Blaster", dmg: 10, cd: 240, speed: 540, range: 400 };
+
+/** The most powerful owned gun that still has ammo, or null (Fart Blaster). */
+export function bestLoadedGun(s: GameState = G.s, except?: string): string | null {
+  for (const id of GUN_POWER) if (id !== except && s.guns && id in s.guns && (s.guns[id] ?? 0) > 0) return id;
+  return null;
+}
+
+/** Arm the best gun you have ammo for. Returns its id (or null for the Fart Blaster). */
+export function equipBest(s: GameState = G.s): string | null {
+  const id = bestLoadedGun(s);
+  s.gun = id ?? undefined;
+  return id;
+}
+
 /** Max ammo after the Bigger Pockets perk. */
 export function gunMax(g: GunDef, s: GameState = G.s): number {
   return Math.round(g.maxAmmo * (1 + 0.25 * (s.upgrades?.pk_ammo ?? 0)));
@@ -85,24 +104,17 @@ export function currentGun(s: GameState = G.s): GunDef | null {
   return s.gun && s.guns && s.gun in s.guns ? GUNS[s.gun] : null;
 }
 
-/** The next owned gun (after `from`, wrapping round) that still has ammo, or null. */
+/** Out of ammo in `from`: the strongest other gun that still has ammo, or null. */
 export function nextLoadedGun(s: GameState = G.s, from?: string): string | null {
-  const owned = ownedGuns(s);
-  if (!owned.length) return null;
-  const start = from ? owned.indexOf(from) : -1;
-  for (let k = 1; k <= owned.length; k++) {
-    const id = owned[(start + k + owned.length) % owned.length];
-    if (id !== from && (s.guns![id] ?? 0) > 0) return id;
-  }
-  return null;
+  return bestLoadedGun(s, from);
 }
 
-/** Cycle fists -> each owned gun with ammo -> fists. Returns the new label. */
+/** Cycle strongest loaded gun -> ... -> weakest -> Fart Blaster -> strongest. Returns the new label. */
 export function cycleGun(s: GameState = G.s): string {
-  const list = [null, ...ownedGuns(s).filter((id) => (s.guns![id] ?? 0) > 0)];
+  const list: (string | null)[] = [...GUN_POWER.filter((id) => s.guns && id in s.guns && (s.guns[id] ?? 0) > 0), null];
   const i = list.indexOf(s.gun ?? null);
   s.gun = list[(i + 1) % list.length] ?? undefined;
-  return s.gun ? GUNS[s.gun].name : "FISTS";
+  return s.gun ? GUNS[s.gun].name : FART_BLASTER.name;
 }
 
 /** Give a gun the player doesn't have yet (or ammo if they have them all). */
@@ -125,10 +137,18 @@ export function rollCrate(s: GameState = G.s): { gun?: GunDef; ammoFor?: GunDef;
 export function giveAmmo(s: GameState = G.s, mult = 1): { gun: GunDef; amount: number } | null {
   const owned = ownedGuns(s).filter((id) => s.guns![id] < gunMax(GUNS[id], s));
   if (!owned.length) return null;
-  const id = s.gun && owned.includes(s.gun) && Math.random() < 0.6 ? s.gun : owned[Math.floor(Math.random() * owned.length)];
+  // goes to whatever is emptiest (so a dry favourite gets fed), with a nudge towards the one in hand
+  const frac = (id: string) => s.guns![id] / gunMax(GUNS[id], s) - (id === s.gun ? 0.15 : 0);
+  const id = [...owned].sort((a, b) => frac(a) - frac(b))[0];
   const g = GUNS[id];
   const amount = Math.max(1, Math.round(g.pickup * mult));
+  const wasEmpty = (s.guns![id] ?? 0) <= 0;
   s.guns![id] = Math.min(gunMax(g, s), s.guns![id] + amount);
+  // picked up ammo for something better than what's in hand: arm it
+  if (wasEmpty || !s.gun) {
+    const cur = s.gun ? GUN_POWER.indexOf(s.gun) : 99;
+    if (GUN_POWER.indexOf(id) < cur) s.gun = id;
+  }
   return { gun: g, amount };
 }
 

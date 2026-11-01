@@ -21,6 +21,8 @@ const BANK_PERKS = [
   { id: "pk_armor", name: "Krez-Proof Vest", desc: "Armour: take 10% less damage per level. Hi-vis. Smells of Lynx Africa.", cost: 170, max: 3 },
   { id: "pk_krezz", name: "Krezz Regeneration Serum", desc: "Krezz refills 30% faster per level (specials come back sooner).", cost: 190, max: 3 },
   { id: "pk_meter", name: "Pre-Workout (Bootleg)", desc: "Wonk and Fart meters fill 30% faster per level.", cost: 160, max: 2 },
+  { id: "pk_ibs", name: "Prescription Beans", desc: "IBS Attack hits 25% harder per level, and the Fart meter fills 15% faster. Doctor's orders. Not a real doctor.", cost: 210, max: 3 },
+  { id: "pk_jet", name: "Krez Kream Deluxe", desc: "The Krezz jet stream (a perfect Wonk) hits 25% harder per level, and the Wonk meter fills 15% faster.", cost: 210, max: 3 },
   { id: "pk_autoaim", name: "Auto-Aim (Krezz-Assist)", desc: "Your attacks and guns lock onto the nearest enemy automatically.", cost: 300, max: 1 },
   { id: "pk_spd", name: "Fresh Trainers", desc: "+7% movement speed per level. Krunch-approved. Smell of new.", cost: 140, max: 3 },
   { id: "pk_dmg", name: "Krunch Gym Membership", desc: "+8% damage from everything per level. You don't go. You just have it.", cost: 160, max: 3 },
@@ -33,6 +35,12 @@ const BANK_MOVES = [
   { id: "mv_fart", name: "Fart Propulsion", desc: "Every dodge leaves a lingering fart cloud that hurts and slows enemies.", cost: 280 },
   { id: "mv_lastorders", name: "Last Orders", desc: "Drinking pussy juice (Q) sends out a shockwave that knocks everything around you flying.", cost: 360 },
 ];
+
+/** Price of one box of ammo for a gun at the Central Bank. */
+function ammoUnitCost(id: string): number {
+  const g = GUNS[id];
+  return g.shop ? Math.max(20, Math.round(g.shop * 0.08)) : Math.max(10, Math.round(g.pickup * 0.8));
+}
 
 export class MenuScene extends Phaser.Scene {
   private bankTab: "upgrades" | "armoury" | "perks" | "moves" = "upgrades";
@@ -156,11 +164,14 @@ export class MenuScene extends Phaser.Scene {
         const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "LADS & MOVES"]];
         tabs.forEach(([k, label], i) => add(button(this, 255 + i * 150, 106, label, () => { this.bankTab = k; this.render("bank"); }, { w: 140, h: 28, size: 13, color: this.bankTab === k ? 0x22c55e : undefined })));
         let y = 130;
+        // rows squeeze up a bit on the long tabs so everything fits above the LEAVE button
+        const nRows = this.bankTab === "perks" ? BANK_PERKS.length : this.bankTab === "armoury" ? GUN_ORDER.length + 1 : this.bankTab === "moves" ? BANK_MOVES.length + 1 : GENERIC_UPGRADES.length + 4;
+        const rowH = Math.min(40, Math.floor(372 / nRows));
         const row = (name: string, desc: string, btn: string, disabled: boolean, fn: () => void, col = "#ffffff") => {
           add(this.add.text(150, y, name, { fontFamily: FONT, fontSize: "14px", color: col }));
-          add(this.add.text(150, y + 18, desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 500 } }));
-          add(button(this, 760, y + 14, btn, fn, { w: 150, h: 28, size: 13, disabled }));
-          y += 40;
+          add(this.add.text(150, y + 17, desc, { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 560 }, maxLines: rowH < 38 ? 1 : 2 } as any));
+          add(button(this, 790, y + 13, btn, fn, { w: 150, h: Math.min(28, rowH - 4), size: 13, disabled }));
+          y += rowH;
         };
         if (this.bankTab === "upgrades") {
           for (const u of GENERIC_UPGRADES) {
@@ -180,23 +191,26 @@ export class MenuScene extends Phaser.Scene {
           });
         } else if (this.bankTab === "armoury") {
           s.guns = s.guns ?? {};
+          // one button tops up everything you own, as far as your money goes
+          const all = this.refillQuote();
+          row("REFILL EVERYTHING", all.boxes ? `Fills every gun you own (${all.boxes} boxes of ammo).` : "Every gun you own is full. The Fart Blaster never runs out.", all.boxes ? `ALL ${all.cost}` : "ALL FULL", !all.boxes || s.coins < Math.min(...all.unit.filter((u) => u > 0), 1e9), () => this.refillAll(), "#67e8f9");
           for (const id of GUN_ORDER) {
             const g = GUNS[id];
             const owned = id in s.guns;
-            if (g.shop) {
-              if (!owned) row(`${g.name}  ·  BANK EXCLUSIVE`, g.blurb, `BUY ${g.shop}`, s.coins < g.shop, () => this.buyGun(id), "#ffd23f");
-              else {
-                const cost = Math.round(g.shop * 0.12);
-                const full = s.guns[id] >= gunMax(g, s);
-                row(`${g.name}  (${s.guns[id]}/${gunMax(g, s)})`, "Ammo: +" + g.pickup, full ? "FULL" : `AMMO ${cost}`, full || s.coins < cost, () => this.buyAmmo(id, cost), "#5ad35a");
-              }
-            } else if (owned) {
-              const cost = Math.max(15, Math.round(g.pickup * 1.2));
-              const full = s.guns[id] >= gunMax(g, s);
-              row(`${g.name}  (${s.guns[id]}/${gunMax(g, s)})`, "Ammo: +" + g.pickup, full ? "FULL" : `AMMO ${cost}`, full || s.coins < cost, () => this.buyAmmo(id, cost));
+            if (g.shop && !owned) {
+              row(`${g.name}  ·  BANK EXCLUSIVE`, g.blurb, `BUY ${g.shop}`, s.coins < g.shop, () => this.buyGun(id), "#ffd23f");
+              continue;
             }
+            if (!owned) continue;
+            const have = s.guns[id] ?? 0;
+            const max = gunMax(g, s);
+            const unit = ammoUnitCost(id);
+            const boxes = Math.ceil((max - have) / g.pickup);
+            const fill = boxes * unit;
+            const label = have >= max ? "FULL" : s.coins >= fill ? `FILL ${fill}` : `+${g.pickup} ${unit}`;
+            row(`${g.name}  (${have}/${max})${have === 0 ? "  · EMPTY" : ""}`, `A box is ${g.pickup} rounds for ${unit}. Fills to the top if you can afford it.`, label, have >= max || s.coins < unit, () => this.buyAmmo(id), have === 0 ? "#ff6b6b" : g.shop ? "#5ad35a" : "#ffffff");
           }
-          if (y < 440) add(this.add.text(480, y + 6, "Crate guns (pistol, Uzi, Boomstick, Railgun, Marital Aid) are found in dungeons. Their ammo is sold here once you own them.", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5, 0));
+          if (y < 470) add(this.add.text(480, y + 4, "Crate guns (Pistol, Uzi, Boomstick, Railgun, Marital Aid) are found in dungeon crates. Their ammo is sold here once you own them.", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5, 0));
         } else if (this.bankTab === "perks") {
           for (const p of BANK_PERKS) {
             const lvl = s.upgrades[p.id] ?? 0;
@@ -276,12 +290,56 @@ export class MenuScene extends Phaser.Scene {
     this.render("bank");
   }
 
-  private buyAmmo(id: string, cost: number) {
+  /** Buy as many boxes as it takes to fill the gun (or as many as you can afford). */
+  private buyAmmo(id: string) {
     const s = G.s;
     const g = GUNS[id];
-    if (!s.guns || !(id in s.guns) || s.coins < cost) return;
-    s.coins -= cost;
-    s.guns[id] = Math.min(gunMax(g, s), s.guns[id] + g.pickup);
+    if (!s.guns || !(id in s.guns)) return;
+    const unit = ammoUnitCost(id);
+    let bought = 0;
+    while (s.guns[id] < gunMax(g, s) && s.coins >= unit) {
+      s.coins -= unit;
+      s.guns[id] = Math.min(gunMax(g, s), s.guns[id] + g.pickup);
+      bought++;
+    }
+    if (!bought) return;
+    if (!s.gun || (s.guns[s.gun] ?? 0) <= 0) s.gun = id;
+    synth.play("coin");
+    G.save();
+    this.render("bank");
+  }
+
+  private refillQuote(): { cost: number; boxes: number; unit: number[] } {
+    const s = G.s;
+    let cost = 0;
+    let boxes = 0;
+    const unit: number[] = [];
+    for (const id of GUN_ORDER) {
+      if (!s.guns || !(id in s.guns)) continue;
+      const g = GUNS[id];
+      const n = Math.max(0, Math.ceil((gunMax(g, s) - s.guns[id]) / g.pickup));
+      boxes += n;
+      cost += n * ammoUnitCost(id);
+      if (n) unit.push(ammoUnitCost(id));
+    }
+    return { cost, boxes, unit };
+  }
+
+  /** Fill every owned gun, emptiest first, until the money runs out. */
+  private refillAll() {
+    const s = G.s;
+    if (!s.guns) return;
+    let any = false;
+    for (let pass = 0; pass < 200; pass++) {
+      const owned = GUN_ORDER.filter((id) => s.guns && id in s.guns && s.guns[id] < gunMax(GUNS[id], s) && s.coins >= ammoUnitCost(id));
+      if (!owned.length) break;
+      owned.sort((a, b) => s.guns![a] / gunMax(GUNS[a], s) - s.guns![b] / gunMax(GUNS[b], s));
+      const id = owned[0];
+      s.coins -= ammoUnitCost(id);
+      s.guns[id] = Math.min(gunMax(GUNS[id], s), s.guns[id] + GUNS[id].pickup);
+      any = true;
+    }
+    if (!any) return;
     synth.play("coin");
     G.save();
     this.render("bank");

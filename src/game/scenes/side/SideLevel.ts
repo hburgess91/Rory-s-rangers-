@@ -37,6 +37,12 @@ export class SideLevel {
   private pendingSpawns = 0;
   private pitCd = 0;
   private trip: { reef?: Phaser.GameObjects.TileSprite; fx?: any; t: number } | null = null;
+  /** LOCKDOWN: the screen locks until this lot is dead. */
+  private lock: { l: number; r: number; spawned: any[]; pending: number; banner: Phaser.GameObjects.Text } | null = null;
+  private trigCount = 0;
+  /** The chase: something big rolls in from the left and you run. */
+  private chase: { x: number; wall: Phaser.GameObjects.Container; hitAt: number; started: boolean; done: boolean } | null = null;
+  private go: Phaser.GameObjects.Text | null = null;
 
   constructor(private sc: SideHost, private room: RoomDef) {}
 
@@ -117,6 +123,14 @@ export class SideLevel {
       }
     }
     this.triggers = (r.triggers ?? []).map(([fx, wave]) => ({ x: r.w * fx, wave, fired: false }));
+    if (r.chase) {
+      const wall = sc.add.container(-400, 0).setDepth(30);
+      const col = r.chase.color ?? 0x991b1b;
+      wall.add(sc.add.rectangle(-150, gy / 2, 300, gy + 200, col, 1));
+      for (let y = 20; y < gy; y += 46) wall.add(sc.add.triangle(6, y, 0, 0, 34, 18, 0, 36, 0xd4d4d8).setStrokeStyle(2, 0x111827));
+      wall.add(sc.add.text(-40, gy / 2, r.chase.label, { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffffff", stroke: "#000", strokeThickness: 6, align: "center", wordWrap: { width: 260 } }).setOrigin(0.5).setAngle(-90));
+      this.chase = { x: -400, wall, hitAt: 0, started: false, done: false };
+    }
     if (r.trip) this.startTrip();
   }
 
@@ -129,10 +143,32 @@ export class SideLevel {
 
   /** Run-and-gun rooms: done when every trigger has fired and nothing's left alive. */
   triggersDone() {
-    return this.hasTriggers && this.pendingSpawns === 0 && this.triggers.every((t) => t.fired) && this.sc.enemies.every((e) => e.dead);
+    return this.hasTriggers && !this.lock && this.pendingSpawns === 0 && this.triggers.every((t) => t.fired) && this.sc.enemies.every((e) => e.dead);
   }
 
-  private inGap(x: number, pad = 0) {
+  /** A platform top near x (for perching turrets), or null. */
+  private perchNear(x: number): { x: number; y: number } | null {
+    const r = this.room;
+    const gy = this.sc.groundY;
+    const opts = (r.platforms ?? []).map(([fx, h, w]) => ({ x: r.w * fx, y: gy - h - 26, w })).filter((p) => Math.abs(p.x - x) < 520 && !this.inGap(p.x));
+    if (!opts.length) return null;
+    const p = opts[Math.floor(Math.random() * opts.length)];
+    return { x: p.x + (Math.random() - 0.5) * (p.w * 0.5), y: p.y };
+  }
+
+  private releaseLock() {
+    const sc = this.sc;
+    const lk = this.lock!;
+    this.lock = null;
+    sc.cameras.main.setBounds(0, 0, this.room.w, this.room.h);
+    lk.banner.destroy();
+    synth.play("ding");
+    this.go?.destroy();
+    this.go = sc.add.text(880, 250, "GO →", { fontFamily: "Impact, sans-serif", fontSize: "44px", color: "#ffd23f", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(960);
+    sc.tweens.add({ targets: this.go, x: 900, yoyo: true, repeat: 3, duration: 220, onComplete: () => { this.go?.destroy(); this.go = null; } });
+  }
+
+  inGap(x: number, pad = 0) {
     return this.gaps.some(([a, b]) => x > a - pad && x < b + pad);
   }
 
@@ -200,6 +236,15 @@ export class SideLevel {
       } else if (t >= warnAt) v.puff.setFillStyle(0xf1f5f9, 0.25).setScale(0.6, 0.2);
       else v.puff.setFillStyle(0xffffff, 0);
     }
+    // hazards don't care who they hit
+    for (const c of this.crushers) {
+      const t = (now + c.offset) % c.period;
+      if (t >= c.period - 250 || t < 120) for (const e of sc.enemies) if (!e.dead && !e.isBoss && Math.abs(e.x - c.x) < c.w / 2 && e.y > c.block.y) sc.damageEnemy(e, 60, { label: "SQUASHED", knock: 200 });
+    }
+    for (const v of this.vents) {
+      const t = (now + v.offset) % v.period;
+      if (t >= v.period - 1100 && Math.random() < dt / 300) for (const e of sc.enemies) if (!e.dead && !e.isBoss && Math.abs(e.x - v.x) < 30) sc.damageEnemy(e, 10, { noWonk: true, label: "" });
+    }
     // conveyor belts push you (and everything else) along
     for (const b of this.belts) {
       b.strip.tilePositionX -= b.dir * dt * 0.12;
@@ -219,22 +264,91 @@ export class SideLevel {
       }
       for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.y > gy + 90) sc.damageEnemy(e, 99999, { noWonk: true, label: "" });
     }
+    // the chase
+    if (this.chase && !this.chase.done) {
+      const ch = this.chase;
+      const cfg = this.room.chase!;
+      if (!ch.started && p.x > this.room.w * cfg.at) {
+        ch.started = true;
+        ch.x = sc.cameras.main.scrollX - 120;
+        sc.toast(`RUN!`, `${cfg.label} is coming. Don't stop.`);
+        synth.play("roar");
+        sc.cameras.main.shake(400, 0.01);
+      }
+      if (ch.started) {
+        // never too far behind, never faster than a sprint
+        ch.x = Math.max(ch.x + (cfg.speed * dt) / 1000, sc.cameras.main.scrollX - 260);
+        ch.wall.setX(ch.x);
+        if (Math.random() < dt / 400) sc.cameras.main.shake(80, 0.003);
+        if (p.x < ch.x + 20 && now > ch.hitAt) {
+          ch.hitAt = now + 500;
+          sc.damagePlayer(12, { x: ch.x, y: p.y }, { unblockable: true, label: `-12 (${cfg.label})` });
+          pb.setVelocity(520, -380);
+        }
+        for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.x < ch.x + 10) sc.damageEnemy(e, 99999, { noWonk: true, label: "MINCED" });
+        if (p.x > this.room.w * 0.9) {
+          ch.done = true;
+          sc.tweens.add({ targets: ch.wall, x: ch.x - 600, duration: 1200 });
+          sc.toast("PHEW", "It's stopped. Probably jammed on a Crobley.");
+        }
+      }
+    }
+    // LOCKDOWN: hold the screen until they're dead
+    if (this.lock) {
+      const lk = this.lock;
+      if (p.x < lk.l + 30) p.spr.x = lk.l + 30;
+      if (p.x > lk.r - 30) p.spr.x = lk.r - 30;
+      if (lk.pending === 0 && lk.spawned.every((e) => !e || e.dead)) this.releaseLock();
+    }
     // run and gun: push forward, more turn up
     for (const tr of this.triggers) {
-      if (tr.fired || p.x < tr.x) continue;
+      if (tr.fired || p.x < tr.x || this.lock) continue;
       tr.fired = true;
+      this.trigCount++;
+      // every other wave locks the screen (not during a chase)
+      const locking = this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
+      if (locking) {
+        const cam = sc.cameras.main;
+        const l = Math.max(0, cam.scrollX);
+        const rr = Math.min(this.room.w, l + 960);
+        cam.setBounds(l, 0, rr - l, this.room.h);
+        const banner = sc.add.text(480, 110, "LOCKDOWN", { fontFamily: "Impact, sans-serif", fontSize: "40px", color: "#ef4444", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(960);
+        sc.tweens.add({ targets: banner, alpha: 0.35, yoyo: true, repeat: -1, duration: 380 });
+        this.lock = { l, r: rr, spawned: [], pending: 0, banner };
+        synth.play("decree");
+      }
       for (const [type, n0] of tr.wave) {
         const n = Math.max(1, Math.round(n0 * 0.8));
         for (let i = 0; i < n; i++) {
-          const flyer = ENEMIES[type] && (ENEMIES[type].behavior === "orbiter" || ENEMIES[type].behavior === "blinker" || ["bubble", "ghost", "drone", "page"].includes(ENEMIES[type].shape));
+          const d = ENEMIES[type];
+          const flyer = !!d && d.behavior !== "leaper" && d.behavior !== "turret" && (d.behavior === "orbiter" || d.behavior === "blinker" || ["bubble", "ghost", "drone", "page"].includes(d.shape));
           const ahead = Math.random() < 0.8;
           let x = Phaser.Math.Clamp(p.x + (ahead ? 1 : -1) * Phaser.Math.Between(320, 640), 60, this.room.w - 60);
           if (this.inGap(x, 30)) x = Phaser.Math.Clamp(x + 160, 60, this.room.w - 60);
-          const y = flyer ? Phaser.Math.Between(120, gy - 200) : gy - 60;
+          let y = flyer ? Phaser.Math.Between(120, gy - 200) : gy - 60;
+          const lk = this.lock;
+          if (locking && lk) {
+            // inside the locked screen, not on top of you
+            x = Phaser.Math.Clamp(Math.random() < 0.5 ? lk.l + 60 + Math.random() * 200 : lk.r - 60 - Math.random() * 200, lk.l + 40, lk.r - 40);
+            if (this.inGap(x, 30)) x = lk.l + (lk.r - lk.l) / 2;
+          }
+          let sx = x + (i % 3) * 30;
+          if (d?.behavior === "turret") {
+            const perch = this.perchNear(x);
+            if (perch) {
+              sx = perch.x;
+              y = perch.y;
+            } else y = gy - 30;
+          }
           this.pendingSpawns++;
+          if (locking && lk) lk.pending++;
           this.sc.time.delayedCall(i * 140, () => {
             this.pendingSpawns--;
-            this.sc.spawnEnemy(type, x + (i % 3) * 30, y);
+            const e = this.sc.spawnEnemy(type, sx, y);
+            if (locking && lk) {
+              lk.pending--;
+              lk.spawned.push(e);
+            }
           });
         }
       }
@@ -307,6 +421,7 @@ export class SideLevel {
 
   destroy() {
     const cam = this.sc.cameras.main;
+    this.go?.destroy();
     if (this.trip) {
       cam.setRotation(0);
       cam.setZoom(1);

@@ -367,6 +367,10 @@ export class Synth {
       case "shoot":
         this.tone(880, 0.06, "square", 0.12, 0, 0.5);
         break;
+      case "pfft":
+        this.tone(95 + Math.random() * 40, 0.09, "sawtooth", 0.14, 0, 0.55);
+        this.burst(0.08, 0.12, 0, 260, undefined, 2);
+        break;
       case "fart":
         this.tone(70, 0.5, "sawtooth", 0.35, 0, 0.6);
         this.burst(0.45, 0.25, 0.02, 180, undefined, 2);

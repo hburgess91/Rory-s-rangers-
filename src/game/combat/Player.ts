@@ -10,7 +10,7 @@ import type { CombatWorld } from "./types";
 import type { Controls } from "./Controls";
 import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
-import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS } from "./Guns";
+import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS, FART_BLASTER } from "./Guns";
 import { releaseFart } from "./Farts";
 import { startWonk } from "./Wonk";
 
@@ -39,9 +39,6 @@ export class Player {
   specialCd = 0;
   dodgeCd = 0;
   dodgeQueuedUntil = 0;
-  /** Melee combo: 1, 2, 3 (finisher). Resets if you pause between swings. */
-  meleeStep = 0;
-  lastSwing = 0;
   dodgeUntil = 0;
   dodgeAngle = 0;
   iframesUntil = 0;
@@ -51,6 +48,8 @@ export class Player {
   burstUntil = 0;
   lurkUntil = 0;
   nextHitCrit = false;
+  /** Fart Overdrive (a freed hostage's beans): faster, harder firing. */
+  overdriveUntil = 0;
   bongoUntil = 0;
   machineBuffUntil = 0;
   shieldUntil = 0;
@@ -131,6 +130,7 @@ export class Player {
     if (this.burstUntil > 0 && now < this.burstUntil + 4000) d *= 1.35;
     if (now < this.bongoUntil) d *= 1.15;
     if (now < this.machineBuffUntil) d *= 1.25;
+    if (now < this.overdriveUntil) d *= 1.4;
     if (G.s.flags.pq_done_pq_krebon && G.s.hp < maxHp(G.s) / 2) d *= 1.2;
     d *= 1 + 0.08 * (G.s.upgrades.pk_dmg ?? 0);
     return d;
@@ -262,6 +262,7 @@ export class Player {
     if (now < this.burstUntil) this.spr.setTint(0xffd23f);
     else if (now < this.loanUntil) this.spr.setTint(0x86efac);
     else if (now < this.shieldUntil) this.spr.setTint(0xc4b5fd);
+    else if (now < this.overdriveUntil) this.spr.setTint(0xb5e655);
     else this.spr.clearTint();
     // Krezz trickle
     s.krezz = Math.min(maxKrezz(s), s.krezz + dt * 0.0022 * (1 + 0.3 * (s.upgrades.pk_krezz ?? 0)));
@@ -275,7 +276,7 @@ export class Player {
     if (c.swap()) {
       const nm = cycleGun();
       synth.play("pickup");
-      this.world.floatText(this.x, this.y - 44, nm === "FISTS" ? (this.def.attack === "melee" ? "FISTS" : "OWN WEAPON") : nm.toUpperCase(), "#67e8f9", 13);
+      this.world.floatText(this.x, this.y - 44, nm.toUpperCase(), "#67e8f9", 13);
     }
     if (c.attackHeld()) {
       this.attackHeldTime += dt;
@@ -333,7 +334,7 @@ export class Player {
     if (s.gun !== id || (s.guns?.[id] ?? 0) > 0) return;
     const next = nextLoadedGun(s, id);
     s.gun = next ?? undefined;
-    this.world.floatText(this.x, this.y - 44, next ? `OUT OF AMMO — ${GUNS[next].name.toUpperCase()}` : `OUT OF AMMO — ${this.def.attack === "melee" ? "FISTS" : "OWN WEAPON"}`, next ? "#ffd23f" : "#ff6666", 13);
+    this.world.floatText(this.x, this.y - 44, next ? `OUT OF AMMO — ${GUNS[next].name.toUpperCase()}` : "OUT OF AMMO — FART BLASTER", next ? "#ffd23f" : "#ff6666", 13);
     synth.play(next ? "select" : "tap_fail");
   }
 
@@ -349,7 +350,7 @@ export class Player {
     }
     s.guns[g.id]--;
     if (s.guns[g.id] <= 0) this.world.sc.time.delayedCall(Math.min(400, g.cd), () => this.switchFromEmpty(g.id));
-    this.attackCd = now + g.cd * (now < this.burstUntil ? 0.75 : 1) * (1 - 0.1 * (s.upgrades.pk_rof ?? 0));
+    this.attackCd = now + g.cd * (now < this.burstUntil ? 0.75 : 1) * (now < this.overdriveUntil ? 0.7 : 1) * (1 - 0.1 * (s.upgrades.pk_rof ?? 0));
     this.attackAnimUntil = now + 90;
     this.gunKick = g.id === "rocket" || g.id === "shotgun" ? 10 : 5;
     const mx = this.x + Math.cos(this.aim) * 26;
@@ -458,188 +459,73 @@ export class Player {
   private tryAttack(now: number, moving: boolean) {
     if (now < this.attackCd || now < this.dodgeUntil) return;
     if (!this.headbuttMode && this.fireGun(now)) return;
-    let rate = this.def.attackRate ?? 300;
-    if (this.id === "MIKEY" && moving) rate *= 0.7;
-    if (now < this.burstUntil) rate *= 0.75;
-    this.attackCd = now + rate;
-    this.attackAnimUntil = now + 110;
-    const base = this.def.damage ?? 10;
-    const s = G.s;
-    switch (this.def.attack) {
-      case "melee": {
-        this.combo++;
-        // three-hit combo; the third swing is a heavy finisher
-        this.meleeStep = now - this.lastSwing < (this.def.attackRate ?? 300) + 380 ? (this.meleeStep % 3) + 1 : 1;
-        this.lastSwing = now;
-        const fin = this.meleeStep === 3;
-        let d = this.dmg(base, now) * (fin ? 1.5 : 1);
-        let crit = Math.random() < 0.08;
-        if (this.id === "FLENKY" && s.upgrades.fl3 && this.combo % 4 === 0) {
-          d *= 3;
-          crit = true;
-        }
-        if (this.nextHitCrit) {
-          d *= 4;
-          crit = true;
-        }
-        if (crit && !this.nextHitCrit) d *= 2;
-        const range = (this.def.range ?? 50) * (this.id === "KREBON" ? 1.1 : 1) * (fin ? 1.2 : 1);
-        const arc = (this.id === "KREBON" || this.id === "GRONNY" ? 1.25 : 1.05) + (fin ? 0.3 : 0);
-        // a little aim assist: swing at the nearest enemy roughly in front of you
-        const near = this.world.nearestEnemy(this.x, this.y, range * 1.7);
-        if (near) {
-          const toNear = Math.atan2(near.y - this.y, near.x - this.x);
-          if (Math.abs(Phaser.Math.Angle.Wrap(toNear - this.aim)) < 0.75) this.aim = toNear;
-        }
-        // lunge into the swing (less if they're already in your face)
-        const body = this.spr.body as Phaser.Physics.Arcade.Body;
-        const close = near && Phaser.Math.Distance.Between(this.x, this.y, near.x, near.y) < near.radius + 18;
-        if (!close) {
-          const lunge = fin ? 260 : 150;
-          body.velocity.x += Math.cos(this.aim) * lunge;
-          body.velocity.y += Math.sin(this.aim) * lunge * (this.world.side ? 0.2 : 1);
-        }
-        if (fin) this.attackAnimUntil = now + 170;
-        synth.play(fin ? "swing3" : this.meleeStep === 2 ? "swing2" : "swing");
-        // swoosh: an arc that sweeps across the swing, alternating direction each hit
-        const sc = this.world.sc;
-        const dir = this.meleeStep === 2 ? -1 : 1;
-        const sweep = sc.add.graphics().setDepth(512).setPosition(this.x, this.y);
-        const col = fin ? 0xffffff : this.def.color;
-        const t0 = { p: 0 };
-        sc.tweens.add({
-          targets: t0,
-          p: 1,
-          duration: fin ? 120 : 85,
-          onUpdate: () => {
-            sweep.clear();
-            const a0 = this.aim - arc * dir;
-            const a1 = a0 + 2 * arc * dir * t0.p;
-            for (let k = 0; k < 3; k++) {
-              sweep.lineStyle((fin ? 9 : 6) - k * 2, k ? col : 0xffffff, 0.9 - k * 0.25);
-              sweep.beginPath();
-              sweep.arc(0, 0, range * (0.75 + k * 0.12), Math.min(a0, a1), Math.max(a0, a1));
-              sweep.strokePath();
-            }
-          },
-          onComplete: () => sc.tweens.add({ targets: sweep, alpha: 0, duration: 90, onComplete: () => sweep.destroy() }),
-        });
-        let hitAny = false;
-        const knockBase = (this.id === "KREBON" ? 260 : 140) * (fin ? 1.9 : 1);
-        for (const e of [...this.world.enemies]) {
-          if (e.dead) continue;
-          const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
-          if (dist > range + e.radius) continue;
-          const ang = Math.atan2(e.y - this.y, e.x - this.x);
-          if (Math.abs(Phaser.Math.Angle.Wrap(ang - this.aim)) > arc && dist > e.radius + 8) continue;
-          let dd = d;
-          let c2 = crit;
-          if (this.id === "CRONGUS") {
-            const back = Math.abs(Phaser.Math.Angle.Wrap(Math.atan2(this.y - e.y, this.x - e.x) - e.facing)) > 1.9;
-            if (back || this.isHidden()) {
-              dd *= 2;
-              c2 = true;
-            }
-          }
-          this.world.damageEnemy(e, dd, { crit: c2, knock: knockBase, angle: ang, stun: fin ? 350 : 0 });
-          if (this.id === "KREBON" && s.upgrades.kn2) s.hp = Math.min(maxHp(s), s.hp + 3);
-          // impact: spark burst and a ring where it landed
-          const ix = e.x - Math.cos(ang) * e.radius * 0.5;
-          const iy = e.y - Math.sin(ang) * e.radius * 0.5;
-          this.world.burst(ix, iy, fin ? 0xffffff : this.def.color, fin ? 10 : 5);
-          const ring = sc.add.circle(ix, iy, 6, 0xffffff, 0).setStrokeStyle(3, 0xffffff, 0.9).setDepth(1400);
-          sc.tweens.add({ targets: ring, radius: fin ? 34 : 22, alpha: 0, duration: 160, onComplete: () => ring.destroy() });
-          hitAny = true;
-        }
-        if (hitAny) {
-          // the weight: freeze a few frames, thump, and shake
-          synth.play(fin ? "punch_big" : "punch");
-          this.world.hitStop(fin ? 85 : 45);
-          this.world.shake(fin ? 140 : 70, fin ? 0.007 : 0.0025);
-          // stop the lunge on contact so you don't slide through them
-          body.velocity.x *= 0.3;
-          body.velocity.y *= 0.3;
-        }
-        if (this.nextHitCrit && hitAny) {
-          this.nextHitCrit = false;
-          if (this.id === "CRONGUS" && s.upgrades.cr1) this.world.aoe(this.x, this.y, 90, 1, { stun: 1200, noWonk: true, label: "" });
-        }
-        if (hitAny) this.bark();
-        break;
-      }
-      case "projectile": {
-        this.shots++;
-        const d = this.dmg(base, now);
-        let crit = Math.random() < 0.08;
-        if (this.id === "KREZWONK") {
-          this.omenCount++;
-          if (s.upgrades.kw3 && this.omenCount % 6 === 0) crit = true;
-        }
-        const tex = this.id === "KREBLIS" ? "fx_paper" : "fx_bullet";
-        const speed = this.id === "MIKEY" ? 520 : 420;
-        const life = ((this.def.range ?? 300) / speed) * 1000;
-        const spread = this.id === "MIKEY" ? (Math.random() - 0.5) * 0.12 : 0;
-        const homing = this.id === "KREZWONK" ? 2.2 : this.id === "MIKEY" && s.upgrades.mk3 && this.shots % 20 === 0 ? 4 : 0;
-        this.world.shoot(this.x, this.y - 6, {
-          owner: "player",
-          damage: crit ? d * 2 : d,
-          crit,
-          speed,
-          angle: this.aim + spread,
-          color: this.def.color,
-          texture: tex,
-          life: homing ? life * 1.6 : life,
-          pierce: this.id === "KREZWONK" && s.upgrades.kw1 ? 1 : 0,
-          homing,
-          ricochet: this.id === "KREBLIS" && s.upgrades.kb1 ? 1 : 0,
-          slow: this.id === "MIKEY" && s.upgrades.mk1 ? 0.2 : 0,
-          scale: homing && this.id === "MIKEY" ? 2 : 1,
-        });
-        synth.play("shoot");
-        break;
-      }
-      case "lob": {
-        const target = this.world.player === this ? this.lobTarget() : { x: this.x, y: this.y };
-        const throwOne = (tx: number, ty: number) => {
-          const fl = this.world.sc.add.image(this.x, this.y, "fx_flask").setScale(2).setDepth(520);
-          const d = this.dmg(base, now) * (Math.random() < 0.08 ? 2 : 1);
-          this.world.sc.tweens.add({
-            targets: fl,
-            x: tx,
-            y: ty,
-            angle: 540,
-            duration: 380,
-            onUpdate: (tw) => {
-              fl.setScale(2 + Math.sin(tw.progress * Math.PI) * (this.world.side ? 0.3 : 1.2));
-              // side-on: a proper lobbed arc
-              if (this.world.side) fl.y = this.y + (ty - this.y) * tw.progress - Math.sin(tw.progress * Math.PI) * 90;
-            },
-            onComplete: () => {
-              fl.destroy();
-              synth.play("explode");
-              this.world.aoe(tx, ty, 50, d, { color: 0x22c55e, knock: 120, slow: s.upgrades.kz1 ? 0.45 : 0 });
-            },
-          });
-        };
-        throwOne(target.x, target.y);
-        if (s.upgrades.kz3) {
-          throwOne(target.x + 40, target.y + 20);
-          throwOne(target.x - 40, target.y - 20);
-        }
-        synth.play("lob");
-        break;
-      }
-    }
+    this.fireFartBlaster(now, moving);
   }
 
-  private lobTarget() {
-    const r = this.def.range ?? 300;
-    // land where you're pointing (up to the throw range); side-on, never below the floor
-    const want = this.aimAt ? Math.hypot(this.aimAt.x - this.x, this.aimAt.y - this.y) : 260;
-    const d = this.world.side ? Phaser.Math.Clamp(want, 40, Math.min(r, 300)) : Math.min(r, 260);
-    let ty = this.y + Math.sin(this.aim) * d;
-    if (this.world.side && this.world.groundY) ty = Math.min(ty, this.world.groundY - 10);
-    return { x: this.x + Math.cos(this.aim) * d, y: ty };
+  /**
+   * The Fart Blaster: everyone's infinite starter. Fires stink puffs. Each character's old attack perks ride on it
+   * (ricochet, pierce, homing, slow, split shot, the 4th-shot crit, the backstab, the lifesteal).
+   */
+  private fireFartBlaster(now: number, moving: boolean) {
+    const s = G.s;
+    const fb = FART_BLASTER;
+    let rate = fb.cd;
+    if (this.id === "MIKEY" && moving) rate *= 0.7;
+    if (now < this.burstUntil) rate *= 0.75;
+    rate *= 1 - 0.1 * (s.upgrades.pk_rof ?? 0);
+    if (now < this.overdriveUntil) rate *= 0.6;
+    this.attackCd = now + rate;
+    this.attackAnimUntil = now + 90;
+    this.gunKick = 4;
+    this.shots++;
+    this.combo++;
+    let d = this.dmg(fb.dmg, now);
+    let crit = Math.random() < 0.08;
+    if (this.id === "KREZWONK") {
+      this.omenCount++;
+      if (s.upgrades.kw3 && this.omenCount % 6 === 0) crit = true;
+    }
+    if (this.id === "FLENKY" && s.upgrades.fl3 && this.combo % 4 === 0) {
+      d *= 3;
+      crit = true;
+    }
+    if (this.nextHitCrit) {
+      // Lulon Lurk / RuneScape: the next shot is a monster
+      this.nextHitCrit = false;
+      d *= 4;
+      crit = true;
+      if (this.id === "CRONGUS" && s.upgrades.cr1) this.world.sc.time.delayedCall(120, () => this.world.aoe(this.x, this.y, 90, 1, { stun: 1200, noWonk: true, label: "" }));
+    } else if (crit) d *= 2;
+    const mx = this.x + Math.cos(this.aim) * 22;
+    const my = this.y + 2 + Math.sin(this.aim) * 22;
+    const homing = this.id === "KREZWONK" ? 2.2 : this.id === "MIKEY" && s.upgrades.mk3 && this.shots % 20 === 0 ? 4 : 0;
+    const angles = now < this.overdriveUntil ? [-0.22, -0.08, 0.08, 0.22] : this.id === "KREZMAR" && s.upgrades.kz3 ? [-0.18, 0, 0.18] : [0];
+    const tex = this.world.sc.textures.exists("fx_gas") ? "fx_gas" : "fx_bullet";
+    for (const off of angles) {
+      const backstab = this.id === "CRONGUS" || this.id === "KREBON";
+      this.world.shoot(mx, my, {
+        owner: "player",
+        damage: d,
+        crit,
+        speed: fb.speed,
+        angle: this.aim + off + (Math.random() - 0.5) * 0.06,
+        color: crit ? 0xfff176 : 0xb5e655,
+        texture: tex,
+        life: ((homing ? fb.range * 1.5 : fb.range) / fb.speed) * 1000,
+        pierce: this.id === "KREZWONK" && s.upgrades.kw1 ? 1 : 0,
+        homing,
+        ricochet: this.id === "KREBLIS" && s.upgrades.kb1 ? 1 : 0,
+        slow: (this.id === "MIKEY" && s.upgrades.mk1) || (this.id === "KREZMAR" && s.upgrades.kz1) ? 0.25 : 0,
+        knock: this.id === "KREBON" ? 160 : 60,
+        scale: tex === "fx_gas" ? 0.2 : 1,
+        onHit: backstab && (s.upgrades.kn2 || this.isHidden()) ? () => {
+          if (this.id === "KREBON" && s.upgrades.kn2) s.hp = Math.min(maxHp(s), s.hp + 1);
+        } : undefined,
+      });
+    }
+    const flash = this.world.sc.add.circle(mx, my, 6, 0xb5e655, 0.85).setDepth(602);
+    this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    synth.play("pfft");
   }
 
   private spendKrezz(cost: number): boolean {

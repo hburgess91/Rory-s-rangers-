@@ -14,7 +14,7 @@ export const FART_LEVELS = [
   { name: "FAIRY FART", radius: 70, dmg: 8 },
   { name: "BAKED BEANS FART", radius: 115, dmg: 22 },
   { name: "CABBAGE FART", radius: 165, dmg: 36 },
-  { name: "IBS ATTACK", radius: 9999, dmg: 110 },
+  { name: "IBS ATTACK", radius: 9999, dmg: 240 },
 ];
 
 /** Each character's twist on the fart. */
@@ -211,10 +211,11 @@ function ibsAttack(p: Player, now: number) {
       });
     }
     // damage: everything in the room, plus a lingering stink
-    const dmg = p.dmg(FART_LEVELS[4].dmg, now);
+    const ibs = 1 + 0.25 * (G.s.upgrades.pk_ibs ?? 0);
+    const dmg = p.dmg(FART_LEVELS[4].dmg, now) * ibs;
     for (const e of [...w.enemies]) {
       if (e.dead) continue;
-      const extra = e.isBoss ? e.maxHp * 0.08 : 0;
+      const extra = e.isBoss ? e.maxHp * 0.16 * ibs : 0;
       w.damageEnemy(e, dmg + extra, { crit: true, knock: id === "KREBON" ? 700 : 420, angle: Math.atan2(e.y - p.y, e.x - p.x), stun: 2500, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });
     }
     sc.time.delayedCall(400, () => lingering(w, (b.left + b.right) / 2, (b.top + b.bottom) / 2, 2000, id === "SCROMBUS" ? 10000 : 5000, p.dmg(5, now)));

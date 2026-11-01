@@ -125,6 +125,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       case "chaser":
       case "swarm": {
         const wobble = this.def.behavior === "swarm" ? Math.sin(now / 200 + this.uid) * 0.6 : 0;
+        if (this.def.id === "tax_goblin") {
+          // runs away with the money, zig-zagging
+          moveAngle(toP + Math.PI + Math.sin(now / 300 + this.uid) * 0.9, spd * (dist < 260 ? 1 : 0.6));
+          break;
+        }
         moveAngle(toP + wobble, spd);
         break;
       }
@@ -216,6 +221,96 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
         break;
       }
+      case "lobber": {
+        // keeps its distance and lobs bombs at where you're standing (red circle = move)
+        const pref = 300;
+        let ang = toP;
+        if (dist < pref - 60) ang = toP + Math.PI;
+        else if (dist < pref + 80) ang = toP + (Math.PI / 2) * this.orbitDir;
+        moveAngle(ang, spd * 0.7);
+        if (now > this.nextAttack && dist < 620) {
+          this.nextAttack = now + (this.def.projectile?.rate ?? 2200) * (0.85 + Math.random() * 0.3);
+          const tx = target.x + (Math.random() - 0.5) * 40;
+          const ty = this.walker && this.world.groundY ? Math.min(target.y + 10, this.world.groundY - 8) : target.y + (Math.random() - 0.5) * 30;
+          const flight = Math.max(700, tele * 1.4);
+          this.world.enemyAoe(tx, ty, 58, (this.def.projectile?.damage ?? this.def.damage) * this.dmgMult, flight, this.def.projectile?.color ?? 0xff3333);
+          const sc = this.world.sc;
+          const bomb = sc.add.circle(this.x, this.y - 10, 7, this.def.projectile?.color ?? this.def.accent).setStrokeStyle(2, 0x111111).setDepth(1300);
+          const sx = this.x;
+          const sy = this.y - 10;
+          const st = { t: 0 };
+          sc.tweens.add({ targets: st, t: 1, duration: flight, onUpdate: () => bomb.setPosition(sx + (tx - sx) * st.t, sy + (ty - sy) * st.t - Math.sin(st.t * Math.PI) * 140), onComplete: () => bomb.destroy() });
+          synth.play("lob");
+          this.setTint(0xffaaaa);
+        }
+        break;
+      }
+      case "leaper": {
+        // closes in, crouches (flashes), then pounces at you and lands with a thump
+        if (this.state === "move") {
+          moveAngle(toP, spd);
+          if (dist < 300 && now > this.nextAttack) {
+            this.state = "windup";
+            this.stateUntil = now + tele * 0.75;
+            this.halt2();
+          }
+        } else if (this.state === "windup") {
+          this.halt2();
+          this.setScale(2.1, 1.7);
+          this.setTint(0xff6666);
+          if (now > this.stateUntil) {
+            this.setScale(2);
+            this.state = "dash";
+            this.stateUntil = now + 520;
+            if (this.walker) {
+              body.setVelocity(Phaser.Math.Clamp(dx * 1.6, -560, 560), -640);
+            } else {
+              this.dashAngle = toP;
+              const lx = target.x;
+              const ly = target.y;
+              this.world.enemyAoe(lx, ly, 52, this.def.damage * this.dmgMult, 480, this.def.color);
+              this.world.sc.tweens.add({ targets: this, x: lx, y: ly, duration: 480, ease: "Quad.inOut" });
+              this.world.sc.tweens.add({ targets: this, scale: 2.8, yoyo: true, duration: 240 });
+            }
+          }
+        } else if (this.state === "dash") {
+          if (now > this.stateUntil && (!this.walker || body.blocked.down || body.touching.down)) {
+            this.state = "recover";
+            this.stateUntil = now + 450;
+            this.world.burst(this.x, this.y + 10, this.def.accent, 8);
+          }
+        } else {
+          this.halt2();
+          if (now > this.stateUntil) {
+            this.state = "move";
+            this.nextAttack = now + 1300 + Math.random() * 900;
+          }
+        }
+        break;
+      }
+      case "turret": {
+        // doesn't move; three-shot bursts, aimed
+        this.halt2();
+        if (now > this.nextAttack && this.def.projectile && dist < 700) {
+          const pr = this.def.projectile;
+          if (this.state !== "windup") {
+            this.state = "windup";
+            this.stateUntil = now + tele * 0.7;
+          } else if (now > this.stateUntil) {
+            this.state = "move";
+            for (let i = 0; i < (pr.count ?? 3); i++) {
+              this.world.sc.time.delayedCall(i * 130, () => {
+                if (this.dead) return;
+                const a = Math.atan2(p.y - this.y, p.x - this.x);
+                this.world.shoot(this.x, this.y, { owner: "enemy", damage: pr.damage * this.dmgMult, speed: pr.speed, angle: a + (Math.random() - 0.5) * (pr.spread ?? 0.08), color: pr.color, life: 3500 });
+              });
+            }
+            this.nextAttack = now + pr.rate * (0.8 + Math.random() * 0.4);
+          }
+          if (this.state === "windup") this.setTint(0xffaaaa);
+        }
+        break;
+      }
       case "blinker": {
         if (this.state === "move") {
           moveAngle(toP, spd * 0.6);
@@ -264,7 +359,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   contactDamage(): number {
-    if (this.def.behavior === "spawner") return this.def.damage * 0.5 * this.dmgMult;
+    if (this.def.behavior === "spawner" || this.def.behavior === "turret") return this.def.damage * 0.5 * this.dmgMult;
     if (this.state === "dash") return this.def.damage * 1.3 * this.dmgMult;
     return this.def.damage * this.dmgMult;
   }

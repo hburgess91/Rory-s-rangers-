@@ -1,4 +1,4 @@
-export type Behavior = "chaser" | "charger" | "shooter" | "bomber" | "spawner" | "blinker" | "orbiter" | "swarm";
+export type Behavior = "chaser" | "charger" | "shooter" | "bomber" | "spawner" | "blinker" | "orbiter" | "swarm" | "lobber" | "leaper" | "turret";
 
 export interface EnemyDef {
   id: string;
@@ -80,5 +80,21 @@ export const ENEMIES: Record<string, EnemyDef> = {
   candy_drone: { id: "candy_drone", name: "Jingle Drone", behavior: "orbiter", hp: 40, speed: 110, damage: 9, size: 14, color: 0xfbcfe8, accent: 0xdb2777, shape: "drone", label: "♪", projectile: { speed: 220, damage: 9, color: 0xfbcfe8, rate: 1300 }, coins: 5, krezz: 5 },
   fuel_tank: { id: "fuel_tank", name: "THE CENTRAL FUEL TANK", behavior: "spawner", hp: 120, speed: 0, damage: 0, size: 30, color: 0xfacc15, accent: 0x111827, shape: "box", label: "!", coins: 0, krezz: 0 },
   pepsi_normal: { id: "pepsi_normal", name: "Pepsi Normal", behavior: "charger", hp: 40, speed: 120, damage: 12, size: 13, color: 0x1d4ed8, accent: 0xef4444, shape: "box", label: "P", coins: 5, krezz: 4 },
+  // ---- variety pass: lobbers (arcing bombs), leapers (pounce), turrets (perched bursts)
+  gravy_lobber: { id: "gravy_lobber", name: "Gravy Lobber", behavior: "lobber", hp: 34, speed: 70, damage: 8, size: 15, color: 0x8b5a2b, accent: 0xfde68a, shape: "humanoid", label: "G", projectile: { speed: 0, damage: 13, color: 0x7c4a1e, rate: 2300 }, coins: 5, krezz: 4 },
+  leaping_plushie: { id: "leaping_plushie", name: "Feral Beanbag", behavior: "leaper", hp: 40, speed: 95, damage: 13, size: 15, color: 0xd946ef, accent: 0xfdf4ff, shape: "blob", coins: 5, krezz: 4 },
+  pipe_mortar: { id: "pipe_mortar", name: "Pipe Mortar", behavior: "lobber", hp: 46, speed: 60, damage: 9, size: 16, color: 0x78716c, accent: 0xf5f0dc, shape: "box", label: "M", projectile: { speed: 0, damage: 16, color: 0xf5f0dc, rate: 2200 }, coins: 6, krezz: 5 },
+  bonky_bouncer: { id: "bonky_bouncer", name: "Bonky Bouncer", behavior: "leaper", hp: 58, speed: 100, damage: 16, size: 17, color: 0xb45309, accent: 0xfbbf24, shape: "brute", label: "B", coins: 7, krezz: 5 },
+  decree_turret: { id: "decree_turret", name: "Decree Cannon", behavior: "turret", hp: 70, speed: 0, damage: 8, size: 18, color: 0x7c2d12, accent: 0xfbbf24, shape: "box", label: "!", projectile: { speed: 260, damage: 10, color: 0xfde68a, rate: 1700, count: 3, spread: 0.1 }, coins: 8, krezz: 6 },
+  ghost_mortar: { id: "ghost_mortar", name: "Ghost Mortar (Version C)", behavior: "lobber", hp: 52, speed: 70, damage: 10, size: 16, color: 0x475569, accent: 0xcbd5e1, shape: "ghost", projectile: { speed: 0, damage: 17, color: 0x94a3b8, rate: 2100 }, coins: 7, krezz: 6 },
+  edit_leaper: { id: "edit_leaper", name: "Edit War", behavior: "leaper", hp: 60, speed: 110, damage: 17, size: 16, color: 0x2563eb, accent: 0xffffff, shape: "page", label: "✎", coins: 7, krezz: 6 },
+  gobstopper: { id: "gobstopper", name: "Gobstopper Grenadier", behavior: "lobber", hp: 50, speed: 75, damage: 9, size: 16, color: 0xec4899, accent: 0xfde047, shape: "humanoid", label: "●", projectile: { speed: 0, damage: 15, color: 0xf472b6, rate: 2000 }, coins: 6, krezz: 5 },
+  leaping_crobage: { id: "leaping_crobage", name: "Jumping Jack Crobage", behavior: "leaper", hp: 56, speed: 105, damage: 15, size: 16, color: 0xc2410c, accent: 0xfcd34d, shape: "brute", label: "J", coins: 6, krezz: 5 },
+  jingle_turret: { id: "jingle_turret", name: "Jingle Speaker", behavior: "turret", hp: 64, speed: 0, damage: 8, size: 17, color: 0x831843, accent: 0xfbcfe8, shape: "box", label: "♫", projectile: { speed: 260, damage: 10, color: 0xf9a8d4, rate: 1600, count: 3, spread: 0.08 }, coins: 7, krezz: 6 },
+  bone_lobber: { id: "bone_lobber", name: "Bloke Lobbing Chicken Bones", behavior: "lobber", hp: 40, speed: 75, damage: 8, size: 15, color: 0x1f2937, accent: 0xfef3c7, shape: "humanoid", label: "🍗", projectile: { speed: 0, damage: 13, color: 0xfef3c7, rate: 2100 }, coins: 5, krezz: 4 },
+  big_dave: { id: "big_dave", name: "Uncle Rik's Mate Big Dave", behavior: "leaper", hp: 70, speed: 95, damage: 16, size: 18, color: 0x9a3412, accent: 0xfed7aa, shape: "brute", label: "D", coins: 7, krezz: 5 },
+  glowstick_lobber: { id: "glowstick_lobber", name: "Glowstick Lobber", behavior: "lobber", hp: 40, speed: 85, damage: 8, size: 14, color: 0x22d3ee, accent: 0xa3e635, shape: "humanoid", label: "/", projectile: { speed: 0, damage: 13, color: 0xa3e635, rate: 1900 }, coins: 5, krezz: 4 },
+  speaker_turret: { id: "speaker_turret", name: "Bass Bin", behavior: "turret", hp: 70, speed: 0, damage: 8, size: 18, color: 0x111827, accent: 0xe879f9, shape: "box", label: "◉", projectile: { speed: 250, damage: 10, color: 0xe879f9, rate: 1700, count: 3, spread: 0.1 }, coins: 8, krezz: 6 },
+  tax_goblin: { id: "tax_goblin", name: "Krezzcoin Tax Dodger", behavior: "chaser", hp: 90, speed: 175, damage: 0, size: 14, color: 0xfacc15, accent: 0x14532d, shape: "humanoid", label: "£", coins: 30, krezz: 10 },
   invoice: { id: "invoice", name: "Unpaid Bill", behavior: "swarm", hp: 16, speed: 140, damage: 7, size: 11, color: 0xffffff, accent: 0xdc2626, shape: "page", label: "£", coins: 2, krezz: 2 },
 };
