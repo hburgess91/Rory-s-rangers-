@@ -194,6 +194,59 @@ export class Synth {
     o.stop(t + dur + 0.02);
   }
 
+  /**
+   * A crude synthesised human noise: a buzzy voice source through two vowel formants, with a pitch glide and wobble.
+   * "mmm" (closed, nasal hum), "oh" (open moan), "grunt" (short, low, breathy).
+   */
+  voice(kind: "mmm" | "oh" | "grunt", vol = 0.5, pitch = 1, when = 0) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime + when;
+    const dur = kind === "grunt" ? 0.22 + Math.random() * 0.12 : 0.7 + Math.random() * 0.7;
+    const f0 = (kind === "grunt" ? 95 : kind === "oh" ? 135 : 115) * pitch * (0.92 + Math.random() * 0.16);
+    const o = ctx.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f0 * (kind === "grunt" ? 1.25 : 0.92), t);
+    if (kind === "grunt") o.frequency.exponentialRampToValueAtTime(f0 * 0.75, t + dur);
+    else {
+      // rises then sags: mmmMMMmm
+      o.frequency.linearRampToValueAtTime(f0 * 1.18, t + dur * 0.45);
+      o.frequency.linearRampToValueAtTime(f0 * 0.85, t + dur);
+    }
+    // wobble
+    const lfo = ctx.createOscillator();
+    const lg = ctx.createGain();
+    lfo.frequency.value = 5 + Math.random() * 2;
+    lg.gain.value = f0 * 0.025;
+    lfo.connect(lg);
+    lg.connect(o.frequency);
+    const forms: [number, number, number][] =
+      kind === "mmm" ? [[260, 6, 1], [1000, 8, 0.12], [2300, 10, 0.05]] : kind === "oh" ? [[480, 7, 1], [850, 8, 0.6], [2500, 12, 0.08]] : [[560, 4, 1], [1150, 5, 0.5]];
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vol, t + (kind === "grunt" ? 0.02 : 0.12));
+    out.gain.setValueAtTime(vol, t + dur * 0.7);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    for (const [fq, q, amp] of forms) {
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = fq;
+      bp.Q.value = q;
+      const ga = ctx.createGain();
+      ga.gain.value = amp * 3;
+      o.connect(bp);
+      bp.connect(ga);
+      ga.connect(out);
+    }
+    out.connect(this.sfxGain);
+    o.start(t);
+    lfo.start(t);
+    o.stop(t + dur + 0.05);
+    lfo.stop(t + dur + 0.05);
+    // breath
+    if (kind !== "mmm") this.burst(dur * 0.6, vol * (kind === "grunt" ? 0.5 : 0.18), when, kind === "grunt" ? 700 : 1400, undefined, 0.6);
+  }
+
   private burst(dur: number, vol: number, when = 0, filterFreq = 2000, dest?: AudioNode, q = 0.7) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime + when;

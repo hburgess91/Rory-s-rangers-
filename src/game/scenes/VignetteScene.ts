@@ -209,6 +209,66 @@ export class VignetteScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- BREAD AND BUTTER PUDDING
 
+  /** The krezz comes out of the abandoned building: out of the door, out of the windows, across the ground. */
+  private krezzFlood(dx: number, dy: number) {
+    const cream = 0xf8f8f2;
+    // the painted backdrop's doorway and windows sit in different places from the fallback drawing
+    const painted = this.textures.exists("bg_abandoned");
+    const door = painted ? { x: 540, y: 420 } : { x: dx, y: dy + 30 };
+    const ground = painted ? 462 : dy + 38;
+    const spouts: [number, number][] = painted ? [[215, 95], [345, 95], [600, 90], [540, 300]] : [[360, 245], [440, 245], [560, 245], [620, 245], [480, 130]];
+    synth.play("splash");
+    this.time.delayedCall(250, () => synth.play("flush"));
+    // it pours out of the doorway in waves and runs off along the ground both ways
+    this.time.addEvent({
+      delay: 45,
+      repeat: 70,
+      callback: () => {
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        const blob = this.add.ellipse(door.x + (Math.random() - 0.5) * 40, door.y - Math.random() * 40, 26 + Math.random() * 20, 16 + Math.random() * 10, cream, 0.95).setDepth(26);
+        const run = 120 + Math.random() * 360;
+        this.tweens.add({ targets: blob, x: blob.x + dir * run, y: ground + (Math.random() - 0.5) * 10, scaleX: 2.2, scaleY: 0.6, duration: 700 + run * 1.6, ease: "Quad.out", onComplete: () => {
+          blob.setDepth(7);
+          this.tweens.add({ targets: blob, alpha: 0.75, delay: 5000, duration: 3000 });
+        } });
+      },
+    });
+    // the puddle itself, lumpy, spreading
+    for (let i = 0; i < 9; i++) {
+      const x = door.x + (i - 4) * 70 + (Math.random() - 0.5) * 30;
+      const pud = this.add.ellipse(x, ground + (Math.random() - 0.5) * 8, 10, 6, cream, 0.92).setDepth(7);
+      this.tweens.add({ targets: pud, displayWidth: 110 + Math.random() * 90, displayHeight: 22 + Math.random() * 16, delay: 300 + Math.abs(i - 4) * 260, duration: 1600, ease: "Quad.out" });
+      const sh = this.add.ellipse(x - 10, ground - 4, 6, 3, 0xffffff, 1).setDepth(8);
+      this.tweens.add({ targets: sh, displayWidth: 50, delay: 300 + Math.abs(i - 4) * 260, duration: 1600 });
+    }
+    // jets out of the windows
+    spouts.forEach(([sx, sy], k) => {
+      this.time.addEvent({
+        delay: 55,
+        repeat: 34,
+        startAt: k * 15,
+        callback: () => {
+          const d = this.add.circle(sx, sy, 3 + Math.random() * 5, cream).setDepth(27);
+          const vx = (sx < 480 ? -1 : 1) * (40 + Math.random() * 160);
+          const st = { t: 0 };
+          const fall = ground - sy;
+          this.tweens.add({ targets: st, t: 1, duration: 650 + Math.random() * 300, onUpdate: () => d.setPosition(sx + vx * st.t, sy - 50 * st.t + (fall + 50) * st.t * st.t), onComplete: () => {
+            d.destroy();
+            if (Math.random() < 0.25) {
+              const sp = this.add.ellipse(sx + vx, ground + (Math.random() - 0.5) * 10, 24, 8, cream, 0.9).setDepth(7);
+              this.tweens.add({ targets: sp, alpha: 0.6, delay: 4000, duration: 3000 });
+            }
+          } });
+        },
+      });
+      // a drip running down the wall under each window
+      if (sy < 300) {
+        const drip = this.add.rectangle(sx + (Math.random() - 0.5) * 20, sy + 20, 9, 6, cream).setOrigin(0.5, 0).setDepth(6);
+        this.tweens.add({ targets: drip, displayHeight: ground - sy - 30, delay: 400 + k * 150, duration: 2600, ease: "Sine.in" });
+      }
+    });
+  }
+
   /** `spy` = the player is somebody else, watching Lulon from the bushes. */
   private async pudding(spy?: string) {
     const watcherId = spy ?? (G.s.flags.pudding_follower as string) ?? PLAYABLE_ORDER.filter((id) => id !== "CRONGUS")[Math.floor(Math.random() * 8)];
@@ -256,9 +316,16 @@ export class VignetteScene extends Phaser.Scene {
       this.time.delayedCall(i * 380, () => {
         const t = this.add.text(320 + Math.random() * 320, 180 + Math.random() * 220, moans[i % moans.length], { fontFamily: FONT, fontSize: `${14 + (i % 4) * 5}px`, color: "#ffe4ec", fontStyle: "italic", stroke: "#000", strokeThickness: 3 }).setDepth(30);
         this.tween({ targets: t, y: t.y - 30, alpha: 0, duration: 1500 });
-        synth.play(i % 3 ? "mork" : "gasp");
-        this.cameras.main.shake(260, 0.004 + i * 0.0012);
+        // the noises: moans that match the words, grunts in between, getting higher and louder
+        const word = moans[i % moans.length].toLowerCase();
+        const p = 1 + i * 0.025;
+        synth.voice(word.startsWith("oh") ? "oh" : "mmm", 0.35 + i * 0.03, p);
+        if (word.includes("fuck")) synth.voice("grunt", 0.5, p, 0.18);
+        if (i % 2) synth.voice("grunt", 0.4 + i * 0.02, p * 0.95, 0.3);
+        // the whole building shakes, more and more
+        this.cameras.main.shake(380, 0.006 + i * 0.0018);
         g.setAlpha(i % 2 ? 0.85 : 1);
+        this.tweens.add({ targets: door, scaleX: 1.08, scaleY: 0.94, yoyo: true, duration: 90 });
       });
     }
     await this.wait(14 * 380 + 800);
@@ -267,6 +334,10 @@ export class VignetteScene extends Phaser.Scene {
       await this.talk([dir("From inside: a slow, rhythmic creaking. Then a faster one."), say(spy, "Oh no. He's wonking. He's wonking in there. Over the pudding.")]);
     } else await this.puddingWonk();
     this.cameras.main.shake(1200, 0.03);
+    synth.voice("oh", 0.7, 1.35);
+    synth.voice("grunt", 0.7, 1.1, 0.5);
+    synth.voice("oh", 0.6, 1.5, 0.75);
+    this.krezzFlood(door.x, door.y);
     this.caption("THE ULTIMATE SENSATION", "#ffe4ec", 30);
     await this.wait(1600);
     this.children.list.filter((o) => o instanceof Phaser.GameObjects.Text && (o as Phaser.GameObjects.Text).text === "THE ULTIMATE SENSATION").forEach((o) => o.destroy());
