@@ -107,6 +107,10 @@ export class PubScene extends Phaser.Scene {
 
   // ------------------------------------------------------------- menu
 
+  private barred(left: number) {
+    this.box.play([say("BIG DEREK", `You lot are barred. ${Math.ceil(left / 60000)} more minute${left > 60000 ? "s" : ""}. And wash your hands.`)]).then(() => this.showMenu());
+  }
+
   private showMenu() {
     this.menu.removeAll(true);
     const s = G.s;
@@ -116,6 +120,10 @@ export class PubScene extends Phaser.Scene {
     items.push(["🛍 Fizzy Bongo to take away (12 Krezzcoin)", () => this.buy()]);
     items.push([s.flags.pub_tv_off ? "📺 Turn the telly back on" : "📺 Turn the telly off", () => this.toggleTv()]);
     if (this.sanmikOn) items.push(["🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
+    {
+      const left = ((s.flags.club_banned_until as number) ?? 0) - s.playtimeMs;
+      items.push([left > 0 ? `💃 The Wonky Pole strip room (barred: ${Math.ceil(left / 60000)} min)` : "💃 Through the curtain: THE WONKY POLE (strip room)", () => (left > 0 ? this.barred(left) : switchTo(this, "Club", {}))]);
+    }
     if (s.player !== "KREBON" && !s.flags.krebon_gone && s.flags.met_emergency) items.push(["🎸 Back room: Twitcher Mutiny are on. It's getting rowdy.", () => switchTo(this, "Minigame", { mode: "gig", returnAt: "PUB" })]);
     if (s.flags.sanmik_catford) items.push(["🪔 Rub the magic lamp (back to the SanMikverse: Begour's café)", () => switchTo(this, "Dungeon", { dungeon: "sanmik_hangout", room: 0 })]);
     {

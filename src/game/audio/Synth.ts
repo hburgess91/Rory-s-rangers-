@@ -54,7 +54,7 @@ export const MUSIC_FILES: Record<string, string> = {
   flenky: "audio/flenky.mp3",
   sanmik: "audio/ggg8.mp3",
   boss_rik: "audio/ggg13.mp3",
-  boss_jam: "audio/ggg9.mp3",
+  boss_jam: "audio/bpd_menace.mp3",
   norwich: "audio/norwich.mp3",
   crobley: "audio/crobley.mp3",
   majek_lampe: "audio/majek_lampe.mp3",

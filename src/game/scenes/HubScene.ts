@@ -55,7 +55,7 @@ const BUILDINGS: Building[] = [
   { id: "ABANDONED", name: "ABANDONED BUILDING", x: 1000, y: 1660, w: 220, h: 140, wall: 0x2a2a2a, roof: 0x111111, door: { x: 1000, y: 1730 } },
   { id: "POLICE", name: "KRELFORD CONSTABULARY", x: 1700, y: 1670, w: 240, h: 130, wall: 0x1e3a8a, roof: 0x111827, door: { x: 1700, y: 1735 } },
   { id: "BOGGOR_HOUSE", name: "BOGGOR CRANSTIL'S HOUSE", x: 300, y: 250, w: 224, h: 176, wall: 0x2a2433, roof: 0x111111, door: { x: 300, y: 338 } },
-  { id: "STRIP_CLUB", name: "THE WONKY POLE (Gentlemen's Cabaret)", x: 1660, y: 1290, w: 220, h: 150, wall: 0x2a0f2a, roof: 0x111111, door: { x: 1660, y: 1368 } },
+  { id: "CROBLEY_FACTORY", name: "CROBLEY CORP HQ (THE CROBLEY FACTORY)", x: 1660, y: 1255, w: 288, h: 224, wall: 0xf472b6, roof: 0x334155, door: { x: 1660, y: 1367 } },
   { id: "OLD_FLAT", name: "YOUR OLD FLAT", x: 700, y: 1650, w: 200, h: 130, wall: 0x9a8a7a, roof: 0x5a3a2a, door: { x: 700, y: 1715 } },
 ];
 
@@ -64,7 +64,6 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
   { id: "PORTAL", name: "??? THE SYMBOL OF WAHOOGAH", x: 90, y: 1250 },
-  { id: "CROBLEY_FACTORY", name: "→ THE CROBLEY FACTORY", x: 2500, y: 460 },
 ];
 
 /** The playground (Boggor's view). Kids, sweeties, screaming. */
@@ -548,9 +547,15 @@ export class HubScene extends Phaser.Scene {
   }
 
   /** Building footprints follow the generated art; doors sit at the bottom centre. */
+  /** Which picture a building uses (the Crobley factory burns down). */
+  private buildingKey(b: Building) {
+    if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed && this.textures.exists("bld_CROBLEY_FACTORY_RUIN")) return "bld_CROBLEY_FACTORY_RUIN";
+    return `bld_${b.id}`;
+  }
+
   private fitBuildingsToArt() {
     for (const b of BUILDINGS) {
-      const key = `bld_${b.id}`;
+      const key = this.buildingKey(b);
       if (!this.textures.exists(key)) continue;
       const src = this.textures.get(key).getSourceImage();
       const bottom = b.y + b.h / 2;
@@ -562,7 +567,7 @@ export class HubScene extends Phaser.Scene {
   }
 
   private drawBuilding(b: Building) {
-    const key = `bld_${b.id}`;
+    const key = this.buildingKey(b);
     if (this.hd && this.textures.exists(key)) {
       const img = this.add.image(b.x, b.y, key).setDepth(b.y + b.h / 2 - 1);
       // soft drop shadow on the ground
@@ -570,6 +575,7 @@ export class HubScene extends Phaser.Scene {
       let name = b.name;
       if (b.id === "TOWN_HALL" && G.s.chapter === 1 && !G.s.flags.ch1_clear) name = "KRELFORD ____ HALL";
       if (b.id === "HOME") name = `${CHARACTERS[G.s.player].name}'S HOUSE`;
+      if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed) name = "CROBLEY CORP HQ (BURNED OUT)";
       this.add
         .text(b.x, b.y + b.h / 2 + 6, name, { fontFamily: FONT, fontSize: "11px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 }, align: "center", wordWrap: { width: Math.max(160, b.w) } })
         .setOrigin(0.5, 0)
@@ -1324,8 +1330,8 @@ You are required by law to sign the Sex Offenders Register.`, {
         return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the constitutional crisis)";
       case "BOOTH":
         return "The Booth (Bully Mikey · vent your frustration)";
-      case "STRIP_CLUB":
-        return (s.flags.club_banned_until as number) > s.playtimeMs ? "The Wonky Pole (you're barred, for now)" : "Enter The Wonky Pole";
+      case "CROBLEY_FACTORY":
+        return s.flags.crobley_factory_destroyed ? "The burned-out husk of Crobley Corp HQ" : "Crobley Corp HQ";
       case "UNIVERSITY":
         return "Enter Krelford University";
       case "GYM":
@@ -1371,15 +1377,6 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     if (!this.buildingBusy(b.id) && (await this.runArcStep(b.id))) return;
     switch (b.id) {
-      case "STRIP_CLUB": {
-        const left = ((s.flags.club_banned_until as number) ?? 0) - s.playtimeMs;
-        if (left > 0) {
-          await this.talk([say("BIG DEREK", `You lot are barred. ${Math.ceil(left / 60000)} more minute${left > 60000 ? "s" : ""}. And wash your hands.`)]);
-          return;
-        }
-        this.go("Club", {});
-        return;
-      }
       case "BOOTH":
         await this.talk(
           s.player === "MIKEY"
@@ -1520,7 +1517,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       case "CROBLEY_FACTORY":
         if (s.flags.crobley_factory_destroyed) {
-          await this.talk([dir("Where the Crobley Factory used to be, there is a smoking crater the size of a football pitch. It still smells faintly of candy and sausage. A single Crobley lies at the bottom, nibbled."), say(s.player, "Very sad. Very unfortunate.")]);
+          await this.talk([dir("The burned-out husk of Crobley Corp HQ. Black walls. No roof. The giant fibreglass Crobley on top has melted into something that looks like it's screaming. It still smells faintly of candy and sausage. A single Crobley lies in the ash by the gate, nibbled."), say(s.player, "Very sad. Very unfortunate.")]);
           return;
         }
         await this.talk([dir("The gates of the Crobley Factory. Pink chimneys. Purple smoke. A giant fibreglass Crobley on the roof, grinning. Over the gate, a new sign: 'YOU HEARD WHAT YOU THOUGHT YOU HEARD'."), dir("The gates are locked. Not yet.")]);

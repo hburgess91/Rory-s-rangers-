@@ -532,7 +532,7 @@ export class ClubScene extends Phaser.Scene {
     synth.stopMusic();
     G.save();
     this.cameras.main.fadeOut(300);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "PUB" }));
   }
 
   private swapDancer() {
@@ -592,7 +592,7 @@ export class ClubScene extends Phaser.Scene {
     synth.stopMusic();
     G.save();
     this.cameras.main.fadeOut(300);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "PUB" }));
   }
 
   // ------------------------------------------------------------------ WONK-OFF
@@ -804,7 +804,7 @@ export class ClubScene extends Phaser.Scene {
       synth.stopMusic();
       G.save();
       this.cameras.main.fadeOut(300);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "STRIP_CLUB" }));
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "PUB" }));
     });
   }
 }

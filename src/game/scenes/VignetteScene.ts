@@ -875,7 +875,13 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([
       dir("16:30. CAM 1: Polson is asleep on the sofa, holding a slice of pizza like a teddy bear."),
       ping("POLSON", "3 hours done!! Absolutely destroyed. Who even spends 3 hours in a fucking gym? Me apparently 😝"),
-      say("MIKEY", "(over the War Room comms) FGM to base. Subject has not left the house. Repeat, subject has not left the house. Subject has, however, eaten an entire fudge."),
+    ]);
+    // 17:10: he wakes up. Something is coming.
+    await this.cctvFarts(pol);
+    // 18:40: the phone comes out
+    await this.cctvWonk(pol);
+    await this.talk([
+      say("MIKEY", "(over the War Room comms) FGM to base. Subject has not left the house. Repeat, subject has not left the house. Subject has, however, eaten an entire fudge. And done… that. Twice, if you count the farts."),
       ping("KREZMAR", "Why is there no cheese in the War Room"),
       ping("POLSON", "The deed is done 😊"),
       dir("You save the footage to the Archive under 'Strange Occurrences'. Kreblis will want it. Polson's mum will definitely want it."),
@@ -985,6 +991,104 @@ export class VignetteScene extends Phaser.Scene {
       ping("POLSON", "It was for the core!! Mum I promise"),
     ]);
     synth.stopMusic();
+  }
+
+  /** CCTV, CAM 1: Polson lets rip. The camera fogs up. */
+  private async cctvFarts(pol: Phaser.GameObjects.Sprite) {
+    await this.talk([dir("17:10. CAM 1: Polson wakes up. He shifts onto one buttock. He has the look of a man listening to something only he can hear.")]);
+    const sizes = [0.6, 0.9, 1.4, 2.2];
+    for (let i = 0; i < sizes.length; i++) {
+      synth.play("fart");
+      this.cameras.main.shake(180 + i * 120, 0.004 + i * 0.004);
+      const tex = this.textures.exists("fx_gas") ? "fx_gas" : "fx_circle";
+      for (let k = 0; k < 3 + i * 2; k++) {
+        const c = this.add.image(pol.x - 14, pol.y + 18, tex).setTint(0xa3e635).setAlpha(0.75).setScale(0.2 * sizes[i]).setDepth(20);
+        this.tweens.add({ targets: c, x: c.x - 40 - Math.random() * 120 * sizes[i], y: c.y - 20 - Math.random() * 60, scale: 0.6 * sizes[i], alpha: 0, duration: 1400 + i * 300, onComplete: () => c.destroy() });
+      }
+      const sub = this.add.text(250, 232, ["[FART]", "[LONGER FART]", "[WET FART]", "[FART CONTINUES FOR SOME TIME]"][i], { fontFamily: "monospace", fontSize: "13px", color: "#facc15", backgroundColor: "#000000cc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(30);
+      this.tweens.add({ targets: sub, alpha: 0, delay: 800, duration: 400, onComplete: () => sub.destroy() });
+      this.tweens.add({ targets: pol, y: pol.y - 6 - i * 3, yoyo: true, duration: 90, repeat: i });
+      await this.wait(950 + i * 150);
+    }
+    // the lens goes green
+    const fog = this.add.rectangle(250, 150, 420, 200, 0x84cc16, 0).setDepth(25);
+    this.tweens.add({ targets: fog, fillAlpha: 0.55, duration: 900 });
+    await this.talk([
+      dir("CAM 1 has fogged up. From the inside. The War Room microphone picks up a fifth one, which sounds like someone sitting on a duck."),
+      say("POLSON", "(on CAM 1, to nobody) Oh that's delectable 😅"),
+      ping("POLSON", "Core is on fire!!"),
+      say("KREZWONK", "It's not his core that's on fire."),
+    ]);
+    this.tweens.add({ targets: fog, fillAlpha: 0, duration: 1200, onComplete: () => fog.destroy() });
+  }
+
+  /** CCTV, CAM 1: Polson, the phone, the sofa. A censor bar does its best. Then everything gets hit. */
+  private async cctvWonk(pol: Phaser.GameObjects.Sprite) {
+    await this.talk([dir("18:40. CAM 1: Polson gets his phone out. Turns it sideways. Turns the brightness all the way up. Looks over his shoulder at the window. Looks straight into CAM 1. Does not see it.")]);
+    // the phone glow, and what's on it (thankfully, only the glow)
+    const phone = this.add.rectangle(pol.x + 20, pol.y - 10, 14, 22, 0x93c5fd).setDepth(22).setStrokeStyle(2, 0x111827);
+    const glow = this.add.circle(pol.x + 14, pol.y - 14, 34, 0x93c5fd, 0.25).setDepth(21).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: glow, alpha: 0.1, yoyo: true, repeat: -1, duration: 220 });
+    const tag = this.add.text(250, 232, "[AUDIO: 'FILTHY VIDEOS ON HIS PHONE' — VOLUME: MAXIMUM]", { fontFamily: "monospace", fontSize: "11px", color: "#facc15", backgroundColor: "#000000cc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(30);
+    await this.talk([dir("The War Room cannot hear what he's watching. The War Room can hear that it is LOUD."), say("KREBLIS", "Oh no"), say("KREBLIS", "Oh no no no")]);
+    // the wonking: wrist under the bar, faster and faster
+    const wrist = addWrist(this, pol.x - 2, pol.y + 26, { ...wristLook("POLSON", CHARACTERS as any), scale: 1.4, speed: 160 });
+    wrist.obj.setDepth(23);
+    const bar = this.add.rectangle(pol.x, pol.y + 28, 64, 22, 0x000000).setDepth(24);
+    const barTxt = this.add.text(pol.x, pol.y + 28, "CENSORED", { fontFamily: "monospace", fontSize: "9px", color: "#ffffff" }).setOrigin(0.5).setDepth(25);
+    const grunts = ["mmf", "hrrnnggh", "mmm", "yesss", "oh yeah", "HRRNNGH", "MMMMF"];
+    for (let i = 0; i < 14; i++) {
+      wrist.setSpeed(Math.max(45, 160 - i * 9));
+      if (i % 2 === 0) synth.voice(i % 4 === 0 ? "grunt" : "mmm", 0.35 + i * 0.02, 1 + i * 0.02);
+      const g = this.add.text(pol.x + 50 + Math.random() * 60, pol.y - 30 - Math.random() * 30, grunts[i % grunts.length], { fontFamily: FONT, fontSize: `${11 + (i % 3) * 3}px`, color: "#ffe4ec", fontStyle: "italic", stroke: "#000", strokeThickness: 3 }).setDepth(30);
+      this.tweens.add({ targets: g, y: g.y - 20, alpha: 0, duration: 900, onComplete: () => g.destroy() });
+      this.tweens.add({ targets: pol, y: pol.y - 2, yoyo: true, duration: 60 });
+      if (i > 8) this.cameras.main.shake(120, 0.002 + (i - 8) * 0.002);
+      await this.wait(320 - i * 12);
+    }
+    // KREZZ
+    synth.voice("oh", 0.7, 1.4);
+    synth.voice("grunt", 0.7, 1.2, 0.35);
+    synth.play("splat");
+    this.cameras.main.flash(250, 255, 255, 255);
+    this.cameras.main.shake(700, 0.02);
+    tag.destroy();
+    const caption = this.caption("POLSON HAS KREZZED", "#ffffff", 30);
+    const splatTex = this.textures.exists("fx_splat_white") ? "fx_splat_white" : null;
+    const splat = (x: number, y: number, size: number, depth: number) => {
+      const s = splatTex ? this.add.image(x, y, splatTex).setDisplaySize(size, size) : this.add.circle(x, y, size / 3, 0xf8f8f2);
+      s.setDepth(depth).setRotation(Math.random() * Math.PI * 2).setAlpha(0.95);
+      s.setScale(s.scaleX * 0.2, s.scaleY * 0.2);
+      this.tweens.add({ targets: s, scaleX: s.scaleX * 5, scaleY: s.scaleY * 5, duration: 120, ease: "Back.out" });
+      this.tweens.add({ targets: s, y: y + 30, delay: 700, duration: 2600, ease: "Sine.in" });
+      return s;
+    };
+    // all over the lounge: the ceiling, the telly, the sofa, the lens
+    for (let i = 0; i < 26; i++) {
+      this.time.delayedCall(i * 45, () => {
+        synth.play(i % 3 ? "splat" : "gasp");
+        splat(80 + Math.random() * 340, 60 + Math.random() * 180, 20 + Math.random() * 40, 26);
+      });
+    }
+    // and it gets on the other cameras somehow
+    for (let i = 0; i < 18; i++) {
+      this.time.delayedCall(600 + i * 70, () => splat(Math.random() * 960, Math.random() * 500, 50 + Math.random() * 80, 40));
+    }
+    await this.wait(2200);
+    wrist.destroy();
+    bar.destroy();
+    barTxt.destroy();
+    phone.destroy();
+    glow.destroy();
+    caption.destroy();
+    this.lastCaption = undefined;
+    await this.talk([
+      dir("Every camera in the War Room has been hit. CAM 2 is at Krunch Gym, two miles away. CAM 2 has been hit."),
+      say("KREZMAR", "How has it reached the gym"),
+      say("SCROMBUS", "That's the first time anything of Polson's has been to the gym."),
+      ping("POLSON", "Just done a set of reps!! 💪💦"),
+      ping("POLSON", "Upper body day 😅"),
+    ]);
   }
 
   /** The Mouth Workout. Hold to stretch his jaw open, release in the green to CHEW VERY HARD. */

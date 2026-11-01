@@ -3610,9 +3610,6 @@
   "bld_PUB": {
    "file": "buildings/PUB.png"
   },
-  "bld_STRIP_CLUB": {
-   "file": "buildings/STRIP_CLUB.png"
-  },
   "bld_TOWN_HALL": {
    "file": "buildings/TOWN_HALL.png"
   },
@@ -4801,6 +4798,12 @@
   },
   "p_sm_boxers": {
    "file": "props/p_sm_boxers.png"
+  },
+  "bld_CROBLEY_FACTORY": {
+   "file": "buildings/CROBLEY_FACTORY.png"
+  },
+  "bld_CROBLEY_FACTORY_RUIN": {
+   "file": "buildings/CROBLEY_FACTORY_RUIN.png"
   }
  },
  "sheets": {
