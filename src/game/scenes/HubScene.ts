@@ -19,6 +19,7 @@ import { dir, ping, say } from "../../content/dsl";
 import { narrativeActor } from "../systems/narrative";
 import { arcDue, arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
+import { MEETINGS } from "../../content/meetings";
 import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
 
@@ -1501,6 +1502,27 @@ You are required by law to sign the Sex Offenders Register.`, {
       }
       case "ARCHIVE": {
         const a = archiveAction();
+        if (a.kind === "meeting" && a.id === "founding_cabinet") {
+          // first visit: the Archive offers a trip down memory lane, which you can skip
+          delete s.flags.founding_pick;
+          await this.talk([
+            say("ARCHIVE", "Welcome to the Krelworld Historical Archive."),
+            say("ARCHIVE", "The Archive will replay formative moments of group chat bliss… back from the good old days…"),
+            say("ARCHIVE", "…before the current era of 'bad old days'."),
+            { s: "ARCHIVE", t: "Would you like to see THE FOUNDING?", choice: [{ label: "Yes. Play the founding.", set: { founding_pick: 1 } }, { label: "No. Skip it.", set: { founding_pick: 0 } }] },
+          ]);
+          if (s.flags.founding_pick) {
+            this.go("Meeting", { id: a.id, next: { scene: "Hub", data: { at: "ARCHIVE" } } });
+            return;
+          }
+          // skipped: it still counts (the cabinet still gets founded), and it stays in the Archive to watch later
+          const m = MEETINGS[a.id];
+          Object.assign(s.flags, m?.onComplete ?? {});
+          for (const id of m?.unlocksArchive ?? []) G.unlockArchive(id);
+          G.save();
+          await this.talk([say("ARCHIVE", "Very well. The founding has been filed. You can replay it any time from the Archive."), dir("Ministerial side quests are now available from cabinet members around Krelford.")]);
+          return;
+        }
         if (a.kind === "meeting") {
           this.go("Meeting", { id: a.id, next: { scene: "Hub", data: { at: "ARCHIVE" } } });
           return;
