@@ -87,6 +87,28 @@ function voices() {
 }
 if (typeof window !== "undefined" && "speechSynthesis" in window) {
   window.speechSynthesis.onvoiceschanged = () => (voicesCache = []);
+  // Browsers only let speech start from inside a real tap/click/keypress (Safari especially), and Chrome's
+  // engine can sit "stuck" until it's paused and resumed. The game's own input runs a frame later, outside
+  // the gesture, so prime it here, synchronously, on every real gesture.
+  let primed = false;
+  const prime = () => {
+    const ss = window.speechSynthesis;
+    try {
+      if (!primed) {
+        primed = true;
+        const u = new SpeechSynthesisUtterance(" ");
+        u.volume = 0;
+        ss.speak(u);
+      }
+      if (ss.paused || (ss.pending && !ss.speaking)) {
+        ss.pause();
+        ss.resume();
+      } else ss.resume();
+    } catch {
+      /* no speech here */
+    }
+  };
+  for (const ev of ["pointerdown", "keydown", "touchend"]) window.addEventListener(ev, prime, { capture: true, passive: true });
 }
 
 // Apple's novelty voices that sing or laugh instead of talking.
@@ -185,5 +207,12 @@ export const voice = {
       // speaking straight after cancel() gets dropped in Chrome: give it a moment
       setTimeout(go, 80);
     } else go();
+    // watchdog: lines queued but nothing coming out means the engine's stuck; a pause/resume unsticks it
+    setTimeout(() => {
+      if (live === queue && ss.pending && !ss.speaking) {
+        ss.pause();
+        ss.resume();
+      }
+    }, 400);
   },
 };
