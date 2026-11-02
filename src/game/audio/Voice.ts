@@ -141,6 +141,9 @@ export function chunkSpeech(text: string, max = 160): string[] {
   return out.length ? out : [text];
 }
 
+/** The utterances being spoken right now (kept so the browser doesn't drop them). */
+let live: SpeechSynthesisUtterance[] = [];
+
 export const voice = {
   enabled() {
     return "speechSynthesis" in window && G.meta.settings.voices !== false;
@@ -159,15 +162,28 @@ export const voice = {
     if (!t) return;
     const prof = PROFILES[speaker.toUpperCase()] ?? { pitch: 0.8 + (hash(speaker) % 9) / 15, rate: 0.95 + (hash(speaker + "r") % 5) / 20 };
     const v = pickVoice(speaker, !!prof.female);
-    window.speechSynthesis.cancel();
+    const ss = window.speechSynthesis;
     // Browsers silently cut off long utterances (~15s on Chrome), so read long passages as a queue of short chunks.
-    for (const chunk of chunkSpeech(t)) {
+    const queue = chunkSpeech(t).map((chunk) => {
       const u = new SpeechSynthesisUtterance(chunk);
       if (v) u.voice = v;
+      u.lang = v?.lang ?? "en-GB";
       u.pitch = Math.max(0, Math.min(2, prof.pitch));
       u.rate = Math.max(0.5, Math.min(2, prof.rate));
       u.volume = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1);
-      window.speechSynthesis.speak(u);
-    }
+      return u;
+    });
+    // Chrome bin utterances that get garbage-collected mid-speech: hold on to them
+    live = queue;
+    const go = () => {
+      // Chrome sometimes leaves the speech engine stuck "paused" (e.g. after a tab switch)
+      ss.resume();
+      for (const u of queue) ss.speak(u);
+    };
+    if (ss.speaking || ss.pending) {
+      ss.cancel();
+      // speaking straight after cancel() gets dropped in Chrome: give it a moment
+      setTimeout(go, 80);
+    } else go();
   },
 };
