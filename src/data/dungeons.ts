@@ -273,7 +273,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     id: "wildern",
     chapter: 1,
     name: "WILDERN ACADEMY",
-    music: "school",
+    music: "crandle",
     rooms: [
       {
         name: "Wildern Corridor",
