@@ -26,7 +26,8 @@ export interface ArtManifest {
   sheets?: Record<string, { file: string; frameWidth: number; frameHeight: number; hd?: number }>;
 }
 
-const hdOf = (o: { texture?: Phaser.Textures.Texture }) => (o.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;
+/** `big` on an object (side-scrolling rooms draw everyone larger) multiplies on top of the art factor. */
+const hdOf = (o: { texture?: Phaser.Textures.Texture; big?: number }) => ((o.texture?.customData as { hd?: number } | undefined)?.hd ?? 1) * (o.big ?? 1);
 
 let installed = false;
 export function installHdScale() {

@@ -59,6 +59,9 @@ const SHAKE = () => G.meta.settings.shake;
 
 const clearKey = (dungeon: string, room: number) => `dclr_${dungeon}_${room}`;
 
+/** How much bigger people are drawn in side-scrolling rooms. */
+const SIDE_BIG = 1.4;
+
 export class DungeonScene extends Phaser.Scene implements CombatWorld {
   sc!: Phaser.Scene;
   player!: Player;
@@ -179,8 +182,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   create() {
     const s = G.s;
     s.phase = "dungeon";
+    // the catwalks painted into the backdrop become real platforms
+    if (this.room.ledges && this.room.backdrop && this.textures.exists(this.room.backdrop)) this.room = { ...this.room, platforms: [...(this.room.platforms ?? []), ...this.ledgePlatforms(this.room)] };
     const r = this.room;
-    this.telegraphMult = s.player === "KREZWONK" ? 1.4 : 1;
+    this.telegraphMult = (s.player === "KREZWONK" ? 1.4 : 1) * ((r.view ?? this.dungeon.view) === "side" ? 1.3 : 1);
     this.cameras.main.fadeIn(300);
     // a previous room's trip doesn't carry over
     this.cameras.main.setRotation(0).setZoom(1);
@@ -203,7 +208,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.buildRoom();
     this.controls = new Controls(this);
     this.player = new Player(this, this.side ? 90 : r.w / 2, this.side ? this.groundY - 40 : r.h - 90);
-    if (this.side) (this.player.spr.body as Phaser.Physics.Arcade.Body).setGravityY(1500);
+    if (this.side) {
+      (this.player.spr.body as Phaser.Physics.Arcade.Body).setGravityY(1500);
+      // side-on, everyone's drawn bigger (classic run'n'gun proportions)
+      (this.player.spr as any).big = SIDE_BIG;
+      this.player.spr.setScale(2);
+    }
     // walk in holding the best gun you've got ammo for
     equipBest(s);
     this.spice = new Spice(this);
@@ -274,6 +284,53 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   // ------------------------------------------------------------------ room building
 
+  /** Shot a weapon pod: a Contra-style power-up letter drops and flies to you. */
+  private weaponPod(x: number, y: number) {
+    const p = this.player;
+    const now = this.now();
+    const s = G.s;
+    const hurt = s.hp < maxHp(s) * 0.5;
+    const opts = [
+      { k: "S", name: "SPREAD SHOT", col: "#f87171", go: () => (p.spreadUntil = now + 15000) },
+      { k: "M", name: "MACHINE GUN", col: "#fde047", go: () => (p.overdriveUntil = now + 12000) },
+      { k: "B", name: "BARRIER", col: "#a78bfa", go: () => (p.shieldUntil = now + 8000) },
+      { k: "H", name: "HEALTH", col: "#86efac", go: () => (s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.4)) },
+    ];
+    const pick = hurt && Math.random() < 0.5 ? opts[3] : opts[Math.floor(Math.random() * (hurt ? 4 : 3))];
+    synth.play("boom");
+    this.burst(x, y, 0xfde047, 20);
+    const t = this.add.text(x, y, pick.k, { fontFamily: "Impact, sans-serif", fontSize: "30px", color: pick.col, stroke: "#000", strokeThickness: 6, backgroundColor: "#00000088", padding: { x: 6, y: 0 } }).setOrigin(0.5).setDepth(1500);
+    this.tweens.add({ targets: t, y: y - 40, duration: 300, ease: "Quad.out", onComplete: () => {
+      this.tweens.add({ targets: t, x: { getEnd: () => p.x }, y: { getEnd: () => p.y - 10 }, scale: 0.6, duration: 380, ease: "Quad.in", onComplete: () => {
+        t.destroy();
+        pick.go();
+        synth.play("cheer");
+        this.cameras.main.flash(160, 255, 255, 255);
+        this.floatText(p.x, p.y - 60, `${pick.k}: ${pick.name}!`, pick.col, 20);
+      } });
+    } });
+  }
+
+  /** Backdrop ledges (picture pixels, left half, mirrored) as level platforms, repeated along the room. */
+  private ledgePlatforms(r: RoomDef): [number, number, number][] {
+    const src = this.textures.get(r.backdrop!).getSourceImage();
+    const k = 540 / src.height;
+    const tw = src.width;
+    const gy = r.h - 56;
+    const out: [number, number, number][] = [];
+    for (let off = 0; off * k < r.w; off += tw) {
+      for (const [x0, x1, y] of r.ledges ?? []) {
+        for (const [a, b] of [[x0, x1], [tw - x1, tw - x0]]) {
+          const cx = (off + (a + b) / 2) * k;
+          const w = (b - a) * k;
+          if (cx - w / 2 > r.w - 120 || cx + w / 2 < 40) continue;
+          out.push([cx / r.w, gy - y * k, w]);
+        }
+      }
+    }
+    return out;
+  }
+
   /** Side-scrolling room: parallax backdrop, ground strip, one-way platforms, exit on the right. */
   private buildSideRoom() {
     const r = this.room;
@@ -303,6 +360,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         g.fillStyle(0xd4a017, 1).fillRect(x - w / 2, y - 9, w, 3);
         for (let cx = x - w / 2 + 14; cx < x + w / 2 - 6; cx += 28) g.fillStyle(0x1f1226, 1).fillTriangle(cx - 9, y + 9, cx + 9, y + 9, cx, y + 22);
         g.lineStyle(1, 0x000000, 0.6).strokeRect(x - w / 2, y - 7, w, 16);
+      } else if (r.ledges) {
+        // painted into the backdrop already: just a faint edge so you can see it's solid
+        this.add.rectangle(x, y - 6, w, 2, 0xfff1c1, 0.35).setDepth(4);
       } else if (r.trip) {
         // wonder platforms: rainbow jelly, wobbling to the beat
         const c = this.add.container(x, y).setDepth(4);
@@ -1613,6 +1673,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     e.dmgMult = enemyDamageMult(s);
     e.speedMult = activeMods(s).enemySpeedMult * (s.ngPlus ? 1.1 : 1);
     e.hpBar = this.add.graphics().setDepth(800);
+    if (this.side) {
+      (e as any).big = SIDE_BIG * 0.95;
+      e.setScale(2);
+      // run'n'gun: grunts pop quickly
+      e.hp = e.maxHp = Math.max(1, Math.round(e.maxHp * 0.75));
+    }
     e.setDepth(y);
     this.enemies.push(e);
     this.enemyGroup.add(e);
@@ -1623,7 +1689,22 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     } else if (this.side && !this.isFlyer(type)) {
       e.walker = true;
       (e.body as Phaser.Physics.Arcade.Body).setGravityY(1500).setCollideWorldBounds(true);
-    } else if (this.side) (e.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true);
+    } else if (this.side) (e.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(type !== "weapon_pod");
+    if (type === "weapon_pod") {
+      // big, flashing and easy to pop, and never an elite
+      (e as any).big = 2.4;
+      e.setScale(2);
+      e.hp = e.maxHp = 6;
+      const glow = this.add.circle(e.x, e.y, 26, 0xfde047, 0.25).setBlendMode(Phaser.BlendModes.ADD).setDepth(e.depth - 1);
+      this.tweens.add({ targets: glow, scale: 1.5, alpha: 0.05, yoyo: true, repeat: -1, duration: 300 });
+      const tag = this.add.text(e.x, e.y - 34, "WEAPON POD", { fontFamily: FONT, fontSize: "10px", color: "#fde047", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(1500);
+      const follow = this.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (!e.active || e.dead) { glow.destroy(); tag.destroy(); follow.remove(); return; }
+        glow.setPosition(e.x, e.y);
+        tag.setPosition(e.x, e.y - 34);
+      } });
+      return e;
+    }
     this.spice?.onSpawn(e, opts);
     return e;
   }
@@ -1703,6 +1784,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const up = addFart(2.6 * (1 + 0.15 * (G.s.upgrades.pk_ibs ?? 0)));
       if (up) this.fartLevelUp(up);
     }
+    if (e.def.id === "weapon_pod") {
+      this.weaponPod(e.x, e.y);
+      return;
+    }
     if (e.def.id === "fuel_tank") {
       this.events.emit("fuel-tank-dead", e.x, e.y);
       return;
@@ -1774,6 +1859,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   shoot(x: number, y: number, o: ShotOpts): Phaser.Physics.Arcade.Sprite {
+    if (this.side && o.owner === "enemy") {
+      // run'n'gun fairness: nobody off-screen shoots you, enemy bullets are slower and big and bright,
+      // and there are never too many on screen at once
+      const v = this.cameras.main.worldView;
+      const live = this.shots.filter((sh) => sh.o.owner === "enemy").length;
+      if (live >= 9 || x < v.x - 30 || x > v.right + 30 || y < v.y - 30 || y > v.bottom + 30) o = { ...o, life: 1 };
+      o = { ...o, speed: o.speed * 0.8, scale: (o.scale ?? 1) * 1.25 };
+    }
     const tex = o.texture ?? "fx_bullet";
     const spr = this.add.image(x, y, tex).setDepth(600).setScale((o.scale ?? 1) * (o.owner === "enemy" ? 1.8 : 1.6)).setTint(o.color ?? 0xffffff);
     spr.setRotation(o.angle);
@@ -2080,7 +2173,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     {
       const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;
       leadCamera(this.cameras.main, pb.velocity.x, this.side ? 0 : pb.velocity.y, dt, 0.12, 36);
-      if (this.sideBg) this.sideBg.tilePositionX = (this.cameras.main.scrollX * 0.35) / this.sideBgScale;
+      if (this.sideBg) this.sideBg.tilePositionX = (this.cameras.main.scrollX * (this.room.ledges ? 1 : 0.35)) / this.sideBgScale;
       if (this.towerBg) this.towerBg.tilePositionY = (this.cameras.main.scrollY * 0.5) / this.towerBg.tileScaleY;
     }
     // intoxication decays slowly

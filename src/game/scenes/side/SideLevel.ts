@@ -180,6 +180,7 @@ export class SideLevel {
   }
 
   private nextCull = 0;
+  private nextPod = 0;
 
   update(dt: number, busy: boolean) {
     const sc = this.sc;
@@ -309,6 +310,14 @@ export class SideLevel {
       if (p.x > lk.r - 30) p.spr.x = lk.r - 30;
       if (lk.pending === 0 && lk.spawned.every((e) => !e || e.dead)) this.releaseLock();
     }
+    // a weapon pod every so often (shoot it for SPREAD / MACHINE GUN / BARRIER / HEALTH)
+    if (this.hasTriggers && !this.room.boss && !busy && now > this.nextPod) {
+      if (this.nextPod) {
+        const v = sc.cameras.main.worldView;
+        sc.spawnEnemy("weapon_pod", v.right + 40, this.room.tower ? p.y - 200 : v.y + 110 + Math.random() * 120, { noDrops: true });
+      }
+      this.nextPod = now + 13000 + Math.random() * 5000;
+    }
     // towers: anything left well below you gives up the chase (no rewards), so the climb doesn't snowball
     if (this.room.tower && now > this.nextCull) {
       this.nextCull = now + 500;
@@ -332,7 +341,8 @@ export class SideLevel {
         synth.play("decree");
       }
       // towers keep the crowd small: a wave only tops the room up to a handful
-      const room = this.room.tower ? Math.max(0, 9 - sc.enemies.filter((e) => !e.dead && !e.isBoss).length) : 99;
+      // keep the crowd to a readable handful (towers and run'n'gun alike)
+      const room = Math.max(this.room.tower ? 0 : 2, (this.room.tower ? 9 : 8) - sc.enemies.filter((e) => !e.dead && !e.isBoss).length);
       let budget = room;
       for (const [type, n0] of tr.wave) {
         const n = Math.min(budget, Math.max(1, Math.round(n0 * 0.8)));

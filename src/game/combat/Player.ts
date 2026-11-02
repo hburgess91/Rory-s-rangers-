@@ -53,6 +53,8 @@ export class Player {
   bongoUntil = 0;
   machineBuffUntil = 0;
   shieldUntil = 0;
+  /** SPREAD power-up (side-scrolling weapon pods): every shot fans out. */
+  spreadUntil = 0;
   readmissionUsed = false;
   combo = 0;
   shots = 0;
@@ -363,8 +365,10 @@ export class Player {
       this.world.burst(x, y, 0xff6ec7, 14);
       this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: 0xff6ec7, knock: g.knock ?? 200 });
     };
+    const fan = now < this.spreadUntil && g.pellets === 1 ? [-0.25, 0, 0.25] : [0];
+    for (const fo of fan)
     for (let i = 0; i < g.pellets; i++) {
-      const spread = g.pellets > 1 ? (i / (g.pellets - 1) - 0.5) * g.spread + (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * g.spread;
+      const spread = fo + (g.pellets > 1 ? (i / (g.pellets - 1) - 0.5) * g.spread + (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * g.spread);
       const crit = Math.random() < 0.06;
       const d = this.dmg(g.dmg, now) * (crit ? 2 : 1);
       this.world.shoot(mx, my, {
@@ -499,7 +503,7 @@ export class Player {
     const mx = this.x + Math.cos(this.aim) * 22;
     const my = this.y + 2 + Math.sin(this.aim) * 22;
     const homing = this.id === "KREZWONK" ? 2.2 : this.id === "MIKEY" && s.upgrades.mk3 && this.shots % 20 === 0 ? 4 : 0;
-    const angles = now < this.overdriveUntil ? [-0.22, -0.08, 0.08, 0.22] : this.id === "KREZMAR" && s.upgrades.kz3 ? [-0.18, 0, 0.18] : [0];
+    const angles = now < this.spreadUntil ? [-0.32, -0.16, 0, 0.16, 0.32] : now < this.overdriveUntil ? [-0.22, -0.08, 0.08, 0.22] : this.id === "KREZMAR" && s.upgrades.kz3 ? [-0.18, 0, 0.18] : [0];
     const tex = this.world.sc.textures.exists("fx_gas") ? "fx_gas" : "fx_bullet";
     for (const off of angles) {
       const backstab = this.id === "CRONGUS" || this.id === "KREBON";

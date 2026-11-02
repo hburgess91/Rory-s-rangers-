@@ -34,6 +34,9 @@ export interface RoomDef {
   /** Side-scrolling rooms: backdrop image and one-way platforms [x (0..1), height above the ground, width]. */
   backdrop?: string;
   platforms?: [number, number, number][];
+  /** Side rooms: the backdrop scrolls with the level (no parallax) and these ledges in it are real platforms.
+   *  [x0, x1, y] in backdrop pixels, left half only (the art is mirrored, so they're mirrored too). */
+  ledges?: [number, number, number][];
   /** SanMik and SanChz fight alongside you in this room. */
   sanBros?: boolean;
   /** Scenes to play (in order) when you leave through the exit, before the next room: "norwich", "drive". */
@@ -704,7 +707,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         sanBros: true,
         exitFlag: "sm_donut",
         exitHint: "Where's SanChz? He went to the toilet twenty minutes ago. Check the STAFF TOILET.",
-        hazards: [{ kind: "conveyor", x: 0.14, w: 420, dir: -1 }, { kind: "crusher", x: 0.4, w: 120, period: 2700 }, { kind: "conveyor", x: 0.55, w: 380, dir: 1 }, { kind: "crusher", x: 0.72, w: 120, period: 2400, offset: 900 }],
+        hazards: [{ kind: "crusher", x: 0.4, w: 120, period: 2700 }, { kind: "crusher", x: 0.72, w: 120, period: 2400, offset: 900 }],
         crusherLabel: "FORMS",
         movers: [[0.86, 150, 120, 0, 70, 2400]],
         platforms: [[0.18, 110, 240], [0.3, 210, 200], [0.45, 120, 300], [0.6, 220, 200], [0.75, 120, 260]],
@@ -791,12 +794,13 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 540,
         theme: "industrial",
         backdrop: "cf_floor",
-        platforms: [[0.08, 120, 200], [0.15, 230, 160], [0.3, 130, 200], [0.36, 240, 160], [0.5, 130, 220], [0.58, 240, 160], [0.74, 130, 200], [0.8, 240, 160], [0.9, 130, 220]],
+        platforms: [],
+        ledges: [[56, 222, 78], [0, 96, 162], [150, 256, 163], [280, 368, 205], [354, 404, 126], [436, 512, 127], [436, 512, 205]],
         floorGaps: [[0.2, 170], [0.43, 200], [0.66, 180]],
         pitColor: 0x5b3416,
         pitName: "CHOCOLATE RIVER",
         movers: [[0.22, 120, 110, 0, 70, 2400], [0.455, 140, 120, 90, 0, 2800], [0.68, 130, 110, 0, 80, 2200]],
-        hazards: [{ kind: "conveyor", x: 0.04, w: 360, dir: 1 }, { kind: "crusher", x: 0.27, w: 130, period: 2600 }, { kind: "steam", x: 0.34, period: 3000 }, { kind: "conveyor", x: 0.52, w: 420, dir: -1 }, { kind: "crusher", x: 0.6, w: 130, period: 2300, offset: 800 }, { kind: "steam", x: 0.78, period: 2600 }, { kind: "crusher", x: 0.86, w: 130, period: 2500, offset: 1500 }],
+        hazards: [{ kind: "crusher", x: 0.27, w: 130, period: 2600 }, { kind: "steam", x: 0.34, period: 3000 }, { kind: "crusher", x: 0.6, w: 130, period: 2300, offset: 800 }, { kind: "steam", x: 0.78, period: 2600 }, { kind: "crusher", x: 0.86, w: 130, period: 2500, offset: 1500 }],
         crusherLabel: "CROBLEY PRESS",
         triggers: [[0.03, [["crobley_minion", 8]]], [0.14, [["crobley_minion", 5], ["candy_drone", 2], ["gobstopper", 2]]], [0.28, [["crobage", 3], ["crobley_minion", 4], ["leaping_crobage", 2]]], [0.4, [["crobley_guard", 3], ["candy_drone", 2], ["jingle_turret", 1]]], [0.55, [["crobage", 3], ["crobley_minion", 6], ["gobstopper", 2]]], [0.7, [["crobley_guard", 3], ["candy_drone", 3], ["leaping_crobage", 2]]], [0.84, [["crobage", 3], ["crobley_guard", 2], ["crobley_minion", 6], ["jingle_turret", 1]]]],
         enterLines: [
@@ -811,12 +815,13 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 540,
         theme: "industrial",
         backdrop: "cf_packing",
-        platforms: [[0.1, 130, 200], [0.2, 240, 160], [0.33, 130, 200], [0.47, 240, 180], [0.6, 130, 200], [0.73, 240, 160], [0.86, 130, 200]],
+        platforms: [],
+        ledges: [[100, 512, 188], [300, 380, 129], [448, 512, 112], [0, 96, 238]],
         floorGaps: [[0.25, 160], [0.53, 190], [0.79, 170]],
         pitColor: 0xdb2777,
         pitName: "THE CANDY CHUTE",
         movers: [[0.27, 130, 110, 0, 80, 2200], [0.555, 150, 120, 80, 0, 2600], [0.81, 130, 110, 0, 70, 2000]],
-        hazards: [{ kind: "conveyor", x: 0.02, w: 600, dir: 1 }, { kind: "crusher", x: 0.16, w: 130, period: 2200 }, { kind: "conveyor", x: 0.36, w: 520, dir: -1 }, { kind: "crusher", x: 0.42, w: 130, period: 2000, offset: 600 }, { kind: "crusher", x: 0.66, w: 130, period: 2400, offset: 1200 }, { kind: "conveyor", x: 0.6, w: 480, dir: 1 }, { kind: "steam", x: 0.9, period: 2400 }],
+        hazards: [{ kind: "crusher", x: 0.16, w: 130, period: 2200 }, { kind: "crusher", x: 0.42, w: 130, period: 2000, offset: 600 }, { kind: "crusher", x: 0.66, w: 130, period: 2400, offset: 1200 }, { kind: "steam", x: 0.9, period: 2400 }],
         crusherLabel: "WRAPPER",
         triggers: [[0.04, [["crobley_minion", 7], ["candy_drone", 2]]], [0.2, [["crobley_guard", 3], ["crobley_minion", 4], ["jingle_turret", 1]]], [0.38, [["candy_drone", 4], ["crobage", 2], ["gobstopper", 2]]], [0.56, [["crobley_guard", 3], ["crobage", 3], ["leaping_crobage", 2]]], [0.74, [["candy_drone", 3], ["crobley_minion", 8], ["jingle_turret", 1]]], [0.88, [["crobley_guard", 4], ["crobage", 3], ["gobstopper", 2]]]],
         enterLines: [
@@ -829,12 +834,13 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 540,
         theme: "industrial",
         backdrop: "cf_sausage",
-        platforms: [[0.1, 130, 200], [0.2, 240, 160], [0.34, 130, 200], [0.46, 240, 180], [0.6, 130, 200], [0.72, 240, 160], [0.86, 130, 200]],
+        platforms: [],
+        ledges: [[0, 266, 205], [276, 420, 184], [424, 512, 149], [300, 370, 79], [52, 112, 107]],
         floorGaps: [[0.26, 180], [0.52, 200], [0.78, 180]],
         pitColor: 0x991b1b,
         pitName: "RAW SAUSAGE MEAT",
         movers: [[0.28, 130, 110, 0, 80, 2000], [0.545, 150, 120, 90, 0, 2400], [0.8, 140, 110, 0, 80, 1800]],
-        hazards: [{ kind: "crusher", x: 0.14, w: 140, period: 2000 }, { kind: "steam", x: 0.22, period: 2200 }, { kind: "crusher", x: 0.4, w: 140, period: 1900, offset: 700 }, { kind: "conveyor", x: 0.42, w: 300, dir: -1 }, { kind: "steam", x: 0.64, period: 2000 }, { kind: "crusher", x: 0.68, w: 140, period: 2100, offset: 1300 }, { kind: "crusher", x: 0.92, w: 140, period: 1800, offset: 300 }],
+        hazards: [{ kind: "crusher", x: 0.14, w: 140, period: 2000 }, { kind: "steam", x: 0.22, period: 2200 }, { kind: "crusher", x: 0.4, w: 140, period: 1900, offset: 700 }, { kind: "steam", x: 0.64, period: 2000 }, { kind: "crusher", x: 0.68, w: 140, period: 2100, offset: 1300 }, { kind: "crusher", x: 0.92, w: 140, period: 1800, offset: 300 }],
         crusherLabel: "MINCER",
         chase: { at: 0.45, speed: 175, label: "THE GIANT MINCER", color: 0x7f1d1d },
         triggers: [[0.04, [["crobage", 4]]], [0.18, [["crobage", 3], ["crobley_guard", 2], ["leaping_crobage", 2]]], [0.36, [["crobage", 4], ["candy_drone", 3], ["gobstopper", 2]]], [0.55, [["crobley_guard", 4], ["crobage", 3], ["jingle_turret", 1]]], [0.72, [["crobage", 5], ["candy_drone", 3], ["leaping_crobage", 2]]], [0.88, [["crobley_guard", 4], ["crobage", 4], ["gobstopper", 2]]]],

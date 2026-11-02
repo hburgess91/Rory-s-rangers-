@@ -1,4 +1,4 @@
-export type Behavior = "chaser" | "charger" | "shooter" | "bomber" | "spawner" | "blinker" | "orbiter" | "swarm" | "lobber" | "leaper" | "turret";
+export type Behavior = "chaser" | "charger" | "shooter" | "bomber" | "spawner" | "blinker" | "orbiter" | "swarm" | "lobber" | "leaper" | "turret" | "pod";
 
 export interface EnemyDef {
   id: string;
@@ -72,6 +72,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   jam_donut: { id: "jam_donut", name: "Jam Donut (Avenging Sister)", behavior: "chaser", hp: 34, speed: 130, damage: 10, size: 13, color: 0xd6a35c, accent: 0xdc2626, shape: "blob", label: "o", coins: 4, krezz: 4 },
   biofilm: { id: "biofilm", name: "Biofilm", behavior: "chaser", hp: 40, speed: 95, damage: 11, size: 14, color: 0x84cc16, accent: 0x3f6212, shape: "blob", coins: 4, krezz: 4 },
   rave_bouncer: { id: "rave_bouncer", name: "Rave Bouncer", behavior: "charger", hp: 80, speed: 85, damage: 15, size: 18, color: 0x111827, accent: 0xa3e635, shape: "brute", label: "B", coins: 8, krezz: 6 },
+  weapon_pod: { id: "weapon_pod", name: "Weapon Pod", behavior: "pod", hp: 6, speed: 150, damage: 0, size: 16, color: 0xef4444, accent: 0xfde047, shape: "drone", label: "P", coins: 0, krezz: 0 },
   loved_up: { id: "loved_up", name: "Loved-Up Raver", behavior: "swarm", hp: 24, speed: 140, damage: 7, size: 12, color: 0xe879f9, accent: 0x22d3ee, shape: "humanoid", label: "♥", coins: 3, krezz: 3 },
   comedown: { id: "comedown", name: "The Comedown", behavior: "blinker", hp: 55, speed: 95, damage: 14, size: 16, color: 0x334155, accent: 0x64748b, shape: "ghost", label: ":(", coins: 6, krezz: 6 },
   crobley_minion: { id: "crobley_minion", name: "Brainwashed Crobley", behavior: "swarm", hp: 26, speed: 145, damage: 9, size: 12, color: 0xf9a8d4, accent: 0x9d174d, shape: "blob", label: "o", coins: 3, krezz: 3 },

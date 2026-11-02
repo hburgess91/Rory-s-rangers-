@@ -180,7 +180,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.stateUntil = now + tele * 0.6;
           } else if (now > this.stateUntil) {
             this.state = "move";
-            const n = pr.count ?? 1;
+            // side-scrolling: two-way spreads at most, so the screen stays readable
+            const n = this.world.side ? Math.min(2, pr.count ?? 1) : pr.count ?? 1;
             for (let i = 0; i < n; i++) {
               const a = toP + (n > 1 ? (i - (n - 1) / 2) * (pr.spread ?? 0.2) : 0);
               this.world.shoot(this.x, this.y, { owner: "enemy", damage: pr.damage * this.dmgMult, speed: pr.speed, angle: a, color: pr.color, life: 3500 });
@@ -245,6 +246,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
         break;
       }
+      case "pod": {
+        // a Contra-style weapon capsule: sails across the screen in a wave, shoot it for a power-up
+        body.setVelocity(-this.def.speed, Math.cos(now / 260 + this.uid) * 110);
+        this.angle = Math.sin(now / 200) * 12;
+        if (this.x < this.world.sc.cameras.main.scrollX - 80) this.kill();
+        break;
+      }
       case "leaper": {
         // closes in, crouches (flashes), then pounces at you and lands with a thump
         if (this.state === "move") {
@@ -298,7 +306,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             this.stateUntil = now + tele * 0.7;
           } else if (now > this.stateUntil) {
             this.state = "move";
-            for (let i = 0; i < (pr.count ?? 3); i++) {
+            for (let i = 0; i < (this.world.side ? 2 : pr.count ?? 3); i++) {
               this.world.sc.time.delayedCall(i * 130, () => {
                 if (this.dead) return;
                 const a = Math.atan2(p.y - this.y, p.x - this.x);
