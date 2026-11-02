@@ -185,6 +185,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     // the catwalks painted into the backdrop become real platforms
     if (this.room.ledges && this.room.backdrop && this.textures.exists(this.room.backdrop)) this.room = { ...this.room, platforms: [...(this.room.platforms ?? []), ...this.ledgePlatforms(this.room)] };
     const r = this.room;
+    // a Tap Rush lasts for this outing, then wears off back in town
+    if (s.flags.tap_rush) s.flags.tap_rush_out = true;
     this.telegraphMult = (s.player === "KREZWONK" ? 1.4 : 1) * ((r.view ?? this.dungeon.view) === "side" ? 1.3 : 1);
     this.cameras.main.fadeIn(300);
     // a previous room's trip doesn't carry over

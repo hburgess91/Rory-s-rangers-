@@ -26,6 +26,8 @@ export function maxHp(s: GameState): number {
   if (s.flags.arc_krezwonk_done) hp += 15;
   if (s.flags.arc_kreblis_done) hp += 25;
   if (s.flags.arc_cronster_done) hp += 15;
+  // TAP RUSH: a fresh drink from the Great Tap, good for your next outing
+  if (s.flags.tap_rush) hp = Math.round(hp * 1.5);
   return Math.max(30, hp);
 }
 
@@ -43,6 +45,7 @@ export function damageMult(s: GameState): number {
   m *= reactionDamageMult(s);
   if (s.flags.arc_flenky_done) m *= 1.1;
   if (s.flags.arc_krezwonk_done) m *= 1.08;
+  if (s.flags.tap_rush) m *= 1.25;
   return m;
 }
 

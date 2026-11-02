@@ -53,6 +53,7 @@ export class DebugScene extends Phaser.Scene {
       const c = CHAPTERS[k - 1];
       if (c) for (const st of c.steps) if (st.done?.flag) s.flags[st.done.flag] = true;
       s.flags[`ch${k}_clear`] = s.flags[`ch${k}_outro`] = s.flags[`ch${k}_fact`] = s.flags[`ch${k}_intro`] = true;
+      if (k === 1) Object.assign(s.flags, { wildern_destroyed: true, tap_flow_seen: true });
     }
     for (const a of arcsFor(pl)) {
       if (a === keep) continue;

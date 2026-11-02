@@ -266,6 +266,14 @@ export class HubScene extends Phaser.Scene {
       G.save();
     }
     if (s.flags.met_emergency && !s.flags.drongus_dungeon_risen) await this.riseTower();
+    // you've been out with a Tap Rush: it's worn off
+    if (s.flags.tap_rush && s.flags.tap_rush_out && from) {
+      s.flags.tap_rush = false;
+      s.flags.tap_rush_out = false;
+      s.hp = Math.min(s.hp, maxHp(s));
+      G.emit("toast", { title: "TAP RUSH WORN OFF", text: "Back to normal. The Great Tap is always there for a top-up." });
+    }
+    if (s.chapter === 1 && s.flags.ch1_clear && !s.flags.tap_flow_seen) await this.tapFlows();
     if (s.chapter === 1 && !s.flags.ch1_hub_tip) {
       s.flags.ch1_hub_tip = true;
       G.emit("toast", { title: "KRELFORD", text: "WASD to walk. E to talk/interact. Follow the yellow arrow. Esc for menu (quests, upgrades, save)." });
@@ -546,6 +554,103 @@ export class HubScene extends Phaser.Scene {
         left--;
       }
     }
+  }
+
+  // ------------------------------------------------------------- the Great Tap
+
+  private static TAP = { x: 1280, y: 790, spoutX: 1265, spoutY: 773, basinY: 805 };
+
+  /** A pink splash and sparkles at the Tap (you've just had a drink). */
+  private tapSplash() {
+    const T = HubScene.TAP;
+    for (let i = 0; i < 16; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+      const d = this.add.circle(T.spoutX, T.basinY, 3 + Math.random() * 3, Math.random() < 0.5 ? 0xff6bb0 : 0xffc0de, 0.95).setDepth(900);
+      this.tweens.add({ targets: d, x: d.x + Math.cos(a) * 70, y: d.y + Math.sin(a) * 60, alpha: 0, duration: 600, ease: "Quad.out", onComplete: () => d.destroy() });
+    }
+    const t = this.add.text(this.av.x, this.av.y - 60, "💦 TAP RUSH!", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ff6bb0", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(5000);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 1600, onComplete: () => t.destroy() });
+    this.cameras.main.flash(200, 255, 140, 200);
+  }
+
+  /** Chapter 1, Krandall's dead: the camera swings round to the Great Tap as it coughs back into life. */
+  private async tapFlows() {
+    const s = G.s;
+    const T = HubScene.TAP;
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    synth.stopMusic();
+    cam.stopFollow();
+    cam.pan(T.x, T.y - 40, 1400, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(1500, r));
+    // it coughs...
+    for (let i = 0; i < 3; i++) {
+      synth.play("tap_fail");
+      cam.shake(200, 0.006);
+      const drop = this.add.circle(T.spoutX, T.spoutY, 4, 0xff6bb0).setDepth(900);
+      this.tweens.add({ targets: drop, y: T.basinY, duration: 300, ease: "Quad.in", onComplete: () => drop.destroy() });
+      const cough = this.add.text(T.spoutX - 30, T.spoutY - 30, ["*cough*", "*splutter*", "*GLUG*"][i], { fontFamily: FONT, fontSize: "14px", color: "#ffb6c1", stroke: "#000", strokeThickness: 3 }).setDepth(5000);
+      this.tweens.add({ targets: cough, y: cough.y - 20, alpha: 0, duration: 800, onComplete: () => cough.destroy() });
+      await new Promise((r) => this.time.delayedCall(700, r));
+    }
+    // ...and GUSHES
+    synth.play("tap");
+    synth.play("boom");
+    cam.shake(900, 0.014);
+    cam.flash(300, 255, 120, 190);
+    const gush = this.time.addEvent({ delay: 25, loop: true, callback: () => {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.1;
+      const v = 260 + Math.random() * 160;
+      const d = this.add.circle(T.spoutX, T.spoutY, 3 + Math.random() * 4, Math.random() < 0.6 ? 0xff6bb0 : 0xffc0de, 0.95).setDepth(900);
+      const dx = Math.cos(a) * v * 0.9;
+      const peak = Math.sin(a) * v * 0.55;
+      this.tweens.add({ targets: d, x: d.x + dx, duration: 1100, ease: "Linear" });
+      this.tweens.add({ targets: d, y: T.spoutY + peak, duration: 520, ease: "Quad.out", yoyo: true, hold: 40, onComplete: () => d.destroy() });
+    } });
+    const rain = this.time.addEvent({ delay: 60, loop: true, callback: () => {
+      const x = cam.worldView.x + Math.random() * 960;
+      const d = this.add.rectangle(x, cam.worldView.y - 10, 2, 9, 0xff8fc7, 0.8).setDepth(4200);
+      this.tweens.add({ targets: d, y: d.y + 560, duration: 900, onComplete: () => d.destroy() });
+    } });
+    const title = this.add.text(480, 120, "THE TAP FLOWS AGAIN", { fontFamily: "Impact, sans-serif", fontSize: "52px", color: "#ff6bb0", stroke: "#3b0a2a", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setScale(2.5).setAlpha(0);
+    this.tweens.add({ targets: title, scale: 1, alpha: 1, duration: 450, ease: "Back.out" });
+    this.time.delayedCall(500, () => synth.music("hub"));
+    // the town comes running
+    const cheers = ["PUSSY JUICE!!", "IT'S BACK!!", "ME NEED PUSSY JUICE!", "GET THE BUCKETS!", "MMMM!", "I'M DRINKING IT WITH MY EYES CLOSED!"];
+    for (let i = 0; i < 8; i++) {
+      this.time.delayedCall(300 + i * 280, () => {
+        const ang = Math.random() * Math.PI * 2;
+        const sx = T.x + Math.cos(ang) * 420;
+        const sy = T.y + Math.sin(ang) * 260;
+        const folk = this.add.sprite(sx, sy, this.textures.exists(`spr_FOLK${(i % 3) + 1}`) ? `spr_FOLK${(i % 3) + 1}` : `spr_${s.player}`, 0).setScale(2).setDepth(sy);
+        const bucket = this.add.text(sx + 12, sy - 4, "🪣", { fontSize: "16px" }).setDepth(sy + 1);
+        const tx = T.x + Math.cos(ang) * 80;
+        const ty = T.y + 40 + Math.sin(ang) * 40;
+        this.tweens.add({ targets: [folk, bucket], x: `+=${tx - sx}`, y: `+=${ty - sy}`, duration: 1400, ease: "Quad.out", onComplete: () => {
+          const c = this.add.text(folk.x, folk.y - 44, cheers[i % cheers.length], { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#be185dcc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(5000);
+          this.tweens.add({ targets: folk, y: folk.y - 14, yoyo: true, repeat: 5, duration: 160 });
+          this.time.delayedCall(2600, () => { c.destroy(); this.tweens.add({ targets: [folk, bucket], alpha: 0, duration: 500, onComplete: () => { folk.destroy(); bucket.destroy(); } }); });
+        } });
+      });
+    }
+    await new Promise((r) => this.time.delayedCall(3800, r));
+    this.tweens.add({ targets: title, alpha: 0, duration: 500, onComplete: () => title.destroy() });
+    await this.talk([
+      dir("With Kranky Krandall gone, the Main reconnects. The Great Pussy Juice Tap coughs, splutters, and then absolutely lets rip. It rains pink over Krelford for eleven minutes."),
+      dir("Citizens run out with buckets, mugs, eggcups and in one case a wellington boot. Someone is drinking straight from the spout with their eyes closed."),
+      say("GRONNY", "Me have pussy juice! ME HAVE PUSSY JUICE!"),
+      say("KREBLIS", "Breaking news… the Tap is back 👍", { role: true, proctus: "Breaking news! The Tap! It's back! I've got it in my ear!" }),
+      dir("TIP: Drink from the Great Tap before a mission for a TAP RUSH: +50% max HP and +25% damage until you're back in town."),
+    ]);
+    rain.remove();
+    gush.remove();
+    s.flags.tap_flow_seen = true;
+    cam.pan(this.av.x, this.av.y, 900, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(950, r));
+    cam.startFollow(this.av, true, 0.12, 0.12);
+    this.busy = false;
+    G.save();
   }
 
   // ------------------------------------------------------------- blowing up Wildern
@@ -2133,9 +2238,13 @@ You are required by law to sign the Sex Offenders Register.`, {
         react: { message: "THE GREAT TAP: 'Do you think Drongus appreciates me?'", context: "tap_feelings", from: "TAP", outcomes: { LOVE: [say("TAP", "Oh. Oh that's lovely. Glug.")], SEEN: [say("TAP", "Seen. Right. I'm used to it.")] } },
       });
     }
-    lines.push(dir("You drink deeply from the national drink. Health restored. Pussy juice bottles refilled."));
+    lines.push(dir(s.flags.tap_rush ? "You top up from the national drink. Still buzzing. Health restored, bottles refilled." : "You drink deeply from the national drink. Warm. Pink-ish. Your whole body tingles. Health restored, bottles refilled."));
+    if (!s.flags.tap_rush) lines.push(dir("💦 TAP RUSH! +50% max HP and +25% damage for your next outing. It wears off when you get back to town."));
     await this.talk(lines);
+    s.flags.tap_rush = true;
+    s.flags.tap_rush_out = false;
     s.hp = maxHp(s);
+    this.tapSplash();
     s.bottles = maxBottles(s);
     s.intoxication = Math.max(0, s.intoxication - 20);
     synth.play("tap");
