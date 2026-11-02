@@ -823,7 +823,7 @@ export class HubScene extends Phaser.Scene {
     const D = 25000;
     const s = G.s;
     this.busy = true;
-    synth.music("techno_dance", true, 100 / 339.46);
+    synth.music("techno_dance", true);
     const root = this.add.container(0, 0).setScrollFactor(0).setDepth(7000);
     const bg = this.add.graphics();
     bg.fillGradientStyle(0x0b0220, 0x0b0220, 0x3b0a45, 0x3b0a45, 1).fillRect(0, 0, 960, 540);
