@@ -158,6 +158,102 @@ export class SalmonSovereign extends Boss {
   }
 }
 
+// ----------------------------------------------------------------- KRANKY KRANDALL (Wildern's headmaster)
+
+/** Seventy, skinny, jester hat, krazy and zany. Sat on the pussy juice main. Lessons are attacks. */
+export class KrandallBoss extends Boss {
+  private dashUntil = 0;
+  private dashAng = 0;
+  private slurpUntil = 0;
+  constructor(w: CombatWorld, x: number, y: number) {
+    super(w, "krandall", x, y, 1300, w.sc.textures.exists("boss_krandall") ? "boss_krandall" : "boss_flatmate", 40, 0xfacc15, 64, 96);
+    this.setScale(2.6);
+  }
+  private say(t: string, col = "#fde047", size = 16) {
+    this.world.floatText(this.x, this.y - this.displayHeight / 2 - 26, t, col, size);
+  }
+  incoming(amount: number, opts?: { source?: string }): number {
+    // mid-slurp he's not paying attention: free hits
+    return super.incoming(amount, opts) * (this.world.now() < this.slurpUntil ? 1.6 : 1);
+  }
+  pattern(dt: number, now: number) {
+    const p = this.world.player;
+    const ts = this.world.enemyTimeScale;
+    this.setFrame(Math.floor(now / 170) % 4);
+    if (now < this.slurpUntil) {
+      this.halt();
+      return;
+    }
+    if (now < this.dashUntil) {
+      // the zany cartwheel
+      this.angle += 24;
+      this.moveToward(this.x + Math.cos(this.dashAng) * 100, this.y + Math.sin(this.dashAng) * 100, 600 * ts);
+      return;
+    }
+    this.angle = 0;
+    this.moveToward(p.x, p.y, (this.phase ? 90 : 65) * ts);
+    if (now < this.nextPattern) return;
+    const tele = 800 * this.world.telegraphMult;
+    const pick = this.patternIdx++ % (this.phase ? 6 : 5);
+    if (pick === 0) {
+      // ENGLISH: spell it. Every letter is a bullet.
+      this.halt();
+      this.say("SPELLING TEST! SPELL 'PUSSY JUICE'!");
+      const word = "PUSSYJUICE";
+      for (let i = 0; i < word.length; i++) {
+        this.world.sc.time.delayedCall(i * 110, () => {
+          if (this.dead) return;
+          const a = Math.atan2(p.y - this.y, p.x - this.x) + (i - 4.5) * 0.11;
+          this.world.shoot(this.x, this.y, { owner: "enemy", damage: 9, speed: 210, angle: a, color: 0xf9a8d4, life: 3500 });
+          this.world.floatText(this.x + Math.cos(a) * 40, this.y + Math.sin(a) * 40, word[i], "#f9a8d4", 18);
+        });
+      }
+      this.world.sc.time.delayedCall(word.length * 110 + 200, () => !this.dead && this.say("Mmmm. Pussy juicy.", "#f9a8d4", 14));
+      this.nextPattern = now + 2400;
+    } else if (pick === 1) {
+      // MATHS: cartons and boxes of juice rain down where you're standing
+      this.say("MATHS! JOHN HAS 2 CARTONS... DEREK HAS 5 BOXES...");
+      const n = this.phase ? 8 : 6;
+      for (let i = 0; i < n; i++) {
+        const x = p.x + (Math.random() - 0.5) * 320;
+        const y = p.y + (Math.random() - 0.5) * 320;
+        this.world.enemyAoe(x, y, 44, 15, tele + i * 90, 0xfde047);
+      }
+      this.world.sc.time.delayedCall(tele + n * 90, () => !this.dead && this.say("How many pussy juice does... ughhhh. Sorry. Lovely.", "#fde047", 13));
+      this.nextPattern = now + 2600;
+    } else if (pick === 2) {
+      // the zany cartwheel, telegraphed
+      this.halt();
+      this.say("ZANY!", "#ef4444", 20);
+      this.dashAng = Math.atan2(p.y - this.y, p.x - this.x);
+      this.world.enemyLine(this.x, this.y, this.dashAng, 520, 64, 0, tele);
+      this.world.sc.time.delayedCall(tele, () => (this.dashUntil = this.world.now() + 650));
+      this.nextPattern = now + tele + 1500;
+    } else if (pick === 3) {
+      // DETENTION: the dinner ladies come for you
+      this.say("DETENTION! DINNER LADIES!");
+      for (let i = 0; i < (this.phase ? 3 : 2); i++) this.world.spawnEnemy("dinner_lady", this.x + (i - 1) * 70, this.y + 50, { minion: true });
+      this.nextPattern = now + 2400;
+    } else if (pick === 4) {
+      // HISTORY: he loses the thread and needs a drink. Free hits while he slurps.
+      this.say("HISTORY. The Battle of... sorry... does anyone have pussy juice?", "#93c5fd", 14);
+      this.world.sc.time.delayedCall(900, () => {
+        if (this.dead) return;
+        this.say("*SLUUUURP* (hit him now!)", "#86efac", 16);
+        this.slurpUntil = this.world.now() + 2200;
+        this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.02);
+      });
+      this.nextPattern = now + 3600;
+    } else {
+      // phase 2: the bells on his hat
+      this.say("JINGLE JANGLE!", "#fde047", 18);
+      this.ring(16, 170, 10, 0xfacc15, now / 500);
+      this.world.sc.time.delayedCall(450, () => !this.dead && this.ring(16, 170, 10, 0xef4444, now / 500 + 0.2));
+      this.nextPattern = now + 2200;
+    }
+  }
+}
+
 // ----------------------------------------------------------------- THE POLSON–EDEN FEEDBACK LOOP
 
 export class FeedbackLoop extends Boss {
@@ -1402,6 +1498,8 @@ export function createBoss(id: string, w: CombatWorld, x: number, y: number): Bo
   switch (id) {
     case "hoard":
       return new HoardBoss(w, x, y);
+    case "krandall":
+      return new KrandallBoss(w, x, y);
     case "salmon":
       return new SalmonSovereign(w, x, y);
     case "feedback":

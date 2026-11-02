@@ -104,6 +104,8 @@ export interface Line {
   /** Messenger-notification style instead of a dialogue box. */
   notify?: boolean;
   emo?: string;
+  /** Play this KrelTV episode on the telly right here, then carry on. */
+  tv?: string;
 }
 
 export interface MeetingScript {

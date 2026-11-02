@@ -87,7 +87,11 @@ export class TVScene extends Phaser.Scene {
     super("TV");
   }
 
-  create(data: { overlay?: boolean; caller?: string; fromTitle?: boolean; episode?: string }) {
+  /** Played from a cutscene: close as soon as the episode ends. */
+  private once = false;
+
+  create(data: { overlay?: boolean; caller?: string; fromTitle?: boolean; episode?: string; once?: boolean }) {
+    this.once = !!data?.once;
     this.overlay = !!data?.overlay;
     this.caller = data?.caller ?? "";
     this.fromTitle = !!data?.fromTitle;
@@ -388,6 +392,10 @@ export class TVScene extends Phaser.Scene {
     if (pf === "anthem" || pf === "crazy") synth.stopMusic();
     this.subs.setText("");
     this.card.setText("");
+    if (this.once) {
+      this.time.delayedCall(600, () => this.exit());
+      return;
+    }
     this.mode = "episodes";
     this.showEpisodes(e.channel);
     if (e.id === "tcc_ep7" && !this.fromTitle) G.emit("toast", { title: "KRELTV", text: "The cabinet has opinions about Thick Cumming Cock. Go and ask them." });
@@ -736,6 +744,11 @@ export class TVScene extends Phaser.Scene {
   }
 
   private back() {
+    if (this.once) {
+      this.beatTimer?.remove();
+      this.exit();
+      return;
+    }
     if (this.mode === "playing") {
       this.beatTimer?.remove();
       this.mode = "episodes";

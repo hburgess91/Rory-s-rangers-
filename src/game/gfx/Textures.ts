@@ -376,6 +376,7 @@ const SPEAKER_SPRITES: Record<string, string> = {
   "CHAD DELTOID": "boss_rival",
   "THE CUDDLE CRONSTER": "boss_cronster",
   "THE SALMON SOVEREIGN": "boss_salmon",
+  "KRANKY KRANDALL": "boss_krandall",
   WAITER: "spr_FOLK1",
   "PROCTUS KRELMOR": "spr_PROCTUS",
 };

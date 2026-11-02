@@ -3562,6 +3562,35 @@
      3
     ]
    }
+  },
+  "spr_TV_KRANKY_KRANDALL": {
+   "file": "chars/TV_KRANKY_KRANDALL.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
   }
  },
  "images": {
@@ -4810,6 +4839,9 @@
   },
   "cum_crystal": {
    "file": "props/cum_crystal.png"
+  },
+  "tv_classroom": {
+   "file": "backdrops/tv_classroom.png"
   }
  },
  "sheets": {
@@ -5147,6 +5179,12 @@
    "file": "chars/POLSON_FAT.png",
    "frameWidth": 112,
    "frameHeight": 64
+  },
+  "boss_krandall": {
+   "file": "combat/boss_krandall.png",
+   "frameWidth": 64,
+   "frameHeight": 96,
+   "hd": 0.5
   }
  }
 }

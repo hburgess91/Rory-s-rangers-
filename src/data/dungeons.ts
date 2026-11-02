@@ -280,7 +280,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         theme: "school",
         waves: [[["smolt", 6]], [["dinner_lady", 2], ["smolt", 4]]],
         enterLines: [
-          { s: "NARRATOR", t: "Wildern Academy (Krelford branch). They also have a Wildern in Krelford. That was the first lore. The corridors smell of fish fingers and real fish.", dir: true },
+          { s: "NARRATOR", t: "Wildern Academy (Krelford branch). They also have a Wildern in Krelford. That was the first lore. The corridors smell of fish fingers and, faintly, pussy juice. Every classroom door has the same thing chalked on it: 'SPELL IT'.", dir: true },
           { s: "NARRATOR", t: "CONTROLS: WASD move · Mouse aim · Left click attack · Right click / F special · Space dodge · Q pussy juice · B fizzy bongo · R Krezz Burst (full Wonk) · E interact · Esc pause", dir: true },
         ],
       },
@@ -307,11 +307,11 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         props: [{ kind: "vending", x: 0.88, y: 0.2, id: "v_boiler" }],
       },
       {
-        name: "The Wildern Main",
+        name: "The Headmaster's Office (on top of the Main)",
         w: 1300,
         h: 820,
         theme: "school",
-        boss: "salmon",
+        boss: "krandall",
       },
     ],
   },

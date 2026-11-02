@@ -1268,7 +1268,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     s.phase = "hub";
     s.hp = maxHp(s);
     s.bottles = maxBottles(s);
-    if (b.bossId === "salmon") G.unlockArchive("arch_squeeze");
+    if (b.bossId === "salmon" || b.bossId === "krandall") G.unlockArchive("arch_squeeze");
     if (b.bossId === "feedback") {
       G.unlockArchive("arch_cheesegate");
       G.unlockArchive("arch_mork_voice");

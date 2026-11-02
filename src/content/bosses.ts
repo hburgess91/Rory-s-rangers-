@@ -12,6 +12,33 @@ export interface BossText {
 }
 
 export const BOSS_TEXT: Record<string, BossText> = {
+  krandall: {
+    id: "krandall",
+    name: "KRANKY KRANDALL",
+    title: "Headmaster of Wildern Academy (Krazy, Zany)",
+    intro: [
+      dir("The Headmaster's Office. A brass tap sticks out of the wall marked 'HEADMASTER'S PRIVATE SUPPLY'. Behind it, the Great Main of Krelford, diverted. Pussy juice is running down the wall."),
+      dir("Sat cross-legged on the desk, drinking straight from the tap, is a skinny man of seventy with white hair, a short white beard and a jester hat. The bells jingle every time he swallows."),
+      say("KRANKY KRANDALL", "Ah! Visitors! Pupils! Late! ZANY!"),
+      say("KRANKY KRANDALL", "I'm Mr Krandall. Kranky to my friends. I haven't got any friends. Apart from Drongus. And the tap."),
+      dir("Pinned to the wall: a letter. 'Dear Kranky. Keep it switched off until they react to the song. All yours till then. Love, D. P.S. The hat is sick.'"),
+      say("KRANKY KRANDALL", "He gave me the WHOLE MAIN. All the pussy juice in Krelworld. Mine. Mmmm. Pussy juicy."),
+      say("CRONGUS", "There are kids in this building, you absolute sicko.", { cond: { notPlayer: "CRONGUS" } }),
+      say("KRANKY KRANDALL", "And they're doing VERY well! They can all spell 'pussy juice'! Lesson one: never share your pussy juice!"),
+      say("KRANKY KRANDALL", "Pop quiz! What happens to pupils who come between me and my pussy juice?"),
+      say("KRANKY KRANDALL", "DETENTION. FOREVER. ZANY!"),
+      dir("TIP: Watch for the lessons. Spelling test: dodge the letters. Maths: get out of the circles. When he stops for a drink in History, unload on him."),
+    ],
+    outro: [
+      say("KRANKY KRANDALL", "Mmm... just... one... last... sippy..."),
+      dir("Kranky Krandall topples off the desk. His jester hat jingles once, then never again. The brass tap gives a cough, and turns itself the right way round."),
+      dir("With a noise like a thousand fizzy bongos opening at once, the Main reconnects. Far above, the Great Tap coughs, gurgles, and flows."),
+      dir("In a drawer of the desk: forty-one marked spelling tests. Every answer is 'pussy juice'. Every one has a gold star."),
+      say("CRONGUS", "As Children's Minister I'm putting all of these in the bin. And then the bin in a bigger bin."),
+      say("SCROMBUS", "Wildern's getting a new headmaster. A normal one. With a normal hat. Or no hat."),
+    ],
+    taunts: ["ZANY!", "KRAZY!", "PENS DOWN!", "MMMM, PUSSY JUICY!", "DETENTION!", "SPELL IT!", "JUST A LITTLE SIPPY!", "NO TALKING IN MY OFFICE!", "HAT STAYS ON!", "DRONGUS SAYS HELLO!"],
+  },
   salmon: {
     id: "salmon",
     name: "THE SALMON SOVEREIGN",

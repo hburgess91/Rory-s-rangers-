@@ -126,6 +126,48 @@ NEWSREADER: A restaurant menu bearing the words "Krebon — real butter" has bee
   { unlockFlag: "ch4_clear", unlockHint: "Broadcasts after Chapter 4" },
 );
 
+export const KRANDALL_SEGMENT = ep(
+  "krews_krandall",
+  "GB KREWS 24",
+  "GB Krews",
+  "Wildern's Zany New Head",
+  1,
+  `
+[MUSIC news start]
+# GB KREWS 24
+# CONCERNS GROW OVER WILDERN'S NEW HEAD
+INT. NEWSDESK - DAY
+[MUSIC news fade]
+NEWSREADER: Good evening. Concerns are growing tonight over the new headmaster of Wildern Academy, Mr Kranky Krandall.
+NEWSREADER: Mr Krandall, seventy, describes himself as "krazy and zany". He wears a jester hat. We asked him why. He said "zany".
+NEWSREADER: He has attracted controversy locally for his unorthodox teaching methods, and is rumoured to be a pussy juice addict.
+NEWSREADER: Parents say they are concerned about what their children are coming home saying.
+NEWSREADER: GB Krews has obtained secret footage from inside his classroom. Some viewers may find it sticky.
+INT. CLASSROOM - DAY
+# SECRET FOOTAGE: ENGLISH
+KRANKY KRANDALL: Right! Spelling test time!
+KRANKY KRANDALL: Spell... "pussy juice".
+KRANKY KRANDALL: Mmmm. Pussy juicy.
+KRANKY KRANDALL: Pussy juicy juicy. Pens down. Nobody spell it better than that.
+# SECRET FOOTAGE: MATHS
+KRANKY KRANDALL: John has two cartons of fresh pussy juice. Derek has five boxes of pussy juice. Each box contains lots of pussy juice.
+KRANKY KRANDALL: How many pussy juice does... ughhhhh.
+KRANKY KRANDALL: Sorry. Mmm. I got distracted.
+KRANKY KRANDALL: Lovely pussy juice.
+# SECRET FOOTAGE: HISTORY
+KRANKY KRANDALL: So. History. The Battle of... the Battle of...
+KRANKY KRANDALL: Sorry. Does anyone have pussy juice with them?
+KRANKY KRANDALL: I need pussy juice. Just a sip. Just a little sippy. Anyone?
+[GASP]
+KRANKY KRANDALL: (jingling his hat) ZANY!
+INT. NEWSDESK - DAY
+NEWSREADER: Wildern Academy said in a statement that Mr Krandall's methods are "unorthodox but effective", and that the school's pussy juice consumption is "within normal limits for a school with its own pipe".
+NEWSREADER: Mr Krandall was appointed last month. His only reference was from a Mr D. B. Drippin'.
+NEWSREADER: The headmaster's office has since been locked from the inside. Witnesses report slurping.
+[FADE]
+`,
+);
+
 export const CABINET_LIVE = ep(
   "cabinet_live",
   "GB KREWS 24",
@@ -224,7 +266,7 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-const EPISODES: TVEpisode[] = [NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
+const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
 
 /** Number each channel's episodes in order, now that some channels have been folded together. */
 const counts: Record<string, number> = {};
@@ -236,6 +278,7 @@ export const CHANNELS: string[] = ["GB KREWS 24", "CHANNEL KREZ", "BBK ONE", "WO
 export function setKeyFor(set: string): string {
   const s = set.toUpperCase();
   if (s.includes("OVAL OFFICE")) return "oval_office";
+  if (s.includes("CLASSROOM")) return "classroom";
   if (s.includes("DEBATE")) return "debate_stage";
   if (s.includes("CONFERENCE HALL")) return "conference_hall";
   if (s.includes("ICE CREAM")) return "ice_cream";

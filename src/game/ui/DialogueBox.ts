@@ -344,6 +344,22 @@ export class DialogueBox {
         if (out) queue.unshift(...out);
         if (!raw.t) continue;
       }
+      if (raw.tv) {
+        // someone puts the telly on: play the episode over the top, then carry on
+        this.skipping = false;
+        this.root.setVisible(false);
+        const sc = this.scene;
+        // the scene that owns this box (meetings run the box themselves; otherwise it's the Dialogue overlay)
+        const host = sc.scene.key;
+        await new Promise<void>((res) => {
+          sc.events.once("ui-resume", () => res());
+          sc.scene.launch("TV", { overlay: true, caller: host, episode: raw.tv, once: true });
+          sc.scene.pause();
+        });
+        synth.music(host === "Meeting" ? "meeting" : "hub");
+        this.root.setVisible(true);
+        if (!raw.t) continue;
+      }
       if (raw.choice) {
         this.skipping = false;
         const avail: ChoiceOption[] = raw.choice.filter((c) => evalCond(c.cond, s));

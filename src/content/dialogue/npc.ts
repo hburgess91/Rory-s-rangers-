@@ -134,7 +134,7 @@ export const NPC_TALK: Record<string, TalkSet[]> = {
   SCROMBUS: [
     ...playerSpecificSets("SCROMBUS"),
     T(36, { ngPlus: true }, [say("SCROMBUS", "Déjà vu. I've installed this machine before. Nobody said anything about it then either.")], "ng_SCROMBUS"),
-    T(10, ch(1), [say("SCROMBUS", "The Tap's down. That's municipal infrastructure. Under the Krelneva Convention that's a war crime."), say("SCROMBUS", "Wildern Academy. Under the cafeteria. Something big and salmony's sat on the main.")]),
+    T(10, ch(1), [say("SCROMBUS", "The Tap's down. That's municipal infrastructure. Under the Krelneva Convention that's a war crime."), say("SCROMBUS", "Wildern Academy. The headmaster's sat on the main. In a jester hat. Drinking it.")]),
     T(10, ch(2), [say("SCROMBUS", "Polson Towers. I've read the archive. I still don't fully understand. I'm not sure anyone does."), say("SCROMBUS", "Find the Reaction Network junction. Get the Friendship Token. Don't eat the cheese.")]),
     T(10, ch(3), [say("SCROMBUS", "The Ministry of Boner Control. My Mk II is in there. Over-wonking."), say("SCROMBUS", "If you shut it down, at least say something nice about it first. It deserves that. I deserve that.")]),
     T(10, ch(4), [say("SCROMBUS", "The Bonky Cult's on the hill. Drongus commandments carved into a giant hammer. I'd have used a better font.")]),
