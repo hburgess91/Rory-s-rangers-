@@ -830,7 +830,7 @@ export class HubScene extends Phaser.Scene {
       say("MIKEY", "YOU'VE DONE IT!!"),
       say("FLENKY", "You saved the kids from that fucking sicko!"),
       say("GRONNY", "Kids safe. School gone. Me never liked school anyway."),
-      say("CRONGUS", "As Children's Minister: you saved the kids from that fucking sicko. Lessons will now take place online. With a normal teacher. I'm vetting them personally. No hats."),
+      say("CRONGUS", "As Children's Minister: you saved the kids from that fucking sicko."),
       say("KREZWONK", "I foresaw an explosion. I did not foresee how good it would feel."),
       say("KREZMAR", "Somebody's going to have to pay for that. Not me. Put it on Drongus's tab."),
       say("SCROMBUS", "Right. The Tap's flowing, the sicko's dead and his school's a crater. Let's see what the news makes of it."),

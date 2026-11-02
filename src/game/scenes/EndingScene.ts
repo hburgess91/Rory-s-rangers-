@@ -109,7 +109,7 @@ export class EndingScene extends Phaser.Scene {
     const extra = [
       s.flags.kreltower_fell ? "The Kreltower fell (again). Rebuilding starts Monday." : s.flags.kreltower_saved ? "The Kreltower stands. Flight KR-069 lives in the Great Tap now." : "",
       s.flags.arc_scrombus_done ? "Supreme Leader: Ben Scrombus." : "",
-      s.flags.wildern_destroyed ? "The Wildern kids came back to life via the power of emeralds. Nobody has asked any follow-up questions. Lessons resume Monday, online." : "",
+      s.flags.wildern_destroyed ? "The Wildern kids came back to life via the power of emeralds. Nobody has asked any follow-up questions." : "",
     ].filter(Boolean).join(" ");
     card.add(this.add.text(-220, -96, EPILOGUES[s.player] + (extra ? `\n\n${extra}` : ""), { fontFamily: FONT, fontSize: "15px", color: "#ffffff", wordWrap: { width: 560 }, lineSpacing: 4 }));
     await new Promise<void>((res) => {
