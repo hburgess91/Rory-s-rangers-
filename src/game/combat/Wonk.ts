@@ -304,8 +304,10 @@ function jetStream(p: Player, now: number) {
           if (along < 0 || along > st.len || across > WIDTH + e.radius) continue;
           const n = (hit.get(e) ?? 0) + 1;
           hit.set(e, n);
+          // bosses only take the first ten hits (about a quarter of their health); STD KREZZ upgrades push that up
+          if (e.isBoss && n > 10) continue;
           const jet = 1 + 0.25 * (G.s.upgrades.pk_jet ?? 0);
-          const dmg = (p.dmg(14, now) * 4.5 + (e.isBoss ? e.maxHp * 0.022 : 0)) * jet;
+          const dmg = (e.isBoss ? p.dmg(14, now) * 1.2 + e.maxHp * 0.012 : p.dmg(14, now) * 4.5) * jet;
           w.damageEnemy(e, dmg, { knock: 220, angle: a, crit: n === 1, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });
           if (n === 1) w.burst(e.x, e.y, 0xffffff, 10);
         }
