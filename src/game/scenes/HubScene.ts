@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { squeeze } from "../systems/squeeze";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { FONT, hexStr, button } from "../ui/theme";
@@ -553,6 +554,35 @@ export class HubScene extends Phaser.Scene {
         place(k, x, y, solid, 40);
         left--;
       }
+    }
+  }
+
+  // ------------------------------------------------------------- golden juice
+
+  /** Two new faces in town (once golden juice is a thing), up for a squeeze. */
+  private setupSqueezers() {
+    if (!G.s.flags.golden_unlocked) return;
+    const who: { name: string; tex: string; x: number; y: number; hi: string }[] = [
+      { name: "SHEZLEIGH", tex: "spr_TV_SHEZLEIGH", x: 1520, y: 905, hi: "Alright babe. Heard you're the one going round squeezing. I'm up for it." },
+      { name: "BIG SUE", tex: "spr_TV_SUE", x: 760, y: 905, hi: "Ooh, it's you. Come here, I give the best squeezes in Krelford. Ask anyone." },
+    ];
+    for (const w of who) {
+      if (!this.textures.exists(w.tex)) continue;
+      const spr = this.add.sprite(w.x, w.y, w.tex, 0).setScale(2).setDepth(w.y);
+      this.add.text(w.x, w.y - 44, `${w.name} 💛`, { fontFamily: FONT, fontSize: "9px", color: "#fde047", backgroundColor: "#00000077", padding: { x: 2, y: 1 } }).setOrigin(0.5, 1).setDepth(4000);
+      this.tweens.add({ targets: spr, y: w.y - 4, yoyo: true, repeat: -1, duration: 900 + Math.random() * 300 });
+      this.interactables.push({
+        x: w.x,
+        y: w.y,
+        r: 50,
+        label: () => (G.s.flags.golden_charge ? `${w.name} (you're already full of golden juice)` : `Talk to ${w.name} (squeeze)`),
+        use: async () => {
+          this.busy = true;
+          (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+          await squeeze(this, (l) => this.talk(l), { name: w.name, spr }, this.av, [say(w.name, w.hi)]);
+          this.busy = false;
+        },
+      });
     }
   }
 
@@ -1470,6 +1500,7 @@ export class HubScene extends Phaser.Scene {
       this.interactables.push({ x: b.door.x, y: b.door.y + 10, r: 46, label: () => this.doorLabel(b), use: () => this.enterBuilding(b) });
     }
     this.setupBombs();
+    this.setupSqueezers();
     for (const gt of GATES) {
       this.interactables.push({ x: gt.x, y: gt.y, r: 60, label: () => this.doorLabel({ id: gt.id, name: gt.name } as Building), use: () => this.enterBuilding({ id: gt.id, name: gt.name } as Building) });
     }

@@ -18,7 +18,7 @@ export class Controls {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const kb = scene.input.keyboard!;
-    this.keys = kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,Q,B,R,F,SHIFT,ESC,J,K,L,TAB,X,G") as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,Q,B,R,F,SHIFT,ESC,J,K,L,TAB,X,G,T,C") as Record<string, Phaser.Input.Keyboard.Key>;
     kb.addCapture("SPACE,TAB,UP,DOWN,LEFT,RIGHT");
     scene.input.mouse?.disableContextMenu();
   }
@@ -103,7 +103,7 @@ export class Controls {
 
   /** After a dialogue closes, ignore keys that are still held until they are released. */
   swallow() {
-    for (const n of ["jump", "interact", "dodge", "special", "burst", "bottle", "bongo", "pause", "swap", "fart"]) this.pressedOnce.add(n);
+    for (const n of ["jump", "interact", "dodge", "special", "burst", "bottle", "bongo", "pause", "swap", "fart", "transform", "cume"]) this.pressedOnce.add(n);
     TOUCH.edges.clear();
   }
 
@@ -132,6 +132,14 @@ export class Controls {
   fart(): boolean {
     const p = this.pad();
     return this.edge("fart", this.keys.G.isDown || !!(p && p.down));
+  }
+  /** GOLDEN JUICE TRANSFORMATION. */
+  transform(): boolean {
+    return this.edge("transform", this.keys.T.isDown);
+  }
+  /** CUMEHAMEHA (while golden). */
+  cume(): boolean {
+    return this.edge("cume", this.keys.C.isDown);
   }
   /** Swap between fists and found guns. */
   swap(): boolean {

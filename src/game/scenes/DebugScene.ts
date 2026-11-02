@@ -54,6 +54,7 @@ export class DebugScene extends Phaser.Scene {
       if (c) for (const st of c.steps) if (st.done?.flag) s.flags[st.done.flag] = true;
       s.flags[`ch${k}_clear`] = s.flags[`ch${k}_outro`] = s.flags[`ch${k}_fact`] = s.flags[`ch${k}_intro`] = true;
       if (k === 1) Object.assign(s.flags, { wildern_destroyed: true, tap_flow_seen: true });
+      if (k === 3) Object.assign(s.flags, { mollor_freed: true, golden_unlocked: true });
     }
     for (const a of arcsFor(pl)) {
       if (a === keep) continue;

@@ -4,7 +4,7 @@ import { goat } from "../content/dsl";
 export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki";
 
 export interface PropDef {
-  kind: "talker" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
+  kind: "talker" | "mollor" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
   x: number; // 0..1 of room width
   y: number; // 0..1 of room height
   id?: string;
@@ -381,61 +381,29 @@ export const DUNGEONS: Record<string, DungeonDef> = {
   ministry: {
     id: "ministry",
     chapter: 3,
-    name: "THE MINISTRY OF BONER CONTROL",
-    music: "industrial",
+    name: "THE MINISTRY OF BONER CONTROL (CRONNY'S LAIR)",
+    music: "ominous",
     rooms: [
+      cuddleTower(),
       {
-        name: "Pumping Station Alpha",
-        w: 1300,
-        h: 780,
-        theme: "industrial",
-        event: "valves",
-        exitFlag: "valves_done",
-        waves: [[["pipe_gremlin", 6]], [["krez_leak", 2], ["pipe_gremlin", 3]]],
-        props: [
-          { kind: "valve", x: 0.15, y: 0.2, id: "valve1" },
-          { kind: "valve", x: 0.85, y: 0.2, id: "valve2" },
-          { kind: "valve", x: 0.5, y: 0.85, id: "valve3" },
-        ],
-        enterLines: [{ s: "NARRATOR", t: "Pumping Station Alpha. Three main valves are shut. Open them all (E) to restore pressure to Krelford. The pipes are warm. Don't think about it.", dir: true }],
-      },
-      {
-        name: "The Vending Hall",
-        w: 1300,
-        h: 780,
-        theme: "industrial",
-        waves: [[["vending_mimic", 3], ["pipe_gremlin", 4]], [["krezbian", 2], ["pipe_mortar", 2]]],
-        props: [
-          { kind: "vending", x: 0.1, y: 0.2, id: "v_hall1" },
-          { kind: "vending", x: 0.9, y: 0.2, id: "v_hall2" },
-        ],
-        enterLines: [{ s: "KREZMAR", t: "(over the network) Those are my vending machines. Some of them are mimics. Please only kill the mimics.", cond: { notPlayer: "KREZMAR" } }],
-      },
-      {
-        name: "The Krezz Refinery",
-        w: 1400,
-        h: 820,
-        theme: "industrial",
-        waves: [[["krezbian", 3], ["krez_leak", 1], ["pipe_mortar", 2]], [["vending_mimic", 2], ["krezbian", 2], ["pipe_gremlin", 3]]],
-        props: [{ kind: "wonking_machine", x: 0.5, y: 0.2, id: "wm_refinery" }],
-        enterLines: [{ s: "NARRATOR", t: "The Krezz Refinery. Crude krezz is processed into Extra Virgin Krezz Oil here. Krezbians — purple, Mad Max, cannons for right arms — have taken the floor.", dir: true }],
-      },
-      {
-        name: "The Basement",
+        name: "Da Squeezing Room",
         w: 1100,
         h: 720,
-        theme: "industrial",
-        event: "bertha",
-        waves: [[["pipe_gremlin", 8]]],
-        props: [{ kind: "bertha", x: 0.5, y: 0.3, id: "bertha" }],
-        enterLines: [{ s: "NARRATOR", t: "The basement. In the corner, under a dust sheet: Big Bertha. Two years old. Crusty. Retired.", dir: true }],
+        theme: "mansion",
+        boss: "cronster",
       },
       {
-        name: "The Central Chamber",
-        w: 1300,
-        h: 860,
-        theme: "industrial",
-        boss: "machine",
+        name: "Mollor's Cell",
+        w: 1000,
+        h: 640,
+        theme: "mansion",
+        exitFlag: "mollor_freed",
+        exitHint: "Untie Mollor first (E).",
+        props: [
+          { kind: "mollor", x: 0.5, y: 0.32, id: "mollor" },
+          { kind: "bertha", x: 0.86, y: 0.28, id: "bertha" },
+        ],
+        enterLines: [{ s: "NARRATOR", t: "Behind Da Squeezing Room: a small pink cell full of beanbags. Tied to a chair in the middle, very cross, is Mollor.", dir: true }],
       },
     ],
   },

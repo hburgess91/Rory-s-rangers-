@@ -274,7 +274,7 @@ export class UIScene extends Phaser.Scene {
         ...(ownedGuns(s).length
           ? [currentGun(s) ? `🔫 ${currentGun(s)!.name} ${s.guns![s.gun!]}/${gunMax(currentGun(s)!, s)}  (X swap)` : `💨 Fart Blaster ∞${ownedGuns(s).length ? ` · ${ownedGuns(s).length} gun${ownedGuns(s).length > 1 ? "s" : ""}  (X swap)` : ""}`]
           : []),
-        `${intoxLabel(s.intoxication)}${s.intoxication > 5 ? ` (${Math.round(s.intoxication)}%)` : ""}  ·  Drongus: ${resentmentLabel(s.drongusResentment)}${s.flags.tap_rush ? "  ·  💦 TAP RUSH (+50% HP, +25% dmg)" : ""}`,
+        `${intoxLabel(s.intoxication)}${s.intoxication > 5 ? ` (${Math.round(s.intoxication)}%)` : ""}  ·  Drongus: ${resentmentLabel(s.drongusResentment)}${s.flags.tap_rush ? "  ·  💦 TAP RUSH (+50% HP, +25% dmg)" : ""}${s.flags.golden_charge ? "  ·  ⚡ GOLDEN JUICE (T to transform)" : ""}`,
       ].join("\n"),
     );
     // objective

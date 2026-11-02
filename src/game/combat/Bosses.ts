@@ -840,17 +840,102 @@ export class BrandBoss extends Boss {
 
 // ----------------------------------------------------------------- THE CUDDLE CRONSTER (everyone)
 
+type Hostage = { name: string; spr: Phaser.GameObjects.Sprite; ropes: Phaser.GameObjects.Graphics; tag: Phaser.GameObjects.Text; state: "tied" | "free" | "cuddled" };
+
 export class CronsterBoss extends Boss {
   lungeUntil = 0;
   lungeAngle = 0;
+  /** Cronny's cuddle collection, tied up round Da Squeezing Room. Free them, or he cuddles them for health. */
+  hostages: Hostage[] = [];
+  private grab: { h: Hostage; until: number } | null = null;
+  private nextGrab = 0;
   constructor(w: CombatWorld, x: number, y: number) {
     super(w, "cronster", x, y, 1500, "boss_cronster", 32, 0xf9a8d4, 32, 48);
     this.setScale(2.6);
+    const sc = w.sc;
+    const b = (w as any).bounds as Phaser.Geom.Rectangle;
+    const who: [string, string][] = [["SERGEANT SWIG", "spr_SWIG"], ["MARGE PLUNKETT", "spr_TV_MARGE_PLUNKETT"], ["BIG DEREK", "spr_TV_BOUNCER"], ["SHEZLEIGH", "spr_TV_SHEZLEIGH"]];
+    const spots = [[b.left + 70, b.top + 90], [b.right - 70, b.top + 90], [b.left + 70, b.bottom - 70], [b.right - 70, b.bottom - 70]];
+    who.forEach(([name, tex], i) => {
+      const [hx, hy] = spots[i];
+      const spr = sc.add.sprite(hx, hy, sc.textures.exists(tex) ? tex : "spr_FOLK1", 0).setScale(2).setDepth(hy);
+      const ropes = sc.add.graphics().setDepth(hy + 1);
+      ropes.lineStyle(4, 0xd6b370, 1);
+      for (const dy of [-8, 2, 12]) ropes.lineBetween(hx - 18, hy + dy, hx + 18, hy + dy + 3);
+      const tag = sc.add.text(hx, hy - 46, `${name}\n(tied up: E to free)`, { fontFamily: "monospace", fontSize: "10px", color: "#ffd1e8", align: "center", backgroundColor: "#00000099", padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(1500);
+      const h: Hostage = { name, spr, ropes, tag, state: "tied" };
+      this.hostages.push(h);
+      (sc as any).interactables?.push({ x: hx, y: hy + 20, r: 60, label: `Free ${name}`, enabled: () => h.state === "tied" && !this.dead, use: () => this.freeHostage(h) });
+    });
+    this.once("destroy", () => {
+      for (const h of this.hostages) {
+        h.tag.destroy();
+        h.ropes.destroy();
+      }
+    });
   }
+
+  private freeHostage(h: Hostage) {
+    if (h.state !== "tied") return;
+    h.state = "free";
+    h.ropes.destroy();
+    h.tag.destroy();
+    synth.play("cheer");
+    this.world.floatText(h.spr.x, h.spr.y - 40, "THANK YOU!", "#86efac", 14);
+    (this.world.sc as any).dropPickup?.(h.spr.x, h.spr.y + 10, "heal", 10);
+    if (this.grab?.h === h) this.grab = null;
+    const away = h.spr.x < this.world.sc.cameras.main.worldView.centerX ? -300 : 300;
+    this.world.sc.tweens.add({ targets: h.spr, x: h.spr.x + away, alpha: 0, duration: 900, onComplete: () => h.spr.destroy() });
+  }
+
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
     this.setFrame(Math.floor(now / 180) % 3);
+    // first grab comes a few seconds into the fight
+    if (!this.nextGrab) this.nextGrab = now + 9000;
+    // going for one of his cuddle collection
+    if (this.grab) {
+      const h = this.grab.h;
+      if (h.state !== "tied") {
+        this.grab = null;
+      } else if (Phaser.Math.Distance.Between(this.x, this.y, h.spr.x, h.spr.y) > 44) {
+        this.moveToward(h.spr.x, h.spr.y, 260 * ts);
+        return;
+      } else {
+        this.halt();
+        if (this.grab.until === 0) {
+          this.grab.until = now + 1700;
+          this.world.floatText(this.x, this.y - 60, "CUDDLE!", "#f9a8d4", 22);
+          this.world.floatText(h.spr.x, h.spr.y - 36, "AAAGH! NOT THE ARMS!", "#ffffff", 12);
+          this.world.sc.tweens.add({ targets: h.spr, angle: { from: -12, to: 12 }, yoyo: true, repeat: 6, duration: 110 });
+          synth.play("hurt");
+        } else if (now > this.grab.until) {
+          // all their cosiness, gone; he's feeling much better
+          h.state = "cuddled";
+          h.ropes.destroy();
+          h.tag.setText(`${h.name}\n(cuddled out)`);
+          h.spr.setTint(0x9ca3af).setAngle(90);
+          const heal = Math.round(this.maxHp * 0.1);
+          this.hp = Math.min(this.maxHp, this.hp + heal);
+          this.world.floatText(this.x, this.y - 70, `+${heal} SO COSY`, "#86efac", 18);
+          this.grab = null;
+          this.nextPattern = now + 900;
+        }
+        return;
+      }
+    }
+    if (now > this.nextGrab && now > p.grappledUntil && now > this.lungeUntil) {
+      this.nextGrab = now + (this.phase ? 11000 : 14000);
+      const tied = this.hostages.filter((h) => h.state === "tied");
+      if (tied.length) {
+        const h = tied.sort((a, c) => Phaser.Math.Distance.Between(this.x, this.y, a.spr.x, a.spr.y) - Phaser.Math.Distance.Between(this.x, this.y, c.spr.x, c.spr.y))[0];
+        this.grab = { h, until: 0 };
+        this.world.floatText(this.x, this.y - 60, `${h.name.split(" ")[0]}! COME HERE!`, "#f9a8d4", 16);
+        this.world.toast("HE'S GOING FOR A HOSTAGE", `Get to ${h.name} first and press E, or he'll cuddle them for health.`);
+        return;
+      }
+    }
     if (now < this.lungeUntil) {
       this.moveToward(this.x + Math.cos(this.lungeAngle) * 100, this.y + Math.sin(this.lungeAngle) * 100, 480 * ts);
       if (Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y) < 50 && now > p.grappledUntil && !p.invulnerable(now)) {

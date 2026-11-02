@@ -107,10 +107,7 @@ export function townHallAction(): TownHallAction {
     if (!f.met_emergency) return { kind: "meeting", id: "emergency_reaction_session" };
     if (f.ch1_clear && f.wildern_destroyed && !f.ch1_fact) return f.krazy_fact_ready ? { kind: "fact" } : { kind: "meeting", id: "krazy_fact_emergency" };
   }
-  if (n === 3) {
-    if (!f.beverage_committee) return { kind: "meeting", id: "national_beverage_committee" };
-    if (!f.machine_hearing) return { kind: "meeting", id: "wonking_machine_hearing" };
-  }
+  if (n === 3 && !f.cronster_briefed) return { kind: "meeting", id: "cronster_briefing" };
   if (n === 4 && !f.ban_tribunal_open) return { kind: "meeting", id: "flenky_constitutional_crisis" };
   if (n === 5 && !f.krebon_question) return { kind: "meeting", id: "krebon_question" };
   if (n === 6 && !f.final_reading) return { kind: "meeting", id: "final_reading" };

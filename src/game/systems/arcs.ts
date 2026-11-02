@@ -76,7 +76,6 @@ const DUE: Record<string, number> = {
   arc_polson_fit: 3,
   arc_crocodile: 3,
   arc_koeman: 3,
-  arc_cronster: 4,
   arc_pudding_spy: 4,
   arc_hotel_chaz: 4,
   arc_kreblis_news: 4,

@@ -568,6 +568,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.interactables.push({ x, y: y + 40, r: 50, label: "Pussy Juice Vending (15 Krezzcoin)", use: () => this.useVending(x, y) });
         break;
       }
+      case "mollor": {
+        // tied to a chair, very cross
+        const chair = this.add.rectangle(x, y + 14, 44, 30, 0x7c2d12).setDepth(y - 1);
+        const spr = this.add.sprite(x, y, this.textures.exists("spr_MOLLOR") ? "spr_MOLLOR" : "spr_FOLK1", 0).setScale(2.4).setDepth(y);
+        const ropes = this.add.graphics().setDepth(y + 1);
+        ropes.lineStyle(4, 0xd6b370, 1);
+        for (const dy of [-6, 6, 16]) ropes.lineBetween(x - 22, y + dy, x + 22, y + dy + 3);
+        this.obstacles.add(this.add.rectangle(x, y + 10, 50, 40, 0, 0));
+        void chair;
+        this.interactables.push({ x, y: y + 50, r: 70, label: "Untie Mollor", enabled: () => !G.s.flags.mollor_freed, use: () => void this.rescueMollor(spr, ropes) });
+        break;
+      }
       case "valve": {
         const spr = this.add.image(x, y, "p_valve").setScale(2.4).setDepth(y);
         this.interactables.push({
@@ -1200,6 +1212,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
       await this.talk(BOSS_TEXT[b.bossId].outro);
+      await this.crystalGet(b);
       this.boss = null;
       this.roomCleared = true;
       this.markCleared();
@@ -1264,20 +1277,27 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const txt = BOSS_TEXT[b.bossId];
     await this.talk(txt.outro);
     await this.crystalGet(b);
+    this.completeChapter(b.bossId);
+  }
+
+  /** The chapter's dungeon is done (after its boss, or after whatever its last room asks of you). */
+  private completeChapter(bossId: string) {
+    const s = G.s;
+    for (let i = 0; i < this.dungeon.rooms.length; i++) delete s.flags[clearKey(this.dungeon.id, i)];
     const reward = Math.round(200 * activeMods(s).questRewardMult * (1 + (s.chapter - 1) * 0.25));
     s.coins += reward;
     s.flags[`ch${this.dungeon.chapter}_clear`] = true;
     s.phase = "hub";
     s.hp = maxHp(s);
     s.bottles = maxBottles(s);
-    if (b.bossId === "salmon" || b.bossId === "krandall") G.unlockArchive("arch_squeeze");
-    if (b.bossId === "feedback") {
+    if (bossId === "salmon" || bossId === "krandall") G.unlockArchive("arch_squeeze");
+    if (bossId === "feedback") {
       G.unlockArchive("arch_cheesegate");
       G.unlockArchive("arch_mork_voice");
     }
-    if (b.bossId === "machine") G.unlockArchive("arch_purple");
-    if (b.bossId === "banhammer") G.unlockArchive("arch_kreltower");
-    if (b.bossId === "spectre") {
+    if (bossId === "machine") G.unlockArchive("arch_purple");
+    if (bossId === "banhammer") G.unlockArchive("arch_kreltower");
+    if (bossId === "spectre") {
       G.unlockArchive("arch_godric");
       G.unlockArchive("arch_crobley");
     }
@@ -1479,6 +1499,40 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   // ------------------------------------------------------------------ events: misc
+
+  /** Chapter 3's last room: untie Mollor, a thank-you, a hug, and a tip about the golden juice. */
+  private async rescueMollor(spr: Phaser.GameObjects.Sprite, ropes: Phaser.GameObjects.Graphics) {
+    const s = G.s;
+    if (s.flags.mollor_freed || this.busy) return;
+    s.flags.mollor_freed = true;
+    ropes.destroy();
+    synth.play("cheer");
+    this.tweens.add({ targets: spr, y: spr.y - 16, yoyo: true, duration: 180 });
+    const jenko = s.player === "FLENKY";
+    await this.talk(
+      jenko
+        ? [
+            say("MOLLOR", "JENKO! Oh thank god. There was another one of you. A DARK one. He kept calling himself 'a real man'."),
+            say("FLENKY", "That wasn't me. That was Dark Jenko. I'm the light one. Mostly."),
+            dir("Mollor kisses you on the cheek. Then gives you a big hug."),
+            say("MOLLOR", "Can we go home now? And can you never be dark again?"),
+            say("FLENKY", "No promises. Too weird to live, too rare to die."),
+          ]
+        : [
+            say("MOLLOR", "Thank you for saving me from that sicko Jenko!"),
+            dir("Mollor kisses you on the cheek. Then gives you a big hug."),
+            say("MOLLOR", "He kept going on about 'golden juice'. Said real men get it from a proper squeeze. Said the girls at the Wonky Pole do the best ones."),
+            say("MOLLOR", "Anyway. I'm going home. Tell Jenko it's over. Both Jenkos."),
+          ],
+    );
+    s.flags.golden_unlocked = true;
+    await this.talk([
+      dir("⚡ NEW: GOLDEN JUICE ⚡"),
+      dir("Golden juice can only be attained from the freshest sources. Find a woman who's up for a squeeze (a private dance at the Wonky Pole, or a couple of new faces around Krelford) before a dungeon, and you can TRANSFORM once in that dungeon."),
+      dir("Press T to transform. Golden hair. Bulging muscles. A mega melee on ATTACK, and a CUMEHAMEHA blast on C."),
+    ]);
+    this.completeChapter("cronster");
+  }
 
   private async inspectBertha() {
     const s = G.s;

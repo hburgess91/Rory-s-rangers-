@@ -84,18 +84,18 @@ describe("shared side quests", () => {
     const shared = () => currentArcSteps(s).filter((c) => c.arc.player === "ALL");
     expect(shared().length).toBe(0);
     s.chapter = 3;
-    expect(shared().map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_crocodile", "arc_cronster", "arc_hotel_chaz", "arc_koeman", "arc_polson_fit", "arc_pudding_spy"]);
+    expect(shared().map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_crocodile", "arc_hotel_chaz", "arc_koeman", "arc_polson_fit", "arc_pudding_spy"]);
   });
   it("collect steps finish when every token is picked up", () => {
     const s = newGameState("MIKEY");
     s.flags.met_emergency = true;
-    s.chapter = 2;
-    const a = ARCS.find((x) => x.id === "arc_cronster")!;
+    s.chapter = 4;
+    const a = ARCS.find((x) => x.id === "arc_koeman")!;
+    if (a.requires) s.flags[a.requires] = true;
     completeStep(s, a, a.steps[0]);
-    completeStep(s, a, a.steps[1]);
-    const st = a.steps[2];
-    expect(arcStepAt(s, "FIELD")?.step.id).toBe("tokens");
+    const st = a.steps[1];
+    expect(arcStepAt(s, "FIELD")?.step.id).toBe("emails");
     if (st.step.kind === "collect") st.step.spots.forEach((_, i) => (s.flags[spotFlag(a, st, i)] = true));
-    expect(arcStepAt(s, "POLICE")?.step.id).toBe("handin");
+    expect(currentArcSteps(s).find((c) => c.arc.id === "arc_koeman")?.step.id).toBe("post");
   });
 });

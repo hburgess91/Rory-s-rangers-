@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { squeeze } from "../systems/squeeze";
 import { addWrist, wristLook, type Wrist } from "../gfx/Wrist";
 import { randomZone, flap, fall, OVER, type WonkZone } from "../combat/Wonk";
 import { G } from "../G";
@@ -144,6 +145,7 @@ export class ClubScene extends Phaser.Scene {
     // stations
     this.add.text(870, 330, "🍸 BAR", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
     this.add.text(70, 400, "🏆 WONK-OFF\nTABLE", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", align: "center", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
+    if (G.s.flags.golden_unlocked) this.add.text(860, 470, "💋 PRIVATE\nBOOTH", { fontFamily: FONT, fontSize: "11px", color: "#fde047", align: "center", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
     this.add.rectangle(480, 532, 90, 14, 0xffd23f, 0.3).setStrokeStyle(2, 0xffd23f).setDepth(1);
     this.add.text(480, 532, "EXIT", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f" }).setOrigin(0.5).setDepth(2);
     this.me = this.add.sprite(480, 495, `spr_${s.player}`, 0).setScale(2).setDepth(495);
@@ -289,11 +291,15 @@ export class ClubScene extends Phaser.Scene {
     const atBar = this.me.x > 780 && this.me.y < 440;
     const atTable = this.me.x < 130 && this.me.y < 470;
     const atExit = this.me.y > 495 && Math.abs(this.me.x - 480) < 70;
+    const atBooth = !!G.s.flags.golden_unlocked && this.me.x > 800 && this.me.y > 450;
     let label = "";
     let act: (() => void) | null = null;
     if (atStage && !this.onBreak && !this.dancerDown) {
       label = `E: Tip ${this.dancerName()} (5 Krezzcoin)`;
       act = () => this.tip();
+    } else if (atBooth && !this.onBreak && !this.dancerDown) {
+      label = `E: Private dance with ${this.dancerName()} (25 Krezzcoin)`;
+      act = () => void this.privateDance();
     } else if (atBar) {
       label = "E: Order a Pussy Juice (10 Krezzcoin)";
       act = () => this.bar();
@@ -566,6 +572,27 @@ export class ClubScene extends Phaser.Scene {
         this.time.delayedCall(i * 250, () => this.bubble(p.spr, ["SHE'S MINE", "Oi! She's MINE", "She was looking at ME", "That's my tip money!"][i % 4], 1500, "#ffe4e4"));
       }
     });
+  }
+
+  /** A private dance, and (if you're up for it) a golden juice squeeze. */
+  private async privateDance() {
+    const s = G.s;
+    if (this.busy) return;
+    if (s.coins < 25) {
+      this.bubble(this.me, "Skint.", 1200);
+      return;
+    }
+    s.coins -= 25;
+    this.busy = true;
+    const name = this.dancerName();
+    const home = { x: this.dancer.x, y: this.dancer.y };
+    this.tweens.add({ targets: this.dancer, x: this.me.x - 50, y: this.me.y - 6, duration: 500 });
+    await new Promise((r) => this.time.delayedCall(550, r));
+    this.tweens.add({ targets: this.dancer, angle: { from: -10, to: 10 }, yoyo: true, repeat: 7, duration: 150 });
+    await squeeze(this, (l) => this.talk(l), { name, spr: this.dancer }, this.me, [dir(`${name} does a private dance for you. It's mostly spinning. It's very good spinning.`)]);
+    this.dancer.setAngle(0);
+    this.tweens.add({ targets: this.dancer, x: home.x, y: home.y, duration: 500 });
+    this.busy = false;
   }
 
   private bar() {

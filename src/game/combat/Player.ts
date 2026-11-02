@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { cumehameha, goSuper, megaMelee, superTick } from "./Super";
 import { charMeta, facingFrom, feetBody, steer } from "../gfx/HD";
 import { CHARACTERS, type CharacterDef } from "../../data/characters";
 import type { PlayableId } from "../../data/types";
@@ -53,6 +54,11 @@ export class Player {
   bongoUntil = 0;
   machineBuffUntil = 0;
   shieldUntil = 0;
+  /** GOLDEN JUICE TRANSFORMATION (Super.ts) */
+  superUntil = 0;
+  cumeCd = 0;
+  chargingUntil = 0;
+  swingSide = 1;
   /** SPREAD power-up (side-scrolling weapon pods): every shot fans out. */
   spreadUntil = 0;
   readmissionUsed = false;
@@ -266,6 +272,7 @@ export class Player {
     else if (now < this.shieldUntil) this.spr.setTint(0xc4b5fd);
     else if (now < this.overdriveUntil) this.spr.setTint(0xb5e655);
     else this.spr.clearTint();
+    superTick(this, now);
     // Krezz trickle
     s.krezz = Math.min(maxKrezz(s), s.krezz + dt * 0.0022 * (1 + 0.3 * (s.upgrades.pk_krezz ?? 0)));
     // Krez Loan interest
@@ -288,6 +295,8 @@ export class Player {
     if (c.bottle()) this.drinkBottle(now);
     if (c.bongo()) this.drinkBongo(now);
     if (c.burst()) this.tryBurst(now);
+    if (c.transform()) goSuper(this, now);
+    if (c.cume() && now < this.superUntil) cumehameha(this, now);
     if (c.fart()) releaseFart(this, now);
     // turrets
     this.updateTurrets(now);
@@ -462,6 +471,10 @@ export class Player {
 
   private tryAttack(now: number, moving: boolean) {
     if (now < this.attackCd || now < this.dodgeUntil) return;
+    if (now < this.superUntil) {
+      megaMelee(this, now);
+      return;
+    }
     if (!this.headbuttMode && this.fireGun(now)) return;
     this.fireFartBlaster(now, moving);
   }
@@ -790,6 +803,8 @@ export class Player {
     }
     const s = G.s;
     let a = amount;
+    // golden: half damage
+    if (now < this.superUntil) a *= 0.5;
     if (this.id === "KREBON") a *= 0.8;
     a *= 1 - 0.1 * (s.upgrades.pk_armor ?? 0);
     if (now < this.bongoUntil) a *= 0.95;

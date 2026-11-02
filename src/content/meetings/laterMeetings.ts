@@ -120,6 +120,43 @@ export const FRAGMAR_BRIEFING: MeetingScript = {
   unlocksArchive: [],
 };
 
+/** CHAPTER 3: the Cuddle Cronster has Mollor. */
+export const CRONSTER_BRIEFING: MeetingScript = {
+  id: "cronster_briefing",
+  title: "KRELMERGENCY: THE CUDDLE CRONSTER",
+  subtitle: "Sweet hugs, sweeter squeezes",
+  location: "TOWN_HALL",
+  agenda: [
+    "1. The Cuddle Cronster",
+    "2. Mollor",
+    "3. Why it's the Ministry of Boner Control (nobody wants to say)",
+    "4. Cum crystal number three",
+  ],
+  beats: [
+    dir("Everyone has a copy of the Krelford Gazette. Nobody has read past the headline. The headline is enough: 'CUDDLE CRONSTER STRIKES AGAIN: JENKO'S GIRLFRIEND TAKEN'."),
+    say("KREBLIS", "Breaking news…", { role: true, proctus: "Breaking news! The Cuddle Cronster has struck! I'm going to read the note. I don't want to read the note." }),
+    say("KREBLIS", "He left a note 👍", { cond: { notPlayer: "KREBLIS" } }),
+    dir("The note, in disturbingly cheery handwriting: 'I'll cuddle you, squeeze you, and extract all your lovely juices :)' It's signed with a smiley face and a chocolate coin."),
+    say("SCROMBUS", "Have you seen the serious pump today of Krezzcoin? And not to mention, #cuddletoken", { cond: { notPlayer: "SCROMBUS" } }),
+    say("MIKEY", "Not now Scrombus."),
+    say("KREZMAR", "Sorry but does this not go against convention… should it not be 'kuddle kronster'"),
+    say("FLENKY", "He's got Mollor. He's got MY Mollor. She's nineteen, she's lovely, and he's GOT HER.", { variants: { FLENKY: "He's got Mollor. He's got MY Mollor. She's nineteen, she's lovely, and he's GOT HER. I'm going to burst him. I'm going to fuckin burst him." } }),
+    say("GRONNY", "Where him?"),
+    say("KREBLIS", "Strange occurrences unit traced the chocolate wrappers. He's holed up in the Ministry of Boner Control", { role: true, proctus: "He's in the Ministry of Boner Control! I've been asked to say that with a straight face! I can't!" }),
+    dir("A long silence."),
+    say("CRONGUS", "Course he is."),
+    say("KREZWONK", "I have foreseen it. A tower inside the Ministry. Gothic. Candles. Banners of his own face. At the top: Da Squeezing Room.", { role: true, proctus: "I foresee… a tower! At the top: a room! It's called… Da Squeezing Room! I didn't make that up! I wish I had!" }),
+    say("SCROMBUS", "And there's this. Swig's lot found it at the last crime scene."),
+    dir("Scrombus holds up a photo: a cum crystal, glowing, held in a very long pink arm. On the back: 'DRONGUS SAYS HI :)'"),
+    say("SCROMBUS", "He's one of Drongus's best boys. He's got cum crystal number three."),
+    say("MIKEY", "Mikey here. I'm not going in a room called the Squeezing Room."),
+    say("FLENKY", "You are. We all are. We're getting Mollor back.", { variants: { FLENKY: "We're ALL going. Nobody squeezes my girlfriend except… nobody. Nobody squeezes her." } }),
+    say("SCROMBUS", "Right. Ministry of Boner Control. Climb the tower, get in Da Squeezing Room, unmask him, bring Mollor home. And the crystal.", { role: true, proctus: "Off you pop! Up the tower! Unmask the man! Bring back the girl and the… the crystal! Not in that order!" }),
+  ],
+  onComplete: { cronster_briefed: true },
+  unlocksArchive: [],
+};
+
 export const NATIONAL_BEVERAGE_COMMITTEE: MeetingScript = {
   id: "national_beverage_committee",
   title: "NATIONAL BEVERAGE COMMITTEE",

@@ -74,6 +74,8 @@ export class TouchControls {
       btn(930, 260, 26, "WONK", "burst", false, 0xff8c00);
       btn(700, 410, 26, "GUN", "swap", false, 0x67e8f9);
       btn(800, 290, 28, "💨", "fart", false, 0x9ccc65);
+      btn(720, 330, 24, "⚡T", "transform", false, 0xfde047);
+      btn(640, 420, 24, "CUME", "cume", false, 0x93c5fd);
     } else {
       btn(860, 450, 44, "E", "interact");
     }

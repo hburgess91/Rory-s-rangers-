@@ -7,6 +7,7 @@ import {
   KREBON_QUESTION,
   NATIONAL_BEVERAGE_COMMITTEE,
   WONKING_MACHINE_HEARING,
+  CRONSTER_BRIEFING,
 } from "./laterMeetings";
 
 export const MEETINGS: Record<string, MeetingScript> = Object.fromEntries(
@@ -18,6 +19,7 @@ export const MEETINGS: Record<string, MeetingScript> = Object.fromEntries(
     FRAGMAR_BRIEFING,
     NATIONAL_BEVERAGE_COMMITTEE,
     WONKING_MACHINE_HEARING,
+    CRONSTER_BRIEFING,
     FLENKY_CONSTITUTIONAL_CRISIS,
     KREBON_QUESTION,
     FINAL_READING,
