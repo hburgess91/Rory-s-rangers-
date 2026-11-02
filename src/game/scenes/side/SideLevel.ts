@@ -342,7 +342,7 @@ export class SideLevel {
       }
       // towers keep the crowd small: a wave only tops the room up to a handful
       // keep the crowd to a readable handful (towers and run'n'gun alike)
-      const room = Math.max(this.room.tower ? 0 : 2, (this.room.tower ? 9 : 8) - sc.enemies.filter((e) => !e.dead && !e.isBoss).length);
+      const room = Math.max(this.room.tower ? 0 : 2, (this.room.tower ? 11 : 8) - sc.enemies.filter((e) => !e.dead && !e.isBoss).length);
       let budget = room;
       for (const [type, n0] of tr.wave) {
         const n = Math.min(budget, Math.max(1, Math.round(n0 * 0.8)));

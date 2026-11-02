@@ -37,6 +37,8 @@ export interface RoomDef {
   /** Side rooms: the backdrop scrolls with the level (no parallax) and these ledges in it are real platforms.
    *  [x0, x1, y] in backdrop pixels, left half only (the art is mirrored, so they're mirrored too). */
   ledges?: [number, number, number][];
+  /** Always drop a weapons crate in this room (a new gun if there's one to find). */
+  gunCrate?: boolean;
   /** SanMik and SanChz fight alongside you in this room. */
   sanBros?: boolean;
   /** Scenes to play (in order) when you leave through the exit, before the next room: "norwich", "drive". */
@@ -111,20 +113,20 @@ function cuddleTower(): RoomDef {
   const top = 115 + STEPS * 112;
   platforms.push([0.5, top, 760]);
   const waves: [string, number][][] = [
-    [["plushie", 3]],
-    [["leaping_plushie", 1], ["plushie", 2]],
-    [["candy_drone", 1], ["plushie", 2]],
-    [["jingle_turret", 1], ["plushie", 2]],
-    [["crobley_minion", 4]],
-    [["gobstopper", 1], ["plushie", 2]],
+    [["plushie", 4]],
+    [["leaping_plushie", 2], ["plushie", 2]],
+    [["candy_drone", 2], ["plushie", 2]],
+    [["jingle_turret", 1], ["plushie", 3]],
+    [["crobley_minion", 5]],
+    [["gobstopper", 1], ["plushie", 3]],
     [["leaping_plushie", 2], ["candy_drone", 1]],
-    [["candy_drone", 2], ["crobley_minion", 3]],
-    [["gobstopper", 1], ["leaping_plushie", 2]],
-    [["plushie", 3], ["candy_drone", 1]],
+    [["candy_drone", 2], ["crobley_minion", 4]],
+    [["gobstopper", 2], ["leaping_plushie", 2]],
+    [["plushie", 4], ["candy_drone", 2]],
   ];
-  // a wave every few floors, with quiet stretches in between
+  // a wave every few floors, with short breathers in between
   const triggers: [number, [string, number][]][] = [];
-  for (let i = 0; i < 13; i++) triggers.push([0.02 + i * 0.075, waves[i % waves.length]]);
+  for (let i = 0; i < 16; i++) triggers.push([0.02 + i * 0.061, waves[i % waves.length]]);
   return {
     name: "The Cuddle Tower",
     view: "side",
@@ -398,6 +400,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         h: 640,
         theme: "mansion",
         exitFlag: "mollor_freed",
+        gunCrate: true,
         exitHint: "Untie Mollor first (E).",
         props: [
           { kind: "mollor", x: 0.5, y: 0.32, id: "mollor" },

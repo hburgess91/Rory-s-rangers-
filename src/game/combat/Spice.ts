@@ -117,7 +117,7 @@ export class Spice {
     const b = sc.bounds as Phaser.Geom.Rectangle;
     const combat = !!(sc.waves?.length) && !r.boss && !r.event && !r.exitFlag;
     if (combat && (sc.roomIdx > 0 || G.s.chapter > 1)) {
-      const pool: (Twist | null)[] = [null, null, "BARRELS", "ELITES", "TAX DODGER", "LIGHTS OUT", "SURVIVE", "SLURRY FLOOR"];
+      const pool: (Twist | null)[] = [null, null, "BARRELS", "ELITES", "TAX DODGER", "SURVIVE", "SLURRY FLOOR"];
       this.twist = pool[Math.floor(Math.random() * pool.length)];
     }
     const nBarrels = this.twist === "BARRELS" ? 8 : r.boss ? 2 : combat ? 2 + Math.floor(Math.random() * 2) : 0;

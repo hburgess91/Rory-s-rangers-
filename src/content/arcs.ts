@@ -1284,5 +1284,5 @@ export function arcFor(player: PlayableId): Arc | undefined {
 /** The player's own story first, then the shared ones. */
 export function arcsFor(player: PlayableId): Arc[] {
   // the Vegas quest is retired; the Cuddle Cronster is Chapter 3 now
-  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)].filter((a) => a.id !== "arc_vegas" && a.id !== "arc_cronster");
+  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)].filter((a) => !["arc_vegas", "arc_cronster", "arc_koeman", "arc_sanmik"].includes(a.id));
 }

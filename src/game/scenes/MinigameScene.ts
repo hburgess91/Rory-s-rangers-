@@ -340,21 +340,32 @@ export class MinigameScene extends Phaser.Scene {
     };
     const startAcapella = () => {
       for (const l of log) l.setVisible(false);
-      const LANES = [372, 410, 448, 486];
-      const KEYS = ["←", "↓", "↑", "→"];
+      // one track, like Do The Crocodile: the move scrolls in, hit the matching direction as it reaches the ring
+      const TRACK_Y = 405;
+      const LANES = [TRACK_Y, TRACK_Y, TRACK_Y, TRACK_Y];
+      const KEYS = ["◀", "▼", "▲", "▶"];
       const COLS = [0x22c55e, 0xef4444, 0xfacc15, 0x60a5fa];
       const HIT_X = 150;
-      const LEAD = 1.6;
+      const LEAD = 2.0;
       const lay = this.add.container(0, 0).setDepth(35);
-      LANES.forEach((y, i) => {
-        lay.add(this.add.rectangle(530, y, 820, 30, COLS[i], 0.12));
-        lay.add(this.add.circle(HIT_X, y, 15, 0x000000, 0.5).setStrokeStyle(3, COLS[i]));
-        lay.add(this.add.text(HIT_X - 50, y, KEYS[i], { fontFamily: FONT, fontSize: "16px", color: "#fff", fontStyle: "bold" }).setOrigin(0.5));
+      lay.add(this.add.rectangle(530, TRACK_Y, 860, 50, 0x000000, 0.55));
+      lay.add(this.add.circle(HIT_X, TRACK_Y, 24).setStrokeStyle(4, 0xffd23f));
+      // four pads for touch / mouse
+      ([["◀ A", 0, 160], ["▼ S", 1, 380], ["▲ W", 2, 600], ["▶ D", 3, 820]] as const).forEach(([lbl, lane, x]) => {
+        const pad = this.add.rectangle(x, 498, 200, 50, COLS[lane], 0.35).setStrokeStyle(2, COLS[lane]).setDepth(36).setInteractive();
+        lay.add(pad);
+        lay.add(this.add.text(x, 498, lbl, { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(37));
+        pad.on("pointerdown", () => judge(lane));
       });
       const lyric = this.add.text(530, 350, "🎤 SANMIK SHOULD'VE GONE VIRAL (acapella, live, shirtless)", { fontFamily: FONT, fontSize: "12px", color: "#f9a8d4" }).setOrigin(0.5).setDepth(36);
       const score = this.add.text(900, 350, "", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(1, 0.5).setDepth(36);
-      type N = { t: number; lane: number; c: Phaser.GameObjects.Arc; done: boolean };
-      const notes: N[] = VIRAL_CHART.map(([t, lane]) => ({ t, lane, c: this.add.circle(-50, LANES[lane], 12, COLS[lane]).setStrokeStyle(2, 0xffffff).setDepth(37), done: false }));
+      type N = { t: number; lane: number; c: Phaser.GameObjects.Container; done: boolean };
+      const notes: N[] = VIRAL_CHART.map(([t, lane]) => {
+        const c = this.add.container(-60, TRACK_Y).setDepth(37);
+        c.add(this.add.circle(0, 0, 19, COLS[lane]).setStrokeStyle(3, 0xffffff));
+        c.add(this.add.text(0, 0, KEYS[lane], { fontFamily: FONT, fontSize: "17px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+        return { t, lane, c, done: false };
+      });
       let hits = 0;
       let misses = 0;
       let combo = 0;
@@ -402,11 +413,20 @@ export class MinigameScene extends Phaser.Scene {
         if (over || this.box.active) return;
         const st = songT();
         let best: N | null = null;
-        for (const n of notes) if (!n.done && n.lane === lane && Math.abs(n.t - st) < 0.16 && (!best || Math.abs(n.t - st) < Math.abs(best.t - st))) best = n;
-        const ring = this.add.circle(HIT_X, LANES[lane], 16, COLS[lane], 0.6).setDepth(38);
+        for (const n of notes) if (!n.done && Math.abs(n.t - st) < 0.18 && (!best || Math.abs(n.t - st) < Math.abs(best.t - st))) best = n;
+        const ring = this.add.circle(HIT_X, LANES[lane], 22, COLS[lane], 0.6).setDepth(38);
         this.tweens.add({ targets: ring, scale: 1.8, alpha: 0, duration: 200, onComplete: () => ring.destroy() });
         if (!best) return;
         best.done = true;
+        if (best.lane !== lane) {
+          // wrong direction: it counts as a miss
+          misses++;
+          combo = 0;
+          artifact();
+          this.pop(HIT_X + 40, TRACK_Y - 30, "WRONG WAY", "#ff6b6b", 13);
+          best.c.destroy();
+          return;
+        }
         best.c.destroy();
         hits++;
         combo++;
@@ -442,19 +462,14 @@ export class MinigameScene extends Phaser.Scene {
           this.pop(715, 140, "MMMM FUCK", "#f9a8d4", 24);
         }
       };
-      const keyMap: Record<string, number> = { D: 0, F: 1, J: 2, K: 3, A: 0, S: 1, L: 3, LEFT: 0, DOWN: 1, UP: 2, RIGHT: 3 };
+      const keyMap: Record<string, number> = { A: 0, S: 1, W: 2, D: 3, LEFT: 0, DOWN: 1, UP: 2, RIGHT: 3 };
       const onKey = (e: KeyboardEvent) => {
         const k = e.key.toUpperCase().replace("ARROW", "");
         if (k in keyMap) judge(keyMap[k]);
       };
       this.input.keyboard?.addCapture("UP,DOWN,LEFT,RIGHT");
       this.input.keyboard?.on("keydown", onKey);
-      const onTap = (p: Phaser.Input.Pointer) => {
-        if (p.y < 350) return;
-        let best = 0;
-        LANES.forEach((y, i) => Math.abs(p.y - y) < Math.abs(p.y - LANES[best]) && (best = i));
-        judge(best);
-      };
+      const onTap = () => undefined;
       this.input.on("pointerdown", onTap);
       const tick = this.time.addEvent({ delay: 16, loop: true, callback: () => {
         if (over) return;
@@ -1637,7 +1652,7 @@ export class MinigameScene extends Phaser.Scene {
     const BPM = 89;
     const BEAT = 60 / BPM;
     const PHASE = 0.017;
-    const SPEED = 260; // px per second along the lane
+    const SPEED = 330; // px per second along the lane
     const HIT_X = 150;
     if (!backdrop(this, "bg_gig", { dim: 0.35, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x10241a);
     title(this, 480, 22, "DO THE CROCODILE", 26, "#86efac").setDepth(200);
@@ -1699,23 +1714,25 @@ export class MinigameScene extends Phaser.Scene {
     const quiet = new Set([28, 29, 54, 55]);
     const pattern: ("L" | "R" | "C")[] = ["L", "R", "L", "C", "R", "L", "R", "C"];
     let pi = 0;
-    // the moves start straight away (sparse for the first few bars)
-    for (let beat = 4; beat < 69 * 4; beat++) {
+    // the moves start straight away: every other beat for two bars, then every beat, then offbeats creep in
+    const add = (beat: number, k: "L" | "R" | "C") => {
+      const t = PHASE + beat * BEAT;
+      if (t > CROC_END - 1.5) return;
+      const c = this.add.container(-200, 120).setDepth(150);
+      const col = k === "C" ? 0x22c55e : k === "L" ? 0x38bdf8 : 0xf472b6;
+      c.add(this.add.circle(0, 0, 20, col).setStrokeStyle(3, 0xffffff));
+      c.add(this.add.text(0, 0, k === "C" ? "▲" : k === "L" ? "◀" : "▶", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+      notes.push({ t, k, img: c, done: false });
+    };
+    for (let beat = 2; beat < 69 * 4; beat++) {
       const bar = Math.floor(beat / 4);
       if (quiet.has(bar)) continue;
-      if (beat < 16 && beat % 4) continue;
-      if (bar < 12 && beat % 2) continue; // gentle start: every other beat
-      if (bar >= 56 || beat % 2 === 0 || bar >= 30) {
-        const t = PHASE + beat * BEAT;
-        if (t > CROC_END - 1.5) break;
-        const k = pattern[pi++ % pattern.length];
-        const c = this.add.container(-200, 120).setDepth(150);
-        const col = k === "C" ? 0x22c55e : k === "L" ? 0x38bdf8 : 0xf472b6;
-        c.add(this.add.circle(0, 0, 20, col).setStrokeStyle(3, 0xffffff));
-        c.add(this.add.text(0, 0, k === "C" ? "▲" : k === "L" ? "◀" : "▶", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
-        notes.push({ t, k, img: c, done: false });
-      }
+      if (beat < 8 && beat % 2) continue;
+      add(beat, pattern[pi++ % pattern.length]);
+      // offbeats: a syncopated extra on the last beat of the bar from bar 16, on every other beat from bar 40
+      if ((bar >= 16 && beat % 4 === 3) || (bar >= 40 && beat % 2 === 1)) add(beat + 0.5, pattern[pi++ % pattern.length]);
     }
+    notes.sort((a, b) => a.t - b.t);
     this.add.rectangle(480, 120, 960, 54, 0x000000, 0.55).setDepth(140);
     this.add.circle(HIT_X, 120, 24).setStrokeStyle(4, 0xffd23f).setDepth(145);
     const lyric = this.add.text(480, 200, "", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#86efac", stroke: "#000", strokeThickness: 6 }).setOrigin(0.5).setDepth(160);

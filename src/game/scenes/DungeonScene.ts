@@ -398,6 +398,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const t = this.add.text(480, 200, r.name.toUpperCase(), { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setScrollFactor(0).setDepth(950).setShadow(3, 3, "#000", 0);
     this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
     for (const p of r.props ?? []) if (evalCond(p.cond, G.s)) this.addProp(p);
+    if (r.gunCrate) this.time.delayedCall(600, () => this.maybeGunCrate(true));
   }
 
   private towerBg: Phaser.GameObjects.TileSprite | null = null;
@@ -485,6 +486,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
     // props
     for (const p of r.props ?? []) if (evalCond(p.cond, G.s)) this.addProp(p);
+    if (r.gunCrate) this.time.delayedCall(600, () => this.maybeGunCrate(true));
     // quest pickups
     for (const { quest, spot } of pickupsInDungeon(G.s, this.dungeon.id, this.roomIdx)) {
       const x = r.w * (0.15 + Math.random() * 0.7);
@@ -852,10 +854,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   /** Weapon crates: the first cleared room always has one until you own a gun, then about one room in three. */
-  private maybeGunCrate() {
+  private maybeGunCrate(force = false) {
     const s = G.s;
     const first = !ownedGuns(s).length;
-    if (!first && Math.random() > 0.33) return;
+    if (!force && !first && Math.random() > 0.33) return;
     const x = this.side ? Phaser.Math.Clamp(this.player.x + 90, 80, this.room.w - 160) : this.bounds.centerX + (Math.random() - 0.5) * 120;
     const y = this.side ? this.groundY - 26 : this.bounds.centerY + 40;
     const tex = this.textures.exists("p_gun_crate") ? "p_gun_crate" : "p_bin";
@@ -1238,6 +1240,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (this.dungeon.arenaFlag) {
       await this.talk(BOSS_TEXT[b.bossId].outro);
+      // Uncle Rik is Chapter 5's boss now: his crystal, and the chapter's done
+      if (b.bossId === "rik") {
+        await this.crystalGet(b);
+        if (s.chapter === 5 && !s.flags.ch5_clear) {
+          s.flags.ch5_clear = true;
+          s.coins += Math.round(200 * activeMods(s).questRewardMult * 2);
+          s.bottles = maxBottles(s);
+          G.unlockArchive("arch_godric");
+          G.unlockArchive("arch_crobley");
+          G.drongus("boss_defeated");
+        }
+      }
       s.flags[this.dungeon.arenaFlag] = true;
       s.coins += 150;
       s.hp = maxHp(s);

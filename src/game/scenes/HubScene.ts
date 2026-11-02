@@ -1904,7 +1904,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "ARCHIVE":
         return archiveAction().kind === "meeting" ? "Enter the Archive (the cabinet is waiting)" : "Enter the Historical Archive";
       case "PUB":
-        return "Enter The Krezz Arms";
+        return s.chapter === 5 && !s.flags.ch5_clear && dungeonOpen().open ? "The Krezz Arms: ★ rub SanMik's magic lamp (back room)" : "Enter The Krezz Arms";
       case "BANK":
         return "Enter the Central Bank (upgrades)";
       case "HOME":
@@ -1948,6 +1948,24 @@ You are required by law to sign the Sex Offenders Register.`, {
   private async enterBuilding(b: Building) {
     const s = G.s;
     const ch = chapterDef(s.chapter);
+    // Chapter 5: the lamp in the Krezz Arms back room is the way into the SanMikverse
+    if (b.id === "PUB" && s.chapter === 5 && !s.flags.ch5_clear && dungeonOpen().open && !this.buildingBusy("PUB")) {
+      if (!s.flags.sanmik_lamp_seen) {
+        s.flags.sanmik_lamp_seen = true;
+        G.save();
+        this.go("Vignette", { id: "sanmik_lampe", returnAt: "PUB" });
+        return;
+      }
+      s.flags.rub_lamp = false;
+      await this.talk([
+        dir("The Krezz Arms. In the back room, SanMik's magic lamp is on the bar, still glowing. It smells of corn."),
+        { s: "NARRATOR", t: "Rub it?", dir: true, choice: [{ label: "Rub the lamp (into the SanMikverse)", set: { rub_lamp: true } }, { label: "Just go to the pub", set: { rub_lamp: false } }] },
+      ]);
+      if (s.flags.rub_lamp) {
+        this.go("Dungeon", { dungeon: "arena_sanmik", room: 0 });
+        return;
+      }
+    }
     if (b.id === "WILDERN" && (s.flags.wildern_destroyed || (s.chapter === 1 && s.flags.ch1_clear))) {
       await this.talk([dir(s.flags.wildern_destroyed ? "A smoking crater. Bits of desk. A gold star, fluttering. Somewhere underneath it all, a bell tinkles." : "The doors are chained shut. Mikey's bombs need planting round the outside: look for the red circles.")]);
       return;
