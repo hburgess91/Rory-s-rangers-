@@ -244,6 +244,7 @@ export const KRAZY_FACT_EMERGENCY: MeetingScript = {
     "4. It will become law",
   ],
   beats: [
+    dir("Out of the window, where Wildern Academy used to be, there is a smoking crater. A jester hat bell tinkles somewhere in it. Lessons have moved online."),
     dir("The Great Tap is flowing. Pink-ish. Warm-ish. Through the window, citizens queue with buckets. Someone is drinking straight from the spout with their eyes closed."),
     say("SCROMBUS", "Order. The Tap is restored. Pussy juice pressure is at sixty percent and climbing. A round of applause for the hero of Wildern.", { role: true, proctus: "The Tap is back! Round of applause! I'll start. *claps once, alone, for too long*" }),
     dir("Applause. Some of it sticky."),

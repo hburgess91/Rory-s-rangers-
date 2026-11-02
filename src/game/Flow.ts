@@ -105,7 +105,7 @@ export function townHallAction(): TownHallAction {
   const n = s.chapter;
   if (n === 1) {
     if (!f.met_emergency) return { kind: "meeting", id: "emergency_reaction_session" };
-    if (f.ch1_clear && !f.ch1_fact) return f.krazy_fact_ready ? { kind: "fact" } : { kind: "meeting", id: "krazy_fact_emergency" };
+    if (f.ch1_clear && f.wildern_destroyed && !f.ch1_fact) return f.krazy_fact_ready ? { kind: "fact" } : { kind: "meeting", id: "krazy_fact_emergency" };
   }
   if (n === 3) {
     if (!f.beverage_committee) return { kind: "meeting", id: "national_beverage_committee" };

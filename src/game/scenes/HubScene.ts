@@ -290,7 +290,7 @@ export class HubScene extends Phaser.Scene {
     }
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
-    if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: "Report to the Town Hall." });
+    if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: s.chapter === 1 && !s.flags.wildern_destroyed ? "Wildern has to go. Plant the bombs (4) around the school." : "Report to the Town Hall." });
     // announce side quests that have just opened up
     for (const c of currentArcSteps(s)) {
       const k = `arc_announced_${c.arc.id}`;
@@ -548,6 +548,168 @@ export class HubScene extends Phaser.Scene {
     }
   }
 
+  // ------------------------------------------------------------- blowing up Wildern
+
+  private bImg: Record<string, Phaser.GameObjects.Image> = {};
+
+  /** Where the four bombs go round Wildern. */
+  private bombSpots(b: Building) {
+    const bottom = b.y + b.h / 2;
+    return [
+      { x: b.x - b.w / 2 - 24, y: bottom - 30 },
+      { x: b.x - b.w / 4, y: bottom + 26 },
+      { x: b.x + b.w / 4, y: bottom + 26 },
+      { x: b.x + b.w / 2 + 24, y: bottom - 30 },
+    ];
+  }
+
+  private drawBomb(x: number, y: number) {
+    const bomb = this.add.text(x, y, "💣", { fontSize: "26px" }).setOrigin(0.5).setDepth(y + 5);
+    const led = this.add.circle(x + 9, y - 12, 3, 0xef4444).setDepth(y + 6);
+    this.tweens.add({ targets: led, alpha: 0.1, yoyo: true, repeat: -1, duration: 260 });
+    this.tweens.add({ targets: bomb, scale: 1.08, yoyo: true, repeat: -1, duration: 520 });
+    return [bomb, led];
+  }
+
+  private setupBombs() {
+    const s = G.s;
+    if (!(s.chapter === 1 && s.flags.ch1_clear && !s.flags.wildern_destroyed)) return;
+    const b = BUILDINGS.find((x) => x.id === "WILDERN")!;
+    this.bombSpots(b).forEach((sp, i) => {
+      const k = `wildern_bomb_${i}`;
+      if (s.flags[k]) {
+        this.drawBomb(sp.x, sp.y);
+        return;
+      }
+      const ring = this.add.circle(sp.x, sp.y, 20, 0xef4444, 0.18).setStrokeStyle(2, 0xef4444, 0.9).setDepth(sp.y);
+      const mark = this.add.text(sp.x, sp.y - 30, "BOMB HERE", { fontFamily: FONT, fontSize: "10px", color: "#ffffff", backgroundColor: "#b91c1ccc", padding: { x: 4, y: 1 } }).setOrigin(0.5).setDepth(5000);
+      this.tweens.add({ targets: ring, scale: 1.3, alpha: 0.4, yoyo: true, repeat: -1, duration: 500 });
+      const it = {
+        x: sp.x,
+        y: sp.y,
+        r: 50,
+        label: () => (s.flags[k] ? "" : `Plant a bomb (${this.bombsPlanted() + 1}/4)`),
+        use: () => {
+          if (s.flags[k] || this.busy) return;
+          s.flags[k] = true;
+          ring.destroy();
+          mark.destroy();
+          this.drawBomb(sp.x, sp.y);
+          synth.play("select");
+          const n = this.bombsPlanted();
+          this.interactables = this.interactables.filter((x) => x !== it);
+          G.save();
+          if (n >= 4) void this.blowWildern();
+          else G.emit("toast", { title: `BOMB ${n}/4 PLANTED`, text: n === 3 ? "One more. Then run." : "Keep going. Round the school." });
+        },
+      };
+      this.interactables.push(it);
+    });
+  }
+
+  private bombsPlanted() {
+    return [0, 1, 2, 3].filter((i) => G.s.flags[`wildern_bomb_${i}`]).length;
+  }
+
+  /** The big one: four bombs, a countdown, and Wildern Academy goes up. */
+  private async blowWildern() {
+    const s = G.s;
+    const b = BUILDINGS.find((x) => x.id === "WILDERN")!;
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    await this.talk([say("MIKEY", "That's all four. Everybody back. BACK. Further than that."), dir("You all retreat behind a bin. Mikey holds up a detonator made out of a Nintendo Wii remote.")]);
+    this.busy = true;
+    synth.stopMusic();
+    cam.stopFollow();
+    cam.pan(b.x, b.y + 20, 1200, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(1300, r));
+    // countdown
+    for (const n of ["3", "2", "1"]) {
+      const t = this.add.text(480, 230, n, { fontFamily: "Impact, sans-serif", fontSize: "120px", color: "#ef4444", stroke: "#000", strokeThickness: 12 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setScale(2).setAlpha(0);
+      this.tweens.add({ targets: t, scale: 1, alpha: 1, duration: 250, ease: "Back.out" });
+      this.tweens.add({ targets: t, alpha: 0, delay: 650, duration: 200, onComplete: () => t.destroy() });
+      synth.play("select");
+      await new Promise((r) => this.time.delayedCall(900, r));
+    }
+    // the blast: a chain of explosions round the building, then one enormous one
+    const boom = (x: number, y: number, big: boolean) => {
+      synth.play("boom");
+      cam.shake(big ? 900 : 300, big ? 0.03 : 0.012);
+      const f = this.add.circle(x, y, big ? 40 : 16, 0xfff1a8, 1).setDepth(4300).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: f, radius: big ? 260 : 80, alpha: 0, duration: big ? 900 : 450, onComplete: () => f.destroy() });
+      const o = this.add.circle(x, y, big ? 30 : 12, 0xf97316, 0.9).setDepth(4301);
+      this.tweens.add({ targets: o, radius: big ? 180 : 55, alpha: 0, duration: big ? 1100 : 550, onComplete: () => o.destroy() });
+      for (let i = 0; i < (big ? 40 : 10); i++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = (big ? 120 : 50) + Math.random() * (big ? 260 : 90);
+        const chunk = this.add.rectangle(x, y, 6 + Math.random() * 8, 5 + Math.random() * 6, Math.random() < 0.6 ? 0x9a3412 : 0x44403c).setDepth(4302);
+        this.tweens.add({ targets: chunk, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d - 60, angle: 720, duration: 700 + Math.random() * 500, ease: "Quad.out", onComplete: () => { this.tweens.add({ targets: chunk, alpha: 0, y: chunk.y + 40, duration: 500, onComplete: () => chunk.destroy() }); } });
+      }
+      for (let i = 0; i < (big ? 16 : 4); i++) {
+        const sm = this.add.circle(x + (Math.random() - 0.5) * (big ? 200 : 60), y + (Math.random() - 0.5) * 60, 14 + Math.random() * 16, 0x3f3f46, 0.8).setDepth(4299);
+        this.tweens.add({ targets: sm, y: sm.y - 160 - Math.random() * 160, radius: 50 + Math.random() * 40, alpha: 0, duration: 2200 + Math.random() * 1500, onComplete: () => sm.destroy() });
+      }
+    };
+    const spots = this.bombSpots(b);
+    for (let i = 0; i < spots.length; i++) {
+      boom(spots[i].x, spots[i].y, false);
+      await new Promise((r) => this.time.delayedCall(260, r));
+    }
+    for (let i = 0; i < 6; i++) {
+      boom(b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.5) * b.h * 0.6, false);
+      await new Promise((r) => this.time.delayedCall(170, r));
+    }
+    cam.flash(700, 255, 240, 200);
+    boom(b.x, b.y, true);
+    // the school is gone
+    s.flags.wildern_destroyed = true;
+    const img = this.bImg.WILDERN;
+    if (img && this.textures.exists("bld_WILDERN_RUIN")) {
+      const bottom = b.y + b.h / 2;
+      const src = this.textures.get("bld_WILDERN_RUIN").getSourceImage();
+      img.setTexture("bld_WILDERN_RUIN").setPosition(b.x, bottom - src.height / 2);
+      this.smoulder({ ...b, y: bottom - src.height / 2, w: src.width, h: src.height });
+    } else img?.setTint(0x3f3f46);
+    await new Promise((r) => this.time.delayedCall(1600, r));
+    const title = this.add.text(480, 190, "WILDERN ACADEMY", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#ffffff", stroke: "#000", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setAlpha(0);
+    const sub = this.add.text(480, 246, "DEMOLISHED", { fontFamily: "Impact, sans-serif", fontSize: "60px", color: "#ef4444", stroke: "#000", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(6000).setScale(3).setAlpha(0);
+    this.tweens.add({ targets: title, alpha: 1, duration: 400 });
+    this.tweens.add({ targets: sub, alpha: 1, scale: 1, delay: 500, duration: 350, ease: "Back.out", onComplete: () => cam.shake(250, 0.01) });
+    // celebration: the Krelworld song, fireworks over the crater
+    this.time.delayedCall(900, () => synth.music("crazy", true));
+    const fw = this.time.addEvent({ delay: 380, repeat: 30, callback: () => {
+      const fx = cam.worldView.x + 80 + Math.random() * 800;
+      const fy = cam.worldView.y + 60 + Math.random() * 200;
+      const col = [0xf472b6, 0xfde047, 0x67e8f9, 0x86efac, 0xc084fc][Math.floor(Math.random() * 5)];
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const p = this.add.circle(fx, fy, 3, col).setDepth(5500).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: p, x: fx + Math.cos(a) * 80, y: fy + Math.sin(a) * 80 + 20, alpha: 0, duration: 800, onComplete: () => p.destroy() });
+      }
+    } });
+    await new Promise((r) => this.time.delayedCall(2600, r));
+    this.tweens.add({ targets: [title, sub], alpha: 0, duration: 500, onComplete: () => { title.destroy(); sub.destroy(); } });
+    await this.talk([
+      dir("When the dust settles, Wildern Academy is a smoking hole in the ground. Somewhere in the crater, a single jester-hat bell tinkles once, and is silent."),
+      say("MIKEY", "YOU'VE DONE IT!!"),
+      say("FLENKY", "You saved the kids from that fucking sicko!"),
+      say("GRONNY", "Kids safe. School gone. Me never liked school anyway."),
+      say("CRONGUS", "As Children's Minister: you saved the kids from that fucking sicko. Lessons will now take place online. With a normal teacher. I'm vetting them personally. No hats."),
+      say("KREZWONK", "I foresaw an explosion. I did not foresee how good it would feel."),
+      say("KREZMAR", "Somebody's going to have to pay for that. Not me. Put it on Drongus's tab."),
+      say("SCROMBUS", "Right. The Tap's flowing, the sicko's dead and his school's a crater. Town Hall. We've got a country to run."),
+    ]);
+    fw.remove();
+    cam.pan(this.av.x, this.av.y, 900, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(950, r));
+    cam.startFollow(this.av, true, 0.12, 0.12);
+    synth.music("hub");
+    this.busy = false;
+    G.emit("toast", { title: "WILDERN: GONE", text: "Report back to the Town Hall." });
+    G.save();
+  }
+
   // ------------------------------------------------------------- Da Drongus Dungeon
 
   /** A storm over the top of town: dark cloud, purple glow, the odd fork of lightning. */
@@ -692,6 +854,7 @@ export class HubScene extends Phaser.Scene {
   /** Which picture a building uses (the Crobley factory burns down). */
   private buildingKey(b: Building) {
     if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed && this.textures.exists("bld_CROBLEY_FACTORY_RUIN")) return "bld_CROBLEY_FACTORY_RUIN";
+    if (b.id === "WILDERN" && G.s.flags.wildern_destroyed && this.textures.exists("bld_WILDERN_RUIN")) return "bld_WILDERN_RUIN";
     return `bld_${b.id}`;
   }
 
@@ -743,13 +906,15 @@ export class HubScene extends Phaser.Scene {
       if (b.id === "TOWN_HALL" && G.s.chapter === 1 && !G.s.flags.ch1_clear) name = "KRELFORD ____ HALL";
       if (b.id === "HOME") name = `${CHARACTERS[G.s.player].name}'S HOUSE`;
       if (b.id === "CROBLEY_FACTORY" && G.s.flags.crobley_factory_destroyed) name = "CROBLEY CORP HQ (SMOULDERING WRECK)";
+      if (b.id === "WILDERN" && G.s.flags.wildern_destroyed) name = "WHERE WILDERN USED TO BE (SMOULDERING CRATER)";
+      this.bImg[b.id] = img;
       this.add
         .text(b.x, b.y + b.h / 2 + 6, name, { fontFamily: FONT, fontSize: "11px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 }, align: "center", wordWrap: { width: Math.max(160, b.w) } })
         .setOrigin(0.5, 0)
         .setDepth(b.y + b.h / 2 + 1);
       // the walkable line is the front wall: everything above it is roof and facade
       this.colliders.add(this.add.rectangle(b.x, b.y + b.h * 0.12, b.w * 0.86, b.h * 0.7, 0, 0));
-      if (key === "bld_CROBLEY_FACTORY_RUIN") this.smoulder(b);
+      if (key === "bld_CROBLEY_FACTORY_RUIN" || key === "bld_WILDERN_RUIN") this.smoulder(b);
       else if (b.id === "CITADEL") this.towerFx(b, img);
       else this.neonGlow(b.x, b.y - b.h * 0.25, Math.max(60, b.w * 0.45));
       void img;
@@ -1089,6 +1254,7 @@ export class HubScene extends Phaser.Scene {
       if (!b.door || (b.id === "CITADEL" && !this.towerUp())) continue;
       this.interactables.push({ x: b.door.x, y: b.door.y + 10, r: 46, label: () => this.doorLabel(b), use: () => this.enterBuilding(b) });
     }
+    this.setupBombs();
     for (const gt of GATES) {
       this.interactables.push({ x: gt.x, y: gt.y, r: 60, label: () => this.doorLabel({ id: gt.id, name: gt.name } as Building), use: () => this.enterBuilding({ id: gt.id, name: gt.name } as Building) });
     }
@@ -1478,6 +1644,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const ch = chapterDef(s.chapter);
     const arc = arcStepAt(s, b.id);
     if (arc && !this.buildingBusy(b.id)) return `${b.name}: ★ ${arc.step.text}`;
+    if (b.id === "WILDERN" && s.flags.wildern_destroyed) return "The smouldering crater where Wildern used to be";
+    if (b.id === "WILDERN" && s.chapter === 1 && s.flags.ch1_clear) return "Wildern Academy: plant the bombs around it";
     if (b.id === ch.dungeonDoor) {
       const o = dungeonOpen();
       return o.open ? `Enter: ${b.name}` : `${b.name} (locked: ${o.why})`;
@@ -1534,6 +1702,10 @@ You are required by law to sign the Sex Offenders Register.`, {
   private async enterBuilding(b: Building) {
     const s = G.s;
     const ch = chapterDef(s.chapter);
+    if (b.id === "WILDERN" && (s.flags.wildern_destroyed || (s.chapter === 1 && s.flags.ch1_clear))) {
+      await this.talk([dir(s.flags.wildern_destroyed ? "A smoking crater. Bits of desk. A gold star, fluttering. Somewhere underneath it all, a bell tinkles." : "The doors are chained shut. Mikey's bombs need planting round the outside: look for the red circles.")]);
+      return;
+    }
     synth.play("door");
     if (!(b.id === ch.dungeonDoor && !dungeonOpen().open)) this.discover(b.id, b.name);
     // a side-quest step waiting at the dungeon building goes first

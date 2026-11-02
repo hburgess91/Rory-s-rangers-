@@ -4842,6 +4842,9 @@
   },
   "tv_classroom": {
    "file": "backdrops/tv_classroom.png"
+  },
+  "bld_WILDERN_RUIN": {
+   "file": "buildings/WILDERN_RUIN.png"
   }
  },
  "sheets": {

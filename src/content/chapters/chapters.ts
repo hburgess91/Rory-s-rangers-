@@ -36,6 +36,7 @@ export const CHAPTERS: ChapterDef[] = [
       { id: "s_meeting", text: "Attend the Emergency Reaction Session at the Town Hall", done: { flag: "met_emergency" }, target: "TOWN_HALL" },
       { id: "s_archive", text: "Visit the Historical Archive (the cabinet wants precedent)", done: { flag: "founding_seen" }, target: "ARCHIVE" },
       { id: "s_dungeon", text: "Enter Wildern Academy. Find Kranky Krandall, the zany new headmaster, and turn the Tap back on", done: { flag: "ch1_clear" }, target: "WILDERN" },
+      { id: "s_bomb", text: "Wildern has to go. Plant 4 bombs around Wildern Academy and blow it up", done: { flag: "wildern_destroyed" }, target: "WILDERN" },
       { id: "s_report", text: "Report back to the Town Hall", done: { flag: "ch1_fact" }, target: "TOWN_HALL" },
     ],
     intro: [
