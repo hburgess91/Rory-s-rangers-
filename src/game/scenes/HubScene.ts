@@ -803,9 +803,11 @@ export class HubScene extends Phaser.Scene {
       say("CRONGUS", "As Children's Minister: you saved the kids from that fucking sicko. Lessons will now take place online. With a normal teacher. I'm vetting them personally. No hats."),
       say("KREZWONK", "I foresaw an explosion. I did not foresee how good it would feel."),
       say("KREZMAR", "Somebody's going to have to pay for that. Not me. Put it on Drongus's tab."),
-      say("SCROMBUS", "Right. The Tap's flowing, the sicko's dead and his school's a crater. Town Hall. We've got a country to run."),
+      say("SCROMBUS", "Right. The Tap's flowing, the sicko's dead and his school's a crater. Let's see what the news makes of it."),
+      { s: "NARRATOR", t: "", tv: "krews_wildern" },
     ]);
     fw.remove();
+    await this.crateDance();
     cam.pan(this.av.x, this.av.y, 900, Phaser.Math.Easing.Sine.InOut);
     await new Promise((r) => this.time.delayedCall(950, r));
     cam.startFollow(this.av, true, 0.12, 0.12);
@@ -813,6 +815,114 @@ export class HubScene extends Phaser.Scene {
     this.busy = false;
     G.emit("toast", { title: "WILDERN: GONE", text: "Report back to the Town Hall." });
     G.save();
+  }
+
+  /** "And now, some footage just in from the crater": the lads, dancing in perfect sync, 25 seconds, 140bpm. */
+  private crateDance(): Promise<void> {
+    const BEAT = 60000 / 140;
+    const D = 25000;
+    const s = G.s;
+    this.busy = true;
+    synth.music("techno_dance", true, 100 / 339.46);
+    const root = this.add.container(0, 0).setScrollFactor(0).setDepth(7000);
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0b0220, 0x0b0220, 0x3b0a45, 0x3b0a45, 1).fillRect(0, 0, 960, 540);
+    root.add(bg);
+    // the crater, still smoking, as the dance floor
+    if (this.textures.exists("bld_WILDERN_RUIN")) root.add(this.add.image(480, 430, "bld_WILDERN_RUIN").setScale(3.2).setAlpha(0.55));
+    const floor = this.add.graphics();
+    root.add(floor);
+    const cols = [0xf472b6, 0x22d3ee, 0xfde047, 0xa78bfa, 0x4ade80];
+    // spotlights sweeping
+    const beams: Phaser.GameObjects.Triangle[] = [];
+    for (let i = 0; i < 5; i++) {
+      const b = this.add.triangle(120 + i * 180, -20, 0, 0, -90, 560, 90, 560, cols[i], 0.18).setOrigin(0.5, 0).setBlendMode(Phaser.BlendModes.ADD);
+      root.add(b);
+      beams.push(b);
+      this.tweens.add({ targets: b, angle: { from: -25, to: 25 }, yoyo: true, repeat: -1, duration: BEAT * 4, ease: "Sine.inOut", delay: i * BEAT });
+    }
+    const ball = this.add.text(480, 34, "🪩", { fontSize: "54px" }).setOrigin(0.5);
+    root.add(ball);
+    this.tweens.add({ targets: ball, angle: 360, repeat: -1, duration: BEAT * 8 });
+    // the lads, in a line
+    const ids = (["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "KREBON", "CRONGUS", "GRONNY", "MIKEY"] as string[]).filter((id) => this.textures.exists(`spr_${id}`));
+    const gap = Math.min(100, 880 / ids.length);
+    const x0 = 480 - ((ids.length - 1) * gap) / 2;
+    const lads = ids.map((id, i) => {
+      const spr = this.add.sprite(x0 + i * gap, 400, `spr_${id}`, 0).setScale(3.2);
+      root.add(spr);
+      const tag = this.add.text(spr.x, 450, CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: "10px", color: "#ffffff", backgroundColor: "#00000088", padding: { x: 3, y: 1 } }).setOrigin(0.5);
+      root.add(tag);
+      return spr;
+    });
+    const cap = this.add.text(480, 96, "LIVE FROM THE CRATER", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff", stroke: "#000", strokeThickness: 6 }).setOrigin(0.5);
+    const live = this.add.text(20, 18, "● GB KREWS 24 · LIVE", { fontFamily: FONT, fontSize: "13px", color: "#ef4444", fontStyle: "bold", backgroundColor: "#000000aa", padding: { x: 6, y: 3 } });
+    root.add([cap, live]);
+    this.tweens.add({ targets: live, alpha: 0.4, yoyo: true, repeat: -1, duration: BEAT });
+    // the routine: an 8-count, repeated, all in sync
+    const meta = (k: string) => (this.textures.get(k).customData as any)?.char;
+    const face = (spr: Phaser.GameObjects.Sprite, dir: string) => {
+      const m = meta(spr.texture.key);
+      if (m?.idle?.[dir] !== undefined) spr.setFrame(m.idle[dir]);
+      else spr.setFlipX(dir === "west");
+    };
+    let beat = 0;
+    const tick = () => {
+      const b = beat++ % 16;
+      // floor tiles flash on the beat
+      floor.clear();
+      for (let i = 0; i < 12; i++) floor.fillStyle(cols[(i + beat) % cols.length], 0.25).fillRect(i * 80, 470, 80, 70);
+      lads.forEach((spr, i) => {
+        const by = 400;
+        if (b < 4) {
+          // bounce
+          this.tweens.add({ targets: spr, y: by - 18, duration: BEAT / 2, yoyo: true, ease: "Quad.out" });
+          face(spr, "south");
+        } else if (b < 8) {
+          // step side to side, everyone facing the same way
+          face(spr, b % 2 ? "east" : "west");
+          this.tweens.add({ targets: spr, x: spr.x + (b % 2 ? 14 : -14), duration: BEAT / 2, yoyo: true });
+        } else if (b < 10) {
+          // jump!
+          this.tweens.add({ targets: spr, y: by - 60, duration: BEAT / 2, yoyo: true, ease: "Quad.out" });
+        } else if (b < 12) {
+          // spin
+          this.tweens.add({ targets: spr, angle: 360, duration: BEAT * 0.9, onComplete: () => spr.setAngle(0) });
+        } else if (b < 14) {
+          // the wave, left to right
+          this.time.delayedCall(i * (BEAT / ids.length), () => this.tweens.add({ targets: spr, y: by - 30, duration: BEAT / 3, yoyo: true }));
+        } else {
+          // pose, then squat
+          face(spr, "south");
+          this.tweens.add({ targets: spr, y: by + 12, duration: BEAT / 2, yoyo: true, ease: "Quad.out" });
+        }
+      });
+      if (b === 8 || b === 0) this.cameras.main.shake(120, 0.004);
+      if (b % 4 === 0) {
+        // confetti burst
+        for (let i = 0; i < 24; i++) {
+          const c = this.add.rectangle(Math.random() * 960, -10, 6, 10, cols[i % cols.length]);
+          root.add(c);
+          this.tweens.add({ targets: c, y: 560, x: c.x + (Math.random() - 0.5) * 160, angle: 540, duration: 1800 + Math.random() * 800, onComplete: () => c.destroy() });
+        }
+      }
+    };
+    root.setAlpha(0);
+    this.tweens.add({ targets: root, alpha: 1, duration: 300 });
+    const ev = this.time.addEvent({ delay: BEAT, loop: true, callback: tick });
+    tick();
+    return new Promise((res) => {
+      this.time.delayedCall(D, () => {
+        ev.remove();
+        this.tweens.add({ targets: root, alpha: 0, duration: 700, onComplete: () => {
+          root.destroy(true);
+          synth.music("hub");
+          this.busy = false;
+          void s;
+          res();
+        } });
+      });
+    });
   }
 
   // ------------------------------------------------------------- Da Drongus Dungeon

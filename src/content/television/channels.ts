@@ -126,6 +126,33 @@ NEWSREADER: A restaurant menu bearing the words "Krebon — real butter" has bee
   { unlockFlag: "ch4_clear", unlockHint: "Broadcasts after Chapter 4" },
 );
 
+export const WILDERN_BULLETIN = ep(
+  "krews_wildern",
+  "GB KREWS 24",
+  "GB Krews",
+  "Wildern Destroyed / New Burger",
+  1,
+  `
+[MUSIC news start]
+# GB KREWS 24
+# BREAKING: WILDERN ACADEMY DESTROYED
+INT. NEWSDESK - DAY
+[MUSIC news fade]
+NEWSREADER: Breaking news. Wildern Academy has been destroyed in an explosion, hours after the death of its headmaster, Mr Kranky Krandall.
+NEWSREADER: Several kids were very sadly in the school when it exploded.
+NEWSREADER: But ultimately, it is no one's fault.
+NEWSREADER: Next up: a new type of burger has come to Krelworld.
+# KREZ-KING UNVEILS THE DOUBLE DOWN KREZZ MELT
+EXT. HIGH STREET - DAY
+REPORTER: I'm outside Krez-King, where queues are already round the block for the brand new Double Down Krezz Melt.
+REPORTER: It's a burger. But the bun is also a burger.
+REPORTER: Back to you.
+INT. NEWSDESK - DAY
+NEWSREADER: Lovely. And now, some footage just in from the crater.
+[FADE]
+`,
+);
+
 export const KRANDALL_SEGMENT = ep(
   "krews_krandall",
   "GB KREWS 24",
@@ -266,7 +293,7 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
+const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, WILDERN_BULLETIN, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
 
 /** Number each channel's episodes in order, now that some channels have been folded together. */
 const counts: Record<string, number> = {};

@@ -59,6 +59,7 @@ export const MUSIC_FILES: Record<string, string> = {
   boss_hoard: "audio/erotic_stockport.mp3",
   stockport: "audio/erotic_stockport.mp3",
   crystal: "audio/crystal_is_yours.mp3",
+  techno_dance: "audio/techno_dance.mp3",
   norwich: "audio/norwich.mp3",
   crobley: "audio/crobley.mp3",
   majek_lampe: "audio/majek_lampe.mp3",

@@ -42,7 +42,7 @@ export const BOSS_TEXT: Record<string, BossText> = {
       say("KREZMAR", "Meaning?"),
       say("SCROMBUS", "The school needs to be destroyed. Via bombs."),
       say("MIKEY", "Mikey here. I've got bombs. Don't ask why I've got bombs."),
-      say("CRONGUS", "Every kid's out on an emergency field trip to the Great Tap. I've counted them. Twice. Building's empty."),
+      say("CRONGUS", "Every kid's out on an emergency field trip to the Great Tap. I've counted them. Twice. Roughly. I lost count around eleven. Building's probably empty."),
       dir("NEW OBJECTIVE: Plant 4 bombs around Wildern Academy. Then stand well back.", { set: { wildern_bombs: true } }),
     ],
     taunts: ["ZANY!", "KRAZY!", "PENS DOWN!", "MMMM, PUSSY JUICY!", "DETENTION!", "SPELL IT!", "JUST A LITTLE SIPPY!", "NO TALKING IN MY OFFICE!", "HAT STAYS ON!", "DRONGUS SAYS HELLO!"],
