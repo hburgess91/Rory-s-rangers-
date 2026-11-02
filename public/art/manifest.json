@@ -3591,6 +3591,510 @@
      3
     ]
    }
+  },
+  "spr_SUPER_FLENKY": {
+   "file": "chars/SUPER_FLENKY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_KREZMAR": {
+   "file": "chars/SUPER_KREZMAR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_KREBLIS": {
+   "file": "chars/SUPER_KREBLIS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_KREZWONK": {
+   "file": "chars/SUPER_KREZWONK.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_SCROMBUS": {
+   "file": "chars/SUPER_SCROMBUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_KREBON": {
+   "file": "chars/SUPER_KREBON.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_MIKEY": {
+   "file": "chars/SUPER_MIKEY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_CRONGUS": {
+   "file": "chars/SUPER_CRONGUS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
+  },
+  "spr_SUPER_GRONNY": {
+   "file": "chars/SUPER_GRONNY.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   },
+   "attack": {
+    "south": [
+     40,
+     41,
+     42
+    ],
+    "east": [
+     44,
+     45,
+     46
+    ]
+   }
   }
  },
  "images": {

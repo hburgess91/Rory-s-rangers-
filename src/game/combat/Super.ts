@@ -9,12 +9,15 @@ import { synth } from "../audio/Synth";
  */
 export const SUPER_MS = 20000;
 
-type SuperState = { aura: Phaser.GameObjects.GameObject[]; ev: Phaser.Time.TimerEvent; baseBig: number };
+type SuperState = { aura: Phaser.GameObjects.GameObject[]; ev: Phaser.Time.TimerEvent; baseBig: number; baseKey: string; hasArt: boolean };
 const states = new WeakMap<Player, SuperState>();
 
 export function canTransform() {
   return !!G.s.flags.golden_charge;
 }
+
+/** The transformation cutscene: everything freezes, the camera pushes in, you power up, and you come out golden. */
+const CUTSCENE_MS = 1800;
 
 export function goSuper(p: Player, now: number) {
   const w = p.world;
@@ -25,35 +28,74 @@ export function goSuper(p: Player, now: number) {
     return;
   }
   G.s.flags.golden_charge = false;
-  p.superUntil = now + SUPER_MS;
-  p.iframesUntil = now + 1200;
-  // the scream
-  synth.play("roar");
-  w.shake(1000, 0.02);
-  sc.cameras.main.flash(400, 255, 236, 140);
-  w.hitStop(260);
-  w.floatText(p.x, p.y - 80, "AAAAAAAAAAAHHHHH!!!", "#fde047", 26);
-  for (let i = 0; i < 8; i++) sc.time.delayedCall(i * 90, () => bolt(p));
-  // bigger, golden
+  p.superUntil = now + CUTSCENE_MS + SUPER_MS;
+  p.iframesUntil = now + CUTSCENE_MS + 1200;
+  // freeze the room while it happens
+  w.hitStop(CUTSCENE_MS);
+  const cam = sc.cameras.main;
+  const z0 = cam.zoom;
+  sc.tweens.add({ targets: cam, zoom: z0 * 1.7, duration: 320, ease: "Quad.out" });
+  const dark = sc.add.rectangle(480, 270, 960, 540, 0x000000, 0).setScrollFactor(0).setDepth(590);
+  sc.tweens.add({ targets: dark, fillAlpha: 0.6, duration: 260 });
+  w.floatText(p.x, p.y - 50, "Hnnnnnnngh…", "#fde047", 14);
+  synth.play("select");
+  const x0 = p.spr.x;
+  sc.tweens.add({ targets: p.spr, x: x0 + 2, yoyo: true, repeat: 10, duration: 40, onComplete: () => p.spr.setX(x0) });
+  // power gathering: sparks rushing in
+  const gather = sc.time.addEvent({
+    delay: 25,
+    repeat: 34,
+    callback: () => {
+      const a = Math.random() * Math.PI * 2;
+      const sp = sc.add.circle(p.x + Math.cos(a) * 90, p.y + Math.sin(a) * 90, 2.5, 0xfde047).setBlendMode(Phaser.BlendModes.ADD).setDepth(600);
+      sc.tweens.add({ targets: sp, x: p.x, y: p.y, duration: 240, onComplete: () => sp.destroy() });
+      if (Math.random() < 0.15) bolt(p);
+    },
+  });
+  // the moment it happens
+  sc.time.delayedCall(950, () => {
+    gather.remove();
+    synth.play("roar");
+    w.shake(900, 0.025);
+    cam.flash(450, 255, 240, 160);
+    for (let i = 0; i < 10; i++) sc.time.delayedCall(i * 60, () => bolt(p));
+    const ring = sc.add.circle(p.x, p.y, 10, 0xffffff, 0).setStrokeStyle(6, 0xfde047).setDepth(600);
+    sc.tweens.add({ targets: ring, radius: 160, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+    w.floatText(p.x, p.y - 80, "AAAAAAAAAAAHHHHH!!!", "#fde047", 26);
+    becomeGolden(p);
+  });
+  sc.time.delayedCall(CUTSCENE_MS - 300, () => {
+    sc.tweens.add({ targets: cam, zoom: z0, duration: 300, ease: "Quad.in" });
+    sc.tweens.add({ targets: dark, fillAlpha: 0, duration: 300, onComplete: () => dark.destroy() });
+    w.toast("GOLDEN JUICE TRANSFORMATION", `${SUPER_MS / 1000}s. ATTACK = mega melee. C = CUMEHAMEHA.`);
+  });
+}
+
+/** Swap to the golden sprite, start the aura. */
+function becomeGolden(p: Player) {
+  const sc = p.world.sc;
+  const baseKey = p.spr.texture.key;
+  const superKey = `spr_SUPER_${p.id}`;
+  const hasArt = sc.textures.exists(superKey);
+  if (hasArt) p.spr.setTexture(superKey, p.spr.frame.name);
   const baseBig = (p.spr as any).big ?? 1;
-  (p.spr as any).big = baseBig * 1.3;
+  (p.spr as any).big = baseBig * 1.25;
   p.spr.setScale(2);
   const aura: Phaser.GameObjects.GameObject[] = [];
-  // super saiyan hair: golden spikes on your head
-  const hair = sc.add.graphics().setDepth(503);
+  // no golden art for this one? draw the spikes on
+  const hair = hasArt ? null : sc.add.graphics().setDepth(503);
   const drawHair = () => {
+    if (!hair) return;
     hair.clear();
     const hx = p.x;
     const hy = p.y - p.spr.displayHeight * 0.36;
     const spikes = [[-22, 6, -30, -26], [-12, 0, -14, -40], [0, -4, 4, -48], [12, 0, 20, -38], [22, 6, 32, -22]];
     hair.fillStyle(0xb45309, 1);
-    for (const [x0, y0, tx, ty] of spikes) hair.fillTriangle(hx + x0 - 9, hy + y0 + 3, hx + x0 + 9, hy + y0 + 3, hx + tx, hy + ty - 3);
+    for (const [xa, ya, tx, ty] of spikes) hair.fillTriangle(hx + xa - 9, hy + ya + 3, hx + xa + 9, hy + ya + 3, hx + tx, hy + ty - 3);
     hair.fillStyle(0xfde047, 1);
-    for (const [x0, y0, tx, ty] of spikes) hair.fillTriangle(hx + x0 - 7, hy + y0, hx + x0 + 7, hy + y0, hx + tx, hy + ty);
-    hair.fillStyle(0xfff7c2, 1);
-    for (const [x0, y0, tx, ty] of spikes) hair.fillTriangle(hx + x0 - 2, hy + y0 - 2, hx + x0 + 3, hy + y0 - 2, hx + (x0 + tx) / 2, hy + (y0 + ty) / 2);
+    for (const [xa, ya, tx, ty] of spikes) hair.fillTriangle(hx + xa - 7, hy + ya, hx + xa + 7, hy + ya, hx + tx, hy + ty);
   };
-  aura.push(hair);
+  if (hair) aura.push(hair);
   const glow = sc.add.circle(p.x, p.y, 54, 0xfde047, 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(498);
   sc.tweens.add({ targets: glow, scale: 1.25, alpha: 0.12, yoyo: true, repeat: -1, duration: 160 });
   aura.push(glow);
@@ -63,7 +105,7 @@ export function goSuper(p: Player, now: number) {
     callback: () => {
       glow.setPosition(p.x, p.y);
       drawHair();
-      // flames licking upward all round you
+      // a golden flame licking up all round you
       for (let k = 0; k < 2; k++) {
         const a = Math.random() * Math.PI * 2;
         const f = sc.add.ellipse(p.x + Math.cos(a) * 26, p.y + 22 + Math.sin(a) * 8, 14, 26, Math.random() < 0.5 ? 0xfacc15 : 0xfff7c2, 0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(499);
@@ -72,8 +114,7 @@ export function goSuper(p: Player, now: number) {
       if (Math.random() < 0.04) bolt(p);
     },
   });
-  states.set(p, { aura, ev, baseBig });
-  w.toast("GOLDEN JUICE TRANSFORMATION", `${SUPER_MS / 1000}s. ATTACK = mega melee. C = CUMEHAMEHA.`);
+  states.set(p, { aura, ev, baseBig, baseKey, hasArt });
 }
 
 export function endSuper(p: Player) {
@@ -82,6 +123,7 @@ export function endSuper(p: Player) {
   states.delete(p);
   st.ev.remove();
   for (const o of st.aura) o.destroy();
+  if (st.hasArt && p.spr.scene?.textures.exists(st.baseKey)) p.spr.setTexture(st.baseKey, p.spr.frame.name);
   (p.spr as any).big = st.baseBig;
   p.spr.setScale(2);
   p.world.floatText(p.x, p.y - 50, "...the golden juice wears off", "#fde047", 12);
@@ -90,7 +132,9 @@ export function endSuper(p: Player) {
 /** Called every frame from the player. */
 export function superTick(p: Player, now: number) {
   if (now >= p.superUntil && states.has(p)) endSuper(p);
-  if (now < p.superUntil) p.spr.setTint(Math.floor(now / 90) % 2 ? 0xffd23f : 0xffe680);
+  // a golden shimmer (strong where there's no golden art)
+  const st = states.get(p);
+  if (st) p.spr.setTint(st.hasArt ? (Math.floor(now / 120) % 2 ? 0xffffff : 0xfff3c4) : Math.floor(now / 90) % 2 ? 0xffd23f : 0xffe680);
 }
 
 function bolt(p: Player) {

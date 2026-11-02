@@ -15,6 +15,7 @@ export async function squeeze(
   who: { name: string; spr: Phaser.GameObjects.Sprite },
   me: Phaser.GameObjects.Sprite,
   opener?: Line[],
+  offer = "Fancy a squeeze, love?",
 ): Promise<boolean> {
   const s = G.s;
   const f = s.flags;
@@ -26,7 +27,7 @@ export async function squeeze(
   f.sq_step = 0;
   await talk([
     ...(opener ?? []),
-    { s: who.name, t: "Fancy a squeeze, love?", choice: [{ label: "Hug her", set: { sq_step: 1 } }, { label: "Not today", set: { sq_step: 0 } }] },
+    { s: who.name, t: offer, choice: [{ label: "Hug her", set: { sq_step: 1 } }, { label: "Not today", set: { sq_step: 0 } }] },
   ]);
   if (!step(1)()) return false;
   // in for the hug

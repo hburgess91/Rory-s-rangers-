@@ -1,4 +1,5 @@
 import { carriesCrystal, crystalCount, CRYSTALS_NEEDED, CRYSTAL_BOSSES } from "../systems/crystals";
+import { squeeze } from "../systems/squeeze";
 import Phaser from "phaser";
 import { DUNGEONS, type DungeonDef, type RoomDef, type PropDef } from "../../data/dungeons";
 import { ENEMIES } from "../../data/enemies";
@@ -1515,22 +1516,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
             say("MOLLOR", "JENKO! Oh thank god. There was another one of you. A DARK one. He kept calling himself 'a real man'."),
             say("FLENKY", "That wasn't me. That was Dark Jenko. I'm the light one. Mostly."),
             dir("Mollor kisses you on the cheek. Then gives you a big hug."),
-            say("MOLLOR", "Can we go home now? And can you never be dark again?"),
             say("FLENKY", "No promises. Too weird to live, too rare to die."),
           ]
         : [
             say("MOLLOR", "Thank you for saving me from that sicko Jenko!"),
-            dir("Mollor kisses you on the cheek. Then gives you a big hug."),
-            say("MOLLOR", "He kept going on about 'golden juice'. Said real men get it from a proper squeeze. Said the girls at the Wonky Pole do the best ones."),
-            say("MOLLOR", "Anyway. I'm going home. Tell Jenko it's over. Both Jenkos."),
+            dir("Mollor kisses you on the cheek."),
+            say("MOLLOR", "He kept going on about 'golden juice'. Said it only comes from the freshest sources. Said a proper squeeze does it."),
           ],
     );
     s.flags.golden_unlocked = true;
-    await this.talk([
-      dir("⚡ NEW: GOLDEN JUICE ⚡"),
-      dir("Golden juice can only be attained from the freshest sources. Find a woman who's up for a squeeze (a private dance at the Wonky Pole, or a couple of new faces around Krelford) before a dungeon, and you can TRANSFORM once in that dungeon."),
-      dir("Press T to transform. Golden hair. Bulging muscles. A mega melee on ATTACK, and a CUMEHAMEHA blast on C."),
-    ]);
+    const took = await squeeze(this, (l) => this.talk(l), { name: "MOLLOR", spr }, this.player.spr, [], "Want a cuddle?");
+    if (!took) await this.talk([dir("Golden juice comes from the freshest sources: a woman who's up for a squeeze. Try a private dance at the Wonky Pole, or the new faces around Krelford. Squeeze before a dungeon, then press T in it to TRANSFORM.")]);
+    await this.talk([say("MOLLOR", jenko ? "Right. Home. Now. Before you go dark again." : "Right. I'm going home. Tell Jenko it's over. Both Jenkos.")]);
     this.completeChapter("cronster");
   }
 
