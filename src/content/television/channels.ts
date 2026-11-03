@@ -188,6 +188,16 @@ KRANKY KRANDALL: I need pussy juice. Just a sip. Just a little sippy. Anyone?
 [GASP]
 KRANKY KRANDALL: (jingling his hat) ZANY!
 INT. NEWSDESK - DAY
+NEWSREADER: And at a press conference yesterday, Mr Krandall unveiled his new staffing policy.
+INT. PRESS ROOM - DAY
+# PRESS CONFERENCE, WILDERN ACADEMY
+KRANKY KRANDALL: From now on, only the kraziest teachers will be permitted to work at Wildern!
+KRANKY KRANDALL: I will only hire pedos!
+[GASP]
+REPORTER: Sorry, did you just say—
+KRANKY KRANDALL: ZANY! No further questions! (he leaves, jingling)
+INT. NEWSDESK - DAY
+NEWSREADER: (long pause) …Right.
 NEWSREADER: Wildern Academy said in a statement that Mr Krandall's methods are "unorthodox but effective", and that the school's pussy juice consumption is "within normal limits for a school with its own pipe".
 NEWSREADER: Mr Krandall was appointed last month. His only reference was from a Mr D. B. Drippin'.
 NEWSREADER: The headmaster's office has since been locked from the inside. Witnesses report slurping.
