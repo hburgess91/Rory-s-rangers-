@@ -854,7 +854,7 @@ export class CronsterBoss extends Boss {
     this.setScale(2.6);
     const sc = w.sc;
     const b = (w as any).bounds as Phaser.Geom.Rectangle;
-    const who: [string, string][] = [["SERGEANT SWIG", "spr_SWIG"], ["MARGE PLUNKETT", "spr_TV_MARGE_PLUNKETT"], ["BIG DEREK", "spr_TV_BOUNCER"], ["SHEZLEIGH", "spr_TV_SHEZLEIGH"]];
+    const who: [string, string][] = [["PEGGY", "spr_TV_PEGGY"], ["MARGE PLUNKETT", "spr_TV_MARGE_PLUNKETT"], ["JENNY CUMMING", "spr_TV_JENNY_CUMMING"], ["SHEZLEIGH", "spr_TV_SHEZLEIGH"]];
     const spots = [[b.left + 70, b.top + 90], [b.right - 70, b.top + 90], [b.left + 70, b.bottom - 70], [b.right - 70, b.bottom - 70]];
     who.forEach(([name, tex], i) => {
       const [hx, hy] = spots[i];
