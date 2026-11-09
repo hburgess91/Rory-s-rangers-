@@ -44,7 +44,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.renderList();
     button(this, 90, 515, "◀ LEAVE", () => this.leave(), { w: 140, h: 30, size: 13 });
     this.input.keyboard?.on("keydown-ESC", () => !this.playing && this.leave());
-    synth.music("doc");
+    synth.music("archive");
   }
 
   private unlockedIds(): string[] {
