@@ -18,7 +18,7 @@ const SHOUTS: Record<string, [number, number][]> = {
 
 /** Recorded music (public/audio). Ids not listed here fall back to the synthesised tracks. */
 export const MUSIC_FILES: Record<string, string> = {
-  title: "audio/title.mp3",
+  title: "audio/krel_world.mp3",
   hub: "audio/hub.mp3",
   pub: "audio/pub.mp3",
   meeting: "audio/pixel_quest.mp3",
@@ -659,7 +659,14 @@ export class Synth {
     el.volume = Math.min(1, this.vol.master * this.vol.music);
     this.el = el;
     this.elId = id;
-    el.play().catch(() => undefined);
+    el.play().catch(() => {
+      // browsers block sound until the first tap/click/key: start it the moment one happens
+      const go = () => {
+        for (const ev of ["pointerdown", "keydown", "touchend"]) window.removeEventListener(ev, go, true);
+        if (this.el === el && el.paused) el.play().catch(() => undefined);
+      };
+      for (const ev of ["pointerdown", "keydown", "touchend"]) window.addEventListener(ev, go, true);
+    });
   }
 
   private stopFile() {

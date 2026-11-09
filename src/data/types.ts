@@ -188,6 +188,8 @@ export interface Settings {
   /** Text-to-speech for dialogue and TV (browser voices). */
   voices?: boolean;
   voiceVolume?: number;
+  /** Custom key bindings (action id -> Phaser key names). Missing actions use the defaults. */
+  keys?: Record<string, string[]>;
 }
 
 export interface MetaState {

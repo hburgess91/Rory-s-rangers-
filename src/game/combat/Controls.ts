@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TOUCH } from "../ui/TouchControls";
+import { keysFor } from "../systems/keybinds";
 
 /** Input abstraction: keyboard + mouse, with gamepad support layered on top. */
 export class Controls {
@@ -18,9 +19,26 @@ export class Controls {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const kb = scene.input.keyboard!;
-    this.keys = kb.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,Q,B,R,F,SHIFT,ESC,J,K,L,TAB,X,G,T,C") as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = kb.addKeys("ESC,TAB") as Record<string, Phaser.Input.Keyboard.Key>;
     kb.addCapture("SPACE,TAB,UP,DOWN,LEFT,RIGHT");
     scene.input.mouse?.disableContextMenu();
+  }
+
+  /** Is any key bound to this action held? (Bindings are read live, so rebinding in the menu applies at once.) */
+  private down(action: string): boolean {
+    const kb = this.scene.input.keyboard;
+    if (!kb) return false;
+    for (const name of keysFor(action)) {
+      if (!this.keys[name]) {
+        try {
+          this.keys[name] = kb.addKey(name, ["SPACE", "TAB", "UP", "DOWN", "LEFT", "RIGHT"].includes(name));
+        } catch {
+          continue;
+        }
+      }
+      if (this.keys[name].isDown) return true;
+    }
+    return false;
   }
 
   private pad(): Phaser.Input.Gamepad.Gamepad | null {
@@ -31,8 +49,8 @@ export class Controls {
 
   move(): { x: number; y: number } {
     const k = this.keys;
-    let x = (k.D.isDown || k.RIGHT.isDown ? 1 : 0) - (k.A.isDown || k.LEFT.isDown ? 1 : 0);
-    let y = (k.S.isDown || k.DOWN.isDown ? 1 : 0) - (k.W.isDown || k.UP.isDown ? 1 : 0);
+    let x = (this.down("right") ? 1 : 0) - (this.down("left") ? 1 : 0);
+    let y = (this.down("down") ? 1 : 0) - (this.down("up") ? 1 : 0);
     const p = this.pad();
     if (p && Math.hypot(p.leftStick.x, p.leftStick.y) > 0.2) {
       x = p.leftStick.x;
@@ -83,8 +101,8 @@ export class Controls {
     const ptr = this.scene.input.activePointer;
     const p = this.pad();
     if (TOUCH.enabled && TOUCH.attack) return true;
-    if (ptr.wasTouch && TOUCH.enabled) return this.keys.J.isDown || !!(p && (p.R2 > 0.3 || p.A));
-    return (ptr.isDown && ptr.leftButtonDown()) || this.keys.J.isDown || !!(p && (p.R2 > 0.3 || p.A));
+    if (ptr.wasTouch && TOUCH.enabled) return this.down("attack") || !!(p && (p.R2 > 0.3 || p.A));
+    return (ptr.isDown && ptr.leftButtonDown()) || this.down("attack") || !!(p && (p.R2 > 0.3 || p.A));
   }
 
   private edge(name: string, down: boolean): boolean {
@@ -110,52 +128,52 @@ export class Controls {
   special(): boolean {
     const ptr = this.scene.input.activePointer;
     const p = this.pad();
-    return this.edge("special", (ptr.isDown && !ptr.wasTouch && ptr.rightButtonDown()) || this.keys.F.isDown || this.keys.K.isDown || !!(p && (p.L2 > 0.3 || p.Y)));
+    return this.edge("special", (ptr.isDown && !ptr.wasTouch && ptr.rightButtonDown()) || this.down("special") || !!(p && (p.L2 > 0.3 || p.Y)));
   }
   dodge(): boolean {
     const p = this.pad();
-    return this.edge("dodge", this.keys.SPACE.isDown || this.keys.SHIFT.isDown || !!(p && (p.B || p.R1)));
+    return this.edge("dodge", this.down("dodge") || !!(p && (p.B || p.R1)));
   }
   bottle(): boolean {
     const p = this.pad();
-    return this.edge("bottle", this.keys.Q.isDown || !!(p && p.left));
+    return this.edge("bottle", this.down("bottle") || !!(p && p.left));
   }
   bongo(): boolean {
     const p = this.pad();
-    return this.edge("bongo", this.keys.B.isDown || !!(p && p.right));
+    return this.edge("bongo", this.down("bongo") || !!(p && p.right));
   }
   burst(): boolean {
     const p = this.pad();
-    return this.edge("burst", this.keys.R.isDown || this.keys.L.isDown || !!(p && p.L1));
+    return this.edge("burst", this.down("burst") || !!(p && p.L1));
   }
   /** Let one rip. */
   fart(): boolean {
     const p = this.pad();
-    return this.edge("fart", this.keys.G.isDown || !!(p && p.down));
+    return this.edge("fart", this.down("fart") || !!(p && p.down));
   }
   /** GOLDEN JUICE TRANSFORMATION. */
   transform(): boolean {
-    return this.edge("transform", this.keys.T.isDown);
+    return this.edge("transform", this.down("transform"));
   }
   /** CUMEHAMEHA (while golden). */
   cume(): boolean {
-    return this.edge("cume", this.keys.C.isDown);
+    return this.edge("cume", this.down("cume"));
   }
   /** Swap between fists and found guns. */
   swap(): boolean {
     const p = this.pad();
-    return this.edge("swap", this.keys.X.isDown || !!(p && p.up));
+    return this.edge("swap", this.down("swap") || !!(p && p.up));
   }
   /** Side-scrolling rooms: W / Up / joystick up. */
   jump(): boolean {
     const k = this.keys;
     const p = this.pad();
     const stickUp = (TOUCH.enabled && TOUCH.my < -0.6) || !!(p && p.leftStick.y < -0.6);
-    return this.edge("jump", k.W.isDown || k.UP.isDown || stickUp);
+    return this.edge("jump", this.down("up") || stickUp);
   }
   interact(): boolean {
     const p = this.pad();
-    return this.edge("interact", this.keys.E.isDown || !!(p && p.X));
+    return this.edge("interact", this.down("interact") || !!(p && p.X));
   }
   pause(): boolean {
     const p = this.pad();

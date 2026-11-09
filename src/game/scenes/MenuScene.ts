@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ACTIONS, bindKey, keyNameFromEvent, keysFor, prettyKey, resetKeys } from "../systems/keybinds";
 import { G } from "../G";
 import { button, FONT, panel, title, UI } from "../ui/theme";
 import { switchTo, currentStep } from "../Flow";
@@ -14,7 +15,7 @@ import { narrativeActor } from "../systems/narrative";
 import { DialogueBox } from "../ui/DialogueBox";
 import { say } from "../../content/dsl";
 
-type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests";
+type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests" | "controls";
 
 /** Overlay menus: pause, settings, bank (upgrades), ban tribunal, quests, death. */
 const BANK_PERKS = [
@@ -61,10 +62,45 @@ export class MenuScene extends Phaser.Scene {
     this.escKey = this.input.keyboard?.addKey("ESC");
     this.escKey?.on("down", () => {
       if (this.mode === "death") return;
+      if (this.mode === "controls") {
+        // Esc cancels a rebind in progress, otherwise goes back
+        if (this.listening) {
+          this.listening = null;
+          this.render("controls");
+        } else this.render(this.controlsFrom);
+        return;
+      }
       if (this.mode === "settings" || this.mode === "quests") this.render(this.caller === "Title" ? "settings" : "pause");
       if (this.mode === "pause" || this.mode === "bank" || this.mode === "tribunal") this.close();
     });
     this.render(data?.mode ?? "pause");
+  }
+
+  private listening: string | null = null;
+  private controlsFrom: Mode = "pause";
+  private keyListener: ((e: KeyboardEvent) => void) | null = null;
+
+  private openControls(from: Mode) {
+    this.controlsFrom = from;
+    this.listening = null;
+    if (!this.keyListener) {
+      this.keyListener = (e: KeyboardEvent) => {
+        if (this.mode !== "controls" || !this.listening || e.code === "Escape") return;
+        const name = keyNameFromEvent(e);
+        if (!name) return;
+        e.preventDefault();
+        bindKey(this.listening, name);
+        this.listening = null;
+        synth.play("select");
+        this.render("controls");
+      };
+      window.addEventListener("keydown", this.keyListener);
+      this.events.once("shutdown", () => {
+        if (this.keyListener) window.removeEventListener("keydown", this.keyListener);
+        this.keyListener = null;
+      });
+    }
+    this.render("controls");
   }
 
   private render(mode: Mode) {
@@ -82,12 +118,28 @@ export class MenuScene extends Phaser.Scene {
         const items: [string, () => void][] = [
           ["RESUME", () => this.close()],
           ["QUESTS, FACTS & STATS", () => this.render("quests")],
+          ["CONTROLS", () => this.openControls("pause")],
           ["SETTINGS", () => this.render("settings")],
         ];
         if (this.caller === "Hub") items.push(["SAVE GAME", () => this.saveNow()]);
         items.push(["QUIT TO TITLE (progress is autosaved)", () => this.quit()]);
-        items.forEach(([t, fn], i) => add(button(this, 480, 170 + i * 52, t, fn, { w: 380 })));
-        add(this.add.text(480, 470, "Controls: WASD move · Mouse aim · LMB attack · RMB/F special · Space dodge · Q pussy juice · B fizzy bongo · R Wonk Your Thang (when Wonk is full) · G fart · X swap gun · E interact · Tab skip dialogue", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
+        items.forEach(([t, fn], i) => add(button(this, 480, 160 + i * 50, t, fn, { w: 380 })));
+        break;
+      }
+      case "controls": {
+        add(title(this, 480, 62, "CONTROLS", 26));
+        add(this.add.text(480, 88, "Click CHANGE, then press the new key. Mouse aims · Esc pauses · Tab skips dialogue (fixed).", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4" }).setOrigin(0.5));
+        const col = (i: number) => (i < 8 ? 0 : 1);
+        ACTIONS.forEach((a, i) => {
+          const x = col(i) ? 475 : 150;
+          const y = 118 + (i % 8) * 42;
+          const listening = this.listening === a.id;
+          add(this.add.text(x, y, a.label, { fontFamily: FONT, fontSize: "12px", color: "#ffffff", wordWrap: { width: 152 } }).setOrigin(0, 0.5));
+          add(this.add.text(x + 152, y, listening ? "press a key…" : keysFor(a.id).map(prettyKey).join("/"), { fontFamily: FONT, fontSize: "12px", color: listening ? "#86efac" : "#ffd23f", fontStyle: "bold" }).setOrigin(0, 0.5));
+          add(button(this, x + 268, y, listening ? "…" : "CHANGE", () => { this.listening = a.id; this.render("controls"); }, { w: 70, h: 28, size: 11 }));
+        });
+        add(button(this, 380, 500, "RESET TO DEFAULTS", () => { resetKeys(); this.listening = null; synth.play("ding"); this.render("controls"); }, { w: 220 }));
+        add(button(this, 600, 500, "◀ BACK", () => { this.listening = null; this.render(this.controlsFrom); }, { w: 160 }));
         break;
       }
       case "settings": {
@@ -110,7 +162,8 @@ export class MenuScene extends Phaser.Scene {
         row(370, "CRT effect (KrelTV)", () => (set.crt ? "ON" : "OFF"), () => (set.crt = !set.crt), () => (set.crt = !set.crt));
         row(410, "Character voices", () => (set.voices !== false ? "ON" : "OFF"), () => (set.voices = set.voices === false), () => (set.voices = set.voices === false));
         row(450, "Voice volume", () => pct(set.voiceVolume ?? 0.8), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) - 0.1)), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) + 0.1)));
-        add(button(this, 480, 500, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 200 }));
+        add(button(this, 360, 500, "CONTROLS", () => this.openControls("settings"), { w: 180 }));
+        add(button(this, 600, 500, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 180 }));
         break;
       }
       case "quests": {
