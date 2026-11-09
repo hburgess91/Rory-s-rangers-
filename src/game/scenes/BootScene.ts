@@ -18,9 +18,11 @@ export class BootScene extends Phaser.Scene {
     // PixelLab art (public/art). Loaded under the old texture keys, so it replaces the procedural art.
     this.load.json("artmanifest", "art/manifest.json");
     this.load.on("filecomplete-json-artmanifest", (_k: string, _t: string, m: ArtManifest) => {
-      for (const [key, c] of Object.entries(m.chars ?? {})) this.load.spritesheet(key, `art/${c.file}`, { frameWidth: c.frame, frameHeight: c.frame });
-      for (const [key, im] of Object.entries(m.images ?? {})) this.load.image(key, `art/${im.file}`);
-      for (const [key, sh] of Object.entries(m.sheets ?? {})) this.load.spritesheet(key, `art/${sh.file}`, { frameWidth: sh.frameWidth, frameHeight: sh.frameHeight });
+      // the published build bakes small pictures straight into the manifest (data: URLs) to keep the file count down
+      const src = (f: string) => (f.startsWith("data:") ? f : `art/${f}`);
+      for (const [key, c] of Object.entries(m.chars ?? {})) this.load.spritesheet(key, src(c.file), { frameWidth: c.frame, frameHeight: c.frame });
+      for (const [key, im] of Object.entries(m.images ?? {})) this.load.image(key, src(im.file));
+      for (const [key, sh] of Object.entries(m.sheets ?? {})) this.load.spritesheet(key, src(sh.file), { frameWidth: sh.frameWidth, frameHeight: sh.frameHeight });
     });
     const t = this.add.text(480, 270, "LOADING LORE…", { fontFamily: "monospace", fontSize: "20px", color: "#ffd23f" }).setOrigin(0.5);
     this.load.on("progress", (p: number) => t.setText(`LOADING LORE… ${Math.round(p * 100)}%`));
