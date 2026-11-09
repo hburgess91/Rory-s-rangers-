@@ -34,6 +34,7 @@ export const MUSIC_FILES: Record<string, string> = {
   boss_salmon: "audio/boss_salmon.mp3",
   boss_krandall: "audio/cranky_crandall_boss.mp3",
   crandle: "audio/crankey_crandle.mp3",
+  crobley_factory: "audio/crobley_factory.mp3",
   boss_feedback: "audio/boss_feedback.mp3",
   boss_machine: "audio/boss_machine.mp3",
   boss_banhammer: "audio/boss_banhammer.mp3",

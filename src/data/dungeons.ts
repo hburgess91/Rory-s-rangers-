@@ -755,7 +755,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     chapter: 0,
     view: "side",
     name: "THE CROBLEY FACTORY",
-    music: "industrial",
+    music: "crobley_factory",
     arenaFlag: "crobley_factory_done",
     returnAt: "CROBLEY_FACTORY",
     rooms: [
