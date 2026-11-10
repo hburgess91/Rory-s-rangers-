@@ -68,6 +68,15 @@ export class VignetteScene extends Phaser.Scene {
     fadeThen(this, 250, next);
   }
 
+  /** Wipe the set for the next shot, but keep the dialogue box (depth 1000+) alive. */
+  private clearStage() {
+    for (const o of [...this.children.list]) {
+      if ((o as unknown as { depth: number }).depth >= 1000) continue;
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    }
+  }
+
   private wait(ms: number) {
     return new Promise<void>((res) => this.time.delayedCall(ms, () => res()));
   }
@@ -492,7 +501,7 @@ export class VignetteScene extends Phaser.Scene {
     ]);
     flashes.remove();
     // ---- the tanks
-    this.children.removeAll(true);
+    this.clearStage();
     this.cameras.main.flash(300, 255, 255, 255);
     if (!backdrop(this, "bg_abandoned", { depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x222233);
     const house = this.add.rectangle(480, 300, 420, 300, 0x000000, 0).setDepth(1);
@@ -819,7 +828,7 @@ export class VignetteScene extends Phaser.Scene {
       say("POLSON", "Another day, another gym sesh done!! In other news.. I'm starving 😅 Restaurant? Wbu?"),
     ]);
     // restaurant
-    this.children.removeAll(true);
+    this.clearStage();
     this.lastCaption = undefined;
     if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
     if (!this.textures.exists("bg_restaurant")) this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
@@ -978,7 +987,7 @@ export class VignetteScene extends Phaser.Scene {
       say("POLSON", "That's the session!! Post-workout window. I've got to get the protein in within thirty seconds or the gains evaporate. Make no mistake"),
       say("POLSON", "Restaurant!! Quick!! QUICK!!"),
     ]);
-    this.children.removeAll(true);
+    this.clearStage();
     this.lastCaption = undefined;
     if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
     this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
@@ -1484,7 +1493,7 @@ export class VignetteScene extends Phaser.Scene {
       say("EVERYONE", "NO."),
     ]);
     // the celebration
-    this.children.removeAll(true);
+    this.clearStage();
     this.lastCaption = undefined;
     if (!backdrop(this, "bg_townhall", { dim: 0.2, depth: -10 })) this.sky(0x9ec5e8, 0xe8d8b0);
     const m2 = this.add.sprite(480, 360, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(3.4).setDepth(10);
@@ -1754,7 +1763,7 @@ export class VignetteScene extends Phaser.Scene {
     ]);
     cam.setRotation(0);
     crack.destroy();
-    this.children.removeAll(true);
+    this.clearStage();
     this.lastCaption = undefined;
     // technical difficulties
     const bars = [0xffffff, 0xfacc15, 0x22d3ee, 0x22c55e, 0xe879f9, 0xef4444, 0x2563eb];
@@ -2257,8 +2266,7 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("boom");
     this.cameras.main.flash(500, 255, 255, 255);
     this.cameras.main.setRotation(0);
-    this.children.removeAll(true);
-    this.tweens.killAll();
+    this.clearStage();
     const sky2 = this.sky(0x8fc3ea, 0xf3d9b1);
     const g = this.add.graphics();
     g.fillStyle(0x5a6a80, 1);
@@ -2272,11 +2280,11 @@ export class VignetteScene extends Phaser.Scene {
     this.tweens.add({ targets: plane, x: 330, y: 200, duration: 2600, ease: "Sine.inOut" });
     await this.talk([dir("You shoot out of the roof of KR-069 on a rocket-powered seat. A little pink parachute pops open. Below you, the plane carries on, straight and true, towards the giant pussy juice.")]);
     // the drugs wear off
-    this.tween({ targets: haze, alpha: 0, duration: 2600 });
+    this.tween({ targets: haze, alpha: 0, duration: 1800 });
     this.tween({ targets: label, alpha: 0, duration: 1400 });
     const tower = this.add.image(640, 440, "p_kreltower").setOrigin(0.5, 1).setScale(1.7).setDepth(9).setAlpha(0);
-    this.tween({ targets: carton, alpha: 0, scaleX: tower.scaleX * 0.5, duration: 2600, ease: "Sine.inOut" });
-    await this.tween({ targets: tower, alpha: 1, duration: 2600, ease: "Sine.inOut" });
+    this.tween({ targets: carton, alpha: 0, scaleX: tower.scaleX * 0.5, duration: 1800, ease: "Sine.inOut" });
+    await this.tween({ targets: tower, alpha: 1, duration: 1800, ease: "Sine.inOut" });
     carton.destroy();
     this.add.text(640, 448, "THE KREL TOWER", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(12);
     synth.play("gasp");
@@ -2288,13 +2296,11 @@ export class VignetteScene extends Phaser.Scene {
       say(me, "…Has anyone seen the train though?"),
     ]);
     // ---- meanwhile: the Kreddle Express
-    this.children.removeAll(true);
-    this.tweens.killAll();
+    this.clearStage();
     void sky2;
     await this.kreddleExpress();
     // ---- back to the plane: everyone watches
-    this.children.removeAll(true);
-    this.tweens.killAll();
+    this.clearStage();
     const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
     const g2 = this.add.graphics();
     g2.fillStyle(0x5a6a80, 1);
@@ -2348,7 +2354,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([say("FLENKY", "Noooo!! Mollor was in there!!!")]);
     this.caption("THE KREL TOWER HAS FALLEN (AGAIN)", "#ff4d4d", 30);
     synth.play("alarm");
-    await this.wait(2400);
+    await this.wait(1600);
     await this.talk([
       dir("Silence. Then sirens. Then you land, gently, on top of the Great Tap."),
       say(me, "Did we get the train?"),
@@ -2576,14 +2582,17 @@ export class VignetteScene extends Phaser.Scene {
       let ax = 0;
       let ay = 0;
       let drag: { x: number; y: number } | null = null;
-      this.input.on("pointerdown", (p: Phaser.Input.Pointer) => (drag = { x: p.x, y: p.y }));
-      this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+      const onDown = (p: Phaser.Input.Pointer) => (drag = { x: p.x, y: p.y });
+      const onMove = (p: Phaser.Input.Pointer) => {
         if (!drag || !p.isDown) return;
         ax = Phaser.Math.Clamp(ax + (p.x - drag.x) / 260, -1, 1);
         ay = Phaser.Math.Clamp(ay + (p.y - drag.y) / 200, -1, 1);
         drag = { x: p.x, y: p.y };
-      });
-      this.input.on("pointerup", () => (drag = null));
+      };
+      const onUp = () => (drag = null);
+      this.input.on("pointerdown", onDown);
+      this.input.on("pointermove", onMove);
+      this.input.on("pointerup", onUp);
       type Obj = { c: Phaser.GameObjects.Container; ox: number; oy: number; z: number; giant: boolean };
       const live: Obj[] = [];
       let got = 0;
@@ -2607,6 +2616,12 @@ export class VignetteScene extends Phaser.Scene {
         const go = () => {
           if (phase !== "eject") return;
           phase = "done";
+          loop.remove();
+          this.input.off("pointerdown", onDown);
+          this.input.off("pointermove", onMove);
+          this.input.off("pointerup", onUp);
+          this.input.keyboard?.off("keydown-E", go);
+          this.input.keyboard?.off("keydown-SPACE", go);
           const g = live.find((o) => o.giant);
           resolve({ sx: g ? g.c.scaleX * 0.25 : 3, sy: g ? g.c.scaleY * 0.25 : 9 });
         };
@@ -2614,7 +2629,7 @@ export class VignetteScene extends Phaser.Scene {
         this.input.keyboard?.once("keydown-E", go);
         this.input.keyboard?.once("keydown-SPACE", go);
       };
-      this.time.addEvent({
+      const loop = this.time.addEvent({
         delay: 16,
         loop: true,
         callback: () => {
@@ -2713,7 +2728,7 @@ export class VignetteScene extends Phaser.Scene {
     const shop = this.add.image(720, 400, "p_krelburger").setOrigin(0.5, 1).setScale(1.5).setDepth(5);
     this.add.text(shop.x, shop.y - shop.displayHeight - 6, "KRELBURGER", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffd23f", stroke: "#b91c1c", strokeThickness: 5 }).setOrigin(0.5, 1).setDepth(6);
     this.caption("MEANWHILE…", "#ffffff", 30);
-    await this.wait(1400);
+    await this.wait(900);
     this.lastCaption?.destroy();
     const train = this.add.image(-700, 392, "p_train").setOrigin(0, 1).setScale(2.4).setDepth(10);
     const k = this.add.sprite(0, 0, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(1.5).setDepth(11);
@@ -2721,7 +2736,7 @@ export class VignetteScene extends Phaser.Scene {
     follow();
     synth.play("jet");
     this.cameras.main.shake(2000, 0.006);
-    await this.tween({ targets: train, x: -260, duration: 1600, ease: "Linear", onUpdate: follow });
+    await this.tween({ targets: train, x: -260, duration: 1300, ease: "Linear", onUpdate: follow });
     await this.talk([
       dir("The Kreddle Express thunders over the border at three hundred miles an hour. In the cab, President Klerble has still not blinked."),
       say("PRESIDENT KLERBLE", "YES! YES! YESSS!!"),
@@ -2732,14 +2747,14 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("trombone");
     const eyes = this.add.text(k.x, k.y - 50, "!!!", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ff4d4d", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(30);
     this.tweens.add({ targets: eyes, scale: { from: 0.4, to: 1.3 }, yoyo: true, repeat: 2, duration: 160 });
-    await this.wait(900);
+    await this.wait(600);
     eyes.destroy();
     this.cameras.main.shake(300, 0.01);
     await this.talk([say("PRESIDENT KLERBLE", "Mmmm!! Want Krelburger!!")]);
     // out he gets, in he goes
     const walker = this.add.sprite(k.x, 380, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(1.8).setDepth(12);
     k.setVisible(false);
-    await this.tween({ targets: walker, x: shop.x, duration: 1600, ease: "Linear" });
+    await this.tween({ targets: walker, x: shop.x, duration: 1100, ease: "Linear" });
     synth.play("door");
     walker.destroy();
     await this.talk([
