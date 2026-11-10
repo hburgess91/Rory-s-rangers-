@@ -2326,7 +2326,6 @@ export class VignetteScene extends Phaser.Scene {
     this.people(people, "NOOOO!");
     synth.play("gasp");
     const noo: [string, string][] = [
-      ["FLENKY", "NOOOOOOOOOOOOO!!"],
       ["SCROMBUS", "Nooooooooo!"],
       ["KREZMAR", "NOOOOOOOO!!!"],
       ["MIKEY", "NOOOOOOOOOOOOOOOOOOO!"],
@@ -2343,16 +2342,16 @@ export class VignetteScene extends Phaser.Scene {
       const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
       this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 640, y: 380 - Math.random() * 130, scale: 3, alpha: 0, duration: 3500 });
     }
+    await this.wait(700);
+    // Jenko, as it comes down
+    this.tweens.add({ targets: people.find((p) => p.texture.key === "spr_FLENKY") ?? [], y: "+=14", duration: 200 });
+    await this.talk([say("FLENKY", "Noooo!! Mollor was in there!!!")]);
     this.caption("THE KREL TOWER HAS FALLEN (AGAIN)", "#ff4d4d", 30);
     synth.play("alarm");
-    await this.wait(3000);
+    await this.wait(2400);
     await this.talk([
       dir("Silence. Then sirens. Then you land, gently, on top of the Great Tap."),
       say(me, "Did we get the train?"),
-      dir("Jenko's phone rings. Everyone freezes."),
-      say("MOLLOR", "(on the phone) Hiya. Saw the tower on the news. I'm fine. I was on my lunch break at Krelburger."),
-      say("MOLLOR", "(on the phone) There's a man in a sash in here eating his eleventh burger. He keeps shouting 'YES'. Want a cuddle?"),
-      say("FLENKY", "(sobbing) Yes. YES. I want a cuddle.", { cond: { notPlayer: "FLENKY" } }),
       say("KREZWONK", "So the plan worked.", { cond: { notPlayer: "KREZWONK" } }),
       say("KREBLIS", "Breaking news…", { cond: { notPlayer: "KREBLIS" } }),
       say("KREBLIS", "The train has been stopped 👍", { cond: { notPlayer: "KREBLIS" } }),
