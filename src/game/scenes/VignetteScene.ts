@@ -2219,79 +2219,101 @@ export class VignetteScene extends Phaser.Scene {
     if (r) await this.talk([dir(r)]);
   }
 
-  // ---------------------------------------------------------------- FLIGHT KR-069: THE COCKPIT, THE PARACHUTE, THE TOWER
+  // ---------------------------------------------------------------- OPERATION PLANE INTO TRAIN
+  // The cockpit, the drugs, the juice, the ejector seat, the Kreddle Express, the Krel Tower.
 
   private async planeEscape() {
     const me = G.s.player;
     G.rt.timerEnd = 0;
     G.emit("timer", null);
-    // ---- the cockpit, on the approach
+    // a lad on the ground to deliver the bad news (never the player)
+    const lad = (pref: string[]) => pref.find((p) => p !== me) ?? "KREBLIS";
+    // ---- the cockpit
     const sky = this.sky(0x7ec8f0, 0xf3d9b1);
-    const city = this.add.graphics();
-    city.fillStyle(0x5a6a80, 1);
-    for (let i = 0; i < 20; i++) city.fillRect(i * 50, 330 - ((i * 37) % 70), 44, 300);
-    const tower = this.add.image(480, 420, "p_kreltower").setOrigin(0.5, 1).setScale(0.6).setDepth(2);
-    const dash = this.add.graphics().setDepth(20);
-    dash.fillStyle(0x1f2937, 1).fillRect(0, 380, 960, 160);
-    dash.fillStyle(0x111827, 1).fillRect(0, 0, 960, 40).fillRect(0, 0, 60, 540).fillRect(900, 0, 60, 540).fillRect(470, 0, 20, 380);
-    for (let i = 0; i < 14; i++) dash.fillStyle([0x22c55e, 0xef4444, 0xfacc15][i % 3], 1).fillCircle(120 + i * 52, 420 + (i % 2) * 22, 7);
-    dash.fillStyle(0x374151, 1).fillRect(400, 450, 160, 70);
-    this.add.text(480, 485, "AUTOPILOT: TESLA FSD (BETA)", { fontFamily: FONT, fontSize: "10px", color: "#86efac" }).setOrigin(0.5).setDepth(21);
+    const dash = this.cockpitFrame();
     const pilot = this.add.sprite(480, 470, `spr_${me}`, 5).setScale(3).setDepth(22);
-    synth.play("alarm");
-    this.tween({ targets: tower, scale: 4.5, duration: 9000, ease: "Quad.in" });
+    synth.music("airport");
     await this.talk([
-      dir("The cockpit of Flight KR-069. Krozno is unconscious in the drinks trolley. Through the windscreen: Kreltower. It is getting bigger. It is getting much bigger."),
-      dir("You approach the controls. There are four hundred buttons. One of them is labelled 'DO NOT'."),
+      dir("The cockpit of Flight KR-069. Krozno is unconscious in the drinks trolley. There are four hundred buttons. One of them is labelled 'DO NOT'."),
+      say("MIKEY", "(over the radio) You're in? Legend. Right. Find the train. Fly the plane into the train.", { cond: { notPlayer: "MIKEY" } }),
+      say("SCROMBUS", "(over the radio) You're in? Legend. Right. Find the train. Fly the plane into the train.", { cond: { player: "MIKEY" } }),
+      say(me, "I don't know how to fly a plane."),
+      say("KREZMAR", "(over the radio) Nobody knows how to fly a plane, mate. That's what the drugs are for. Glovebox."),
+      dir("You open the glovebox. Inside: a little bag. On the bag, in Krozno's handwriting: 'CONFIDENCE'."),
     ]);
-    this.tween({ targets: pilot, y: 440, duration: 600 });
-    await this.wait(700);
+    await this.takeDrugs();
+    pilot.destroy();
     await this.talk([
-      dir("You don't know how to fly a plane."),
-      dir("Why did you do this."),
-      dir("It probably won't even hit the tower now that Krozno has been bested."),
-      dir("Just find a parachute and get yourself some pussy juice."),
-      say(me, "…yeah. Fair."),
+      dir("Oh. Oh, that's lovely. Your hands are steady. The four hundred buttons make sense now. They're all friends. One of them waves at you."),
+      say(me, "…I know how to fly a plane."),
+      say("KREZWONK", "(over the radio) He knows how to fly a plane.", { cond: { notPlayer: "KREZWONK" } }),
+      say("KREBLIS", "(over the radio) He knows how to fly a plane.", { cond: { player: "KREZWONK" } }),
     ]);
     sky.destroy();
-    city.destroy();
-    tower.destroy();
     dash.destroy();
-    pilot.destroy();
-    this.children.list.filter((o) => o instanceof Phaser.GameObjects.Text).forEach((o) => o.destroy());
-    // ---- the cabin: shove your way to the parachute
-    await this.parachuteShove(me);
-    // ---- the jump
-    await this.talk([
-      dir("You open the emergency door. The wind takes your eyebrows."),
-      say(me, "It'll probably auto-land. It's a Tesla plane."),
-      dir("You jump."),
-    ]);
-    // ---- outside: parachuting down, everyone watching
-    const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
+    // ---- the flight
+    await this.juiceFlight();
+    // ---- the ejector seat, the bang, and the come-down
+    synth.play("boom");
+    this.cameras.main.flash(500, 255, 255, 255);
+    this.cameras.main.setRotation(0);
+    this.children.removeAll(true);
+    this.tweens.killAll();
+    const sky2 = this.sky(0x8fc3ea, 0xf3d9b1);
     const g = this.add.graphics();
     g.fillStyle(0x5a6a80, 1);
-    for (let i = 0; i < 20; i++) g.fillRect(i * 50, 300 - ((i * 37) % 90), 44, 300);
-    g.fillStyle(0x3d6a2a, 1).fillRect(0, 430, 960, 110);
+    for (let i = 0; i < 20; i++) g.fillRect(i * 50, 330 - ((i * 37) % 90), 44, 300);
+    g.fillStyle(0x3d6a2a, 1).fillRect(0, 440, 960, 100);
+    const haze = this.add.rectangle(480, 270, 960, 540, 0xff4fd8, 0.28).setDepth(80).setBlendMode(Phaser.BlendModes.ADD);
+    const carton = this.add.image(640, 440, "p_juice").setOrigin(0.5, 1).setScale(3.4, 8.6).setDepth(10);
+    const label = this.add.text(640, 250, "PUSSY\nJUICE", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", align: "center", stroke: "#b0247a", strokeThickness: 5 }).setOrigin(0.5).setDepth(11);
+    const plane = this.add.image(140, 150, "p_plane").setScale(2.2).setDepth(20);
+    const chute = this.chute(me, 120, 60);
+    this.tweens.add({ targets: plane, x: 330, y: 200, duration: 2600, ease: "Sine.inOut" });
+    await this.talk([dir("You shoot out of the roof of KR-069 on a rocket-powered seat. A little pink parachute pops open. Below you, the plane carries on, straight and true, towards the giant pussy juice.")]);
+    // the drugs wear off
+    this.tween({ targets: haze, alpha: 0, duration: 2600 });
+    this.tween({ targets: label, alpha: 0, duration: 1400 });
+    const tower = this.add.image(640, 440, "p_kreltower").setOrigin(0.5, 1).setScale(1.7).setDepth(9).setAlpha(0);
+    this.tween({ targets: carton, alpha: 0, scaleX: tower.scaleX * 0.5, duration: 2600, ease: "Sine.inOut" });
+    await this.tween({ targets: tower, alpha: 1, duration: 2600, ease: "Sine.inOut" });
+    carton.destroy();
+    this.add.text(640, 448, "THE KREL TOWER", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(12);
+    synth.play("gasp");
+    this.cameras.main.shake(400, 0.01);
+    await this.talk([
+      dir("The giant pussy juice wobbles. It shimmers. It is, and possibly always was, the Krel Tower."),
+      say(lad(["SCROMBUS", "KREZMAR"]), "(over the radio) Oh no!! You were hallucinating so badly from the drugs that you didn't realise you were heading straight for the Krel Tower! Noooooooooooo!"),
+      say(lad(["FLENKY", "CRONGUS"]), "(over the radio) MOLLOR'S ON THE TOP FLOOR!!"),
+      say(me, "…Has anyone seen the train though?"),
+    ]);
+    // ---- meanwhile: the Kreddle Express
+    this.children.removeAll(true);
+    this.tweens.killAll();
+    void sky2;
+    await this.kreddleExpress();
+    // ---- back to the plane: everyone watches
+    this.children.removeAll(true);
+    this.tweens.killAll();
+    const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
+    const g2 = this.add.graphics();
+    g2.fillStyle(0x5a6a80, 1);
+    for (let i = 0; i < 20; i++) g2.fillRect(i * 50, 300 - ((i * 37) % 90), 44, 300);
+    g2.fillStyle(0x3d6a2a, 1).fillRect(0, 430, 960, 110);
     if (backdrop(this, "bg_city", { depth: -10 })) {
       skyG.setVisible(false);
-      g.setVisible(false);
+      g2.setVisible(false);
     }
     const tw = this.add.image(620, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
     const people = this.crowd(470).filter((p) => p.texture.key !== `spr_${me}`);
     synth.music("airport");
-    const chute = this.add.container(180, -60).setDepth(70);
-    const canopy = this.add.graphics();
-    canopy.fillStyle(0xff4fa3, 1).slice(0, 0, 46, Math.PI, 0, false).fillPath();
-    canopy.lineStyle(2, 0xffffff, 1).lineBetween(-44, 0, 0, 56).lineBetween(44, 0, 0, 56).lineBetween(0, -40, 0, 56);
-    chute.add([canopy, this.add.sprite(0, 70, `spr_${me}`, 0).setScale(2)]);
-    this.tween({ targets: chute, y: 330, x: 120, duration: 9000, ease: "Sine.out" });
-    this.tweens.add({ targets: chute, angle: { from: -8, to: 8 }, yoyo: true, repeat: -1, duration: 900 });
-    await this.talk([dir("You drift down over Krelford under a pink parachute. Below, everyone is outside. Everyone is looking up.")]);
-    const plane = this.add.image(1020, 110, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
-    await this.talk([say("KREBLIS", "Is that… is that the plane?"), say("MIKEY", "It's on autopilot. It's a Tesla. It'll be fine.")]);
-    await this.tween({ targets: plane, x: 670, y: 250, angle: 8, duration: 2600, ease: "Sine.in" });
-    plane.destroy();
+    const chute2 = this.chute(me, 150, -60);
+    this.tween({ targets: chute2, y: 300, x: 110, duration: 9000, ease: "Sine.out" });
+    await this.talk([dir("Back in Krelford, everyone is outside. Everyone is looking up. You are drifting down over them under a pink parachute, waving.")]);
+    const plane2 = this.add.image(1020, 110, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
+    await this.talk([say(lad(["KREBLIS", "GRONNY"]), "Is that… is that the plane?")]);
+    await this.tween({ targets: plane2, x: 670, y: 250, angle: 8, duration: 2600, ease: "Sine.in" });
+    plane2.destroy();
     synth.play("boom");
     this.cameras.main.flash(500, 255, 240, 200);
     this.cameras.main.shake(1400, 0.03);
@@ -2301,16 +2323,18 @@ export class VignetteScene extends Phaser.Scene {
       const smoke = this.add.circle(620 + (Math.random() - 0.5) * 90, 250 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 170, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
     }
-    this.people(people, "!!");
+    this.people(people, "NOOOO!");
     synth.play("gasp");
-    await this.talk([
-      say("FLENKY", "NOT AGAIN!!"),
-      say("SCROMBUS", "NOT AGAIN!!"),
-      say("KREZMAR", "NOT AGAIN!!!"),
-      say("GRONNY", "Not again."),
-      ping("DRONGUS", "NOT AGAIN !!"),
-      say("KREZWONK", "Well. At least it won't collapse. They rebuilt it to code this time."),
-    ]);
+    const noo: [string, string][] = [
+      ["FLENKY", "NOOOOOOOOOOOOO!!"],
+      ["SCROMBUS", "Nooooooooo!"],
+      ["KREZMAR", "NOOOOOOOO!!!"],
+      ["MIKEY", "NOOOOOOOOOOOOOOOOOOO!"],
+      ["GRONNY", "Nooo."],
+      ["KREBON", "No."],
+      ["CRONGUS", "NOOOOOO!! (on his knees)"],
+    ];
+    await this.talk([...noo.filter(([who]) => who !== me).map(([who, t]) => say(who, t)), ping("DRONGUS", "NOOOOOO not the Krel Tower !!")]);
     synth.play("boom");
     this.cameras.main.shake(2800, 0.035);
     fire.destroy();
@@ -2319,83 +2343,272 @@ export class VignetteScene extends Phaser.Scene {
       const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
       this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 640, y: 380 - Math.random() * 130, scale: 3, alpha: 0, duration: 3500 });
     }
-    this.caption("KRELTOWER HAS FALLEN (AGAIN)", "#ff4d4d");
+    this.caption("THE KREL TOWER HAS FALLEN (AGAIN)", "#ff4d4d", 30);
     synth.play("alarm");
     await this.wait(3000);
     await this.talk([
       dir("Silence. Then sirens. Then you land, gently, on top of the Great Tap."),
-      say("KREZWONK", "…I'd like that struck from the record."),
-      say(me, "Anyone got any pussy juice?"),
-      ping("DRONGUS", "It only just got rebuilt !"),
-      dir("KRELTOWER: DESTROYED (AGAIN). Krozno was found in the drinks trolley, unharmed, and charged with 'being up to his usual dirty bloody tricks'. The plane's autopilot has been asked for comment."),
+      say(me, "Did we get the train?"),
+      dir("Jenko's phone rings. Everyone freezes."),
+      say("MOLLOR", "(on the phone) Hiya. Saw the tower on the news. I'm fine. I was on my lunch break at Krelburger."),
+      say("MOLLOR", "(on the phone) There's a man in a sash in here eating his eleventh burger. He keeps shouting 'YES'. Want a cuddle?"),
+      say("FLENKY", "(sobbing) Yes. YES. I want a cuddle.", { cond: { notPlayer: "FLENKY" } }),
+      say("KREZWONK", "So the plan worked.", { cond: { notPlayer: "KREZWONK" } }),
+      say("KREBLIS", "Breaking news…", { cond: { notPlayer: "KREBLIS" } }),
+      say("KREBLIS", "The train has been stopped 👍", { cond: { notPlayer: "KREBLIS" } }),
+      say("KREBLIS", "By a burger", { cond: { notPlayer: "KREBLIS" } }),
+      say("KREBON", "We could have turned the power off.", { cond: { notPlayer: "KREBON" } }),
+      say("KREZMAR", "Krebon. Not today.", { cond: { notPlayer: "KREZMAR" } }),
+      dir("THE KREL TOWER: DESTROYED (AGAIN). The Kreddle Express is parked outside Krelburger with its engine running. President Klerble has ordered a twelfth burger. Krozno was found in the drinks trolley, unharmed, and charged with 'being up to his usual dirty bloody tricks'."),
     ]);
     synth.stopMusic();
-    Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true });
+    Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true });
   }
 
-  /** Down the aisle to the parachute. Everyone is in the way. Shove them. */
-  private parachuteShove(me: string) {
+  /** The cockpit dashboard, window struts and all. */
+  private cockpitFrame() {
+    const dash = this.add.graphics().setDepth(20);
+    dash.fillStyle(0x1f2937, 1).fillRect(0, 400, 960, 140);
+    dash.fillStyle(0x111827, 1).fillRect(0, 0, 960, 34).fillRect(0, 0, 50, 540).fillRect(910, 0, 50, 540);
+    dash.fillTriangle(50, 34, 200, 34, 50, 400).fillTriangle(910, 34, 760, 34, 910, 400);
+    dash.fillRect(472, 0, 16, 400);
+    for (let i = 0; i < 14; i++) dash.fillStyle([0x22c55e, 0xef4444, 0xfacc15][i % 3], 1).fillCircle(110 + i * 54, 432 + (i % 2) * 20, 6);
+    dash.fillStyle(0x374151, 1).fillRect(380, 460, 200, 64);
+    dash.lineStyle(10, 0x0b0f19, 1).strokeCircle(480, 560, 90);
+    return dash;
+  }
+
+  private chute(me: string, x: number, y: number) {
+    const c = this.add.container(x, y).setDepth(70);
+    const canopy = this.add.graphics();
+    canopy.fillStyle(0xff4fa3, 1).slice(0, 0, 46, Math.PI, 0, false).fillPath();
+    canopy.lineStyle(2, 0xffffff, 1).lineBetween(-44, 0, 0, 56).lineBetween(44, 0, 0, 56).lineBetween(0, -40, 0, 56);
+    c.add([canopy, this.add.sprite(0, 70, `spr_${me}`, 0).setScale(2)]);
+    this.tweens.add({ targets: c, angle: { from: -8, to: 8 }, yoyo: true, repeat: -1, duration: 900 });
+    return c;
+  }
+
+  /** Not optional. Press D. */
+  private takeDrugs() {
     return new Promise<void>((resolve) => {
-      this.add.rectangle(480, 270, 960, 540, 0x2a2f3a).setDepth(0);
-      this.add.rectangle(480, 330, 960, 90, 0x7a1f2b).setDepth(1);
-      for (let i = 0; i < 9; i++) {
-        this.add.rectangle(60 + i * 110, 250, 70, 50, 0x334155).setStrokeStyle(2, 0x1e293b).setDepth(2);
-        this.add.rectangle(60 + i * 110, 410, 70, 50, 0x334155).setStrokeStyle(2, 0x1e293b).setDepth(2);
-      }
-      this.add.text(480, 40, "GET TO THE PARACHUTE", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffd23f", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setDepth(100);
-      this.add.text(480, 78, "Tap / SPACE to shove passengers out of the aisle", { fontFamily: FONT, fontSize: "14px", color: "#ffffff" }).setOrigin(0.5).setDepth(100);
-      const chute = this.add.text(900, 320, "🪂", { fontSize: "44px" }).setOrigin(0.5).setDepth(5);
-      this.add.text(900, 360, "PARACHUTE", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5).setDepth(5);
-      const hero = this.add.sprite(80, 330, `spr_${me}`, 4).setScale(2.6).setDepth(20);
-      const screams = ["HELP US!!", "LAND THE FUCKING PLANE", "WHO'S FLYING THIS", "I HAVE A FAMILY", "IS THAT A PARACHUTE", "SHARE IT!!", "MY DUTY FREE", "PLEASE", "DO SOMETHING"];
-      const pax = [0, 1, 2, 3, 4, 5, 6].map((i) => {
-        const p = this.add.sprite(200 + i * 95, 330, `spr_FOLK${i % 4}`, 0).setScale(2.4).setDepth(10);
-        p.setData("hp", 2 + (i % 2));
-        return p;
-      });
-      const bubble = (x: number, y: number, t: string) => {
-        const b = this.add.text(x, y, t, { fontFamily: FONT, fontSize: "12px", color: "#111", backgroundColor: "#ffffffee", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(50);
-        this.tween({ targets: b, y: y - 16, alpha: 0, delay: 900, duration: 500 });
-      };
-      const panic = this.time.addEvent({ delay: 650, loop: true, callback: () => {
-        const alive = pax.filter((p) => p.active && (p.getData("hp") as number) > 0);
-        const p = alive[Math.floor(Math.random() * alive.length)];
-        if (p) bubble(p.x, p.y - 50, screams[Math.floor(Math.random() * screams.length)]);
-        this.cameras.main.shake(120, 0.003);
-      } });
+      const t = title(this, 480, 150, "TAKE DRUGS FOR CONFIDENCE", 34, "#ff4fd8").setDepth(300);
+      const btn = this.add.text(480, 230, "💊  PRESS  D", { fontFamily: "Impact, sans-serif", fontSize: "30px", color: "#ffffff", backgroundColor: "#7e1d6b", padding: { x: 18, y: 10 } }).setOrigin(0.5).setDepth(300).setInteractive({ useHandCursor: true });
+      this.tweens.add({ targets: [t, btn], scale: { from: 1, to: 1.08 }, yoyo: true, repeat: -1, duration: 420 });
       let done = false;
-      const shove = () => {
-        if (done || this.box.active) return;
-        const next = pax.find((p) => (p.getData("hp") as number) > 0);
-        if (!next) return;
-        this.tween({ targets: hero, x: next.x - 60, duration: 120 });
-        synth.play("punch");
-        const hp = (next.getData("hp") as number) - 1;
-        next.setData("hp", hp);
-        this.tweens.add({ targets: next, x: next.x + 14, duration: 70, yoyo: true });
-        if (hp <= 0) {
-          const up = Math.random() < 0.5;
-          this.tween({ targets: next, y: up ? 250 : 410, x: next.x + 20, angle: up ? -80 : 80, duration: 260 });
-          bubble(next.x, next.y - 50, ["OI!", "RUDE", "MY BACK", "SIR!!"][Math.floor(Math.random() * 4)]);
-        }
-        if (pax.every((p) => (p.getData("hp") as number) <= 0)) {
-          done = true;
-          panic.remove();
-          this.input.keyboard?.off("keydown-SPACE", shove);
-          this.input.off("pointerdown", shove);
-          this.tween({ targets: hero, x: 860, duration: 500 }).then(() => {
-            chute.destroy();
-            synth.play("pickup");
-            this.time.delayedCall(500, () => {
-              this.children.removeAll(true);
-              resolve();
-            });
-          });
-        }
+      const take = () => {
+        if (done) return;
+        done = true;
+        this.input.keyboard?.off("keydown-D", take);
+        synth.play("gulp");
+        this.tweens.killTweensOf([t, btn]);
+        t.destroy();
+        btn.destroy();
+        const c = this.caption("CONFIDENCE +900%", "#ff4fd8", 40);
+        this.cameras.main.flash(400, 255, 80, 220);
+        this.time.delayedCall(1300, () => {
+          c.destroy();
+          resolve();
+        });
       };
-      this.input.keyboard?.on("keydown-SPACE", shove);
-      this.input.on("pointerdown", shove);
+      this.input.keyboard?.on("keydown-D", take);
+      btn.on("pointerdown", take);
     });
+  }
+
+  /**
+   * First person: steer KR-069 through eight floating pussy juice cartons, then line up the
+   * giant one. Right before you hit it, the ejector seat. Resolves with the giant's final scale.
+   */
+  private juiceFlight() {
+    return new Promise<{ sx: number; sy: number }>((resolve) => {
+      const NEED = 8;
+      // trippy sky: two hue-cycling layers
+      // the world rolls with the plane; the cockpit doesn't
+      const world = this.add.container(480, 250).setDepth(1);
+      const sky = this.add.graphics();
+      const ground = this.add.graphics();
+      const objs = this.add.container(0, 0);
+      world.add([sky, ground, objs]);
+      const haze = this.add.rectangle(480, 270, 960, 540, 0xff4fd8, 0.18).setDepth(15).setBlendMode(Phaser.BlendModes.ADD);
+      this.cockpitFrame();
+      const hud = this.add.text(480, 52, "", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffffff", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(40);
+      const help = this.add.text(480, 86, "COLLECT THE PUSSY JUICE CONTAINERS TO REACH THE TRAIN", { fontFamily: FONT, fontSize: "15px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(40);
+      this.add.text(480, 500, "WASD / ARROWS (or drag) to steer", { fontFamily: FONT, fontSize: "11px", color: "#86efac" }).setOrigin(0.5).setDepth(41);
+      const cross = this.add.graphics().setDepth(30);
+      cross.lineStyle(3, 0x86efac, 0.9).strokeCircle(0, 0, 22).lineBetween(-34, 0, -12, 0).lineBetween(12, 0, 34, 0).lineBetween(0, -34, 0, -12).lineBetween(0, 12, 0, 34);
+      const keys = this.input.keyboard?.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E") as Record<string, Phaser.Input.Keyboard.Key>;
+      let ax = 0;
+      let ay = 0;
+      let drag: { x: number; y: number } | null = null;
+      this.input.on("pointerdown", (p: Phaser.Input.Pointer) => (drag = { x: p.x, y: p.y }));
+      this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+        if (!drag || !p.isDown) return;
+        ax = Phaser.Math.Clamp(ax + (p.x - drag.x) / 260, -1, 1);
+        ay = Phaser.Math.Clamp(ay + (p.y - drag.y) / 200, -1, 1);
+        drag = { x: p.x, y: p.y };
+      });
+      this.input.on("pointerup", () => (drag = null));
+      type Obj = { c: Phaser.GameObjects.Container; ox: number; oy: number; z: number; giant: boolean };
+      const live: Obj[] = [];
+      let got = 0;
+      let phase: "collect" | "giant" | "eject" | "done" = "collect";
+      let nextSpawn = 600;
+      let t = 0;
+      const spawn = (giant: boolean) => {
+        const img = this.add.image(0, 0, "p_juice");
+        const lbl = this.add.text(0, 6, "PUSSY\nJUICE", { fontFamily: "Impact, sans-serif", fontSize: "9px", color: "#ffffff", align: "center", stroke: "#b0247a", strokeThickness: 2 }).setOrigin(0.5);
+        const c = this.add.container(0, 0, [img, lbl]);
+        objs.addAt(c, 0);
+        live.push({ c, ox: giant ? 0 : Phaser.Math.FloatBetween(-0.85, 0.85), oy: giant ? 0.1 : Phaser.Math.FloatBetween(-0.6, 0.6), z: 1, giant });
+      };
+      const ejectPrompt = () => {
+        phase = "eject";
+        synth.play("alarm");
+        help.setText("");
+        const p = title(this, 480, 230, "⚠ HIT THE EJECTOR SEAT ⚠", 36, "#ff4d4d").setDepth(60);
+        const b = this.add.text(480, 300, "PARACHUTE TO FREEDOM  [ E / SPACE / TAP ]", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", backgroundColor: "#b91c1c", padding: { x: 14, y: 8 } }).setOrigin(0.5).setDepth(60).setInteractive({ useHandCursor: true });
+        this.tweens.add({ targets: [p, b], scale: { from: 1, to: 1.08 }, yoyo: true, repeat: -1, duration: 300 });
+        const go = () => {
+          if (phase !== "eject") return;
+          phase = "done";
+          const g = live.find((o) => o.giant);
+          resolve({ sx: g ? g.c.scaleX * 0.25 : 3, sy: g ? g.c.scaleY * 0.25 : 9 });
+        };
+        b.on("pointerdown", go);
+        this.input.keyboard?.once("keydown-E", go);
+        this.input.keyboard?.once("keydown-SPACE", go);
+      };
+      this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          if (phase === "done") return;
+          t += 16;
+          // steering
+          const sp = 0.028;
+          if (keys) {
+            if (keys.A.isDown || keys.LEFT.isDown) ax -= sp;
+            if (keys.D.isDown || keys.RIGHT.isDown) ax += sp;
+            if (keys.W.isDown || keys.UP.isDown) ay -= sp;
+            if (keys.S.isDown || keys.DOWN.isDown) ay += sp;
+          }
+          // test hook: steer at the nearest carton
+          if ((window as unknown as { __krelAutoFly?: boolean }).__krelAutoFly && live.length) {
+            const o = live.reduce((a, b) => (b.z < a.z ? b : a));
+            ax += Phaser.Math.Clamp(o.ox - ax, -sp, sp);
+            ay += Phaser.Math.Clamp(o.oy - ay, -sp, sp);
+          }
+          ax = Phaser.Math.Clamp(ax, -1, 1);
+          ay = Phaser.Math.Clamp(ay, -1, 1);
+          // the world tilts with you; the drugs make it wobble
+          world.setRotation(-ax * 0.14 + Math.sin(t / 700) * 0.035);
+          const hy = 10 - ay * 120;
+          const hue = (t / 40) % 360;
+          const c1 = Phaser.Display.Color.HSVToRGB(hue / 360, 0.45, 1) as Phaser.Types.Display.ColorObject;
+          const c2 = Phaser.Display.Color.HSVToRGB(((hue + 60) % 360) / 360, 0.35, 1) as Phaser.Types.Display.ColorObject;
+          const col = (o: Phaser.Types.Display.ColorObject) => (o.r << 16) | (o.g << 8) | o.b;
+          sky.clear().fillGradientStyle(col(c1), col(c1), col(c2), col(c2), 1).fillRect(-900, -900, 1800, hy + 900);
+          ground.clear().fillStyle(0x3d8a3a, 1).fillRect(-900, hy, 1800, 900);
+          for (let i = 0; i < 9; i++) {
+            const k = ((i + (t / 300) % 1) / 9) ** 2;
+            ground.fillStyle(i % 2 ? 0x4fa04a : 0x357a32, 1).fillRect(-900, hy + k * 400, 1800, 8 + k * 30);
+          }
+          cross.setPosition(480, 250);
+          haze.setFillStyle(col(c2), 0.16 + 0.06 * Math.sin(t / 300));
+          // spawning
+          if (phase === "collect" && t > nextSpawn && live.filter((o) => !o.giant).length < 3) {
+            spawn(false);
+            nextSpawn = t + 1100;
+          }
+          // move everything towards you
+          for (const o of [...live]) {
+            o.z -= o.giant ? (o.z < 0.14 ? 0 : 0.0032) : 0.0075;
+            const zz = o.z * 3 + 0.25;
+            const sx = ((o.ox - ax) * 420) / zz;
+            const sy = ((o.oy - ay) * 300) / zz;
+            const s = (o.giant ? 2.6 : 1.7) / zz;
+            o.c.setPosition(sx, sy).setScale(s, o.giant ? s * 2.6 : s);
+            if (o.giant) {
+              // the giant one holds still while you line it up, then the ejector seat
+              if (phase === "giant" && o.z < 0.14) ejectPrompt();
+              continue;
+            }
+            if (o.z <= 0.06) {
+              if (Math.abs(o.ox - ax) < 0.22 && Math.abs(o.oy - ay) < 0.24) {
+                got++;
+                synth.play("slurp");
+                this.cameras.main.flash(150, 255, 120, 220);
+                const pop = this.add.text(480, 330, ["SLURP!", "JUICY!", "LOVELY!", "MMMM!", "GET IN!"][got % 5], { fontFamily: "Impact, sans-serif", fontSize: "30px", color: "#ff9ad5", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(50);
+                this.tweens.add({ targets: pop, y: 290, alpha: 0, duration: 700, onComplete: () => pop.destroy() });
+              } else synth.play("pfft");
+              o.c.destroy();
+              live.splice(live.indexOf(o), 1);
+            }
+          }
+          hud.setText(phase === "collect" ? `PUSSY JUICE ${got}/${NEED}` : "");
+          if (phase === "collect" && got >= NEED) {
+            phase = "giant";
+            for (const o of live) o.c.destroy();
+            live.length = 0;
+            synth.play("perfect");
+            help.setText("COLLECT THE GIANT PUSSY JUICE TO GET THE TRAIN!").setFontSize(20).setColor("#ff4fd8");
+            spawn(true);
+          }
+        },
+      });
+    });
+  }
+
+  /** Meanwhile: the Kreddle Express arrives in Krelworld, and finds something it likes more than the Krel Tower. */
+  private async kreddleExpress() {
+    const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
+    const g = this.add.graphics();
+    g.fillStyle(0x6b7b90, 1);
+    for (let i = 0; i < 20; i++) g.fillRect(i * 50, 260 - ((i * 37) % 70), 44, 300);
+    g.fillStyle(0x3d6a2a, 1).fillRect(0, 380, 960, 160);
+    g.fillStyle(0x6b5b4b, 1).fillRect(0, 404, 960, 14);
+    for (let i = 0; i < 40; i++) g.fillStyle(0x4a3a2a, 1).fillRect(i * 26, 400, 10, 22);
+    g.fillStyle(0x9ca3af, 1).fillRect(0, 402, 960, 3).fillRect(0, 415, 960, 3);
+    void skyG;
+    const sign = this.add.text(160, 300, "WELCOME TO\nKRELWORLD", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#1d4ed8", padding: { x: 6, y: 4 }, align: "center" }).setOrigin(0.5, 1).setDepth(5);
+    this.add.rectangle(160, 340, 6, 40, 0x555555).setDepth(4);
+    void sign;
+    const shop = this.add.image(720, 400, "p_krelburger").setOrigin(0.5, 1).setScale(1.5).setDepth(5);
+    this.add.text(shop.x, shop.y - shop.displayHeight - 6, "KRELBURGER", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffd23f", stroke: "#b91c1c", strokeThickness: 5 }).setOrigin(0.5, 1).setDepth(6);
+    this.caption("MEANWHILE…", "#ffffff", 30);
+    await this.wait(1400);
+    this.lastCaption?.destroy();
+    const train = this.add.image(-700, 392, "p_train").setOrigin(0, 1).setScale(2.4).setDepth(10);
+    const k = this.add.sprite(0, 0, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(1.5).setDepth(11);
+    const follow = () => k.setPosition(train.x + train.displayWidth - 70, train.y - train.displayHeight + 40);
+    follow();
+    synth.play("jet");
+    this.cameras.main.shake(2000, 0.006);
+    await this.tween({ targets: train, x: -260, duration: 1600, ease: "Linear", onUpdate: follow });
+    await this.talk([
+      dir("The Kreddle Express thunders over the border at three hundred miles an hour. In the cab, President Klerble has still not blinked."),
+      say("PRESIDENT KLERBLE", "YES! YES! YESSS!!"),
+    ]);
+    // he sees it
+    this.tween({ targets: train, x: -10, duration: 1400, ease: "Sine.out", onUpdate: follow });
+    await this.wait(700);
+    synth.play("trombone");
+    const eyes = this.add.text(k.x, k.y - 50, "!!!", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ff4d4d", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({ targets: eyes, scale: { from: 0.4, to: 1.3 }, yoyo: true, repeat: 2, duration: 160 });
+    await this.wait(900);
+    eyes.destroy();
+    this.cameras.main.shake(300, 0.01);
+    await this.talk([say("PRESIDENT KLERBLE", "Mmmm!! Want Krelburger!!")]);
+    // out he gets, in he goes
+    const walker = this.add.sprite(k.x, 380, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(1.8).setDepth(12);
+    k.setVisible(false);
+    await this.tween({ targets: walker, x: shop.x, duration: 1600, ease: "Linear" });
+    synth.play("door");
+    walker.destroy();
+    await this.talk([
+      dir("He goes in. He does not come out. The Kreddle Express sits outside Krelburger with its engine running, three hundred metres short of nothing in particular."),
+      dir("Somewhere in the sky above Krelford, a plane is still on its way to the Krel Tower."),
+    ]);
   }
 
   /** Stuff Polson's face. Food slides down the table: shove it in as it reaches his mouth. Skip the salad. */

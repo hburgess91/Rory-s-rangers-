@@ -80,6 +80,7 @@ const DUE: Record<string, number> = {
   arc_hotel_chaz: 4,
   arc_kreblis_news: 4,
   arc_flenky_sigma: 4,
+  arc_klerble: 4,
   arc_vegas: 5, arc_sanmik: 5, arc_crobley: 5,
   arc_50p: 6,
 };

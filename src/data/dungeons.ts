@@ -575,22 +575,21 @@ export const DUNGEONS: Record<string, DungeonDef> = {
 
   airport: {
     id: "airport",
-    chapter: 6,
-    name: "THE KRELTOWER INCIDENT — FLIGHT KR-069",
+    chapter: 4,
+    name: "FLIGHT KR-069: OPERATION PLANE INTO TRAIN",
     music: "airport",
-    timerSec: 300,
     returnAt: "AIRPORT",
     rooms: [
       {
-        name: "Flight KR-069: Economy",
-        w: 1500,
-        h: 520,
+        name: "Flight KR-069: The Aisle",
+        w: 2200,
+        h: 380,
         theme: "industrial",
-        waves: [[["bandit", 5], ["trolley", 1]], [["bandit_gunner", 3], ["trolley", 2]]],
+        waves: [[["bandit", 5], ["trolley", 1]], [["bandit_gunner", 3], ["trolley", 2]], [["bandit", 4], ["bandit_gunner", 2]]],
         enterLines: [
-          { s: "NARRATOR", t: "You're in. Seatbelt sign on. Krozno's bandits are serving drinks out of a possessed trolley. Nobody ordered anything.", dir: true },
-          { s: "KREBLIS", t: "(over the network) This is a Krelmergency message. They've set a course for Kreltower. Again. You've got five minutes. FIVE.", cond: { notPlayer: "KREBLIS" } },
-          { s: "NARRATOR", t: "A TIMER has started. Fight through the cabin to the cockpit and stop Krozno before KR-069 reaches Kreltower.", dir: true },
+          { s: "NARRATOR", t: "You're on. Seatbelt sign on. The cabin crew are all wearing balaclavas and stick-on moustaches. One of them is serving drinks out of a possessed trolley.", dir: true },
+          { s: "MIKEY", t: "(over the radio) Krozno's bandits have gone legit. They're cabin crew now. They will NOT like you hijacking their plane.", cond: { notPlayer: "MIKEY" } },
+          { s: "NARRATOR", t: "Fight down the aisle to the cockpit. Excuse yourself to the passengers. Or don't.", dir: true },
         ],
       },
       {

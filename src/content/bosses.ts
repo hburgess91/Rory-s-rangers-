@@ -213,19 +213,19 @@ export const BOSS_TEXT: Record<string, BossText> = {
   krozno: {
     id: "krozno",
     name: "KROZNO",
-    title: "Bandit King · Hijacker of Flight KR-069",
+    title: "Bandit King · Captain of Flight KR-069",
     intro: [
-      dir("The cockpit. Krozno is at the controls, wearing two pilot's hats and a third, smaller hat. Through the windscreen: Kreltower, getting bigger."),
-      say("KROZNO", "It brings me no pleasure to report that Krozno and his bandits are up to their usual dirty bloody tricks."),
-      say("KROZNO", "Drongus said that about me. In January. Do you know how long it's been since anyone mentioned me? I've been waiting for this."),
-      say("KROZNO", "Kreltower only just got rebuilt. So I'm going to un-rebuild it. That's lore. That's ENGAGEMENT."),
-      dir("TIP: Beat him before the timer runs out. Turbulence will throw you around."),
+      dir("The cockpit. The captain swivels round in his chair. He's wearing two pilot's hats and a third, smaller hat. It's Krozno. Of course it's Krozno."),
+      say("KROZNO", "A HIJACKING? On MY flight? That's MY thing. Everybody knows that's my thing."),
+      say("KROZNO", "It brings me no pleasure to report that Krozno and his bandits are up to their usual dirty bloody tricks. Drongus said that about me. In January."),
+      say("KROZNO", "I went straight. I got my pilot's licence. I've got a little badge. And you lot turn up out of a CANNON. Bandits! Defend the cockpit!"),
+      dir("TIP: turbulence will throw you around. Krozno will not give up the controls without a fight."),
     ],
     outro: [
       say("KROZNO", "My… dirty… bloody… tricks…"),
-      dir("Krozno slumps into the drinks trolley. The cockpit is yours. Through the windscreen, Kreltower is getting bigger."),
+      dir("Krozno slumps into the drinks trolley. The cockpit is yours. Something glitters inside his third hat."),
     ],
-    taunts: ["DIRTY BLOODY TRICKS!", "TURBULENCE!", "BANDITS, ASSEMBLE!", "KRELTOWER IS THE LORE!", "PLEASE FASTEN YOUR SEATBELTS!"],
+    taunts: ["THIS IS YOUR CAPTAIN SPEAKING!", "DIRTY BLOODY TRICKS!", "TURBULENCE!", "BANDITS, ASSEMBLE!", "PLEASE FASTEN YOUR SEATBELTS!", "MY PLANE!!"],
   },
   brand: {
     id: "brand",

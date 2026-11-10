@@ -205,6 +205,48 @@ NEWSREADER: The headmaster's office has since been locked from the inside. Witne
 `,
 );
 
+export const KLERBLE_PRESSER = ep(
+  "klerble_presser",
+  "GB KREWS 24",
+  "GB Krews",
+  "Kreddle's President Has An Announcement",
+  1,
+  `
+[MUSIC news start]
+# GB KREWS 24
+# BREAKING: KREDDLE PRESIDENT CALLS PRESS CONFERENCE
+INT. NEWSDESK - DAY
+[MUSIC news fade]
+NEWSREADER: Breaking news. The President of neighbouring Kreddle, President Klerble, has called an emergency press conference. We go there live.
+INT. PRESS CONFERENCE - DAY
+# LIVE: THE PRESIDENTIAL PALACE, KREDDLE
+PRESIDENT KLERBLE: People of Kreddle. And people of Krelworld, who I hope are watching. Hello.
+PRESIDENT KLERBLE: In a few minutes, I am going to hijack a train.
+PRESIDENT KLERBLE: And I am going to crash it into the Krel Tower.
+[GASP]
+REPORTER: Mr President… why?
+PRESIDENT KLERBLE: For a laugh!
+PRESIDENT KLERBLE: And because we hate Krelworld and everyone who lives there!
+PRESIDENT KLERBLE: We hate their way of life and their freedoms!
+PRESIDENT KLERBLE: Their right to drink pussy juice, for example! This is not a right in Kreddle…
+PRESIDENT KLERBLE: Grrr!!
+REPORTER: Sir, with respect, it's your own national railway. You don't need to hijack it.
+PRESIDENT KLERBLE: NO FURTHER QUESTIONS!
+[SMASH CUT]
+INT. TRAIN CAB - DAY
+# LIVE: THE KREDDLE EXPRESS · 300 MPH · DESTINATION: KREL TOWER
+(President Klerble is at the controls. His eyes are enormous. He has not blinked since the press conference.)
+PRESIDENT KLERBLE: YES!
+PRESIDENT KLERBLE: YES!!
+PRESIDENT KLERBLE: YESSS!!!
+INT. NEWSDESK - DAY
+NEWSREADER: (long pause) …Right.
+NEWSREADER: The Krel Tower has not been evacuated. The Krelworld cabinet is understood to be "working on something". More as we get it.
+[FADE]
+`,
+  { unlockFlag: "tv_klerble_presser", unlockHint: "Chapter 4: a Krelmergency in the FGM War Room" },
+);
+
 export const CABINET_LIVE = ep(
   "cabinet_live",
   "GB KREWS 24",
@@ -303,7 +345,7 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, WILDERN_BULLETIN, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
+const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, KLERBLE_PRESSER, WILDERN_BULLETIN, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
 
 /** Number each channel's episodes in order, now that some channels have been folded together. */
 const counts: Record<string, number> = {};
@@ -314,6 +356,7 @@ export const CHANNELS: string[] = ["GB KREWS 24", "CHANNEL KREZ", "BBK ONE", "WO
 /** Which set a shot uses. The TV renderer draws these procedurally. */
 export function setKeyFor(set: string): string {
   const s = set.toUpperCase();
+  if (s.includes("TRAIN")) return "train_cab";
   if (s.includes("OVAL OFFICE")) return "oval_office";
   if (s.includes("CLASSROOM")) return "classroom";
   if (s.includes("DEBATE")) return "debate_stage";

@@ -279,20 +279,6 @@ export class HubScene extends Phaser.Scene {
       s.flags.ch1_hub_tip = true;
       G.emit("toast", { title: "KRELFORD", text: "WASD to walk. E to talk/interact. Follow the yellow arrow. Esc for menu (quests, upgrades, save)." });
     }
-    if (s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved && !s.flags.hijack_alert) {
-      s.flags.hijack_alert = true;
-      synth.play("alarm");
-      await this.talk([
-        say("KREBLIS", "This is a Krelmergency message. I repeat. This is a Krelmergency message"),
-        say("KREBLIS", "Hehe…I love saying it"),
-        say("KREBLIS", "Flight KR-069 out of Krelford International has been hijacked. The hijacker is wearing a balaclava and a stick-on moustache. It's Krozno. It's obviously Krozno."),
-        say("KREBLIS", "The plane is heading for the Kreltower. Which, I'd like to remind everyone, only just got rebuilt."),
-        ping("DRONGUS", "Not the Kreltower !!"),
-        ping("DRONGUS", "Somebody do something. Not me, I'm busy making a song about it"),
-        dir("NEW OBJECTIVE: get to Krelford International (south-east gate) and stop Flight KR-069. You will be on a clock."),
-      ]);
-      G.save();
-    }
     if (from === "swap") {
       G.emit("toast", { title: "CARRYING ON", text: `You are now ${CHARACTERS[s.player].name}. Krebon's ${s.flags.rock_points ?? 0} rockstar points came with you.` });
       await this.talk([dir("You wake up at the edge of town, next to a faded symbol and a pile of underwear. You don't remember how you got here. You feel inexplicably like a rockstar.")]);
@@ -1932,7 +1918,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "PORTAL":
         return G.s.flags.krebon_gone ? "The faded symbol of Wahoogah" : "The symbol of Wahoogah";
       case "AIRPORT":
-        return s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved ? "KRELFORD INTERNATIONAL: STOP FLIGHT KR-069" : "Krelford International";
+        return "Krelford International";
       case "CITADEL":
         return `DA DRONGUS DUNGEON (sealed: ${crystalCount(s)}/${CRYSTALS_NEEDED} cum crystals)`;
       case "WILDERN":
@@ -2063,14 +2049,9 @@ You are required by law to sign the Sex Offenders Register.`, {
         await this.talk([dir("Your old flat. Someone's new tenancy agreement is pinned to the door. It specifically mentions the carpet. In bold. Underlined.")]);
         return;
       case "AIRPORT": {
-        if (s.chapter === 6 && s.flags.final_reading && !s.flags.kreltower_resolved) {
-          G.rt.timerEnd = 0;
-          this.go("Minigame", { mode: "cannon", returnAt: "AIRPORT" });
-          return;
-        }
         await this.talk(
           s.flags.kreltower_fell
-            ? [dir("Krelford International. Every flight is cancelled. The departures board just says 'NO'.")]
+            ? [dir("Krelford International. Every flight is cancelled. The departures board just says 'NO'. Under it, a laminated sign: 'PLEASE DO NOT HIJACK THE PLANES TO CRASH INTO TRAINS. THIS HAS NEVER WORKED.'")]
             : s.flags.kreltower_saved
               ? [dir("Krelford International. There's a new statue in departures of you pulling a plane out of the sky. It is anatomically generous.")]
               : [dir("Krelford International. Flights to Kreddle, Krezteua d'If and 'Fragmar Prime (Seasonal)'. Security is one man reacting to his phone.")],

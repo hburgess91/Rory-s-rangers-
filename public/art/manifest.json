@@ -4095,6 +4095,35 @@
      46
     ]
    }
+  },
+  "spr_TV_PRESIDENT_KLERBLE": {
+   "file": "chars/TV_PRESIDENT_KLERBLE.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
   }
  },
  "images": {
@@ -5349,6 +5378,18 @@
   },
   "bld_WILDERN_RUIN": {
    "file": "buildings/WILDERN_RUIN.png"
+  },
+  "p_train": {
+   "file": "props/p_train.png"
+  },
+  "p_juice": {
+   "file": "props/p_juice.png"
+  },
+  "p_krelburger": {
+   "file": "props/p_krelburger.png"
+  },
+  "tv_train_cab": {
+   "file": "backdrops/tv_train_cab.png"
   }
  },
  "sheets": {

@@ -3,11 +3,11 @@ import { ARCS, arcsFor } from "../src/content/arcs";
 import { DUNGEONS } from "../src/data/dungeons";
 import { BOSS_TEXT } from "../src/content/bosses";
 import { newGameState } from "../src/game/systems/state";
-import { currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
+import { arcDue, currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
 
-const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE", "PORTAL", "CROBLEY_FACTORY"];
+const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE", "PORTAL", "CROBLEY_FACTORY", "AIRPORT"];
 const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv", "polson_gym2", "polson_mouth", "wahooga", "pudding_spy", "pudding_raid", "sanmik_lampe", "sanmik_nation", "sanmik_finale", "crobley_news", "crobley_presser", "crobley_boom"];
-const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig", "modulator", "crocodile", "norwich", "cam2cam"];
+const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig", "modulator", "crocodile", "norwich", "cam2cam", "cannon"];
 
 describe("character side stories", () => {
   it("every arc step points at real places, fights, minigames and cutscenes", () => {
@@ -66,10 +66,16 @@ describe("character side stories", () => {
 });
 
 describe("Kreltower plot", () => {
-  it("airport dungeon is timed and ends with Krozno", () => {
+  it("the Kreddle Express quest: Flight KR-069 ends with Krozno and gates Chapter 4's dungeon", () => {
     const d = DUNGEONS.airport;
-    expect(d.timerSec).toBeGreaterThan(60);
     expect(d.rooms[d.rooms.length - 1].boss).toBe("krozno");
+    const a = ARCS.find((x) => x.id === "arc_klerble")!;
+    expect(a.steps.map((s) => s.at)).toEqual(["ARCHIVE", "AIRPORT"]);
+    expect(arcDue(a)).toBe(4);
+    const st = newGameState("FLENKY");
+    st.chapter = 4;
+    Object.assign(st.flags, { met_emergency: true, ban_tribunal_open: true, arcstep_arc_klerble_brief: true, arcstep_arc_klerble_hijack: true });
+    expect(maybeFinishArc(st)).toContain("The Kreddle Express complete");
   });
   it("Drongus's office plays the anthem", () => {
     expect(DUNGEONS.citadel.rooms.some((r) => r.event === "anthem")).toBe(true);
