@@ -3,6 +3,7 @@ import { G } from "./G";
 import { switchTo } from "./Flow";
 import type { PlayableId } from "../data/types";
 import { maxHp } from "./systems/stats";
+import { jetStream } from "./combat/Wonk";
 
 /**
  * Debug hooks for testing (window.__krel). Not shown anywhere in the UI.
@@ -39,6 +40,11 @@ export function installDebug(game: Phaser.Game) {
     shieldsDown: () => {
       const d = game.scene.getScene("Dungeon") as any;
       for (const e of d?.enemies ?? []) if (e.isBoss) e.shielded = false;
+    },
+    /** Fire the krezz beam straight away (skips the mash minigame). */
+    jet: () => {
+      const d = game.scene.getScene("Dungeon") as unknown as { player?: Parameters<typeof jetStream>[0]; now: () => number };
+      if (d?.player) jetStream(d.player, d.now());
     },
     god: () => {
       G.s.hp = maxHp(G.s) * 100;

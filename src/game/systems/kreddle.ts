@@ -65,6 +65,6 @@ export function addKrokens(s: GameState, n: number) {
 /** What a prize costs at the Prize Counter. Guns you already own are just a cheap refill. */
 export function krokenPrice(s: GameState, p: Prize): number {
   if (p.gun) return s.guns && p.gun in s.guns ? 10 : 40;
-  const base: Record<string, number> = { krezz: 20, gas: 20, violence: 30, gold: 25, tracer: 15, jackpot: 30, super_time: 30, super_aura: 35 };
+  const base: Record<string, number> = { krezz: 20, gas: 20, violence: 30, gold: 25, tracer: 15, jackpot: 30, super_time: 30, super_aura: 35, armor: 30, krezzlong: 25, sperm: 40, hp: 25, lucky: 20, dice: 30, slotfart: 25 };
   return (base[p.id] ?? 25) + 5 * kd(s, p.key!);
 }

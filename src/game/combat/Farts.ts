@@ -100,7 +100,15 @@ export function releaseFart(p: Player, now: number) {
   // Kreddle CASINO GAS: bigger, harder, sparkly
   const casino = kd(G.s, "kd_gas");
   const r = L.radius * (id === "GRONNY" ? 1.4 : 1) * (1 + 0.2 * casino);
-  const dmg = p.dmg(L.dmg, now) * (id === "KREBLIS" ? 1.1 : 1) * (1 + 0.2 * casino);
+  let dmg = p.dmg(L.dmg, now) * (id === "KREBLIS" ? 1.1 : 1) * (1 + 0.2 * casino);
+  // Kreddle SLOT MACHINE FARTS: spin the reels on every one
+  if (kd(G.s, "kd_slotfart")) {
+    const roll = [1, 1, 2, 3][Math.floor(Math.random() * 4)];
+    const sym = ["🍒", "🔔", "💎", "7️⃣"][roll === 1 ? Math.floor(Math.random() * 2) : roll];
+    dmg *= roll;
+    w.floatText(p.x, p.y - 74, `${sym}${sym}${sym} x${roll}${roll === 3 ? " JACKPOT!" : ""}`, roll === 3 ? "#facc15" : "#ffffff", roll === 3 ? 20 : 14);
+    if (roll === 3) synth.play("coin");
+  }
   // the gas comes out behind you
   const bx = p.x - Math.cos(p.aim) * 14;
   const by = p.y + 6 - Math.sin(p.aim) * 14;

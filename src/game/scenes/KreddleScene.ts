@@ -920,7 +920,7 @@ export class KreddleScene extends Phaser.Scene {
   private prizeCounter(sel = 0) {
     const s = G.s;
     this.openPanel("PRIZE COUNTER", "#facc15");
-    this.add2(this.add.text(480, 98, `🎟 ${krokens(s)} KROKENS · win them at the machines, spend them here`, { fontFamily: FONT, fontSize: "14px", color: "#38bdf8", fontStyle: "bold" }).setOrigin(0.5));
+    this.add2(this.add.text(480, 92, `🎟 ${krokens(s)} KROKENS · win them at the machines, spend them here`, { fontFamily: FONT, fontSize: "14px", color: "#38bdf8", fontStyle: "bold" }).setOrigin(0.5));
     const info = this.add2(this.add.text(480, 418, "Pick a prize. (Click it, or arrows + SPACE.)", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", align: "center", wordWrap: { width: 680 } }).setOrigin(0.5));
     const rows = PRIZES.map((p, i) => {
       const price = krokenPrice(s, p);
@@ -928,14 +928,15 @@ export class KreddleScene extends Phaser.Scene {
       const lvl = p.key && (p.max ?? 1) > 1 ? ` ${kd(s, p.key)}/${p.max}` : "";
       const owned = p.gun ? !!s.guns && p.gun in s.guns : kd(s, p.key!) > 0;
       const text = `${p.icon} ${p.name}${lvl}  ·  ${open ? `${price} 🎟${p.gun && owned ? " (refill)" : ""}` : "MAXED"}`;
-      const x = i % 2 ? 660 : 300;
-      const y = 140 + Math.floor(i / 2) * 44;
-      const b = this.btn(x, y, text, () => void buy(i), 340, !open ? 0x1f1f2e : krokens(s) >= price ? 0x3b0764 : 0x27213a);
-      (b as unknown as { label: Phaser.GameObjects.Text }).label.setFontSize(12);
+      const x = 245 + (i % 3) * 235;
+      const y = 128 + Math.floor(i / 3) * 39;
+      const b = this.btn(x, y, text, () => void buy(i), 228, !open ? 0x1f1f2e : krokens(s) >= price ? 0x3b0764 : 0x27213a);
+      (b as unknown as { label: Phaser.GameObjects.Text }).label.setFontSize(11);
+      (b as unknown as { bg: Phaser.GameObjects.Rectangle }).bg.setSize(228, 34);
       return { p, b, price, open };
     });
     let cur = Math.min(sel, rows.length - 1);
-    const mark = this.add2(this.add.rectangle(0, 0, 348, 42).setStrokeStyle(3, 0xfacc15).setFillStyle(0, 0));
+    const mark = this.add2(this.add.rectangle(0, 0, 234, 38).setStrokeStyle(3, 0xfacc15).setFillStyle(0, 0));
     const focus = () => {
       const r = rows[cur];
       mark.setPosition(r.b.x, r.b.y);
@@ -978,8 +979,8 @@ export class KreddleScene extends Phaser.Scene {
     };
     this.key("LEFT", () => move(-1));
     this.key("RIGHT", () => move(1));
-    this.key("UP", () => move(-2));
-    this.key("DOWN", () => move(2));
+    this.key("UP", () => move(-3));
+    this.key("DOWN", () => move(3));
     this.key("SPACE", () => void buy(cur));
     this.key("ESC", () => !buying && this.closePanel());
   }

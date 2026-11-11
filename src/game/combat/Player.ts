@@ -454,6 +454,19 @@ export class Player {
     if (G.s.upgrades.mv_charge) {
       for (let i = 1; i <= 3; i++) this.world.sc.time.delayedCall((dur / 3) * i, () => this.world.aoe(this.x, this.y, 46, this.dmg(14, this.world.now()), { knock: 340, angle: this.dodgeAngle, noWonk: true, label: "SHOULDER" }));
     }
+    // Kreddle: LOADED DICE
+    if (kd(G.s, "kd_dice")) {
+      const dx = this.x;
+      const dy = this.y;
+      const die = this.world.sc.add.text(dx, dy, "🎲🎲", { fontSize: "20px" }).setOrigin(0.5).setDepth(600);
+      this.world.sc.tweens.add({ targets: die, angle: 360, duration: 500 });
+      this.world.sc.time.delayedCall(550, () => {
+        die.destroy();
+        synth.play("explode");
+        this.world.burst(dx, dy, 0xffffff, 12);
+        this.world.aoe(dx, dy, 70, this.dmg(22, this.world.now()), { knock: 260, label: "SNAKE EYES" });
+      });
+    }
     if (G.s.upgrades.mv_fart) {
       const fx = this.x;
       const fy = this.y;
@@ -833,6 +846,7 @@ export class Player {
     if (now < this.superUntil) a *= 0.5;
     if (this.id === "KREBON") a *= 0.8;
     a *= 1 - 0.1 * (s.upgrades.pk_armor ?? 0);
+    a *= 1 - 0.1 * kd(s, "kd_armor");
     if (now < this.bongoUntil) a *= 0.95;
     s.hp -= a;
     this.recentDamage.push({ t: now, amt: a });

@@ -30,7 +30,7 @@ import { say, dir, gabor } from "../../content/dsl";
 import { FONT } from "../ui/theme";
 import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
-import { extraViolence } from "../systems/kreddle";
+import { extraViolence, kd } from "../systems/kreddle";
 
 interface Shot {
   spr: Phaser.GameObjects.Image;
@@ -1988,7 +1988,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (!e.noDrops) {
       const mods = activeMods(s);
-      let coins = Math.round(e.def.coins * mods.coinMult * (s.player === "KREZMAR" ? 1.35 : 1));
+      let coins = Math.round(e.def.coins * mods.coinMult * (s.player === "KREZMAR" ? 1.35 : 1) * (1 + 0.25 * kd(s, "kd_lucky")));
       while (coins > 0) {
         const v = Math.min(coins, 3);
         this.dropPickup(e.x + (Math.random() - 0.5) * 20, e.y + (Math.random() - 0.5) * 20, "coin", v);

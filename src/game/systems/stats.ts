@@ -21,6 +21,7 @@ export function maxHp(s: GameState): number {
   if (s.flags.pq_done_pq_krezwonk) hp += 25;
   if (s.flags.pq_done_pq_gronny) hp += 30;
   if (s.upgrades.gr1) hp += 30;
+  hp += 20 * (s.upgrades.kd_hp ?? 0); // Kreddle: HIGH ROLLER
   if (s.ngPlus > 0) hp += 10;
   if (s.flags.arc_gronny_done) hp += 20;
   if (s.flags.arc_krezwonk_done) hp += 15;

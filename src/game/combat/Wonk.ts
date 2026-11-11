@@ -250,7 +250,8 @@ function splats(p: Player, onScreen: number, onFloor: number) {
 }
 
 /** The good ending: a white jet stream that ploughs through everything in its path. */
-function jetStream(p: Player, now: number) {
+/** The krezz beam itself (exported for the debug hooks). */
+export function jetStream(p: Player, now: number) {
   const w = p.world;
   const sc = w.sc;
   const id = p.id;
@@ -268,7 +269,9 @@ function jetStream(p: Player, now: number) {
   const g = sc.add.graphics().setDepth(590);
   const st = { len: 0, life: 1 };
   sc.tweens.add({ targets: st, len: LEN, duration: 220, ease: "Quad.out" });
-  sc.tweens.add({ targets: st, life: 0, delay: 1300, duration: 300 });
+  // Kreddle EXTENDED KREZZ: half a second more per level
+  const beamMs = 1300 + 500 * kd(G.s, "kd_krezzlong");
+  sc.tweens.add({ targets: st, life: 0, delay: beamMs, duration: 300 });
   const hit = new Map<unknown, number>();
   let ticks = 0;
   const ev = sc.time.addEvent({
@@ -324,7 +327,7 @@ function jetStream(p: Player, now: number) {
   // nudge it towards the target as it moves
   sc.time.addEvent({
     delay: 50,
-    repeat: 30,
+    repeat: Math.round(beamMs / 50) + 4,
     callback: () => {
       const t2 = boss && !boss.dead ? boss : w.nearestEnemy(p.x, p.y, 900);
       if (t2) {
@@ -337,6 +340,58 @@ function jetStream(p: Player, now: number) {
   // STD KREZZ: angry little bacteria riding the stream
   const lvl = G.s.upgrades.pk_jet ?? 0;
   if (lvl > 0) bacteria(p, () => ang, lvl);
+  if (kd(G.s, "kd_sperm")) sperms(p, () => ang, beamMs);
+}
+
+/** Kreddle AGGRESSIVE SPERMS: furious swimmers peel off the beam and hunt the nearest enemy. */
+function sperms(p: Player, angle: () => number, beamMs: number) {
+  const w = p.world;
+  const sc = w.sc;
+  const swimmers: { g: Phaser.GameObjects.Graphics; x: number; y: number; a: number; life: number; phase: number }[] = [];
+  const end = sc.time.now + beamMs;
+  const ev = sc.time.addEvent({
+    delay: 16,
+    loop: true,
+    callback: () => {
+      const now = sc.time.now;
+      if (now < end && Math.random() < 0.2 && swimmers.length < 16) {
+        const k = 40 + Math.random() * 280;
+        const a = angle();
+        swimmers.push({ g: sc.add.graphics().setDepth(592), x: p.x + Math.cos(a) * k, y: p.y + Math.sin(a) * k, a: a + (Math.random() - 0.5) * 1.6, life: 2600, phase: Math.random() * 6 });
+      }
+      for (const s of [...swimmers]) {
+        s.life -= 16;
+        const t = w.nearestEnemy(s.x, s.y, 520);
+        if (t) s.a += Phaser.Math.Angle.Wrap(Math.atan2(t.y - s.y, t.x - s.x) - s.a) * 0.16;
+        s.phase += 0.55;
+        s.x += Math.cos(s.a) * 5;
+        s.y += Math.sin(s.a) * 5;
+        // a head, a furiously wiggling tail and a tiny angry eyebrow
+        const g = s.g.clear();
+        g.fillStyle(0xffffff, 1).fillEllipse(s.x, s.y, 10, 7);
+        g.lineStyle(2, 0xffffff, 0.9).beginPath();
+        g.moveTo(s.x, s.y);
+        for (let i = 1; i <= 6; i++) {
+          const bx = s.x - Math.cos(s.a) * i * 3;
+          const by = s.y - Math.sin(s.a) * i * 3;
+          const off = Math.sin(s.phase - i * 0.9) * 3;
+          g.lineTo(bx - Math.sin(s.a) * off, by + Math.cos(s.a) * off);
+        }
+        g.strokePath();
+        g.lineStyle(1.5, 0xef4444, 1).lineBetween(s.x - 3, s.y - 4, s.x + 2, s.y - 2);
+        if (t && Phaser.Math.Distance.Between(s.x, s.y, t.x, t.y) < t.radius + 6) {
+          w.damageEnemy(t, p.dmg(9, w.now()) * (t.isBoss ? 0.5 : 1), { noWonk: true, label: "", knock: 40 });
+          w.floatText(t.x, t.y - 26, "CHOMP", "#ffffff", 11);
+          s.life = 0;
+        }
+        if (s.life <= 0) {
+          g.destroy();
+          swimmers.splice(swimmers.indexOf(s), 1);
+        }
+      }
+      if (now > end && !swimmers.length) ev.remove();
+    },
+  });
 }
 
 /** Scowling monster bacteria that swim down the jet stream and nibble whatever they hit. */
