@@ -749,12 +749,12 @@ export class DrongusBoss extends Boss {
 }
 
 
-// ----------------------------------------------------------------- KROZNO (Kreltower plot)
+// ----------------------------------------------------------------- CAPTAIN STANLEY (Flight KR-069; id is still "krozno" for the crystal)
 
 export class Krozno extends Boss {
   nextTurb = 0;
   constructor(w: CombatWorld, x: number, y: number) {
-    super(w, "krozno", x, y, 1600, "boss_krozno", 32, 0x1f2937, 32, 48);
+    super(w, "krozno", x, y, 1600, "boss_stanley", 32, 0x1f2937, 32, 48);
     this.setScale(2.6);
     this.nextTurb = w.now() + 5000;
   }

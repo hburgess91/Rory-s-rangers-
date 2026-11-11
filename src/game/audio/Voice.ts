@@ -68,6 +68,7 @@ const PROFILES: Record<string, Profile> = {
   SCRIMBLE: { pitch: 1.8, rate: 1.2 },
   PHEZON: { pitch: 1.9, rate: 1.2 },
   KROZNO: { pitch: 0.6, rate: 0.95 },
+  "CAPTAIN STANLEY": { pitch: 0.75, rate: 1.05 },
   "RUSSELL BRAND": { pitch: 1.1, rate: 1.3 },
   "ALISTAIR SWAMP": { pitch: 0.4, rate: 0.8 },
 };

@@ -587,8 +587,8 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         theme: "industrial",
         waves: [[["bandit", 5], ["trolley", 1]], [["bandit_gunner", 3], ["trolley", 2]], [["bandit", 4], ["bandit_gunner", 2]]],
         enterLines: [
-          { s: "NARRATOR", t: "You're on. Seatbelt sign on. The cabin crew are all wearing balaclavas and stick-on moustaches. One of them is serving drinks out of a possessed trolley.", dir: true },
-          { s: "MIKEY", t: "(over the radio) Krozno's bandits have gone legit. They're cabin crew now. They will NOT like you hijacking their plane.", cond: { notPlayer: "MIKEY" } },
+          { s: "NARRATOR", t: "You're on. Seatbelt sign on. The cabin crew are all wearing balaclavas. Captain Stanley hires on attitude. One of them is serving drinks out of a possessed trolley.", dir: true },
+          { s: "MIKEY", t: "(over the radio) That's Captain Stanley's crew. Thirty years, never once been hijacked. They will NOT like you hijacking their plane.", cond: { notPlayer: "MIKEY" } },
           { s: "NARRATOR", t: "Fight down the aisle to the cockpit. Excuse yourself to the passengers. Or don't.", dir: true },
         ],
       },

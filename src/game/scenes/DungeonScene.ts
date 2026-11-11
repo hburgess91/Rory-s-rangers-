@@ -1016,6 +1016,75 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   /** An entirely unnecessary, deeply cartoonish death. */
+  /** Captain Stanley, on his knees. Press S. */
+  private async slitThroat(b: Boss) {
+    const x = b.x;
+    const y = b.y;
+    const key = b.texture.key;
+    const sc = b.scaleX / (((b.texture.customData as { hd?: number } | undefined)?.hd) ?? 1);
+    this.tweens.killTweensOf(b);
+    b.setVisible(false);
+    const cam = this.cameras.main;
+    cam.stopFollow();
+    cam.pan(x, y, 400, "Sine.easeInOut");
+    cam.zoomTo(1.4, 400);
+    const wait = (ms: number) => new Promise<void>((r) => this.time.delayedCall(ms, () => r()));
+    const body = this.add.image(x, y, key, 0).setScale(sc).setDepth(955).setFlipX(b.flipX);
+    await wait(450);
+    // the prompt: S (or tap)
+    const head = this.add.text(480, 95, "PRESS S TO SLIT HIS THROAT", { fontFamily: "Impact, sans-serif", fontSize: "38px", color: "#ef4444", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
+    const btn = this.add.text(480, 150, "🔪  S", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffffff", backgroundColor: "#7f1d1d", padding: { x: 20, y: 8 } }).setOrigin(0.5).setScrollFactor(0).setDepth(2000).setInteractive({ useHandCursor: true });
+    this.tweens.add({ targets: [head, btn], scale: { from: 1, to: 1.08 }, yoyo: true, repeat: -1, duration: 380 });
+    await new Promise<void>((res) => {
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        this.input.keyboard?.off("keydown-S", go);
+        res();
+      };
+      this.input.keyboard?.on("keydown-S", go);
+      btn.on("pointerdown", go);
+    });
+    this.tweens.killTweensOf([head, btn]);
+    head.destroy();
+    btn.destroy();
+    // the slash
+    const fh = body.frame.height * sc;
+    const fw = body.frame.width * sc;
+    const neckY = y - fh * 0.12;
+    synth.play("swing");
+    const slash = this.add.graphics().setDepth(960);
+    const p = { t: 0 };
+    await new Promise<void>((res) =>
+      this.tweens.add({
+        targets: p,
+        t: 1,
+        duration: 140,
+        onUpdate: () => slash.clear().lineStyle(5, 0xffffff, 1).lineBetween(x - fw * 0.35, neckY - 6, x - fw * 0.35 + fw * 0.7 * p.t, neckY + 6),
+        onComplete: () => res(),
+      }),
+    );
+    synth.play("crit");
+    cam.flash(150, 160, 0, 0);
+    cam.shake(250, 0.015);
+    this.tweens.add({ targets: slash, alpha: 0, duration: 400, onComplete: () => slash.destroy() });
+    const spray = this.time.addEvent({ delay: 50, repeat: 14, callback: () => this.gore(x, neckY, 4, 0.7) });
+    this.screenSplat(2);
+    body.setTint(0xffb0b0);
+    await wait(700);
+    // and down he goes, still saluting
+    this.tweens.add({ targets: body, angle: b.flipX ? -84 : 84, y: y + fh * 0.3, duration: 700, ease: "Quad.in" });
+    await wait(900);
+    synth.play("punch_big");
+    cam.shake(200, 0.01);
+    spray.remove();
+    await wait(500);
+    cam.zoomTo(1, 500);
+    cam.startFollow(this.player.spr, true, 0.12, 0.12);
+    await wait(500);
+  }
+
   private async reinhardtDeath(b: Boss) {
     const x = b.x;
     const y = b.y;
@@ -1267,6 +1336,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (b.bossId === "krozno") {
       await this.talk(BOSS_TEXT.krozno.outro);
+      await this.slitThroat(b);
       await this.crystalGet(b);
       G.rt.timerEnd = 0;
       G.emit("timer", null);

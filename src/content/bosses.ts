@@ -212,20 +212,18 @@ export const BOSS_TEXT: Record<string, BossText> = {
   },
   krozno: {
     id: "krozno",
-    name: "KROZNO",
-    title: "Bandit King · Captain of Flight KR-069",
+    name: "CAPTAIN STANLEY",
+    title: "Captain of Flight KR-069 · Thirty Years, Never Hijacked",
     intro: [
-      dir("The cockpit. The captain swivels round in his chair. He's wearing two pilot's hats and a third, smaller hat. It's Krozno. Of course it's Krozno."),
-      say("KROZNO", "A HIJACKING? On MY flight? That's MY thing. Everybody knows that's my thing."),
-      say("KROZNO", "It brings me no pleasure to report that Krozno and his bandits are up to their usual dirty bloody tricks. Drongus said that about me. In January."),
-      say("KROZNO", "I went straight. I got my pilot's licence. I've got a little badge. And you lot turn up out of a CANNON. Bandits! Defend the cockpit!"),
-      dir("TIP: turbulence will throw you around. Krozno will not give up the controls without a fight."),
+      dir("The cockpit. The captain swivels round in his chair. Full uniform. Four gold stripes. Peaked hat. A moustache you could set your watch by. His badge says CAPTAIN STANLEY."),
+      say("CAPTAIN STANLEY", "Your never hijack this plane!"),
+      dir("TIP: turbulence will throw you around. Captain Stanley will not give up the controls without a fight."),
     ],
     outro: [
-      say("KROZNO", "My… dirty… bloody… tricks…"),
-      dir("Krozno slumps into the drinks trolley. The cockpit is yours. Something glitters inside his third hat."),
+      say("CAPTAIN STANLEY", "Your… never… hijack… this… plane…"),
+      dir("Captain Stanley drops to his knees in front of the controls. He is still, somehow, saluting."),
     ],
-    taunts: ["THIS IS YOUR CAPTAIN SPEAKING!", "DIRTY BLOODY TRICKS!", "TURBULENCE!", "BANDITS, ASSEMBLE!", "PLEASE FASTEN YOUR SEATBELTS!", "MY PLANE!!"],
+    taunts: ["YOUR NEVER HIJACK THIS PLANE!", "THIS IS YOUR CAPTAIN SPEAKING!", "TURBULENCE!", "PLEASE FASTEN YOUR SEATBELTS!", "CABIN CREW, ARM DOORS!", "NOT ON MY FLIGHT!"],
   },
   brand: {
     id: "brand",

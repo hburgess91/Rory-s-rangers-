@@ -5733,6 +5733,12 @@
    "frameWidth": 64,
    "frameHeight": 96,
    "hd": 0.5
+  },
+  "boss_stanley": {
+   "file": "combat/boss_stanley.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
   }
  }
 }

@@ -2243,12 +2243,12 @@ export class VignetteScene extends Phaser.Scene {
     const idle = this.time.addEvent({ delay: 16, loop: true, callback: () => dash.update(0, 0, this.time.now) });
     synth.music("airport");
     await this.talk([
-      dir("The cockpit of Flight KR-069. Krozno is unconscious in the drinks trolley. There are four hundred buttons. One of them is labelled 'DO NOT'."),
+      dir("The cockpit of Flight KR-069. Captain Stanley is in no position to object. There are four hundred buttons. One of them is labelled 'DO NOT'."),
       say("MIKEY", "(over the radio) You're in? Legend. Right. Find the train. Fly the plane into the train.", { cond: { notPlayer: "MIKEY" } }),
       say("SCROMBUS", "(over the radio) You're in? Legend. Right. Find the train. Fly the plane into the train.", { cond: { player: "MIKEY" } }),
       say(me, "I don't know how to fly a plane."),
       say("KREZMAR", "(over the radio) Nobody knows how to fly a plane, mate. That's what the drugs are for. Glovebox."),
-      dir("You open the glovebox. Inside: a little bag. On the bag, in Krozno's handwriting: 'CONFIDENCE'."),
+      dir("You open the glovebox. Inside: a little bag. On the bag, in Captain Stanley's neat handwriting: 'CONFIDENCE (LONG HAUL)'."),
     ]);
     await this.takeDrugs();
     await this.talk([
@@ -2364,7 +2364,7 @@ export class VignetteScene extends Phaser.Scene {
       say("KREBLIS", "By a burger", { cond: { notPlayer: "KREBLIS" } }),
       say("KREBON", "We could have turned the power off.", { cond: { notPlayer: "KREBON" } }),
       say("KREZMAR", "Krebon. Not today.", { cond: { notPlayer: "KREZMAR" } }),
-      dir("THE KREL TOWER: DESTROYED (AGAIN). The Kreddle Express is parked outside Krelburger with its engine running. President Klerble has ordered a twelfth burger. Krozno was found in the drinks trolley, unharmed, and charged with 'being up to his usual dirty bloody tricks'."),
+      dir("THE KREL TOWER: DESTROYED (AGAIN). The Kreddle Express is parked outside Krelburger with its engine running. President Klerble has ordered a twelfth burger."),
     ]);
     synth.stopMusic();
     Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true });
