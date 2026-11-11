@@ -12,7 +12,8 @@ export const WELCOME_SPEECH: Line[] = [
   say("KREDDLER", "The only rule in Kreddle is there are NO rules!!"),
   say("KREDDLER", "The second rule in Kreddle is that pussy juice is BANNED under threat of death."),
   say("KREDDLER", "The third rule is you must gamble! If you do not gamble you will be arrested and lashed!"),
-  say("KREDDLER", `We are Kreddlers! The House always wins… and the House is all of us. Except you, ${INSULT}.`),
+  say("KREDDLER", "We are Krozlens! An ancient religion…"),
+  say("KREDDLER", `…and the House always wins. Especially against you, ${INSULT}.`),
 ];
 
 /** Shouted while shoving you. */
@@ -33,7 +34,8 @@ export const SHOVES = [
 
 /** Talking to a local after the welcome. */
 export const LOCAL_CHAT: Line[][] = [
-  [say("KREDDLER", "We hate Krelworld. Pussy juice is bad for business. It makes people happy for free.")],
+  [say("KREDDLER", "We hate Krelworld, as pussy juice goes against our religion. We are Krozlens. Look it up.")],
+  [say("KREDDLER", "The Krozlen scriptures are very clear. Gamble daily. Never touch the juice. Shove a Krelworlder whenever possible.")],
   [say("KREDDLER", "Have you gambled yet? You look like you haven't gambled. The Pit Boss is watching you.")],
   [say("KREDDLER", "The claw machine is completely fair. It just has feelings. And the feeling is no.")],
   [say("KREDDLER", "I once won a chainsaw on the slots. I sold my house to win it. Worth it.")],
