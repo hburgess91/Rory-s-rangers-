@@ -51,3 +51,20 @@ export function awardPrize(s: GameState, id: string): string {
   const lvl = s.upgrades[key];
   return `${p.name}${(p.max ?? 1) > 1 ? ` (level ${lvl}/${p.max})` : ""}: ${p.desc}`;
 }
+
+// ---- KROKENS: Kreddle's prize tickets, won at the machines, spent at the Prize Counter
+
+export function krokens(s: GameState): number {
+  return (s.flags.krokens as number) ?? 0;
+}
+
+export function addKrokens(s: GameState, n: number) {
+  s.flags.krokens = Math.max(0, krokens(s) + n);
+}
+
+/** What a prize costs at the Prize Counter. Guns you already own are just a cheap refill. */
+export function krokenPrice(s: GameState, p: Prize): number {
+  if (p.gun) return s.guns && p.gun in s.guns ? 10 : 40;
+  const base: Record<string, number> = { krezz: 20, gas: 20, violence: 30, gold: 25, tracer: 15, jackpot: 30, super_time: 30, super_aura: 35 };
+  return (base[p.id] ?? 25) + 5 * kd(s, p.key!);
+}

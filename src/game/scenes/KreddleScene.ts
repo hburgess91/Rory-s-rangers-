@@ -9,7 +9,7 @@ import { dir, say } from "../../content/dsl";
 import { animateWalker } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { INSULT, KRUNCHERS, KRUNCHER_BOAST, LOCAL_CHAT, PRIZE, PRIZES, SHOVES, WELCOME_SPEECH } from "../../content/kreddle";
-import { awardPrize, kd, rollPrize } from "../systems/kreddle";
+import { addKrokens, awardPrize, kd, krokenPrice, krokens, prizeOpen, rollPrize } from "../systems/kreddle";
 import type { Line } from "../../data/types";
 import { maxHp } from "../systems/stats";
 
@@ -187,7 +187,7 @@ export class KreddleScene extends Phaser.Scene {
     this.building("kd_bld_arcade", 2300, 1.6, "KREDDLE KRUNCHERS HQ", "#ff4fd8", 0x9be7ff);
     const counter = this.add.rectangle(2520, 520, 110, 70, 0x2e1065).setStrokeStyle(3, 0xfacc15).setDepth(520);
     this.add.text(counter.x, counter.y, "🏆\nPRIZE\nCOUNTER", { fontFamily: FONT, fontSize: "11px", color: "#facc15", align: "center", fontStyle: "bold" }).setOrigin(0.5).setDepth(521);
-    this.spots.push({ x: 2520, y: 560, r: 80, label: () => `E: Prize Counter (${this.wonCount()} Kreddle prizes won)`, use: () => void this.prizeCounter() });
+    this.spots.push({ x: 2520, y: 560, r: 80, label: () => `E: PRIZE COUNTER (spend your ${krokens(G.s)} 🎟 Krokens)`, use: () => void this.prizeCounter() });
     void s;
   }
 
@@ -284,7 +284,7 @@ export class KreddleScene extends Phaser.Scene {
   update(time: number, delta: number) {
     const s = G.s;
     const dt = Math.min(delta, 50);
-    this.coinText.setText(`💰 ${s.coins} Krezzcoin`);
+    this.coinText.setText(`💰 ${s.coins} Krezzcoin   🎟 ${krokens(s)} Krokens`);
     this.updateNpcs(time, dt);
     if (this.busy || this.panelRoot) {
       this.prompt.setVisible(false);
@@ -439,22 +439,29 @@ export class KreddleScene extends Phaser.Scene {
     root.add(t);
     const coins = this.add.text(850, 80, "", { fontFamily: FONT, fontSize: "14px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(1, 0.5);
     root.add(coins);
-    this.panelTick = this.time.addEvent({ delay: 100, loop: true, callback: () => coins.setText(`💰 ${G.s.coins}`) });
-    coins.setText(`💰 ${G.s.coins}`);
-    root.setScrollFactor(0, 0, true);
+    const upd = () => coins.setText(`💰 ${G.s.coins}   🎟 ${krokens(G.s)}`);
+    this.panelTick = this.time.addEvent({ delay: 100, loop: true, callback: upd });
+    upd();
+    this.pin(root);
     return root;
   }
 
   private add2<T extends Phaser.GameObjects.GameObject>(o: T): T {
     this.panelRoot?.add(o);
-    (o as unknown as { setScrollFactor?: (x: number, y?: number) => void }).setScrollFactor?.(0, 0);
+    this.pin(o);
     return o;
+  }
+
+  /** Fix something (and everything inside it) to the screen, for drawing AND for taps. */
+  private pin(o: Phaser.GameObjects.GameObject) {
+    (o as unknown as { setScrollFactor?: (x: number, y?: number) => void }).setScrollFactor?.(0, 0);
+    if (o instanceof Phaser.GameObjects.Container) for (const c of o.list) this.pin(c);
   }
 
   private btn(x: number, y: number, label: string, fn: () => void, w = 170, color?: number) {
     const b = button(this, x, y, label, fn, { w, h: 40, size: 15, color });
     this.panelRoot?.add(b);
-    b.setScrollFactor(0, 0, true);
+    this.pin(b);
     return b;
   }
 
@@ -518,7 +525,7 @@ export class KreddleScene extends Phaser.Scene {
         this.tweens.add({ targets: c, x: 480 + (Math.random() - 0.5) * 900, y: 270 + (Math.random() - 0.7) * 600, angle: Math.random() * 720, alpha: 0, duration: 1400 + Math.random() * 800 });
       }
       this.tweens.add({ targets: icon, scale: { from: 0.3, to: 1 }, duration: 400, ease: "Back.out" });
-      root.setScrollFactor(0, 0, true);
+      this.pin(root);
       let done = false;
       const close = () => {
         if (done) return;
@@ -536,10 +543,6 @@ export class KreddleScene extends Phaser.Scene {
     });
   }
 
-  private wonCount() {
-    const s = G.s;
-    return PRIZES.filter((p) => (p.gun ? !!s.guns && p.gun in s.guns : kd(s, p.key!) > 0)).length;
-  }
 
   // ------------------------------------------------------------------ KRAZY REELS (slots)
 
@@ -588,11 +591,13 @@ export class KreddleScene extends Phaser.Scene {
             const [a, b, c] = out;
             if (a === b && b === c) {
               info.setText(a === 3 ? "THREE 7s! JACKPOT!" : "THREE OF A KIND!").setColor("#4ade80");
+              this.kroken(5);
               await this.showPrize(rollPrize(G.s).id);
               if (a === 3) await this.showPrize(rollPrize(G.s).id);
             } else if (a === b || b === c || a === c) {
-              G.s.coins += 100;
-              info.setText("Two of a kind. 100 back. The House is generous. Briefly.").setColor("#facc15");
+              G.s.coins += 50;
+              this.kroken(2);
+              info.setText("Two of a kind: 50 back and 2 Krokens. The House is generous. Briefly.").setColor("#facc15");
             } else {
               info.setText(Phaser.Utils.Array.GetRandom(["Nothing. The House thanks you.", "Lose. Again?", "So close. (It wasn't close.)", "The machine winks at you."])).setColor("#ef4444");
               synth.play("tap_fail");
@@ -607,8 +612,9 @@ export class KreddleScene extends Phaser.Scene {
               info.setText("NUDGE. Nothing in Kreddle is as it seems.").setColor("#ef4444");
               this.time.delayedCall(700, () => {
                 spinning = false;
-                G.s.coins += 100;
-                info.setText("…two of a kind, though. 100 back.").setColor("#facc15");
+                G.s.coins += 50;
+                this.kroken(2);
+                info.setText("…two of a kind, though. 50 back and 2 Krokens.").setColor("#facc15");
               });
             });
           } else void finish();
@@ -681,7 +687,8 @@ export class KreddleScene extends Phaser.Scene {
       await tween({ y: 160, duration: 650 });
       if (!this.panelRoot) return;
       if (!holding) {
-        info.setText("Nothing. THE KLAW SAYS NO.").setColor("#ef4444");
+        this.kroken(1);
+        info.setText("Nothing. THE KLAW SAYS NO. (Have a pity Kroken.)").setColor("#ef4444");
         synth.play("tap_fail");
       } else {
         // the Klaw has feelings, and the feeling is usually no
@@ -694,7 +701,8 @@ export class KreddleScene extends Phaser.Scene {
           this.tweens.add({ targets: [h.ball, h.icon], y: 385, duration: 450, ease: "Bounce.out" });
           h.ball.x = h.icon.x = clawX;
           h.x = clawX;
-          info.setText("It slipped! THE KLAW GIVETH AND THE KLAW TAKETH AWAY.").setColor("#ef4444");
+          this.kroken(3);
+          info.setText("It slipped! THE KLAW GIVETH AND THE KLAW TAKETH AWAY. (3 Krokens for trying.)").setColor("#ef4444");
         } else {
           await tween({ x: L + 40, duration: 700 });
           const h = holding;
@@ -723,8 +731,8 @@ export class KreddleScene extends Phaser.Scene {
   private wheel() {
     const COST = 300;
     this.openPanel("WHEEL OF KREDDLE", "#a855f7");
-    const SEG = ["PRIZE", "BUST", "MONEY BACK", "BUST", "LASHED", "DOUBLE PRIZE", "BUST", "PRIZE", "MONEY BACK", "KRELWORLD TAX"];
-    const COL = [0x22c55e, 0x374151, 0xfacc15, 0x1f2937, 0xdc2626, 0xff4fd8, 0x374151, 0xa855f7, 0xfacc15, 0x7f1d1d];
+    const SEG = ["PRIZE", "BUST", "MONEY BACK", "10 KROKENS", "LASHED", "DOUBLE PRIZE", "BUST", "PRIZE", "6 KROKENS", "KRELWORLD TAX"];
+    const COL = [0x22c55e, 0x374151, 0xfacc15, 0x0ea5e9, 0xdc2626, 0xff4fd8, 0x374151, 0xa855f7, 0x14b8a6, 0x7f1d1d];
     const R = 150;
     const cx = 480;
     const cy = 260;
@@ -743,7 +751,7 @@ export class KreddleScene extends Phaser.Scene {
     wheel.add(this.add.circle(0, 0, 16, 0xfacc15).setStrokeStyle(3, 0x000000));
     this.add2(this.add.circle(cx, cy, R + 8, 0xfacc15).setStrokeStyle(4, 0x7c2d12));
     this.add2(wheel);
-    wheel.setScrollFactor(0, 0, true);
+    this.pin(wheel);
     this.add2(this.add.triangle(cx, cy - R - 14, -14, -16, 14, -16, 0, 12, 0xffffff).setStrokeStyle(2, 0x000000));
     const info = this.add2(this.add.text(480, 438, `${COST} Krezzcoin a spin. SPACE or SPIN.`, { fontFamily: FONT, fontSize: "15px", color: "#c4b5fd", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
     let vel = 0;
@@ -784,6 +792,13 @@ export class KreddleScene extends Phaser.Scene {
           await this.showPrize(rollPrize(s).id);
           await this.showPrize(rollPrize(s).id);
           break;
+        case "10 KROKENS":
+        case "6 KROKENS": {
+          const n = r.startsWith("10") ? 10 : 6;
+          this.kroken(n);
+          info.setText(`${n} KROKENS! Spend them at the Prize Counter.`).setColor("#38bdf8");
+          break;
+        }
         case "MONEY BACK":
           s.coins += COST;
           info.setText("Money back. The wheel giveth. Slightly.").setColor("#facc15");
@@ -834,7 +849,7 @@ export class KreddleScene extends Phaser.Scene {
     const cardBg = this.add2(this.add.rectangle(480, 250, 130, 180, 0xffffff).setStrokeStyle(4, 0x111111));
     const cardTxt = this.add2(this.add.text(480, 250, "?", { fontFamily: "Georgia, serif", fontSize: "54px", color: "#111111", fontStyle: "bold", align: "center" }).setOrigin(0.5));
     const streakTxt = this.add2(this.add.text(700, 200, "", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#4ade80", align: "center" }).setOrigin(0.5));
-    const info = this.add2(this.add.text(480, 380, `Deal for ${COST}. Guess HIGHER or LOWER. Three right wins a PRIZE. Two right? Cash out for 200. The House wins ties.`, { fontFamily: FONT, fontSize: "14px", color: "#ffffff", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
+    const info = this.add2(this.add.text(480, 380, `Deal for ${COST}. Guess HIGHER or LOWER. Every right guess wins a Kroken. Three right wins a PRIZE. Two right? Cash out for 150. The House wins ties.`, { fontFamily: FONT, fontSize: "14px", color: "#ffffff", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
     let card = -1;
     let streak = 0;
     let live = false;
@@ -859,15 +874,17 @@ export class KreddleScene extends Phaser.Scene {
       const next = Phaser.Math.Between(0, 12);
       show(next);
       const right = up ? next > card : next < card;
+      const tie = next === card;
       card = next;
       if (!right) {
         live = false;
         streakTxt.setText("");
-        info.setText(next === card ? "A tie. The House wins ties. Deal again?" : "Wrong. The Dealer smiles. Deal again?").setColor("#ef4444");
+        info.setText(tie ? "A tie. The House wins ties. Deal again?" : "Wrong. The Dealer smiles. Deal again?").setColor("#ef4444");
         synth.play("tap_fail");
         return;
       }
       streak++;
+      this.kroken(1);
       streakTxt.setText(`${streak} / 3`);
       synth.play("ding");
       if (streak >= 3) {
@@ -875,14 +892,14 @@ export class KreddleScene extends Phaser.Scene {
         info.setText("THREE IN A ROW!").setColor("#4ade80");
         await this.showPrize(rollPrize(G.s).id);
         if (this.panelRoot) info.setText(`Deal again for ${COST}?`).setColor("#ffffff");
-      } else info.setText(streak === 2 ? "Two right! Keep going, or CASH OUT for 200." : "Right! Again: higher or lower?").setColor("#4ade80");
+      } else info.setText(streak === 2 ? "Two right! Keep going, or CASH OUT for 150." : "Right! Again: higher or lower?").setColor("#4ade80");
     };
     const cashOut = () => {
       if (!live || streak < 2) return;
       live = false;
-      G.s.coins += 200;
+      G.s.coins += 150;
       synth.play("coin");
-      info.setText("Cashed out: +200. Coward. Deal again?").setColor("#facc15");
+      info.setText("Cashed out: +150. Coward. Deal again?").setColor("#facc15");
       streakTxt.setText("");
     };
     this.btn(250, 480, `DEAL (${COST})`, deal, 130, 0x166534);
@@ -900,23 +917,79 @@ export class KreddleScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ the Prize Counter
 
-  private async prizeCounter() {
+  private prizeCounter(sel = 0) {
     const s = G.s;
-    const owned = PRIZES.filter((p) => (p.gun ? !!s.guns && p.gun in s.guns : kd(s, p.key!) > 0));
-    const lines: Line[] = [
-      say("PRIZE COUNTER", owned.length ? `Your Kreddle winnings: ${owned.map((p) => `${p.icon} ${p.name}${p.key && (p.max ?? 1) > 1 ? ` ${kd(s, p.key)}/${p.max}` : ""}`).join(" · ")}` : "You haven't won anything. Most people haven't. That's the business model."),
-    ];
+    this.openPanel("PRIZE COUNTER", "#facc15");
+    this.add2(this.add.text(480, 98, `🎟 ${krokens(s)} KROKENS · win them at the machines, spend them here`, { fontFamily: FONT, fontSize: "14px", color: "#38bdf8", fontStyle: "bold" }).setOrigin(0.5));
+    const info = this.add2(this.add.text(480, 418, "Pick a prize. (Click it, or arrows + SPACE.)", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", align: "center", wordWrap: { width: 680 } }).setOrigin(0.5));
+    const rows = PRIZES.map((p, i) => {
+      const price = krokenPrice(s, p);
+      const open = prizeOpen(s, p);
+      const lvl = p.key && (p.max ?? 1) > 1 ? ` ${kd(s, p.key)}/${p.max}` : "";
+      const owned = p.gun ? !!s.guns && p.gun in s.guns : kd(s, p.key!) > 0;
+      const text = `${p.icon} ${p.name}${lvl}  ·  ${open ? `${price} 🎟${p.gun && owned ? " (refill)" : ""}` : "MAXED"}`;
+      const x = i % 2 ? 660 : 300;
+      const y = 140 + Math.floor(i / 2) * 44;
+      const b = this.btn(x, y, text, () => void buy(i), 340, !open ? 0x1f1f2e : krokens(s) >= price ? 0x3b0764 : 0x27213a);
+      (b as unknown as { label: Phaser.GameObjects.Text }).label.setFontSize(12);
+      return { p, b, price, open };
+    });
+    let cur = Math.min(sel, rows.length - 1);
+    const mark = this.add2(this.add.rectangle(0, 0, 348, 42).setStrokeStyle(3, 0xfacc15).setFillStyle(0, 0));
+    const focus = () => {
+      const r = rows[cur];
+      mark.setPosition(r.b.x, r.b.y);
+      info.setText(`${r.p.icon} ${r.p.name}: ${r.p.desc}`).setColor("#ffffff");
+    };
+    focus();
+    let buying = false;
+    const buy = async (i: number) => {
+      if (buying || !this.panelRoot) return;
+      cur = i;
+      focus();
+      const r = rows[i];
+      if (!r.open) {
+        info.setText(`${r.p.name}: you've maxed it out.`).setColor("#ef4444");
+        return;
+      }
+      if (krokens(G.s) < r.price) {
+        info.setText(`${r.p.name} costs ${r.price} Krokens. You have ${krokens(G.s)}. Go and gamble.`).setColor("#ef4444");
+        synth.play("tap_fail");
+        return;
+      }
+      buying = true;
+      addKrokens(G.s, -r.price);
+      await this.showPrize(r.p.id);
+      this.closePanel();
+      this.prizeCounter(i);
+    };
     if (kd(s, "kd_violence")) {
-      delete s.flags.kd_toggle;
-      lines.push({ s: "NARRATOR", t: `EXTRA VIOLENCE MODE is ${s.flags.kd_violence_off ? "OFF" : "ON"}.`, dir: true, choice: [{ label: s.flags.kd_violence_off ? "Switch it ON" : "Switch it OFF", set: { kd_toggle: 1 } }, { label: "Leave it", set: { kd_toggle: 0 } }] });
+      this.btn(330, 470, `EXTRA VIOLENCE: ${s.flags.kd_violence_off ? "OFF" : "ON"}`, () => {
+        G.s.flags.kd_violence_off = !G.s.flags.kd_violence_off;
+        G.save();
+        this.closePanel();
+        this.prizeCounter(cur);
+      }, 240, s.flags.kd_violence_off ? 0x27213a : 0x7f1d1d);
     }
-    await this.talk(lines);
-    if (s.flags.kd_toggle === 1) {
-      s.flags.kd_violence_off = !s.flags.kd_violence_off;
-      delete s.flags.kd_toggle;
-      G.save();
-      await this.talk([dir(`EXTRA VIOLENCE MODE: ${s.flags.kd_violence_off ? "OFF. Enemies stay in one piece." : "ON. Mind your shoes."}`)]);
-    }
+    this.btn(kd(s, "kd_violence") ? 630 : 480, 470, "LEAVE", () => !buying && this.closePanel(), 200);
+    const move = (d: number) => {
+      cur = (cur + d + rows.length) % rows.length;
+      focus();
+    };
+    this.key("LEFT", () => move(-1));
+    this.key("RIGHT", () => move(1));
+    this.key("UP", () => move(-2));
+    this.key("DOWN", () => move(2));
+    this.key("SPACE", () => void buy(cur));
+    this.key("ESC", () => !buying && this.closePanel());
+  }
+
+  /** Krokens! A little ticket pops out. */
+  private kroken(n: number) {
+    addKrokens(G.s, n);
+    synth.play("ding");
+    const t = this.add.text(480, 300, `+${n} 🎟 KROKEN${n > 1 ? "S" : ""}`, { fontFamily: "Impact, sans-serif", fontSize: "28px", color: "#38bdf8", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setScrollFactor(0).setDepth(6500);
+    this.tweens.add({ targets: t, y: 250, alpha: 0, duration: 1300, onComplete: () => t.destroy() });
   }
 
   // ------------------------------------------------------------------ helpers
