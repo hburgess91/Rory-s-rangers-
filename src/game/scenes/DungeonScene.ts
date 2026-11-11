@@ -30,6 +30,7 @@ import { say, dir, gabor } from "../../content/dsl";
 import { FONT } from "../ui/theme";
 import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
+import { extraViolence } from "../systems/kreddle";
 
 interface Shot {
   spr: Phaser.GameObjects.Image;
@@ -120,6 +121,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   /** Barrels, crates, hostages, elites and room twists. */
   spice: Spice | null = null;
   private lastKillStop = 0;
+  private lastSplat = 0;
   private lastMeterHit = 0;
   /** Kills since the last ammo drop (bad-luck protection). */
   private ammoDry = 0;
@@ -1002,6 +1004,50 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
   }
 
+  /** Kreddle EXTRA VIOLENCE: blood that sprays out and lands (top-down rooms use this, side rooms use gore). */
+  private splatter(x: number, y: number, n: number, power = 1) {
+    if (this.side) {
+      this.gore(x, y, n, power);
+      return;
+    }
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const d = (12 + Math.random() * 46) * power;
+      const sz = 2 + Math.random() * 4;
+      const r = this.add.rectangle(x, y, sz, sz, Math.random() < 0.7 ? 0xdc2626 : 0x7f1d1d).setDepth(960);
+      this.tweens.add({
+        targets: r,
+        x: x + Math.cos(a) * d,
+        y: y + Math.sin(a) * d * 0.7,
+        duration: 180 + Math.random() * 160,
+        ease: "Quad.out",
+        onComplete: () => {
+          const sp = this.add.ellipse(r.x, r.y, 4 + Math.random() * 10, 3 + Math.random() * 5, 0x991b1b, 0.85).setDepth(6);
+          this.tweens.add({ targets: sp, alpha: 0, delay: 8000, duration: 3000, onComplete: () => sp.destroy() });
+          r.destroy();
+        },
+      });
+    }
+  }
+
+  /** Kreddle EXTRA VIOLENCE: the enemy comes apart in four pieces. */
+  private dismember(e: Enemy) {
+    const key = e.texture.key;
+    const fr = e.frame;
+    const w = fr.width;
+    const h = fr.height;
+    const floor = this.side ? this.groundY - 8 : null;
+    for (let cx = 0; cx < 2; cx++)
+      for (let cy = 0; cy < 2; cy++) {
+        const piece = this.add.image(e.x, e.y, key, fr.name).setScale(e.scaleX, e.scaleY).setFlipX(e.flipX).setDepth(e.depth + 1).setCrop((w / 2) * cx, (h / 2) * cy, w / 2, h / 2).setTint(0xffb4b4);
+        const a = Math.atan2(cy - 0.5, cx - 0.5) + (Math.random() - 0.5) * 0.8;
+        const d = 40 + Math.random() * 60;
+        this.tweens.add({ targets: piece, x: e.x + Math.cos(a) * d, y: floor ?? e.y + Math.sin(a) * d * 0.7, angle: (Math.random() - 0.5) * 540, duration: 420, ease: "Quad.out" });
+        this.tweens.add({ targets: piece, alpha: 0, delay: 2500, duration: 900, onComplete: () => piece.destroy() });
+      }
+    this.splatter(e.x, e.y, 22, 1.4);
+  }
+
   private screenSplat(n = 4) {
     for (let i = 0; i < n; i++) {
       const sp = this.add.circle(80 + Math.random() * 800, 60 + Math.random() * 300, 30 + Math.random() * 60, 0xb91c1c, 0.75).setScrollFactor(0).setDepth(990);
@@ -1862,6 +1908,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     e.hp -= a;
     e.flashUntil = now + 70;
+    if (extraViolence(G.s) && a > 0 && now - this.lastSplat > 45) {
+      this.lastSplat = now;
+      this.splatter(e.x, e.y, e.isBoss ? 5 : 3, 0.7);
+    }
     if (opts.stun) e.stunUntil = Math.max(e.stunUntil, now + (e.isBoss ? opts.stun * 0.25 : opts.stun));
     if (opts.mark) e.markedUntil = now + 6000;
     if (opts.slow) {
@@ -1929,7 +1979,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.events.emit("fuel-tank-dead", e.x, e.y);
       return;
     }
-    this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
+    if (extraViolence(s) && !e.isBoss) this.dismember(e);
+    else this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
     if (e instanceof Boss) {
       this.boss = null;
       this.onBossDefeated(e);
@@ -2361,6 +2412,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       }
       sh.spr.x += (sh.vx * dt * k) / 1000;
       sh.spr.y += (sh.vy * dt * k) / 1000;
+      if (sh.o.trail !== undefined && Math.random() < 0.7) {
+        const t = this.add.circle(sh.spr.x, sh.spr.y, 3, sh.o.trail, 0.85).setDepth(599).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: t, alpha: 0, scale: 0.3, duration: 260, onComplete: () => t.destroy() });
+      }
       sh.life -= dt * k;
       if (sh.life <= 0 || !Phaser.Geom.Rectangle.Contains(this.bounds, sh.spr.x, sh.spr.y)) {
         sh.o.onEnd?.(sh.spr.x, sh.spr.y);

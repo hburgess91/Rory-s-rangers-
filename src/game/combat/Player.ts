@@ -12,6 +12,7 @@ import type { Controls } from "./Controls";
 import type { Enemy } from "./Enemy";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS, FART_BLASTER } from "./Guns";
+import { kd } from "../systems/kreddle";
 import { releaseFart } from "./Farts";
 import { startWonk } from "./Wonk";
 
@@ -326,7 +327,10 @@ export class Player {
     }
     if (!this.gunSpr) this.gunSpr = this.world.sc.add.image(this.x, this.y, g.tex).setDepth(501);
     if (this.gunSpr.texture.key !== g.tex) this.gunSpr.setTexture(g.tex);
-    fitTo(this.gunSpr, g.id === "rocket" || g.id === "rail" ? 40 : g.id === "shotgun" ? 36 : 26);
+    fitTo(this.gunSpr, g.id === "rocket" || g.id === "rail" || g.id === "kreddler" || g.id === "disco" ? 40 : g.id === "shotgun" || g.id === "chainsaw" ? 36 : 26);
+    // Kreddle: gold-plated guns
+    if (kd(G.s, "kd_gold")) this.gunSpr.setTint(0xffe27a);
+    else this.gunSpr.clearTint();
     this.gunKick = Math.max(0, this.gunKick - dt * 0.05);
     const left = Math.cos(this.aim) < 0;
     const r = 14 - this.gunKick;
@@ -368,31 +372,53 @@ export class Player {
     const my = this.y + 4 + Math.sin(this.aim) * 26;
     const flash = this.world.sc.add.circle(mx, my, 5, g.color === 0xffffff ? 0xffd23f : g.color, 0.9).setDepth(602);
     this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    // Kreddle prizes: gold, tracers, jackpots
+    const gold = kd(s, "kd_gold") > 0;
+    const tracer = kd(s, "kd_tracer") > 0;
+    const jackpot = kd(s, "kd_jackpot") > 0;
+    const disco = g.id === "disco";
     const blast = (x: number, y: number) => {
       synth.play("explode");
       this.world.shake(140, 0.006);
-      this.world.burst(x, y, 0xff6ec7, 14);
-      this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: 0xff6ec7, knock: g.knock ?? 200 });
+      if (disco) for (const c of [0xff4fd8, 0x22d3ee, 0xfacc15, 0x4ade80, 0xa855f7]) this.world.burst(x, y, c, 6);
+      else this.world.burst(x, y, 0xff6ec7, 14);
+      this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: disco ? [0xff4fd8, 0x22d3ee, 0xfacc15][Math.floor(Math.random() * 3)] : 0xff6ec7, knock: g.knock ?? 200 });
     };
+    const payout = (x: number, y: number) => {
+      if (!jackpot || Math.random() > 0.125) return;
+      synth.play("coin");
+      this.world.burst(x, y, 0xffd23f, 10);
+      this.world.aoe(x, y, 55, this.dmg(10, now), { color: 0xffd23f, label: "" });
+      s.coins += 3;
+      this.world.floatText(x, y - 20, "JACKPOT! +3", "#ffd23f", 14);
+    };
+    if (g.id === "chainsaw") {
+      // sparks and chunks right at the bar
+      for (let k = 0; k < 3; k++) {
+        const sp = this.world.sc.add.circle(mx + Math.cos(this.aim) * 30, my + Math.sin(this.aim) * 30, 2, Math.random() < 0.5 ? 0xffd23f : 0xff7a1a, 1).setDepth(603);
+        this.world.sc.tweens.add({ targets: sp, x: sp.x + (Math.random() - 0.5) * 50, y: sp.y + (Math.random() - 0.5) * 50, alpha: 0, duration: 200, onComplete: () => sp.destroy() });
+      }
+    }
     const fan = now < this.spreadUntil && g.pellets === 1 ? [-0.25, 0, 0.25] : [0];
     for (const fo of fan)
     for (let i = 0; i < g.pellets; i++) {
       const spread = fo + (g.pellets > 1 ? (i / (g.pellets - 1) - 0.5) * g.spread + (Math.random() - 0.5) * 0.08 : (Math.random() - 0.5) * g.spread);
       const crit = Math.random() < 0.06;
-      const d = this.dmg(g.dmg, now) * (crit ? 2 : 1);
+      const d = this.dmg(g.dmg, now) * (crit ? 2 : 1) * (gold ? 1.1 : 1);
       this.world.shoot(mx, my, {
         owner: "player",
         damage: g.blast ? 0 : d,
         crit,
         speed: g.speed * (g.pellets > 1 ? 0.9 + Math.random() * 0.2 : 1),
         angle: this.aim + spread,
-        color: g.color,
+        color: gold ? 0xffd23f : disco ? [0xff4fd8, 0x22d3ee, 0xfacc15][i % 3] : g.color,
         texture: g.shotTex && this.world.sc.textures.exists(g.shotTex) ? g.shotTex : undefined,
         life: (g.range / g.speed) * 1000,
         pierce: g.pierce ?? 0,
         knock: g.knock,
-        scale: g.id === "rail" ? 1.6 : g.shotTex ? 0.65 : 1,
-        onHit: g.blast ? blast : undefined,
+        scale: g.id === "rail" ? 1.6 : g.id === "chainsaw" ? 0.5 : disco ? 1.8 : g.shotTex ? 0.65 : 1,
+        trail: tracer ? (this.shots % 2 ? 0xff4fd8 : 0x22d3ee) : undefined,
+        onHit: g.blast ? blast : jackpot ? payout : undefined,
         onEnd: g.blast ? blast : undefined,
       });
     }
@@ -400,7 +426,7 @@ export class Player {
       const beam = this.world.sc.add.rectangle(mx, my, g.range, 3, g.color, 0.7).setOrigin(0, 0.5).setRotation(this.aim).setDepth(598);
       this.world.sc.tweens.add({ targets: beam, alpha: 0, scaleY: 4, duration: 180, onComplete: () => beam.destroy() });
     }
-    synth.play(g.id === "rocket" ? "lob" : `gun_${g.id}`);
+    synth.play(g.id === "rocket" || g.id === "disco" ? "lob" : g.id === "chainsaw" || g.id === "kreddler" ? "gun_smg" : g.id === "flush" ? "gun_shotgun" : `gun_${g.id}`);
     if (g.id === "shotgun" || g.id === "rocket") this.world.shake(70, 0.003);
     if (s.guns[g.id] === 0) this.world.floatText(this.x, this.y - 44, "LAST ONE", "#ffd23f", 12);
     return true;

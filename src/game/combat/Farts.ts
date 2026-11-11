@@ -4,6 +4,7 @@ import { synth } from "../audio/Synth";
 import type { Player } from "./Player";
 import type { CombatWorld } from "./types";
 import { CHARACTERS } from "../../data/characters";
+import { kd } from "../systems/kreddle";
 
 /**
  * Fart attacks. A meter fills from landing hits; release it any time (G / 💨 / D-pad down).
@@ -96,8 +97,10 @@ export function releaseFart(p: Player, now: number) {
   const L = FART_LEVELS[level];
   const sc = w.sc;
   const id = p.id;
-  const r = L.radius * (id === "GRONNY" ? 1.4 : 1);
-  const dmg = p.dmg(L.dmg, now) * (id === "KREBLIS" ? 1.1 : 1);
+  // Kreddle CASINO GAS: bigger, harder, sparkly
+  const casino = kd(G.s, "kd_gas");
+  const r = L.radius * (id === "GRONNY" ? 1.4 : 1) * (1 + 0.2 * casino);
+  const dmg = p.dmg(L.dmg, now) * (id === "KREBLIS" ? 1.1 : 1) * (1 + 0.2 * casino);
   // the gas comes out behind you
   const bx = p.x - Math.cos(p.aim) * 14;
   const by = p.y + 6 - Math.sin(p.aim) * 14;
@@ -114,6 +117,11 @@ export function releaseFart(p: Player, now: number) {
     sc.time.delayedCall(i * 40, () => cloud(sc, bx + Math.cos(a) * d, by + Math.sin(a) * d, r * (0.7 + Math.random() * 0.5), 900 + level * 400, tex));
   }
   stinkLines(sc, bx, by, level * 2);
+  if (casino) for (let i = 0; i < 6 + level * 4; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = sc.add.star(bx, by, 4, 2, 5, [0xa855f7, 0xff4fd8, 0xfacc15][i % 3], 1).setDepth(610).setBlendMode(Phaser.BlendModes.ADD);
+    sc.tweens.add({ targets: sp, x: bx + Math.cos(a) * r * 0.9, y: by + Math.sin(a) * r * 0.9, angle: 180, alpha: 0, duration: 700, onComplete: () => sp.destroy() });
+  }
   w.shake(80 + level * 60, 0.002 * level);
   const knock = [80, 200, 260][level - 1] * (id === "KREBON" ? 2.2 : 1);
   w.aoe(bx, by, r, dmg, { knock, stun: level >= 2 ? 300 * level : 0, slow: id === "KREZMAR" ? 0.5 : level === 3 ? 0.35 : 0, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });

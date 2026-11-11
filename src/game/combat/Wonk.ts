@@ -6,6 +6,7 @@ import { G } from "../G";
 import { addWrist, wristLook } from "../gfx/Wrist";
 import { CHARACTERS } from "../../data/characters";
 import type { Player } from "./Player";
+import { kd } from "../systems/kreddle";
 
 /**
  * WONK YOUR THANG. Replaces the old Krezz Burst on the same button (R / WONK / LB) once the Wonk
@@ -279,9 +280,11 @@ function jetStream(p: Player, now: number) {
       g.clear();
       const x2 = p.x + Math.cos(a) * st.len;
       const y2 = p.y + Math.sin(a) * st.len;
-      g.lineStyle(WIDTH * 2.2 * st.life, 0xffffff, 0.22);
+      // Kreddle NEON KREZZ: a pink neon glow round the beam
+      const neon = kd(G.s, "kd_krezz") > 0;
+      g.lineStyle(WIDTH * (neon ? 3 : 2.2) * st.life, neon ? 0xff4fd8 : 0xffffff, neon ? 0.35 : 0.22);
       g.lineBetween(p.x, p.y, x2, y2);
-      g.lineStyle(WIDTH * st.life, 0xf8f8f2, 0.9);
+      g.lineStyle(WIDTH * st.life, neon ? 0xffd1f3 : 0xf8f8f2, 0.9);
       g.lineBetween(p.x, p.y, x2, y2);
       g.lineStyle(WIDTH * 0.35 * st.life, 0xffffff, 1);
       g.lineBetween(p.x, p.y, x2, y2);
@@ -306,7 +309,7 @@ function jetStream(p: Player, now: number) {
           hit.set(e, n);
           // bosses only take the first ten hits (about a quarter of their health); STD KREZZ upgrades push that up
           if (e.isBoss && n > 10) continue;
-          const jet = 1 + 0.25 * (G.s.upgrades.pk_jet ?? 0);
+          const jet = (1 + 0.25 * (G.s.upgrades.pk_jet ?? 0)) * (1 + 0.25 * kd(G.s, "kd_krezz"));
           const dmg = (e.isBoss ? p.dmg(14, now) * 1.2 + e.maxHp * 0.012 : p.dmg(14, now) * 4.5) * jet;
           w.damageEnemy(e, dmg, { knock: 220, angle: a, crit: n === 1, noWonk: true, label: id === "KREBLIS" ? "99" : undefined });
           if (n === 1) w.burst(e.x, e.y, 0xffffff, 10);

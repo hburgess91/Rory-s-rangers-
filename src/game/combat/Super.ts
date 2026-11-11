@@ -2,12 +2,17 @@ import Phaser from "phaser";
 import type { Player } from "./Player";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
+import { kd } from "../systems/kreddle";
 
 /**
  * GOLDEN JUICE TRANSFORMATION (T). Once per dungeon, if you've had a fresh squeeze beforehand.
  * Golden hair, bulging muscles, a gold flame aura. ATTACK becomes a wide, heavy mega melee; C fires the CUMEHAMEHA.
  */
 export const SUPER_MS = 20000;
+/** How long the transformation lasts (Kreddle OVERTIME SUPER adds 10s a level). */
+export function superMs() {
+  return SUPER_MS + 10000 * kd(G.s, "kd_super");
+}
 
 type SuperState = { aura: Phaser.GameObjects.GameObject[]; ev: Phaser.Time.TimerEvent; baseBig: number; baseKey: string; hasArt: boolean };
 const states = new WeakMap<Player, SuperState>();
@@ -28,7 +33,7 @@ export function goSuper(p: Player, now: number) {
     return;
   }
   G.s.flags.golden_charge = false;
-  p.superUntil = now + CUTSCENE_MS + SUPER_MS;
+  p.superUntil = now + CUTSCENE_MS + superMs();
   p.iframesUntil = now + CUTSCENE_MS + 1200;
   // freeze the room while it happens
   w.hitStop(CUTSCENE_MS);
@@ -67,7 +72,7 @@ export function goSuper(p: Player, now: number) {
   sc.time.delayedCall(CUTSCENE_MS - 300, () => {
     sc.tweens.add({ targets: cam, zoom: z0, duration: 300, ease: "Quad.in" });
     sc.tweens.add({ targets: dark, fillAlpha: 0, duration: 300, onComplete: () => dark.destroy() });
-    w.toast("GOLDEN JUICE TRANSFORMATION", `${SUPER_MS / 1000}s. ATTACK = mega melee. C = CUMEHAMEHA.`);
+    w.toast("GOLDEN JUICE TRANSFORMATION", `${superMs() / 1000}s. ATTACK = mega melee. C = CUMEHAMEHA.`);
   });
 }
 
@@ -104,11 +109,14 @@ function becomeGolden(p: Player) {
     loop: true,
     callback: () => {
       glow.setPosition(p.x, p.y);
+      if (kd(G.s, "kd_aura")) glow.setFillStyle(Phaser.Display.Color.HSVToRGB((sc.time.now / 1500) % 1, 0.8, 1).color, glow.fillAlpha);
       drawHair();
       // a golden flame licking up all round you
       for (let k = 0; k < 2; k++) {
         const a = Math.random() * Math.PI * 2;
-        const f = sc.add.ellipse(p.x + Math.cos(a) * 26, p.y + 22 + Math.sin(a) * 8, 14, 26, Math.random() < 0.5 ? 0xfacc15 : 0xfff7c2, 0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(499);
+        const rainbow = kd(G.s, "kd_aura") > 0;
+        const RB = [0xff4d4d, 0xffa53a, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7, 0xff4fd8];
+        const f = sc.add.ellipse(p.x + Math.cos(a) * 26, p.y + 22 + Math.sin(a) * 8, 14, 26, rainbow ? RB[Math.floor(Math.random() * RB.length)] : Math.random() < 0.5 ? 0xfacc15 : 0xfff7c2, 0.9).setBlendMode(Phaser.BlendModes.ADD).setDepth(499);
         sc.tweens.add({ targets: f, y: f.y - 70 - Math.random() * 40, x: f.x + (Math.random() - 0.5) * 20, alpha: 0, duration: 480, onComplete: () => f.destroy() });
       }
       if (Math.random() < 0.04) bolt(p);
@@ -193,7 +201,7 @@ export function megaMelee(p: Player, now: number) {
     const ang = Math.atan2(e.y - p.y, e.x - p.x);
     if (Math.abs(Phaser.Math.Angle.Wrap(ang - a)) > ARC / 2 + 0.2 && d > 50) continue;
     hits++;
-    const dmg = e.isBoss ? p.dmg(28, now) + e.maxHp * 0.012 : p.dmg(60, now);
+    const dmg = (e.isBoss ? p.dmg(28, now) + e.maxHp * 0.012 : p.dmg(60, now)) * (kd(G.s, "kd_aura") ? 1.3 : 1);
     w.damageEnemy(e, dmg, { knock: e.isBoss ? 180 : 620, angle: ang, crit: Math.random() < 0.25, noWonk: true });
     w.burst(e.x, e.y, 0xfde047, 12);
     const ring = sc.add.circle(e.x, e.y, 8, 0xffffff, 0).setStrokeStyle(4, 0xfde047).setDepth(602);

@@ -69,6 +69,7 @@ const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
   { id: "PORTAL", name: "??? THE SYMBOL OF WAHOOGAH", x: 90, y: 1250 },
+  { id: "KREDDLE_BRIDGE", name: "← THE KREDDLE BRIDGE (casinos, arcades, hostility)", x: 70, y: 825 },
 ];
 
 /** The playground (Boggor's view). Kids, sweeties, screaming. */
@@ -375,6 +376,10 @@ export class HubScene extends Phaser.Scene {
     for (const gt of GATES) {
       if (gt.id === "PORTAL") {
         this.drawPortal(gt.x, gt.y);
+        continue;
+      }
+      if (gt.id === "KREDDLE_BRIDGE") {
+        this.drawKreddleBridge(gt.x, gt.y, gt.name);
         continue;
       }
       this.add.text(gt.x, gt.y - 40, gt.name, { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", backgroundColor: "#000000aa", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(gt.y);
@@ -1931,8 +1936,28 @@ You are required by law to sign the Sex Offenders Register.`, {
     return b.name;
   }
 
+  /** The bridge west to Kreddle: neon rails, flashing arrow. */
+  private drawKreddleBridge(x: number, y: number, name: string) {
+    const g = this.add.graphics().setDepth(2);
+    g.fillStyle(0x3f3f46, 1).fillRect(0, y - 45, 110, 90);
+    for (let bx = 0; bx < 110; bx += 16) g.fillStyle(0x52525b, 1).fillRect(bx, y - 45, 12, 90);
+    g.lineStyle(4, 0xff4fd8, 0.9).lineBetween(0, y - 47, 110, y - 47).lineBetween(0, y + 47, 110, y + 47);
+    const sign = this.add.text(x + 20, y - 62, name, { fontFamily: FONT, fontSize: "12px", color: "#ff4fd8", backgroundColor: "#12001fcc", padding: { x: 5, y: 3 }, fontStyle: "bold" }).setOrigin(0.15, 1).setDepth(y + 40);
+    this.tweens.add({ targets: sign, alpha: 0.55, yoyo: true, repeat: -1, duration: 500 });
+    const glow = this.add.ellipse(55, y, 140, 110, 0xff4fd8, 0.12).setDepth(1).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: glow, alpha: 0.03, yoyo: true, repeat: -1, duration: 900 });
+  }
+
   private async enterBuilding(b: Building) {
     const s = G.s;
+    if (b.id === "KREDDLE_BRIDGE") {
+      if (!s.flags.met_emergency) {
+        await this.talk([dir("The bridge to Kreddle. A neon sign on the far side flashes 'OPEN 24/7/365/FOREVER'. You've got more pressing things to do first.")]);
+        return;
+      }
+      this.go("Kreddle", {});
+      return;
+    }
     const ch = chapterDef(s.chapter);
     // Chapter 5: the lamp in the Krezz Arms back room is the way into the SanMikverse
     if (b.id === "PUB" && s.chapter === 5 && !s.flags.ch5_clear && dungeonOpen().open && !this.buildingBusy("PUB")) {

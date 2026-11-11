@@ -34,6 +34,8 @@ export interface ShotOpts {
   /** Called when the shot runs out of range or leaves the room. */
   onEnd?: (x: number, y: number) => void;
   knock?: number;
+  /** Leave a glowing trail of this colour (Kreddle: Neon Tracers). */
+  trail?: number;
 }
 
 /** What entities need from the combat scene. Implemented by DungeonScene. */

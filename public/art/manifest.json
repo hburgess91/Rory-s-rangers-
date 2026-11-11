@@ -4124,6 +4124,93 @@
      3
     ]
    }
+  },
+  "spr_KD_MAN": {
+   "file": "chars/KD_MAN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_KD_WOMAN": {
+   "file": "chars/KD_WOMAN.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
+  },
+  "spr_KD_PITBOSS": {
+   "file": "chars/KD_PITBOSS.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     0
+    ],
+    "east": [
+     4
+    ],
+    "north": [
+     5
+    ],
+    "west": [
+     6
+    ]
+   },
+   "attack": {
+    "south": [
+     3
+    ]
+   }
   }
  },
  "images": {
@@ -5390,6 +5477,42 @@
   },
   "tv_train_cab": {
    "file": "backdrops/tv_train_cab.png"
+  },
+  "kd_bld_casino": {
+   "file": "props/kd_bld_casino.png"
+  },
+  "kd_bld_arcade": {
+   "file": "props/kd_bld_arcade.png"
+  },
+  "kd_bld_hotel": {
+   "file": "props/kd_bld_hotel.png"
+  },
+  "kd_m_slots": {
+   "file": "props/kd_m_slots.png"
+  },
+  "kd_m_claw": {
+   "file": "props/kd_m_claw.png"
+  },
+  "kd_m_wheel": {
+   "file": "props/kd_m_wheel.png"
+  },
+  "kd_m_cards": {
+   "file": "props/kd_m_cards.png"
+  },
+  "p_wpn_chainsaw": {
+   "file": "props/p_wpn_chainsaw.png"
+  },
+  "p_wpn_minigun": {
+   "file": "props/p_wpn_minigun.png"
+  },
+  "p_wpn_disco": {
+   "file": "props/p_wpn_disco.png"
+  },
+  "p_wpn_flush": {
+   "file": "props/p_wpn_flush.png"
+  },
+  "bg_kreddle_sky": {
+   "file": "backdrops/bg_kreddle_sky.png"
   }
  },
  "sheets": {

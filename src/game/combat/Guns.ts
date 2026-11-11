@@ -28,6 +28,8 @@ export interface GunDef {
   minChapter: number;
   /** Only sold at the Central Bank (never in crates). Price in Krezzcoin. */
   shop?: number;
+  /** Only won in Kreddle (never in crates or the bank). */
+  kreddle?: boolean;
 }
 
 export const GUNS: Record<string, GunDef> = {
@@ -68,12 +70,29 @@ export const GUNS: Record<string, GunDef> = {
     id: "bfk", name: "The BFK (Big Fucking Krezzer)", blurb: "Do not fire indoors. Everything in Krelworld is indoors.",
     tex: "p_wpn_rocket", dmg: 95, cd: 1600, speed: 300, pellets: 1, spread: 0, range: 560, blast: 150, knock: 420, color: 0xc084fc, shotTex: "fx_rocket", maxAmmo: 6, pickup: 2, minChapter: 1, shop: 900,
   },
+  // ---- Kreddle prizes
+  chainsaw: {
+    id: "chainsaw", name: "The Kreddle Chainsaw", blurb: "Won on a claw machine. The claw machine is still scared of it.",
+    tex: "p_wpn_chainsaw", dmg: 11, cd: 55, speed: 520, pellets: 1, spread: 0.5, range: 70, pierce: 4, knock: 40, color: 0xffa500, maxAmmo: 500, pickup: 120, minChapter: 1, kreddle: true,
+  },
+  kreddler: {
+    id: "kreddler", name: "The Kreddler", blurb: "Gold-plated minigun. Paid for itself in one spin.",
+    tex: "p_wpn_minigun", dmg: 6, cd: 32, speed: 720, pellets: 1, spread: 0.2, range: 420, color: 0xffd23f, maxAmmo: 900, pickup: 220, minChapter: 1, kreddle: true,
+  },
+  disco: {
+    id: "disco", name: "Disco Ball Launcher", blurb: "Saturday night fever. Saturday night explosions.",
+    tex: "p_wpn_disco", dmg: 40, cd: 900, speed: 340, pellets: 1, spread: 0, range: 520, blast: 120, knock: 300, color: 0xe5e7eb, maxAmmo: 14, pickup: 4, minChapter: 1, kreddle: true,
+  },
+  flush: {
+    id: "flush", name: "The Royal Flush", blurb: "Five cards, all aces, all very sharp.",
+    tex: "p_wpn_flush", dmg: 14, cd: 420, speed: 780, pellets: 5, spread: 0.6, range: 480, pierce: 3, color: 0xff3355, maxAmmo: 90, pickup: 25, minChapter: 1, kreddle: true,
+  },
 };
 
-export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk"];
+export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk", "chainsaw", "kreddler", "disco", "flush"];
 
 /** Strongest first: what you get handed when you walk into a room or run dry. */
-export const GUN_POWER = ["bfk", "rocket", "gatling", "sniper", "rail", "flamer", "shotgun", "smg", "pistol"];
+export const GUN_POWER = ["bfk", "disco", "kreddler", "rocket", "gatling", "flush", "chainsaw", "sniper", "rail", "flamer", "shotgun", "smg", "pistol"];
 
 /** The infinite starter every character always has (when no gun is in hand). */
 export const FART_BLASTER = { name: "Fart Blaster", dmg: 10, cd: 240, speed: 540, range: 400 };
@@ -120,7 +139,7 @@ export function cycleGun(s: GameState = G.s): string {
 /** Give a gun the player doesn't have yet (or ammo if they have them all). */
 export function rollCrate(s: GameState = G.s): { gun?: GunDef; ammoFor?: GunDef; amount: number } {
   s.guns = s.guns ?? {};
-  const missing = GUN_ORDER.filter((id) => !(id in s.guns!) && !GUNS[id].shop && GUNS[id].minChapter <= s.chapter);
+  const missing = GUN_ORDER.filter((id) => !(id in s.guns!) && !GUNS[id].shop && !GUNS[id].kreddle && GUNS[id].minChapter <= s.chapter);
   if (missing.length) {
     // first ever crate is always the pistol
     const id = !ownedGuns(s).length ? "pistol" : missing[Math.floor(Math.random() * missing.length)];

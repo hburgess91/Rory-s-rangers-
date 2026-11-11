@@ -20,6 +20,7 @@ import { VignetteScene } from "./game/scenes/VignetteScene";
 import { MinigameScene } from "./game/scenes/MinigameScene";
 import { VenueScene } from "./game/scenes/VenueScene";
 import { ClubScene } from "./game/scenes/ClubScene";
+import { KreddleScene } from "./game/scenes/KreddleScene";
 import { DriveScene } from "./game/scenes/DriveScene";
 import { BeepBeepScene } from "./game/scenes/BeepBeepScene";
 import { installDebug } from "./game/debug";
@@ -57,6 +58,7 @@ const game = new Phaser.Game({
     MinigameScene,
     VenueScene,
     ClubScene,
+    KreddleScene,
     DriveScene,
     BeepBeepScene,
     MenuScene,
