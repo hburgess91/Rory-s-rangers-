@@ -2241,7 +2241,7 @@ export class VignetteScene extends Phaser.Scene {
     const sky = this.sky(0x7ec8f0, 0xf3d9b1);
     const dash = this.cockpitFrame();
     const idle = this.time.addEvent({ delay: 16, loop: true, callback: () => dash.update(0, 0, this.time.now) });
-    synth.music("airport");
+    synth.music("boss_krozno", true);
     await this.talk([
       dir("The cockpit of Flight KR-069. Captain Stanley is in no position to object. There are four hundred buttons. One of them is labelled 'DO NOT'."),
       say("MIKEY", "(over the radio) You're in? Legend. Right. Find the train. Fly the plane into the train.", { cond: { notPlayer: "MIKEY" } }),
