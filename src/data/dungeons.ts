@@ -577,7 +577,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     id: "airport",
     chapter: 4,
     name: "FLIGHT KR-069: OPERATION PLANE INTO TRAIN",
-    music: "airport",
+    music: "krel_tower_rap",
     returnAt: "AIRPORT",
     rooms: [
       {

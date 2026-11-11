@@ -30,6 +30,7 @@ export const MUSIC_FILES: Record<string, string> = {
   prison: "audio/prison.mp3",
   wiki: "audio/wiki.mp3",
   airport: "audio/airport.mp3",
+  krel_tower_rap: "audio/krel_tower_rap.mp3",
   ominous: "audio/ominous.mp3",
   boss: "audio/boss1.mp3",
   boss_salmon: "audio/boss_salmon.mp3",
