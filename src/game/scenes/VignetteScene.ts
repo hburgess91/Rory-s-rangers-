@@ -8,7 +8,7 @@ import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, gabor, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
-import { animateWalker, backdrop } from "../gfx/HD";
+import { animateWalker, backdrop, charMeta } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
 import { flap, fall, randomZone } from "../combat/Wonk";
 import { maybeFinishArc } from "../systems/arcs";
@@ -118,7 +118,42 @@ export class VignetteScene extends Phaser.Scene {
   }
 
   private tween(cfg: Phaser.Types.Tweens.TweenBuilderConfig) {
-    return new Promise<void>((res) => this.tweens.add({ ...cfg, onComplete: () => res() }));
+    // a character being moved walks there (instead of sliding), unless something else is already animating them
+    const ts = (Array.isArray(cfg.targets) ? cfg.targets : [cfg.targets]) as unknown[];
+    const walkers = ts.filter(
+      (t): t is Phaser.GameObjects.Sprite =>
+        t instanceof Phaser.GameObjects.Sprite && ("x" in cfg || "y" in cfg) && !("angle" in cfg) && !("scale" in cfg) && !!charMeta(this, t.texture.key) && !t.getData("walking"),
+    );
+    const from = walkers.map((w) => ({ w, x: w.x, y: w.y }));
+    const ev = walkers.length
+      ? this.time.addEvent({
+          delay: 60,
+          loop: true,
+          callback: () => {
+            for (const f of from) {
+              const dx = f.w.x - f.x;
+              const dy = f.w.y - f.y;
+              if (Math.abs(dx) + Math.abs(dy) > 0.5) animateWalker(f.w, dx, dy, true, this.time.now);
+              f.x = f.w.x;
+              f.y = f.w.y;
+            }
+          },
+        })
+      : null;
+    walkers.forEach((w) => w.setData("walking", true));
+    return new Promise<void>((res) =>
+      this.tweens.add({
+        ...cfg,
+        onComplete: () => {
+          ev?.remove();
+          walkers.forEach((w) => {
+            w.setData("walking", false);
+            if (w.active) animateWalker(w, 0, 0, false, this.time.now);
+          });
+          res();
+        },
+      }),
+    );
   }
 
   private talk(lines: Line[]) {
@@ -808,7 +843,7 @@ export class VignetteScene extends Phaser.Scene {
         this.tween({ targets: fl, x: target.x, y: target.y - 20, duration: 120 }).then(() => fl.destroy());
       });
     }
-    press.forEach((p, i) => this.tweens.add({ targets: p, x: i % 2 ? p.x + 600 : p.x - 600, duration: 1400, delay: 200 + i * 60 }));
+    press.forEach((p, i) => this.time.delayedCall(200 + i * 60, () => void this.tween({ targets: p, x: i % 2 ? p.x + 600 : p.x - 600, duration: 1400 })));
     await this.wait(2000);
     synth.stopMusic();
     await this.talk([
@@ -2101,7 +2136,7 @@ export class VignetteScene extends Phaser.Scene {
         this.tween({ targets: fl, x: target.x, y: target.y - 20, duration: 120 }).then(() => fl.destroy());
       });
     }
-    press.forEach((p, i) => this.tweens.add({ targets: p, x: i % 2 ? p.x + 700 : p.x - 700, duration: 1400, delay: 200 + i * 60 }));
+    press.forEach((p, i) => this.time.delayedCall(200 + i * 60, () => void this.tween({ targets: p, x: i % 2 ? p.x + 700 : p.x - 700, duration: 1400 })));
     this.tween({ targets: beer, y: 600, angle: 360, duration: 900 });
     await this.wait(2200);
     this.lastCaption?.destroy();

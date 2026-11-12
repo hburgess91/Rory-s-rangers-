@@ -204,7 +204,8 @@ export class UIScene extends Phaser.Scene {
     this.toasts.push({ c, until: this.time.now + 7500 });
     if (this.toasts.length > 5) {
       const t = this.toasts.shift()!;
-      t.c.destroy();
+      // the oldest slides out rather than vanishing
+      this.tweens.add({ targets: t.c, alpha: 0, x: t.c.x + 60, duration: 220, onComplete: () => t.c.destroy() });
     }
   }
 
@@ -229,7 +230,8 @@ export class UIScene extends Phaser.Scene {
     this.toasts.push({ c, until: this.time.now + (messenger ? 5200 : 4200) });
     if (this.toasts.length > 5) {
       const t = this.toasts.shift()!;
-      t.c.destroy();
+      // the oldest slides out rather than vanishing
+      this.tweens.add({ targets: t.c, alpha: 0, x: t.c.x + 60, duration: 220, onComplete: () => t.c.destroy() });
     }
   }
 

@@ -7,7 +7,7 @@ import type { ReactionChoice } from "../../data/types";
 import { FONT, title, button } from "../ui/theme";
 import { synth } from "../audio/Synth";
 import { dir, say } from "../../content/dsl";
-import { switchTo } from "../Flow";
+import { switchTo, fadeThen } from "../Flow";
 import { portraitKey } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
 import { applyReaction } from "../systems/reactions";
@@ -137,7 +137,7 @@ export class EndingScene extends Phaser.Scene {
           this.time.delayedCall(3500, () => {
             button(this, 480, 360, "BACK TO TITLE (New Krez+ unlocked)", () => {
               res();
-              switchTo(this, "Title");
+              fadeThen(this, 400, () => switchTo(this, "Title"));
             }, { w: 420 });
           });
         },
@@ -151,7 +151,7 @@ export class EndingScene extends Phaser.Scene {
         void card;
         button(this, 480, 360, "BACK TO TITLE (New Krez+ unlocked)", () => {
           res();
-          switchTo(this, "Title");
+          fadeThen(this, 400, () => switchTo(this, "Title"));
         }, { w: 420 });
       });
     });

@@ -9,7 +9,7 @@ import { FONT } from "../ui/theme";
 import { drawCharacter } from "../gfx/Textures";
 import type { SpriteLook } from "../../data/characters";
 import { bump } from "../systems/stats";
-import { switchTo } from "../Flow";
+import { fadeThen, switchTo } from "../Flow";
 import { DUNGEONS } from "../../data/dungeons";
 import { addKrokens } from "../systems/kreddle";
 
@@ -294,7 +294,7 @@ export class TVScene extends Phaser.Scene {
     if (this.fromTitle) return false;
     if (G.s.chapter !== 4 || G.s.flags.vig_crobley_news) return false;
     synth.stopMusic();
-    switchTo(this, "Vignette", { id: "crobley_news", returnAt: this.caller === "Pub" ? "PUB" : "HOME" });
+    fadeThen(this, 250, () => switchTo(this, "Vignette", { id: "crobley_news", returnAt: this.caller === "Pub" ? "PUB" : "HOME" }));
     return true;
   }
 
