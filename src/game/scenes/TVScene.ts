@@ -167,19 +167,48 @@ export class TVScene extends Phaser.Scene {
     });
   }
 
+  /** Two big buttons beside the telly (only while a show's on), plus tap-the-screen for the next line. */
+  private playBtns: Phaser.GameObjects.Container[] = [];
+  private tapZone?: Phaser.GameObjects.Zone;
   private drawControls() {
-    const btns: [string, () => void][] = [
-      ["⏮", () => this.rewind()],
-      ["⏯", () => this.togglePause()],
-      ["⏭", () => this.skipBeat()],
-      ["CC", () => (this.showSubs = !this.showSubs)],
-      ["⏏ EXIT", () => this.back()],
-    ];
-    btns.forEach(([t, fn], i) => {
-      const b = this.add.text(SX + 20 + i * 70, SY + SH + 52, t, { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", backgroundColor: "#2a1a0a", padding: { x: 8, y: 3 } }).setInteractive({ useHandCursor: true });
-      b.on("pointerdown", fn);
-    });
-    this.add.text(960 - 10, 530, "Space: next · P: pause · ←: rewind · S: subtitles · Esc: back", { fontFamily: FONT, fontSize: "10px", color: "#777" }).setOrigin(1, 1);
+    // tapping the picture = next line
+    const zone = (this.tapZone = this.add.zone(SX, SY, SW, SH).setOrigin(0).setInteractive().setDepth(5));
+    zone.on("pointerdown", () => this.mode === "playing" && this.skipBeat());
+    const mk = (y: number, icon: string, label: string, key: string, fn: () => void) => {
+      const c = this.add.container(SX + SW + 40 + 70, y).setDepth(100);
+      const bg = this.add.rectangle(0, 0, 130, 96, 0x2a1a0a).setStrokeStyle(3, 0xd4a017);
+      c.add([bg, this.add.text(0, -20, icon, { fontFamily: FONT, fontSize: "30px", color: "#ffd23f" }).setOrigin(0.5), this.add.text(0, 14, label, { fontFamily: FONT, fontSize: "14px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5), this.add.text(0, 33, key, { fontFamily: FONT, fontSize: "10px", color: "#a8a29e" }).setOrigin(0.5)]);
+      bg.setInteractive({ useHandCursor: true });
+      bg.on("pointerover", () => bg.setFillStyle(0x4a2f12));
+      bg.on("pointerout", () => bg.setFillStyle(0x2a1a0a));
+      bg.on("pointerdown", () => {
+        synth.play("select");
+        fn();
+      });
+      this.playBtns.push(c);
+    };
+    this.playBtns = [];
+    mk(200, "▶", "NEXT LINE", "Space / click", () => this.skipBeat());
+    mk(320, "⏭", "SKIP SHOW", "Tab", () => this.skipShow());
+    this.setPlayBtns(false);
+  }
+
+  private setPlayBtns(on: boolean) {
+    for (const c of this.playBtns) c.setVisible(on);
+    if (this.tapZone?.input) this.tapZone.input.enabled = on;
+  }
+
+  /** Skip the whole show. A story broadcast counts as seen; a show you picked stays "new" (and its gift unclaimed). */
+  private skipShow() {
+    if (this.mode !== "playing" || !this.ep) return;
+    voice.stop();
+    if (this.once) {
+      this.beatTimer?.remove();
+      this.beat = this.ep.beats.length;
+      this.finishEpisode();
+      return;
+    }
+    this.back();
   }
 
   // ---------------------------------------------------------- menus
@@ -751,10 +780,19 @@ export class TVScene extends Phaser.Scene {
     }
   }
 
+  /** On to the next line of dialogue (set changes, sound effects etc. on the way are applied instantly). */
   private skipBeat() {
     if (this.mode !== "playing" || !this.ep) return;
     this.pausedPlay = false;
+    this.beatTimer?.remove();
+    voice.stop();
     this.beat++;
+    const beats = this.ep.beats;
+    while (this.beat < beats.length && !["speaker", "direction", "titleCard"].includes(beats[this.beat].type)) {
+      const b = beats[this.beat];
+      if (b.type !== "audience" && b.type !== "sfx") this.applyBeat(b);
+      this.beat++;
+    }
     this.runBeat();
   }
 
@@ -811,13 +849,17 @@ export class TVScene extends Phaser.Scene {
   }
 
   update() {
+    this.setPlayBtns(this.mode === "playing");
     this.subs.setVisible(this.subs.text.length > 0);
     this.caption.setVisible(this.caption.text.length > 0);
   }
 
   private onKey(e: KeyboardEvent) {
     if (this.mode === "playing") {
-      if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") this.skipBeat();
+      if (e.key === "Tab") {
+        e.preventDefault();
+        this.skipShow();
+      } else if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") this.skipBeat();
       else if (e.key === "p" || e.key === "P") this.togglePause();
       else if (e.key === "ArrowLeft" || e.key === "Backspace") this.rewind();
       else if (e.key === "s" || e.key === "S") this.showSubs = !this.showSubs;
