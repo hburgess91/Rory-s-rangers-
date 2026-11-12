@@ -14,8 +14,9 @@ import type { Line } from "../../data/types";
 
 /** Your house: walk about, watch the telly, sleep, raid the fridge. New games start here. */
 
-const TOP = 440;
-const BOTTOM = 528;
+// where your feet can go
+const TOP = 455;
+const BOTTOM = 536;
 
 interface Spot {
   x: number;
@@ -70,7 +71,7 @@ export class HomeScene extends Phaser.Scene {
       { x: 420, y: 445, r: 55, label: "E: Look out of the window", use: () => this.talk([dir(s.flags.met_emergency ? "Krelford. The sky has a faint grey tint, like an unloaded page. Somewhere, a Tap is not running." : "Krelford, in the evening. Somewhere a fizzy bongo is opened. Somewhere else, the Great Tap gurgles. All is well. For now.")]) },
       { x: 760, y: 450, r: 60, label: "E: Go outside", use: () => this.leave() },
     );
-    this.me = this.add.sprite(s.flags.home_seen ? 740 : 300, 480, `spr_${s.player}`, 0).setScale(2).setDepth(480);
+    this.me = this.add.sprite(s.flags.home_seen ? 740 : 420, 500, `spr_${s.player}`, 0).setOrigin(0.5, 1).setScale(5.5).setDepth(500);
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#000000cc", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(1000).setVisible(false);
     this.controls = new Controls(this);
     this.box = new DialogueBox(this, 2000, 0.2);
@@ -158,7 +159,7 @@ export class HomeScene extends Phaser.Scene {
       }
     }
     if (best) {
-      this.prompt.setText(best.label).setPosition(this.me.x, this.me.y - 56).setVisible(true);
+      this.prompt.setText(best.label).setPosition(this.me.x, this.me.y - this.me.displayHeight - 12).setVisible(true);
       if (this.controls.interact()) void best.use();
     } else {
       this.prompt.setVisible(false);
