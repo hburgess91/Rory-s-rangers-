@@ -6690,6 +6690,111 @@
    "frameWidth": 64,
    "frameHeight": 64,
    "hd": 0.5
+  },
+  "talk_CRONGUS": {
+   "file": "talk/talk_CRONGUS.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_DRONGUS": {
+   "file": "talk/talk_DRONGUS.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_EDEN": {
+   "file": "talk/talk_EDEN.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_FLENKY": {
+   "file": "talk/talk_FLENKY.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_GRONNY": {
+   "file": "talk/talk_GRONNY.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_KREBLIS": {
+   "file": "talk/talk_KREBLIS.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_KREBON": {
+   "file": "talk/talk_KREBON.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_KREZMAR": {
+   "file": "talk/talk_KREZMAR.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_KREZWONK": {
+   "file": "talk/talk_KREZWONK.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_MIKEY": {
+   "file": "talk/talk_MIKEY.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_MOLLOR": {
+   "file": "talk/talk_MOLLOR.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_NEWSREADER": {
+   "file": "talk/talk_NEWSREADER.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_POLSON": {
+   "file": "talk/talk_POLSON.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_PRESIDENT_KLERBLE": {
+   "file": "talk/talk_PRESIDENT_KLERBLE.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_PROCTUS": {
+   "file": "talk/talk_PROCTUS.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_REPORTER": {
+   "file": "talk/talk_REPORTER.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_SANCHZ": {
+   "file": "talk/talk_SANCHZ.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_SANMIK": {
+   "file": "talk/talk_SANMIK.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_SCROMBUS": {
+   "file": "talk/talk_SCROMBUS.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_SERGEANT_SWIG": {
+   "file": "talk/talk_SERGEANT_SWIG.png",
+   "frameWidth": 64,
+   "frameHeight": 64
+  },
+  "talk_SWIG": {
+   "file": "talk/talk_SWIG.png",
+   "frameWidth": 64,
+   "frameHeight": 64
   }
  },
  "vfx": {
