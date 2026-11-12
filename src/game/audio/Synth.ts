@@ -183,27 +183,36 @@ export class Synth {
         }
       }),
     );
-    if (this.ambWant) this.ambience(this.ambWant);
+    for (const [ch, w] of Object.entries(this.loopWant)) if (w.id) this.loopOn(ch, w.id, w.vol);
   }
 
   // ------------------------------------------------------------ ambience: a quiet looping bed under the music
 
-  private amb: { id: string; src: AudioBufferSourceNode; gain: GainNode } | null = null;
-  private ambWant: string | null = null;
+  private loops: Record<string, { id: string; src: AudioBufferSourceNode; gain: GainNode } | null> = {};
+  private loopWant: Record<string, { id: string | null; vol: number }> = {};
 
   /** Loop the recorded ambience "amb_<id>" (town, pub, casino, dungeon...), or stop it with null. Crossfades. */
   ambience(id: string | null) {
-    this.ambWant = id;
+    this.loopOn("amb", id, 0.45);
+  }
+
+  /** A weather layer over the ambience (amb_rain, amb_storm, amb_snow), or null to stop it. */
+  weatherSound(id: string | null) {
+    this.loopOn("wx", id, 0.55);
+  }
+
+  private loopOn(ch: string, id: string | null, vol: number) {
+    this.loopWant[ch] = { id, vol };
     if (!this.ctx) return;
-    if (this.amb?.id === id) return;
+    if (this.loops[ch]?.id === id) return;
     const t = this.ctx.currentTime;
-    if (this.amb) {
-      const old = this.amb;
+    const old = this.loops[ch];
+    if (old) {
       old.gain.gain.cancelScheduledValues(t);
       old.gain.gain.setValueAtTime(old.gain.gain.value, t);
       old.gain.gain.linearRampToValueAtTime(0, t + 0.8);
       old.src.stop(t + 0.85);
-      this.amb = null;
+      this.loops[ch] = null;
     }
     const buf = id ? this.files[`amb_${id}`] : null;
     if (!id || !buf) return;
@@ -212,11 +221,11 @@ export class Synth {
     src.loop = true;
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.45, t + 1.2);
+    gain.gain.linearRampToValueAtTime(vol, t + 1.2);
     src.connect(gain);
     gain.connect(this.sfxGain);
     src.start(t, Math.random() * Math.max(0, buf.duration - 1));
-    this.amb = { id, src, gain };
+    this.loops[ch] = { id, src, gain };
   }
 
   /** A recorded take of this sound (one of id, id_1, id_2…), or null to synthesise it. */

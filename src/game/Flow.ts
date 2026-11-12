@@ -19,6 +19,7 @@ export interface Next {
 export function switchTo(from: Phaser.Scene, key: string, data?: any) {
   // each place sets its own background ambience; anywhere else is quiet
   synth.ambience(null);
+  synth.weatherSound(null);
   const mgr = from.game.scene;
   for (const sc of mgr.getScenes(false)) {
     const k = sc.scene.key;

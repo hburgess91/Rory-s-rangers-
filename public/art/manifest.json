@@ -5970,6 +5970,204 @@
    "file": "combat/bossdie_hoard.png",
    "frameWidth": 168,
    "frameHeight": 168
+  },
+  "en_weapon_pod": {
+   "file": "combat/en_weapon_pod.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_speaker_turret": {
+   "file": "combat/en_speaker_turret.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_wet_pizza": {
+   "file": "combat/en_wet_pizza.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_rave_bouncer": {
+   "file": "combat/en_rave_bouncer.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_pipe_mortar": {
+   "file": "combat/en_pipe_mortar.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_pepsi_normal": {
+   "file": "combat/en_pepsi_normal.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_tax_goblin": {
+   "file": "combat/en_tax_goblin.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_loved_up": {
+   "file": "combat/en_loved_up.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_leaping_plushie": {
+   "file": "combat/en_leaping_plushie.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_leaping_crobage": {
+   "file": "combat/en_leaping_crobage.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_jobcentre": {
+   "file": "combat/en_jobcentre.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_jingle_turret": {
+   "file": "combat/en_jingle_turret.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_jam_donut": {
+   "file": "combat/en_jam_donut.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_imaginary_mandem": {
+   "file": "combat/en_imaginary_mandem.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_hottub_bubble": {
+   "file": "combat/en_hottub_bubble.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_gravy_lobber": {
+   "file": "combat/en_gravy_lobber.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_gobstopper": {
+   "file": "combat/en_gobstopper.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_glowstick_lobber": {
+   "file": "combat/en_glowstick_lobber.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_ghost_mortar": {
+   "file": "combat/en_ghost_mortar.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_edit_leaper": {
+   "file": "combat/en_edit_leaper.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_decree_turret": {
+   "file": "combat/en_decree_turret.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_crobley_guard": {
+   "file": "combat/en_crobley_guard.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_crobage": {
+   "file": "combat/en_crobage.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_corn_turd": {
+   "file": "combat/en_corn_turd.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_comedown": {
+   "file": "combat/en_comedown.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_catford_fox": {
+   "file": "combat/en_catford_fox.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_candy_drone": {
+   "file": "combat/en_candy_drone.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_bonky_bouncer": {
+   "file": "combat/en_bonky_bouncer.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_crobley_minion": {
+   "file": "combat/en_crobley_minion.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_bone_lobber": {
+   "file": "combat/en_bone_lobber.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_biofilm": {
+   "file": "combat/en_biofilm.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_big_dave": {
+   "file": "combat/en_big_dave.png",
+   "frameWidth": 48,
+   "frameHeight": 48,
+   "hd": 0.5
+  },
+  "en_fuel_tank": {
+   "file": "combat/en_fuel_tank.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.5
   }
  },
  "vfx": {

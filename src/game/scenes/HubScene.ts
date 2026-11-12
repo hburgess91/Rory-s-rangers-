@@ -268,7 +268,8 @@ export class HubScene extends Phaser.Scene {
     const h = now.getHours();
     const day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
     const roll = ((day * 9301 + 49297) % 233280) / 233280;
-    const kind = now.getMonth() === 11 ? (roll < 0.6 ? "snow" : null) : roll < 0.25 ? "rain" : null;
+    const kind = now.getMonth() === 11 ? (roll < 0.6 ? "snow" : null) : roll < 0.12 ? "storm" : roll < 0.32 ? "rain" : null;
+    (this as any).weatherKind = kind;
     const night = h >= 20 || h < 6;
     const dusk = h === 19 || h === 6;
     if (night || dusk) {
@@ -281,15 +282,55 @@ export class HubScene extends Phaser.Scene {
         this.tweens.add({ targets: glow, alpha: { from: glow.alpha, to: glow.alpha * 0.7 }, yoyo: true, repeat: -1, duration: 1800 + Math.random() * 1200 });
       }
     }
-    if (!kind || !hasVfx(this, kind === "rain" ? "vfx_rain" : "vfx_snow")) return;
-    if (kind === "rain") this.add.rectangle(480, 270, 960, 540, 0x334155, 0.16).setScrollFactor(0).setDepth(4903);
-    const key = kind === "rain" ? "vfx_rain" : "vfx_snow";
-    for (let gx = 0; gx < 3; gx++)
-      for (let gy = 0; gy < 3; gy++) {
-        const sp = vfx(this, key, 160 + gx * 320, 100 + gy * 200, { fixed: true, scale: 2, depth: 4950, alpha: kind === "rain" ? 0.75 : 0.9 });
-        // stagger the tiles so the pattern doesn't repeat in lockstep
-        sp?.anims.setProgress(Math.random());
+    if (!kind) return;
+    synth.weatherSound(kind);
+    const wet = kind !== "snow";
+    if (wet) this.add.rectangle(480, 270, 960, 540, 0x334155, kind === "storm" ? 0.22 : 0.16).setScrollFactor(0).setDepth(4903);
+    const key = wet ? "vfx_rain" : "vfx_snow";
+    if (hasVfx(this, key)) {
+      const layers = kind === "storm" ? 2 : 1;
+      for (let l = 0; l < layers; l++)
+        for (let gx = 0; gx < 3; gx++)
+          for (let gy = 0; gy < 3; gy++) {
+            const sp = vfx(this, key, 160 + gx * 320 + l * 90, 100 + gy * 200 + l * 60, {
+              fixed: true,
+              scale: 2 + l * 0.4,
+              depth: 4950 + l,
+              alpha: wet ? 0.75 : 0.9,
+              speed: kind === "storm" ? 1.5 : 1,
+              angle: kind === "storm" ? 12 : 0,
+            });
+            // stagger the tiles so the pattern doesn't repeat in lockstep
+            sp?.anims.setProgress(Math.random());
+          }
+    }
+    if (kind === "storm") this.stormFlashes();
+  }
+
+  /** Storms: the sky flashes white every so often, and the thunder follows (closer strikes, sooner and louder). */
+  private stormFlashes() {
+    const flash = this.add.rectangle(480, 270, 960, 540, 0xeef2ff, 0).setScrollFactor(0).setDepth(4960).setBlendMode(Phaser.BlendModes.ADD);
+    const strike = () => {
+      if (!this.scene.isActive()) return;
+      const close = Math.random() < 0.45;
+      this.tweens.chain({
+        targets: flash,
+        tweens: [
+          { alpha: close ? 0.75 : 0.35, duration: 40 },
+          { alpha: 0.05, duration: 90 },
+          { alpha: close ? 0.6 : 0.25, duration: 40 },
+          { alpha: 0, duration: close ? 500 : 300 },
+        ],
+      });
+      if (close) {
+        this.cameras.main.shake(300, 0.003);
+        const v = this.cameras.main.worldView;
+        this.lightning(v.x + 120 + Math.random() * (v.width - 240), v.y, v.y + 200 + Math.random() * 220, 4955);
       }
+      this.time.delayedCall(close ? 120 : 700 + Math.random() * 900, () => this.scene.isActive() && synth.play("thunder"));
+      this.time.delayedCall(7000 + Math.random() * 11000, strike);
+    };
+    this.time.delayedCall(2500 + Math.random() * 4000, strike);
   }
 
   private async flyover() {
@@ -1065,8 +1106,8 @@ export class HubScene extends Phaser.Scene {
     g.fillGradientStyle(0x2a0f3d, 0x2a0f3d, 0x2a0f3d, 0x2a0f3d, 0.9, 0.9, 0, 0).fillRect(0, 0, WORLD_W, 40);
   }
 
-  private lightning(x: number, yTop: number, yBot: number) {
-    const g = this.add.graphics().setDepth(4200).setBlendMode(Phaser.BlendModes.ADD);
+  private lightning(x: number, yTop: number, yBot: number, depth = 4200) {
+    const g = this.add.graphics().setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
     let px = x;
     let py = yTop;
     g.lineStyle(4, 0xc084fc, 1);
