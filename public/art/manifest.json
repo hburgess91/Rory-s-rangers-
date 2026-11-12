@@ -5922,6 +5922,36 @@
    "frameWidth": 32,
    "frameHeight": 32,
    "hd": 0.5
+  },
+  "bossdie_krandall": {
+   "file": "combat/bossdie_krandall.png",
+   "frameWidth": 136,
+   "frameHeight": 136
+  },
+  "bossdie_cronster": {
+   "file": "combat/bossdie_cronster.png",
+   "frameWidth": 176,
+   "frameHeight": 176
+  },
+  "bossdie_reinhardt": {
+   "file": "combat/bossdie_reinhardt.png",
+   "frameWidth": 176,
+   "frameHeight": 176
+  },
+  "bossdie_krozno": {
+   "file": "combat/bossdie_krozno.png",
+   "frameWidth": 176,
+   "frameHeight": 176
+  },
+  "bossdie_drongus": {
+   "file": "combat/bossdie_drongus.png",
+   "frameWidth": 200,
+   "frameHeight": 200
+  },
+  "bossdie_hoard": {
+   "file": "combat/bossdie_hoard.png",
+   "frameWidth": 168,
+   "frameHeight": 168
   }
  },
  "vfx": {

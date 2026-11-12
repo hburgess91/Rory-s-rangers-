@@ -524,6 +524,16 @@ export class Synth {
   /** Farts by potency: the higher the level, the longer and more ridiculous. */
   fart(level: number) {
     if (!this.ctx) return;
+    // recorded farts for the real ones (beans, cabbage, IBS); the fairy keeps her synth squeak
+    const rec = level === 2 ? this.files.fart_2 : level === 3 ? this.files.fart_1 : level >= 4 ? this.files.fart_3 : null;
+    if (rec) {
+      const s = this.ctx.createBufferSource();
+      s.buffer = rec;
+      s.playbackRate.value = level >= 4 ? 0.8 : 0.95 + Math.random() * 0.1;
+      s.connect(this.sfxGain);
+      s.start();
+      if (level < 4) return;
+    }
     const S = (w: number, d: number, a: number, b: number, fl: number, v: number, c?: number) => this.fartSeg(w, d, a, b, fl, v, c);
     const wet = (w: number, v = 0.5) => this.burst(0.12 + Math.random() * 0.1, v, w, 380 + Math.random() * 200, undefined, 1.2);
     if (level <= 1) {
@@ -871,7 +881,9 @@ export class Synth {
     const el = new Audio(MUSIC_FILES[id]);
     if (startFrac > 0) el.addEventListener("loadedmetadata", () => (el.currentTime = el.duration * startFrac), { once: true });
     el.loop = !ONE_SHOT.has(id);
-    el.volume = Math.min(1, this.vol.master * this.vol.music);
+    // fade in (the old track fades out underneath)
+    el.volume = 0;
+    this.ramp(el, Math.min(1, this.vol.master * this.vol.music), 450);
     this.el = el;
     this.elId = id;
     el.play().catch(() => {
@@ -885,12 +897,31 @@ export class Synth {
   }
 
   private stopFile() {
-    if (this.el) {
-      this.el.pause();
-      this.el.src = "";
+    const old = this.el;
+    if (old) {
+      // a quick fade rather than a hard cut
+      this.ramp(old, 0, 350, () => {
+        old.pause();
+        old.src = "";
+      });
     }
     this.el = null;
     this.elId = "";
+  }
+
+  /** Slide an <audio> element's volume to `to` over `ms`. */
+  private ramp(el: HTMLAudioElement, to: number, ms: number, done?: () => void) {
+    const from = el.volume;
+    const t0 = performance.now();
+    const step = () => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
+      // a newer volume setting wins over a fade-in in progress
+      if (el === this.el && to > 0 && k >= 1) el.volume = Math.min(1, this.vol.master * this.vol.music);
+      else el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if (k < 1) requestAnimationFrame(step);
+      else done?.();
+    };
+    requestAnimationFrame(step);
   }
 
   music(id: string, force = false, startFrac = 0) {

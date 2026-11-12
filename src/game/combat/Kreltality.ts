@@ -185,7 +185,12 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     sc.time.delayedCall(ms, () => ev.remove());
   };
   /** A rope of sausagey guts flung from (x,y) towards angle a. */
+  let lastSquelch = 0;
   const guts = (x: number, y: number, a: number, len = 120) => {
+    if (sc.time.now - lastSquelch > 250) {
+      lastSquelch = sc.time.now;
+      synth.play("squelch");
+    }
     if (hasVfx(sc, "vfx_gore")) {
       // meaty chunks flung out along the angle, a splat where they land
       fx("vfx_gore", x + Math.cos(a) * len * 0.35, Math.min(floor, y + Math.sin(a) * len * 0.35), 0.9 + len / 200, { flipX: Math.cos(a) < 0, delay: Math.random() * 120 });
@@ -202,6 +207,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
   };
   /** A spinal column hanging off a head. */
   const spine = (head: Phaser.GameObjects.Image) => {
+    synth.play("bonecrack");
     // vertebrae: a little drawn bone each (body, side wings, a knob), with red gristle between
     const bones: Phaser.GameObjects.GameObject[] = [];
     const vert = (w: number) => {
@@ -221,6 +227,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
   };
   /** Bones: little white dog-bone shapes flung about. */
   const bones = (x: number, y: number, n: number) => {
+    synth.play("bonecrack");
     for (let i = 0; i < n; i++) {
       const c = keep(sc.add.container(x, y).setDepth(D + 5));
       const len = 10 + Math.random() * 16;
@@ -388,6 +395,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
       const k = (i + 1) / steps;
       const gap = W * 0.5 * (1 - k * 0.85);
       synth.play("tap");
+      if (i >= 5) synth.play("bonecrack");
       synth.voice(i < 3 ? "oh" : i < 6 ? "grunt" : "oh", 0.55 + k * 0.3, 1.1 + k * 1.1);
       sc.tweens.add({ targets: handle, angle: handle.angle + 70, duration: 160 });
       sc.tweens.add({ targets: L, x: -(gap + 17), duration: 160 });

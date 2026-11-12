@@ -14,6 +14,7 @@ import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS, FART_BLASTER } from "./Guns";
 import { kd } from "../systems/kreddle";
 import { releaseFart } from "./Farts";
+import { vfx } from "../gfx/Vfx";
 import { startWonk } from "./Wonk";
 
 export interface Turret {
@@ -397,11 +398,12 @@ export class Player {
     const blast = (x: number, y: number) => {
       synth.play("explode");
       this.world.shake(140, 0.006);
-      if (!disco && this.world.boomFx?.(x, y, 0.8)) {
+      const drawn = !disco && !!this.world.boomFx?.(x, y, 0.8);
+      if (drawn) {
         /* drawn explosion */
       } else if (disco) for (const c of [0xff4fd8, 0x22d3ee, 0xfacc15, 0x4ade80, 0xa855f7]) this.world.burst(x, y, c, 6);
       else this.world.burst(x, y, 0xff6ec7, 14);
-      this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: disco ? [0xff4fd8, 0x22d3ee, 0xfacc15][Math.floor(Math.random() * 3)] : 0xff6ec7, knock: g.knock ?? 200 });
+      this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: drawn ? undefined : disco ? [0xff4fd8, 0x22d3ee, 0xfacc15][Math.floor(Math.random() * 3)] : 0xff6ec7, knock: g.knock ?? 200 });
     };
     const payout = (x: number, y: number) => {
       if (!jackpot || Math.random() > 0.125) return;
@@ -445,7 +447,9 @@ export class Player {
       const beam = this.world.sc.add.rectangle(mx, my, g.range, 3, g.color, 0.7).setOrigin(0, 0.5).setRotation(this.aim).setDepth(598);
       this.world.sc.tweens.add({ targets: beam, alpha: 0, scaleY: 4, duration: 180, onComplete: () => beam.destroy() });
     }
-    synth.play(g.id === "rocket" ? "lob" : `gun_${g.id}`);
+    synth.play(g.id === "rocket" ? "rocket" : `gun_${g.id}`);
+    // a drawn muzzle flash at the barrel (not for the chainsaw or the flamer, which are their own flash)
+    if (g.id !== "chainsaw" && g.id !== "flamer") vfx(this.world.sc, "vfx_muzzle", mx, my, { angle: Phaser.Math.RadToDeg(this.aim), scale: g.id === "bfk" || g.id === "shotgun" || g.id === "rocket" ? 1.3 : 0.8, depth: 599, add: true });
     if (g.id === "shotgun" || g.id === "rocket") this.world.shake(70, 0.003);
     if (s.guns[g.id] === 0) this.world.floatText(this.x, this.y - 44, "LAST ONE", "#ffd23f", 12);
     return true;
@@ -497,6 +501,7 @@ export class Player {
       } });
     }
     synth.play("dodge");
+    vfx(this.world.sc, "vfx_dust", this.x, this.y + 14, { scale: 0.7, depth: this.spr.depth - 1, flipX: Math.cos(this.aim) > 0 });
     this.world.sc.events.emit("player-dodge");
     if (this.id === "CRONGUS" && G.s.upgrades.cr3) {
       // caltrops

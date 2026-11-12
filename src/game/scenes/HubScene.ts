@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { hasVfx, vfx } from "../gfx/Vfx";
 import { squeeze } from "../systems/squeeze";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
@@ -822,8 +823,18 @@ export class HubScene extends Phaser.Scene {
     }
     // the blast: a chain of explosions round the building, then one enormous one
     const boom = (x: number, y: number, big: boolean) => {
-      synth.play("boom");
+      synth.play(big ? "explode" : "boom");
       cam.shake(big ? 900 : 300, big ? 0.03 : 0.012);
+      // drawn explosions (PixelLab VFX): one for a charge, a cluster and a smoke column for the big one
+      if (hasVfx(this, "vfx_bigboom")) {
+        vfx(this, "vfx_bigboom", x, y, { scale: big ? 3.2 : 1.4, depth: 4301 });
+        vfx(this, "vfx_smoke", x, y - 20, { scale: big ? 3 : 1.2, depth: 4300, delay: 400 });
+        if (big) {
+          for (let i = 0; i < 6; i++) vfx(this, "vfx_bigboom", x + (Math.random() - 0.5) * 260, y + (Math.random() - 0.5) * 120, { scale: 1.6 + Math.random(), depth: 4302, delay: 120 + i * 140 });
+          vfx(this, "vfx_blastsmoke", x, y + 60, { scale: 3, depth: 4299, delay: 500 });
+        }
+        return;
+      }
       const f = this.add.circle(x, y, big ? 40 : 16, 0xfff1a8, 1).setDepth(4300).setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({ targets: f, radius: big ? 260 : 80, alpha: 0, duration: big ? 900 : 450, onComplete: () => f.destroy() });
       const o = this.add.circle(x, y, big ? 30 : 12, 0xf97316, 0.9).setDepth(4301);
@@ -1159,6 +1170,13 @@ export class HubScene extends Phaser.Scene {
   /** The wreck of Crobley Corp HQ keeps smouldering: smoke drifting up, embers winking. */
   private smoulder(b: Building) {
     const top = b.y - b.h * 0.1;
+    if (hasVfx(this, "vfx_fire")) {
+      // drawn flames licking the rubble and a few smoke columns
+      const d = b.y + b.h / 2 + 2;
+      for (let i = 0; i < 4; i++) vfx(this, "vfx_fire", b.x + (i - 1.5) * b.w * 0.2, b.y + b.h * 0.25 + (i % 2) * 10, { scale: 0.9 + (i % 2) * 0.4, depth: d, delay: i * 70 });
+      for (let i = 0; i < 3; i++) vfx(this, "vfx_smokecol", b.x + (i - 1) * b.w * 0.25, top + 20, { scale: 1.6, depth: d + 1, alpha: 0.8, delay: i * 200 });
+      return;
+    }
     this.time.addEvent({
       delay: 260,
       loop: true,

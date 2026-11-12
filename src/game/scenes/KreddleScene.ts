@@ -593,6 +593,7 @@ export class KreddleScene extends Phaser.Scene {
       const tease = out[0] === out[1] && out[1] !== out[2] && Math.random() < 0.4;
       const tick = this.time.addEvent({ delay: 60, loop: true, callback: () => reels.forEach((t, i) => t.getData("stop") || t.setText(SYM[Phaser.Math.Between(0, SYM.length - 1)])) });
       reels.forEach((t) => t.setData("stop", false));
+      synth.play("slot_spin");
       [700, 1100, 1550].forEach((ms, i) =>
         this.time.delayedCall(ms, () => {
           if (!this.panelRoot) return;
@@ -605,6 +606,7 @@ export class KreddleScene extends Phaser.Scene {
             const [a, b, c] = out;
             if (a === b && b === c) {
               info.setText(a === 3 ? "THREE 7s! JACKPOT!" : "THREE OF A KIND!").setColor("#4ade80");
+              synth.play("jackpot");
               this.kroken(5);
               await this.showPrize(rollPrize(G.s).id);
               if (a === 3) await this.showPrize(rollPrize(G.s).id);

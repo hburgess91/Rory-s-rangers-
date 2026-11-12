@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../gfx/Vfx";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -299,6 +300,12 @@ export class DriveScene extends Phaser.Scene {
 
   private explode(x: number, y: number, big = false) {
     synth.play("explode");
+    // drawn explosion (PixelLab VFX); the shapes below are the fallback
+    if (vfx(this, big ? "vfx_bigboom" : "vfx_boom", x, y, { scale: big ? 1.6 : 1.1, depth: 60 })) {
+      vfx(this, "vfx_smoke", x - 30, y - 20, { scale: big ? 1.6 : 1, depth: 58, delay: 300 });
+      this.cameras.main.shake(big ? 320 : 140, big ? 0.016 : 0.007);
+      return;
+    }
     for (let i = 0; i < (big ? 4 : 2); i++) {
       const c = this.add.circle(x + (Math.random() - 0.5) * 40, y + (Math.random() - 0.5) * 30, 10, i % 2 ? 0xfde047 : 0xf97316, 0.95).setDepth(60).setBlendMode(Phaser.BlendModes.ADD);
       this.tweens.add({ targets: c, radius: big ? 100 : 60, alpha: 0, duration: 450 + i * 120, onComplete: () => c.destroy() });
@@ -609,8 +616,10 @@ export class DriveScene extends Phaser.Scene {
       const a = aim + (Math.random() - 0.5) * 0.07;
       const b = this.add.rectangle(tip.x, tip.y, 16, 3, 0xfde047).setDepth(40).setRotation(a).setBlendMode(Phaser.BlendModes.ADD);
       this.bullets.push({ spr: b, vx: Math.cos(a) * 1.3, vy: Math.sin(a) * 1.3, mine: true, dmg: 1.05 * damageMult(G.s), life: 900 });
-      const mf = this.add.circle(tip.x, tip.y, 7, 0xfff7ae, 0.9).setDepth(41).setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({ targets: mf, alpha: 0, scale: 1.8, duration: 60, onComplete: () => mf.destroy() });
+      if (!vfx(this, "vfx_muzzle", tip.x, tip.y, { angle: Phaser.Math.RadToDeg(a), scale: 0.8, depth: 41, add: true })) {
+        const mf = this.add.circle(tip.x, tip.y, 7, 0xfff7ae, 0.9).setDepth(41).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: mf, alpha: 0, scale: 1.8, duration: 60, onComplete: () => mf.destroy() });
+      }
       // brass
       const shell = this.add.rectangle(gx, gy, 3, 2, 0xfbbf24).setDepth(39);
       this.tweens.add({ targets: shell, x: gx - 20 - Math.random() * 20, y: gy + 60, angle: 360, alpha: 0, duration: 400, onComplete: () => shell.destroy() });

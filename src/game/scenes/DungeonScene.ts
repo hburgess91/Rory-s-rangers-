@@ -1540,10 +1540,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     down.setScale(k);
     b.setVisible(false);
     this.downSpr = down;
-    this.downSplit = Math.max(2, Math.round(n * 0.6));
+    // these strips: a long dazed wobble, then the drop in the last few frames
+    this.downSplit = Math.max(2, n - 4);
     if (!this.anims.exists(`${key}_kneel`)) {
       this.anims.create({ key: `${key}_kneel`, frames: this.anims.generateFrameNumbers(key, { start: 0, end: this.downSplit }), frameRate: 9, repeat: 0 });
-      this.anims.create({ key: `${key}_fall`, frames: this.anims.generateFrameNumbers(key, { start: this.downSplit, end: n - 1 }), frameRate: 9, repeat: 0 });
+      this.anims.create({ key: `${key}_fall`, frames: this.anims.generateFrameNumbers(key, { start: this.downSplit, end: n - 1 }), frameRate: 6, repeat: 0 });
     }
     return new Promise((r) => {
       down.play(`${key}_kneel`);
@@ -2284,7 +2285,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.hitStop(e.def.size >= 16 ? 45 : 25);
       this.shake(80, e.def.size >= 16 ? 0.004 : 0.002);
     }
-    if (!e.isBoss) {
+    if (!e.isBoss && !vfx(this, "vfx_pixeldeath", e.x, e.y, { scale: Math.max(0.6, e.def.size / 18), depth: 1400 })) {
       const ring = this.add.circle(e.x, e.y, 6, 0xffffff, 0).setStrokeStyle(3, e.def.accent, 0.9).setDepth(1400);
       this.tweens.add({ targets: ring, radius: 30, alpha: 0, duration: 200, onComplete: () => ring.destroy() });
     }
@@ -2540,6 +2541,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     rays.setScale(0);
     this.tweens.add({ targets: rays, scale: 1, duration: 600, ease: "Back.out" });
+    for (let i = 0; i < 3; i++) {
+      const c = vfx(this, "vfx_confetti", 300 + i * 180, 260, { fixed: true, depth: D + 30, scale: 2.6, delay: 250 + i * 220 });
+      if (c) objs.push(c);
+    }
     this.tweens.add({ targets: rays, angle: 360, duration: 9000, repeat: -1 });
     // the crystal flies out of the boss and up to the middle of the screen
     const start = cam.getWorldPoint(0, 0);
@@ -2926,6 +2931,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         synth.play("pickup");
         break;
       case "heal":
+        vfx(this, "vfx_heal", this.player.x, this.player.y + 20, { scale: 0.9, depth: this.player.spr.depth + 1 });
         s.hp = Math.min(maxHp(s), s.hp + pk.value);
         this.floatText(this.player.x, this.player.y - 30, `+${pk.value}`, "#ffb6c1", 13);
         synth.play("gulp");
