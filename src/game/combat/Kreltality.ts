@@ -18,8 +18,8 @@ export interface KrelTarget {
   name: string;
 }
 
-type Finisher = "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten";
-const FINISHERS: Finisher[] = ["spine", "explode", "halved", "headboot", "slit", "flatten"];
+type Finisher = "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten" | "vice";
+const FINISHERS: Finisher[] = ["spine", "explode", "halved", "headboot", "slit", "flatten", "vice"];
 const NAMES: Record<Finisher, string> = {
   spine: "SPINE RIP!",
   explode: "KREZZPLOSION!",
@@ -27,6 +27,7 @@ const NAMES: Record<Finisher, string> = {
   headboot: "HEAD BOOT!",
   slit: "THROAT SLIT!",
   flatten: "FLATTENED!",
+  vice: "VICE-D!",
 };
 
 const D = 2000; // above everything in the room
@@ -174,6 +175,17 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     } });
     sc.time.delayedCall(5000, () => ev.remove());
   };
+  /** Bones: little white dog-bone shapes flung about. */
+  const bones = (x: number, y: number, n: number) => {
+    for (let i = 0; i < n; i++) {
+      const c = keep(sc.add.container(x, y).setDepth(D + 5));
+      const len = 10 + Math.random() * 16;
+      c.add([sc.add.rectangle(0, 0, len, 4, 0xf5ecd7), sc.add.circle(-len / 2, -2, 3, 0xf5ecd7), sc.add.circle(-len / 2, 2, 3, 0xf5ecd7), sc.add.circle(len / 2, -2, 3, 0xf5ecd7), sc.add.circle(len / 2, 2, 3, 0xf5ecd7)]);
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6;
+      const d = 80 + Math.random() * 200;
+      sc.tweens.add({ targets: c, x: x + Math.cos(a) * d, y: floor - Math.random() * 6, angle: (Math.random() - 0.5) * 1080, duration: 700 + Math.random() * 400, ease: "Quad.out" });
+    }
+  };
   const cropTop = (frac: number) => {
     const t = keep(sc.add.image(body.x, body.y, tg.key, tg.frame).setScale(tg.scale).setFlipX(tg.flip).setDepth(D + 3).setCrop(0, 0, fw, fh * frac));
     body.setCrop(0, fh * frac, fw, fh * (1 - frac));
@@ -183,6 +195,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
   const label = (t: string) => {
     const x = keep(sc.add.text(tg.x, tg.y - H * 0.7, t, { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#fde047", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setDepth(D + 10).setScale(0.3 / cam.zoom));
     sc.tweens.add({ targets: x, scale: 1 / cam.zoom, duration: 250, ease: "Back.out" });
+    return x;
   };
 
   // ---- the finishers
@@ -298,6 +311,72 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
       await wait(1800);
       break;
     }
+  }
+
+  if (which === "vice") {
+    // a giant workshop vice slams down around them
+    const vg = keep(sc.add.container(tg.x, tg.y).setDepth(D + 4));
+    const jawH = H * 1.05;
+    const mkJaw = (side: number) => {
+      const j = sc.add.container(side * (W * 0.5 + 40), 0);
+      j.add(sc.add.rectangle(0, 0, 34, jawH, 0x6b7280).setStrokeStyle(3, 0x1f2937));
+      for (let k = -3; k <= 3; k++) j.add(sc.add.rectangle(-side * 15, (k * jawH) / 8, 6, 8, 0x374151));
+      j.add(sc.add.rectangle(side * 30, jawH * 0.35, 40, 26, 0x4b5563).setStrokeStyle(2, 0x1f2937));
+      return j;
+    };
+    const L = mkJaw(-1);
+    const R = mkJaw(1);
+    const base = sc.add.rectangle(0, jawH / 2 + 12, W + 160, 24, 0x374151).setStrokeStyle(3, 0x111827);
+    const screw = sc.add.rectangle(W * 0.5 + 110, jawH * 0.35, 120, 10, 0x9ca3af);
+    const handle = sc.add.rectangle(W * 0.5 + 170, jawH * 0.35, 8, 90, 0xd1d5db).setStrokeStyle(2, 0x1f2937);
+    vg.add([base, screw, L, R, handle]);
+    vg.y = tg.y - 700;
+    synth.play("lob");
+    await tw({ targets: vg, y: tg.y, duration: 380, ease: "Bounce.out" });
+    synth.play("punch_big");
+    cam.shake(250, 0.015);
+    flash();
+    const squeeze = label("SQUEEZE!");
+    // crank it shut, a turn at a time; they scream higher and higher
+    const steps = 9;
+    for (let i = 0; i < steps; i++) {
+      const k = (i + 1) / steps;
+      const gap = W * 0.5 * (1 - k * 0.85);
+      synth.play("tap");
+      synth.voice(i < 3 ? "oh" : i < 6 ? "grunt" : "oh", 0.55 + k * 0.3, 1.1 + k * 1.1);
+      sc.tweens.add({ targets: handle, angle: handle.angle + 70, duration: 160 });
+      sc.tweens.add({ targets: L, x: -(gap + 17), duration: 160 });
+      sc.tweens.add({ targets: R, x: gap + 17, duration: 160 });
+      sc.tweens.add({ targets: body, scaleX: tg.scale * (1 - k * 0.82), scaleY: tg.scale * (1 + k * 0.35), duration: 160 });
+      body.setTint(Phaser.Display.Color.GetColor(255, Math.round(255 - k * 160), Math.round(255 - k * 160)));
+      cam.shake(120, 0.004 + k * 0.01);
+      if (i > 3) blood(tg.x, tg.y - H * 0.2, 3 + i, 0.6, true);
+      if (i === 6) {
+        const pop = keep(sc.add.text(tg.x + W * 0.3, tg.y - H * 0.6, "AAAAAAAAGH!!", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", stroke: "#000", strokeThickness: 5 }).setDepth(D + 10).setScale(1 / cam.zoom));
+        sc.tweens.add({ targets: pop, x: pop.x + 6, yoyo: true, repeat: 12, duration: 40 });
+      }
+      await wait(260 - i * 12);
+    }
+    // ...and POP
+    synth.voice("oh", 0.9, 2.6);
+    await wait(150);
+    flash();
+    synth.play("explode");
+    synth.play("splat");
+    synth.play("boom");
+    cam.shake(600, 0.035);
+    body.setVisible(false);
+    for (let cy = 0; cy < 4; cy++) {
+      const ch = keep(sc.add.image(tg.x, tg.y, tg.key, tg.frame).setScale(tg.scale * 0.3, tg.scale).setFlipX(tg.flip).setDepth(D + 4).setCrop(0, (fh / 4) * cy, fw, fh / 4).setTint(0xff9999));
+      sc.tweens.add({ targets: ch, x: tg.x + (Math.random() - 0.5) * 300, y: floor - Math.random() * 10, angle: (Math.random() - 0.5) * 1000, duration: 650 + Math.random() * 300, ease: "Quad.out" });
+    }
+    blood(tg.x, tg.y - H * 0.1, 90, 1.8, true);
+    for (let i = 0; i < 6; i++) guts(tg.x, tg.y - H * 0.1, -Math.PI / 2 + (i - 2.5) * 0.55, 90 + Math.random() * 90);
+    bones(tg.x, tg.y - H * 0.1, 12);
+    squeeze.destroy();
+    label(NAMES.vice);
+    sc.tweens.add({ targets: [L, R], x: 0, duration: 120 });
+    await wait(2200);
   }
 
   // ---- KRELTALITY

@@ -48,7 +48,7 @@ export function installDebug(game: Phaser.Game) {
       if (d?.player) jetStream(d.player, d.now());
     },
     /** Run a KRELTALITY on the current boss (or the nearest enemy). */
-    krel: (which?: "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten") => {
+    krel: (which?: "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten" | "vice") => {
       const d = game.scene.getScene("Dungeon") as any;
       const e = d?.boss ?? d?.enemies?.[0];
       if (!e) return;
