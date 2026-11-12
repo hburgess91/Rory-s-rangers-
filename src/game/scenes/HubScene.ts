@@ -9,7 +9,7 @@ import { NPC_TALK, type TalkSet } from "../../content/dialogue/npc";
 import { CHATTER } from "../../content/dialogue/chatter";
 import { evalCond } from "../systems/conditions";
 import { runDialogue } from "./DialogueScene";
-import { archiveAction, chapterIntroLines, currentStep, dungeonOpen, endChapter, switchTo, townHallAction } from "../Flow";
+import { AFTER_PROLOGUE, archiveAction, chapterIntroLines, currentStep, dungeonOpen, endChapter, switchTo, townHallAction } from "../Flow";
 import { chapterDef } from "../../content/chapters/chapters";
 import type { Line } from "../../data/types";
 import { synth } from "../audio/Synth";
@@ -205,7 +205,7 @@ export class HubScene extends Phaser.Scene {
   /** Set when arriving straight from a chapter report: run the next chapter's Town Hall meetings in the same visit. */
   private chainMeetings = false;
 
-  create(data: { at?: string; from?: string; advance?: boolean; chain?: boolean }) {
+  create(data: { at?: string; from?: string; advance?: boolean; chain?: boolean; flyover?: boolean }) {
     const s = G.s;
     if (data?.advance) endChapter();
     if (s.flags.companion_used) {
@@ -254,11 +254,76 @@ export class HubScene extends Phaser.Scene {
     G.emit("rule", null);
     synth.music("hub");
     G.save();
-    this.time.delayedCall(400, () => this.onArrive(data?.from));
+    this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover));
   }
 
-  private async onArrive(from?: string) {
+  /** First time out of the front door: a slow look round Krelford. */
+  private async flyover() {
     const s = G.s;
+    s.flags.flyover_seen = true;
+    G.save();
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    const cam = this.cameras.main;
+    const wait = (ms: number) => new Promise<void>((r) => this.time.delayedCall(ms, () => r()));
+    cam.stopFollow();
+    this.scene.setVisible(false, "UI");
+    const z0 = cam.zoom;
+    const barT = this.add.rectangle(480, -70, 960, 70, 0x000000).setOrigin(0.5, 0).setScrollFactor(0).setDepth(9000);
+    const barB = this.add.rectangle(480, 610, 960, 70, 0x000000).setOrigin(0.5, 1).setScrollFactor(0).setDepth(9000);
+    this.tweens.add({ targets: barT, y: 0, duration: 600 });
+    this.tweens.add({ targets: barB, y: 540, duration: 600 });
+    const cap = this.add.text(480, 505, "", { fontFamily: FONT, fontSize: "16px", color: "#ffffff", align: "center", wordWrap: { width: 860 } }).setOrigin(0.5).setScrollFactor(0).setDepth(9001);
+    const say2 = (t: string) => {
+      cap.setAlpha(0).setText(t);
+      this.tweens.add({ targets: cap, alpha: 1, duration: 400 });
+    };
+    cam.pan(1280, 160, 1, "Linear", true);
+    await wait(300);
+    const big = this.add.text(480, 250, "KRELFORD", { fontFamily: "Impact, sans-serif", fontSize: "80px", color: "#ffd23f", stroke: "#2a1400", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(9001).setAlpha(0);
+    const sub = this.add.text(480, 315, "capital of Krelworld · population: the group chat, and some others", { fontFamily: FONT, fontSize: "15px", color: "#ffe9a8" }).setOrigin(0.5).setScrollFactor(0).setDepth(9001).setAlpha(0);
+    this.tweens.add({ targets: [big, sub], alpha: 1, duration: 800 });
+    synth.play("cheer");
+    await wait(2200);
+    this.tweens.add({ targets: [big, sub], alpha: 0, duration: 600 });
+    const stops: [number, number, string][] = [
+      [1280, 60, "Up above the clouds: the Great Wiki Citadel. Drongus B. Drippin' writes the lore up there. You can't see it. It's there."],
+      [1280, 440, "KRELFORD TOWN HALL. Where the cabinet meets, argues, and occasionally governs."],
+      [1900, 440, "THE HISTORICAL ARCHIVE. Every message ever sent, kept forever. The FGM War Room is in the basement."],
+      [1280, 800, "THE GREAT PUSSY JUICE TAP. It heals. It nourishes. It is the national drink. Never let it stop."],
+      [560, 840, "THE KREZZ ARMS. Fizzy Bongos on tap. SanMik & SanChz on most nights. You have been warned."],
+      [1280, 1300, "WILDERN ACADEMY. The local school. The new headmaster is said to be very… zany."],
+      [160, 825, "THE KREDDLE BRIDGE. Over there: Kreddle, the casino universe. They hate us. Their slot machines are excellent."],
+    ];
+    for (const [x, y, t] of stops) {
+      cam.pan(x, y, 1700, "Sine.easeInOut");
+      await wait(900);
+      say2(t);
+      await wait(2300);
+    }
+    // ...and home
+    say2("And this is you. Off to the Town Hall. Don't be late.");
+    cam.pan(this.av.x, this.av.y, 1600, "Sine.easeInOut");
+    void z0;
+    await wait(1900);
+    cam.startFollow(this.av, true, 0.12, 0.12);
+    this.tweens.add({ targets: barT, y: -70, duration: 500 });
+    this.tweens.add({ targets: [barB], y: 610, duration: 500 });
+    this.tweens.add({ targets: cap, alpha: 0, duration: 400 });
+    await wait(550);
+    barT.destroy();
+    barB.destroy();
+    cap.destroy();
+    big.destroy();
+    sub.destroy();
+    this.scene.setVisible(true, "UI");
+    this.busy = false;
+    G.emit("toast", { title: "OBJECTIVE", text: "Go to Krelford Town Hall. Follow the yellow arrow." });
+  }
+
+  private async onArrive(from?: string, flyover?: boolean) {
+    const s = G.s;
+    if (flyover && !s.flags.flyover_seen) await this.flyover();
     if (s.chapter > 1 && !s.flags[`ch${s.chapter}_intro`]) {
       s.flags[`ch${s.chapter}_intro`] = true;
       const ch = chapterDef(s.chapter);
@@ -2085,7 +2150,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "TOWN_HALL": {
         const a = townHallAction();
         if (a.kind === "meeting") {
-          const next = a.id === "krazy_fact_emergency" ? { scene: "Hub", data: { at: "TOWN_HALL", advance: true } } : { scene: "Hub", data: { at: "TOWN_HALL", chain: true } };
+          const next = a.id === "lore_appreciation_inquiry" ? AFTER_PROLOGUE : a.id === "krazy_fact_emergency" ? { scene: "Hub", data: { at: "TOWN_HALL", advance: true } } : { scene: "Hub", data: { at: "TOWN_HALL", chain: true } };
           this.go("Meeting", { id: a.id, next });
         } else if (a.kind === "outro") {
           s.flags[`ch${s.chapter}_outro`] = true;
@@ -2143,7 +2208,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       }
       case "HOME":
-        await this.home();
+        this.go("Home", {});
         return;
       case "BAN_TRIBUNAL":
         if (!s.flags.ban_tribunal_open) {

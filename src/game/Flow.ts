@@ -53,12 +53,13 @@ export function goNext(from: Phaser.Scene, next: Next | null | undefined) {
 }
 
 /** NEW GAME: prologue meeting → the song → Krelford. */
+/** After the prologue meeting: the Great Silence, then the emergency session, then out into town. */
+export const AFTER_PROLOGUE = { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", music: "meeting", next: { scene: "Meeting", data: { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } } } } };
+
+/** A new game starts at home. */
 export function startNewRun(from: Phaser.Scene, player: PlayableId, ngPlus = 0) {
   G.newRun(player, ngPlus);
-  switchTo(from, "Meeting", {
-    id: "lore_appreciation_inquiry",
-    next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", music: "meeting", next: { scene: "Meeting", data: { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } } } } },
-  });
+  switchTo(from, "Home", {});
 }
 
 export function continueRun(from: Phaser.Scene) {
@@ -68,7 +69,8 @@ export function continueRun(from: Phaser.Scene) {
     return true;
   }
   if (G.s.chapter === 1 && !G.s.flags.prologue_done) {
-    switchTo(from, "Meeting", { id: "lore_appreciation_inquiry", next: { scene: "Cutscene", data: { script: "ch1_intro", bg: "messenger", next: { scene: "Meeting", data: { id: "emergency_reaction_session", next: { scene: "Hub", data: { at: "TOWN_HALL", chain: true } } } } } } });
+    // not been to the first meeting yet: back home (or outside, if you've already left the house)
+    switchTo(from, G.s.flags.flyover_seen ? "Hub" : "Home", G.s.flags.flyover_seen ? { at: "HOME" } : {});
     return true;
   }
   // the song went unanswered: straight on into the emergency session
@@ -82,6 +84,7 @@ export function continueRun(from: Phaser.Scene) {
 
 export function currentStep(): { text: string; target?: string } | null {
   const s = G.s;
+  if (s.chapter === 1 && !s.flags.prologue_done) return { text: "Go to Krelford Town Hall: the cabinet's Lore Appreciation Inquiry is about to start", target: "TOWN_HALL" };
   const ch = chapterDef(s.chapter);
   for (const st of ch.steps) {
     if (!evalCond(st.done, s)) {
@@ -104,6 +107,7 @@ export function townHallAction(): TownHallAction {
   const f = s.flags;
   const n = s.chapter;
   if (n === 1) {
+    if (!f.prologue_done) return { kind: "meeting", id: "lore_appreciation_inquiry" };
     if (!f.met_emergency) return { kind: "meeting", id: "emergency_reaction_session" };
     if (f.ch1_clear && f.wildern_destroyed && !f.ch1_fact) return f.krazy_fact_ready ? { kind: "fact" } : { kind: "meeting", id: "krazy_fact_emergency" };
   }

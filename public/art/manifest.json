@@ -5513,6 +5513,9 @@
   },
   "bg_kreddle_sky": {
    "file": "backdrops/bg_kreddle_sky.png"
+  },
+  "bg_home": {
+   "file": "backdrops/bg_home.png"
   }
  },
  "sheets": {

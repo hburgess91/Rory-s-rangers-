@@ -58,6 +58,6 @@ export class BootScene extends Phaser.Scene {
       if (tex.startsWith("pt_")) this.textures.get(tex).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     generateAll(this);
-    this.scene.start("Title");
+    this.scene.start("Enter");
   }
 }
