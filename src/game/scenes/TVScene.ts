@@ -11,6 +11,7 @@ import type { SpriteLook } from "../../data/characters";
 import { bump } from "../systems/stats";
 import { switchTo } from "../Flow";
 import { DUNGEONS } from "../../data/dungeons";
+import { addKrokens } from "../systems/kreddle";
 
 const DUNGEON_MUSIC: Record<string, string> = Object.fromEntries(Object.values(DUNGEONS).map((d) => [d.id, d.music]));
 
@@ -227,13 +228,20 @@ export class TVScene extends Phaser.Scene {
     const items = CHANNELS.map((ch) => {
       const eps = ALL_EPISODES.filter((e) => e.channel === ch);
       const avail = eps.filter((e) => this.unlocked(e));
+      // you can't pick shows: the channel plays whatever's on (a new one each time) until you've seen them all
+      const fresh = this.fromTitle ? [] : avail.filter((e) => !G.s.tvWatched.includes(e.id));
       return {
-        label: `${ch}  ${avail.length ? `(${avail.length})` : "[LOCKED PROGRAMME]"}`,
+        label: `${ch}  ${!avail.length ? "[LOCKED PROGRAMME]" : this.fromTitle ? `(${avail.length})` : fresh.length ? `(${fresh.length} new 🎁)` : "(all seen: pick a show)"}`,
         dim: !avail.length,
         action: () => {
           if (this.crobleyBreak()) return;
           if (!avail.length) {
             this.flashCard(eps[0]?.unlockHint ?? "Not broadcasting yet.");
+            return;
+          }
+          if (fresh.length) {
+            this.channel = ch;
+            this.play(fresh[Math.floor(Math.random() * fresh.length)]);
             return;
           }
           this.showEpisodes(ch);
@@ -379,6 +387,8 @@ export class TVScene extends Phaser.Scene {
       G.watched(e.id);
       G.s.flags[`tv_${e.id}`] = true;
       if (fresh) bump(G.s, "tv_watched");
+      // Kreddle's "gift": only for new shows you chose to watch (not briefings, not repeats)
+      if (fresh && !this.once) this.kreddleGift();
       G.save();
     } else {
       if (!G.meta.tvWatched.includes(e.id)) G.meta.tvWatched.push(e.id);
@@ -392,9 +402,37 @@ export class TVScene extends Phaser.Scene {
       this.time.delayedCall(600, () => this.exit());
       return;
     }
-    this.mode = "episodes";
-    this.showEpisodes(e.channel);
+    this.backToGuide(e.channel);
     if (e.id === "tcc_ep7" && !this.fromTitle) G.emit("toast", { title: "KRELTV", text: "The cabinet has opinions about Thick Cumming Cock. Go and ask them." });
+  }
+
+  /** After a show: the channel guide, or the show list if you've seen everything on that channel. */
+  private backToGuide(ch: string) {
+    const left = this.fromTitle ? [] : ALL_EPISODES.filter((x) => x.channel === ch && this.unlocked(x) && !G.s.tvWatched.includes(x.id));
+    if (left.length) this.showChannels();
+    else {
+      this.mode = "episodes";
+      this.showEpisodes(ch);
+    }
+  }
+
+  private kreddleGift() {
+    const s = G.s;
+    let txt: string;
+    if (Math.random() < 0.5) {
+      const n = 4 + Math.floor(Math.random() * 7);
+      addKrokens(s, n);
+      txt = `+${n} KROKENS`;
+    } else {
+      const n = 25 + Math.floor(Math.random() * 11) * 5;
+      s.coins += n;
+      txt = `+${n} KREZZCOIN`;
+    }
+    synth.play("ding");
+    G.emit("toast", { title: "🎁 A GIFT FROM KREDDLE", text: `${txt}. "Keep watching, Krelworld." — President Klerble` });
+    const t = this.add.text(SX + SW / 2, SY + SH - 70, `🎁 A GIFT FROM KREDDLE\n${txt}`, { fontFamily: FONT, fontSize: "24px", color: "#ff4fd8", fontStyle: "bold", align: "center", backgroundColor: "#000000cc", padding: { x: 12, y: 8 } }).setOrigin(0.5).setDepth(80).setScale(0.3);
+    this.tweens.add({ targets: t, scale: 1, duration: 300, ease: "Back.out" });
+    this.time.delayedCall(2200, () => this.tweens.add({ targets: t, alpha: 0, duration: 400, onComplete: () => t.destroy() }));
   }
 
   private drawSet(key: string, framing: string) {
@@ -752,7 +790,7 @@ export class TVScene extends Phaser.Scene {
       this.card.setText("");
       this.caption.setText("");
       synth.stopMusic();
-      this.showEpisodes(this.ep?.channel ?? this.channel);
+      this.backToGuide(this.ep?.channel ?? this.channel);
     } else if (this.mode === "episodes") this.showChannels();
     else this.exit();
   }

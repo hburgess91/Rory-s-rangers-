@@ -34,7 +34,6 @@ export const DRONGUS_SEQUENCES: DrongusSequence[] = [
   { id: "d_seen", trigger: "react_SEEN", repeat: true, messages: ["Seen.", "Cool.", "Cool cool cool."] },
   { id: "d_laugh", trigger: "react_LAUGH", repeat: true, messages: ["Wait was that a laugh", "On something I didn't make", "Interesting"] },
   { id: "d_lowhp", trigger: "low_hp", messages: ["You're bleeding", "Should've reacted to the song", "Just saying"] },
-  { id: "d_proctus", trigger: "hub", cond: { chapterAtLeast: 2 }, messages: ["Who is Proctus Krelmor", "Did I make him", "I think I made him", "I don't remember making him", "Detective Krelmor? From the Krebley case? Is that him?"] },
   { id: "d_mikey", trigger: "hub", cond: { chapterAtLeast: 2, player: "MIKEY" }, messages: ["Mikey !!", "FGM legend", "Remember the nuclear war option", "That was MINE btw. The archive is right for once."] },
   { id: "d_vouchers", trigger: "hub", cond: { chapterAtLeast: 4 }, messages: ["I give this group chat my all", "AI images, AI songs, AI wiki pages, AI messages", "No money, no gift voucher, no food voucher", "No Door dash gift voucher, no grub hub gift voucher, no uber eats credits"] },
 ];

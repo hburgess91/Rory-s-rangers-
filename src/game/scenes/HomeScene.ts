@@ -80,6 +80,15 @@ export class HomeScene extends Phaser.Scene {
     this.events.on("resume", () => {
       this.busy = false;
       this.controls.swallow();
+      // back from Klerble's broadcast: now you can go
+      if (this.mustWatch() === false && G.s.flags.klerble_tv_pending) {
+        delete G.s.flags.klerble_tv_pending;
+        G.save();
+        void this.talk([
+          say(G.s.player, "…Right. Well. That was relaxing."),
+          dir("NEW OBJECTIVE: head out of the door (bottom right) and go to Krelford Town Hall. (Every new show you watch on KrelTV now comes with a 'gift' from Kreddle.)"),
+        ]);
+      }
     });
     synth.music("hub", true);
     this.time.delayedCall(600, () => void this.arrive());
@@ -121,8 +130,8 @@ export class HomeScene extends Phaser.Scene {
       dir("Above it all sits the Great Wiki Citadel, where the Supreme Leader, DRONGUS B. DRIPPIN', writes the lore. Krelworld runs on lore. Without it, things start to go… wrong."),
       dir(`And you are ${me.name}${me.aka ? `, ${me.aka}` : ""}: ${role} in Drongus's cabinet. Mostly that means turning up to meetings. Occasionally it means saving the universe.`),
       dir("TIP: WASD / arrows (or the stick) to walk. E to use things. Have a look round: the telly works, the bed saves your game."),
-      say(s.player, "Right. There's a cabinet meeting at the Town Hall. Something about 'appreciating content'. I'd better go."),
-      dir("NEW OBJECTIVE: head out of the door (bottom right) and go to Krelford Town Hall."),
+      say(s.player, "Right. There's a cabinet meeting at the Town Hall later. Something about 'appreciating content'. But first…"),
+      dir("Why not watch some lovely TV? (The telly's on the left. Walk up to it and press E.)"),
     ];
     await this.talk(lines);
   }
@@ -158,14 +167,30 @@ export class HomeScene extends Phaser.Scene {
     if (this.controls.pause()) {
       this.busy = true;
       this.scene.launch("Menu", { mode: "pause", caller: "Home" });
+      this.scene.bringToTop("Menu");
       this.scene.pause();
     }
   }
 
+  /** A new game: you have to watch Klerble's broadcast before you go out. */
+  private mustWatch() {
+    const f = G.s.flags;
+    return !f.prologue_done && !f.tv_klerble_welcome;
+  }
+
   private watchTV() {
+    if (this.mustWatch()) {
+      G.s.flags.klerble_tv_pending = true;
+      this.busy = true;
+      this.scene.launch("TV", { overlay: true, caller: "Home", episode: "klerble_welcome", once: true });
+      this.scene.bringToTop("TV");
+      this.scene.pause();
+      return;
+    }
     G.drongus("tv");
     this.busy = true;
     this.scene.launch("TV", { overlay: true, caller: "Home" });
+    this.scene.bringToTop("TV");
     this.scene.pause();
   }
 
@@ -185,6 +210,10 @@ export class HomeScene extends Phaser.Scene {
 
   private leave() {
     if (this.busy) return;
+    if (this.mustWatch()) {
+      void this.talk([dir("No, watch some relaxing TV first.")]);
+      return;
+    }
     const s = G.s;
     this.busy = true;
     synth.play("door");

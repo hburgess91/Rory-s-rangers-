@@ -205,6 +205,47 @@ NEWSREADER: The headmaster's office has since been locked from the inside. Witne
 `,
 );
 
+/** The first thing on the telly in a new game: a word from our neighbours. */
+export const KLERBLE_WELCOME = ep(
+  "klerble_welcome",
+  "GB KREWS 24",
+  "GB Krews",
+  "A Message From Our Neighbours",
+  1,
+  `
+[MUSIC news start]
+# GB KREWS 24
+INT. NEWSDESK - EVENING
+[MUSIC news fade]
+NEWSREADER: Good evening. We interrupt this programme for a message from our neighbours across the bridge. We have been told we have to show it. We were not told why.
+INT. PRESS CONFERENCE - DAY
+# LIVE: THE PRESIDENTIAL PALACE, KREDDLE
+PRESIDENT KLERBLE: Hello, Krelworld. My name is President Klerble. I am the President of Kreddle.
+PRESIDENT KLERBLE: Kreddle is your neighbour. Over the bridge. To the west. You can't miss it. It's the bit that's on fire with neon.
+PRESIDENT KLERBLE: Kreddle is a gambling and arcade universe. Slot machines. Claw machines. Casinos the size of mountains. It never closes. It has never once seen the sun.
+PRESIDENT KLERBLE: We are also the most heavily armed state in the whole game. I just want to put that out there. Lots of guns. Big ones. Gold ones.
+PRESIDENT KLERBLE: And we hate Krelworld. We hate you, and all of your inhabitants.
+REPORTER: Mr President… why?
+PRESIDENT KLERBLE: Due to pussy juice.
+[GASP]
+PRESIDENT KLERBLE: Nonetheless! We do enjoy your patronage. Your custom. Your Krezzcoin.
+PRESIDENT KLERBLE: So come on over! Cross the bridge to Kreddle, at the west of the map! Gamble! Win, or buy, brand new weapons! Weapon upgrades! Perks!
+PRESIDENT KLERBLE: Including… GORE MODE.
+[WHISTLE]
+PRESIDENT KLERBLE: (quietly) And one day I will have my revenge on Krelworld. (normally) Anyway!
+PRESIDENT KLERBLE: Most of all, we want Krelworld to relax. Sit down. Watch the telly. Get hooked on the telly. Be pliant and addicted to your TVs…
+PRESIDENT KLERBLE: …so you won't notice it when I put my terrorist plan into action!
+(A long pause.)
+PRESIDENT KLERBLE: Er… I mean… nothing! Ignore what I just said!
+PRESIDENT KLERBLE: As a gesture of friendship, every time you watch a new KrelTV show, you will receive a gift from Kreddle. Krokens! Krezzcoin! Absolutely free! Nothing suspicious about it at all!
+PRESIDENT KLERBLE: Keep watching, Krelworld. Keep watching. NO FURTHER QUESTIONS!
+INT. NEWSDESK - EVENING
+NEWSREADER: (long pause) …Well, that was lovely. We now return you to whatever you were watching. Keep watching.
+[FADE]
+`,
+  { unlockFlag: "tv_klerble_welcome", unlockHint: "Locked programme" },
+);
+
 export const KLERBLE_PRESSER = ep(
   "klerble_presser",
   "GB KREWS 24",
@@ -345,7 +386,7 @@ NARRATOR: Some historians dispute this, citing Godric Gryffindor and a Waluigi u
   { unlockFlag: "ch5_clear", unlockHint: "Locked programme: unlocks after Chapter 5" },
 );
 
-const EPISODES: TVEpisode[] = [KRANDALL_SEGMENT, KLERBLE_PRESSER, WILDERN_BULLETIN, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
+const EPISODES: TVEpisode[] = [KLERBLE_WELCOME, KRANDALL_SEGMENT, KLERBLE_PRESSER, WILDERN_BULLETIN, NEWS_1, NEWS_2, NEWS_3, NEWS_4, NEWS_5, CABINET_LIVE, SHOPPING, KRONSTER_DOC, LORE_HOUR, CREATION_MYTH, EASTENDERS_KREZZ, BEEP_SHOW, ...KREWS_EPISODES, ...KREWS3_EPISODES, { ...TCC_EP07, channel: "CHANNEL KREZ" }];
 
 /** Number each channel's episodes in order, now that some channels have been folded together. */
 const counts: Record<string, number> = {};
