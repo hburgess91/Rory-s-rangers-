@@ -621,78 +621,6 @@ export const ARCS: Arc[] = [
     ],
   },
   {
-    id: "arc_cronster",
-    player: "ALL",
-    minChapter: 2,
-    title: "The Cuddle Cronster",
-    blurb: "Krelford is in the icy grip of terror. Find the Cuddle Cronster before he strikes again.",
-    reward: { coins: 300, desc: "+15 max HP. Also, a lifetime supply of evidence (chocolate)." },
-    steps: [
-      {
-        id: "gazette",
-        text: "Read this morning's Krelford Gazette (at home).",
-        at: "HOME",
-        step: {
-          kind: "dialogue",
-          lines: [
-            dir("THE KRELFORD GAZETTE. Front page: TERROR GRIPS KRELFORD AS THE 'CUDDLE CRONSTER' STRIKES AGAIN."),
-            dir("Krelford is once again in the icy grip of terror as the elusive criminal known only as the 'Cuddle Cronster' continues his reign of bizarre and unsettling crimes."),
-            dir("The latest victim, identified only as a local woman from the outskirts of town, discovered a cryptic note in her home. Written in disturbingly cheery handwriting, it read:"),
-            dir("'I'll cuddle you, squeeze you, and extract all your lovely juices'"),
-            dir("The note was signed with an unsettlingly cheerful smiley face and accompanied by one of the Cronster's infamous edible 'cuddle tokens' – intricate chocolate coins that bear his terrifying motto: 'Sweet hugs, sweeter squeezes.'"),
-            dir("Police will hold a press conference today at Krelford Constabulary."),
-            dir("You put the paper down. You'd better go."),
-          ],
-        },
-      },
-      {
-        id: "presser",
-        text: "Attend the police press conference at Krelford Constabulary.",
-        at: "POLICE",
-        step: { kind: "vignette", id: "press_conference", intro: [dir("Krelford Constabulary. The press room is packed. Sergeant Grimbolus Swig, lead investigator, approaches the podium holding a small bag of chocolate coins.")] },
-      },
-      {
-        id: "tokens",
-        text: "Find the Cronster's six chocolate cuddle tokens around Krelford (the trail to his lair).",
-        at: "FIELD",
-        step: {
-          kind: "collect",
-          label: "Cuddle token",
-          pickup: [dir("A chocolate cuddle token. 'Sweet hugs, sweeter squeezes.' It smells incredible. You do not eat it. You think about eating it.")],
-          spots: [
-            { x: 480, y: 1050, name: "dark choccy" },
-            { x: 1560, y: 980, name: "mint choccy" },
-            { x: 2200, y: 1050, name: "caramel choccy" },
-            { x: 420, y: 1440, name: "ruby choccy" },
-            { x: 1900, y: 1620, name: "white choccy" },
-            { x: 2480, y: 470, name: "orange choccy (rare)" },
-          ],
-        },
-      },
-      {
-        id: "handin",
-        text: "Hand the tokens in to Sergeant Swig.",
-        at: "POLICE",
-        step: {
-          kind: "dialogue",
-          lines: [
-            say("SERGEANT SWIG", "You found them. All six. Dark, mint, caramel, ruby… even the orange."),
-            dir("He eats all six, in one go, while maintaining eye contact."),
-            say("SERGEANT SWIG", "Evidence secured."),
-            say("DR. GRUNGUS FLORP", "(from the corner) The Cuddle Cronster is a master manipulator. By combining his grotesque threats with sweet, irresistible treats, he's playing a twisted game with the authorities. And clearly, it's working."),
-            dir("The wrappers have a factory stamp. The Cronster's lair is behind the chocolate factory. Sergeant Swig is 'too full' to come."),
-          ],
-        },
-      },
-      {
-        id: "lair",
-        text: "Raid the Cronster's lair (Krelford Constabulary will drive you).",
-        at: "POLICE",
-        step: { kind: "arena", dungeon: "arena_cronster", intro: [say("SERGEANT SWIG", "Bring back any tokens you find. For evidence. Obviously.")] },
-      },
-    ],
-  },
-  {
     id: "arc_polson_fit",
     player: "ALL",
     minChapter: 2,
@@ -937,60 +865,6 @@ export const ARCS: Arc[] = [
     ],
   },
   {
-    id: "arc_koeman",
-    player: "ALL",
-    minChapter: 3,
-    title: "The Koeman Papers",
-    blurb: "Kreblis has a theory. The departed Saints manager was rigging results. There are 'leaked emails'. Find them, then post the timeline.",
-    reward: { coins: 220, desc: "The Koeman Papers are published. Pompey v Saints will never recover. +220 Krezzcoin." },
-    steps: [
-      {
-        id: "brief",
-        text: "Kreblis has a theory. Hear it out at the Archive.",
-        at: "ARCHIVE",
-        step: {
-          kind: "dialogue",
-          lines: [
-            dir("The Archive reading room. Kreblis has pinned a single printout to the wall and drawn a red circle on it in Sharpie. There is nothing in the circle."),
-            say("KREBLIS", "Call it the Koeman Papers."),
-            say("KREBLIS", "A ridiculous timeline of events. Culminating in Koeman's return. Every result rigged. Every substitution a message."),
-            say("DRONGUS", "(ping) Welll wWell wELL."),
-            say("KREBLIS", "The emails are out there. Five of them. Scattered round Krelford. Needs some paint once we've got them. Underline, circle etc."),
-          ],
-        },
-      },
-      {
-        id: "emails",
-        text: "Find the five 'leaked Koeman emails' around Krelford.",
-        at: "FIELD",
-        step: {
-          kind: "collect",
-          label: "Koeman email",
-          pickup: [say("KREBLIS", "Another one. Look at the timestamp. LOOK at it."), dir("It's a Tesco receipt. Kreblis has circled the date.")],
-          spots: [
-            { x: 600, y: 980, name: "email (Tesco receipt)" },
-            { x: 1480, y: 1100, name: "email (betting slip)" },
-            { x: 2120, y: 980, name: "email (napkin)" },
-            { x: 540, y: 1520, name: "email (Saints programme, 2014)" },
-            { x: 2000, y: 1700, name: "email (actually an email)" },
-          ],
-        },
-      },
-      {
-        id: "post",
-        text: "Post the Koeman Papers in the Pompey v Saints group (laptop at home). Total sincerity. Never break.",
-        at: "HOME",
-        step: {
-          kind: "minigame",
-          mode: "facebook",
-          intro: [say("KREBLIS", "Like the whole point of trolling Pompey v Saints is that it's impossible to have an actual argument seriously."), say("KREBLIS", "Bad spelling. Total sincerity. Never break.")],
-          success: [say("KREBLIS", "Four hundred comments. Someone's made a documentary pitch. You heard it here first."), dir("The Koeman Papers are now accepted fact in three separate Facebook groups.")],
-          fail: [say("KREBLIS", "Too obvious. They need to think we mean it. Again.")],
-        },
-      },
-    ],
-  },
-  {
     id: "arc_hotel_chaz",
     player: "ALL",
     minChapter: 3,
@@ -1025,56 +899,6 @@ export const ARCS: Arc[] = [
           cost: 40,
           intro: [say("KREZMAR", "The Town Hall jumble sale does homeware. Don't ask. Blanket and pillow, forty Krezzcoin. I'll waive the interest. Once.")],
           success: [say("POLSON", "A blanket. For the sofa bed. In my house."), say("POLSON", "It's a huge end to an era!!!"), dir("He puts the blanket on himself, not the sofa bed, and falls asleep.")],
-        },
-      },
-    ],
-  },
-  {
-    id: "arc_vegas",
-    player: "ALL",
-    minChapter: 4,
-    title: "Has Kreblis Booked Vegas Yet",
-    blurb: "Kreblis is a groomsman at Drongus's Vegas wedding. He has not booked. Drongus checks fortnightly. Get it booked.",
-    reward: { coins: 200, desc: "Kreblis is booked. Probably. +200 Krezzcoin." },
-    steps: [
-      {
-        id: "check",
-        text: "Drongus's fortnightly check-in: ask Kreblis if he's booked Vegas (Krezz Arms).",
-        at: "PUB",
-        step: {
-          kind: "dialogue",
-          lines: [
-            say("DRONGUS", "(ping) My fortnightly check-in to see if you've booked Vegas yet."),
-            say("KREBLIS", "Not yet man."),
-            say("DRONGUS", "(ping) It's in four months."),
-            say("KREBLIS", "Time is a construct. Also flights go down. Nuffin cum free in this werld I tel ya tht 4 free!!"),
-            dir("You are going to have to book it for him."),
-          ],
-        },
-      },
-      {
-        id: "book",
-        text: "Book Kreblis's flight at the Krelford International ticket desk (80 Krezzcoin). He'll pay you back. He will not pay you back.",
-        at: "AIRPORT",
-        step: {
-          kind: "pay",
-          cost: 80,
-          intro: [say("KREZMAR", "Krelford to Vegas, one adult, one 'business guy'. Eighty. He's never paying you back, you know that."), say("KREBLIS", "Can I get a window seat? I go straight up to people and ask to sit in the window seat.")],
-          success: [say("KREBLIS", "Booked. Wow. I feel like I've done this myself."), say("DRONGUS", "(ping) HE'S BOOKED?? 🎉 First time anyone's done anything I asked in this chat")],
-        },
-      },
-      {
-        id: "airport",
-        text: "Show Kreblis his booking confirmation (Krezz Arms) before he loses it.",
-        at: "PUB",
-        step: {
-          kind: "dialogue",
-          lines: [
-            dir("The Krezz Arms. Kreblis looks at the booking confirmation on your phone like it's a menu in another language."),
-            say("KREBLIS", "Have just seen that the Vegas flight is cancelled? I think that's what it said anyway. Not sure. Not an expert."),
-            dir("The Vegas flight is not cancelled. It's the one under it."),
-            say("KREBLIS", "Right. Well. Procrastination paid off big time. Again."),
-          ],
         },
       },
     ],
@@ -1263,34 +1087,6 @@ export const ARCS: Arc[] = [
     ],
   },
   {
-    id: "arc_sanmik",
-    player: "ALL",
-    minChapter: 4,
-    title: "Welcome to the SanMikverse",
-    blurb: "SanMik (Mikey in an afro wig) has found a magic lamp in the skip behind the Krezz Arms. It smells of rank fanny juice. He has rubbed it.",
-    reward: { coins: 400, desc: "A signed copy of 'Peener 4eva' on CD-R, labelled in biro. The biro has gone through the CD." },
-    steps: [
-      {
-        id: "lamp",
-        text: "SanMik has found 'a magic lamp' after his gig. Go to the Krezz Arms back room before he rubs it.",
-        at: "PUB",
-        step: { kind: "vignette", id: "sanmik_lampe", intro: [ping("MIKEY", "Found a magic lamp in the skip"), ping("MIKEY", "Looks like a naughty little dildo"), ping("MIKEY", "Gonna rub it. Come watch. Can someone react to my message pls")] },
-      },
-      {
-        id: "catford",
-        text: "You're in the SanMikverse. The Genie wants a bath: fix the Giant Hot Tub of Catford. (The lamp in the Krezz Arms back room takes you back in.)",
-        at: "PUB",
-        step: { kind: "arena", dungeon: "arena_sanmik", intro: [dir("The lamp is on the bar, still glowing. It smells of corn. You rub it. Against your better judgement, you rub it.")] },
-      },
-      {
-        id: "nation",
-        text: "SanMik and SanChz have fallen out over the last Pepsi Normal. Both of them have started a nation. On the Town Hall steps. Sort it out.",
-        at: "TOWN_HALL",
-        step: { kind: "vignette", id: "sanmik_nation", intro: [dir("There is chanting coming from the Town Hall steps. Two lots of chanting. Different chanting. And a goat.")] },
-      },
-    ],
-  },
-  {
     id: "arc_crobley",
     player: "ALL",
     minChapter: 5,
@@ -1352,6 +1148,5 @@ export function arcFor(player: PlayableId): Arc | undefined {
 
 /** The player's own story first, then the shared ones. */
 export function arcsFor(player: PlayableId): Arc[] {
-  // the Vegas quest is retired; the Cuddle Cronster is Chapter 3 now
-  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)].filter((a) => !["arc_vegas", "arc_cronster", "arc_koeman", "arc_sanmik"].includes(a.id));
+  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)];
 }

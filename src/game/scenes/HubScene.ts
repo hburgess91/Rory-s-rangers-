@@ -65,7 +65,6 @@ const BUILDINGS: Building[] = [
 
 const GATES: { id: string; name: string; x: number; y: number }[] = [
   { id: "POLSON_ROAD", name: "→ POLSON TOWERS", x: 2500, y: 1010 },
-  { id: "DOCKS", name: "DOCKS → KREZTEUA D'IF", x: 240, y: 1640 },
   { id: "AIRPORT", name: "→ KRELFORD INTERNATIONAL", x: 2500, y: 1650 },
   { id: "PORTAL", name: "??? THE SYMBOL OF WAHOOGAH", x: 90, y: 1250 },
   { id: "KREDDLE_BRIDGE", name: "← THE KREDDLE BRIDGE (casinos, arcades, hostility)", x: 70, y: 825 },
@@ -1994,7 +1993,6 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "MINISTRY":
       case "BONKY_TEMPLE":
       case "POLSON_ROAD":
-      case "DOCKS":
         return `${b.name} (not this chapter)`;
     }
     return b.name;

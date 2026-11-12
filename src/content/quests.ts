@@ -52,7 +52,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "don1", label: "Donation: an Uber Eats voucher (expired)", where: { dungeon: "polson_towers", room: 1 } },
       { id: "don2", label: "Donation: one (1) crobley, slightly nibbled", where: { dungeon: "ministry", room: 2 } },
-      { id: "don3", label: "Donation: the Abbé's Krezzcoin (vintage)", where: { dungeon: "krezteua", room: 1 } },
+      { id: "don3", label: "Donation: the Abbé's Krezzcoin (vintage)", where: { dungeon: "bonky_temple", room: 1 } },
     ],
     turnIn: {
       at: "TOWN_HALL",
@@ -98,7 +98,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "sig1", label: "Sigil Fragment: Prophecy", where: { dungeon: "wildern", room: 2 } },
       { id: "sig2", label: "Sigil Fragment: Butter", where: { dungeon: "ministry", room: 1 } },
-      { id: "sig3", label: "Sigil Fragment: Lurk", where: { dungeon: "krezteua", room: 2 } },
+      { id: "sig3", label: "Sigil Fragment: Lurk", where: { dungeon: "bonky_temple", room: 2 } },
     ],
     turnIn: {
       at: "ARCHIVE",
@@ -145,7 +145,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "menu", label: "The Menu (\"Krebon — Real butter\")", where: { hub: "PUB_MENU" } },
       { id: "map", label: "The Abbé Krezia's Map", where: { dungeon: "polson_towers", room: 2 } },
-      { id: "treasure", label: "Krezmond's Treasure (a single pat of real butter)", where: { dungeon: "krezteua", room: 3 } },
+      { id: "treasure", label: "Krezmond's Treasure (a single pat of real butter)", where: { dungeon: "bonky_temple", room: 3 } },
     ],
     turnIn: {
       at: "PUB",
@@ -216,7 +216,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "orig", label: "The Original Friend Request (16/04/2022, 12:00)", where: { dungeon: "polson_towers", room: 3 }, cond: { flag: "mikey_route" } },
       { id: "unsent", label: "The Unsent Messages (you were told to unsend them)", where: { dungeon: "bonky_temple", room: 1 } },
-      { id: "footnote", label: "A Red Pen (for the Archive)", where: { dungeon: "krezteua", room: 2 } },
+      { id: "footnote", label: "A Red Pen (for the Archive)", where: { dungeon: "bonky_temple", room: 3 } },
     ],
     turnIn: {
       at: "ARCHIVE",
