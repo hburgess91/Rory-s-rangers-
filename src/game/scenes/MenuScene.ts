@@ -139,7 +139,7 @@ export class MenuScene extends Phaser.Scene {
           add(button(this, x + 268, y, listening ? "…" : "CHANGE", () => { this.listening = a.id; this.render("controls"); }, { w: 70, h: 28, size: 11 }));
         });
         add(button(this, 380, 500, "RESET TO DEFAULTS", () => { resetKeys(); this.listening = null; synth.play("ding"); this.render("controls"); }, { w: 220 }));
-        add(button(this, 600, 500, "◀ BACK", () => { this.listening = null; this.render(this.controlsFrom); }, { w: 160 }));
+        add(button(this, 600, 495, "◀ BACK", () => { this.listening = null; this.render(this.controlsFrom); }, { w: 160 }));
         break;
       }
       case "settings": {
@@ -154,16 +154,17 @@ export class MenuScene extends Phaser.Scene {
         };
         const pct = (v: number) => `${Math.round(v * 100)}%`;
         const clamp = (v: number) => Math.max(0, Math.min(1, Math.round(v * 10) / 10));
-        row(130, "Master volume", () => pct(set.master), () => (set.master = clamp(set.master - 0.1)), () => (set.master = clamp(set.master + 0.1)));
-        row(180, "Music volume", () => pct(set.music), () => (set.music = clamp(set.music - 0.1)), () => (set.music = clamp(set.music + 0.1)));
-        row(230, "SFX volume", () => pct(set.sfx), () => (set.sfx = clamp(set.sfx - 0.1)), () => (set.sfx = clamp(set.sfx + 0.1)));
-        row(280, "Text speed", () => `${set.textSpeed.toFixed(1)}x`, () => (set.textSpeed = Math.max(0.5, set.textSpeed - 0.5)), () => (set.textSpeed = Math.min(4, set.textSpeed + 0.5)));
-        row(325, "Screen shake", () => (set.shake ? "ON" : "OFF"), () => (set.shake = !set.shake), () => (set.shake = !set.shake));
-        row(370, "CRT effect (KrelTV)", () => (set.crt ? "ON" : "OFF"), () => (set.crt = !set.crt), () => (set.crt = !set.crt));
-        row(410, "Character voices", () => (set.voices !== false ? "ON" : "OFF"), () => (set.voices = set.voices === false), () => (set.voices = set.voices === false));
-        row(450, "Voice volume", () => pct(set.voiceVolume ?? 0.8), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) - 0.1)), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) + 0.1)));
-        add(button(this, 360, 500, "CONTROLS", () => this.openControls("settings"), { w: 180 }));
-        add(button(this, 600, 500, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 180 }));
+        row(120, "Master volume", () => pct(set.master), () => (set.master = clamp(set.master - 0.1)), () => (set.master = clamp(set.master + 0.1)));
+        row(160, "Music volume", () => pct(set.music), () => (set.music = clamp(set.music - 0.1)), () => (set.music = clamp(set.music + 0.1)));
+        row(200, "SFX volume", () => pct(set.sfx), () => (set.sfx = clamp(set.sfx - 0.1)), () => (set.sfx = clamp(set.sfx + 0.1)));
+        row(240, "Text speed", () => `${set.textSpeed.toFixed(1)}x`, () => (set.textSpeed = Math.max(0.5, set.textSpeed - 0.5)), () => (set.textSpeed = Math.min(4, set.textSpeed + 0.5)));
+        row(280, "Screen shake", () => (set.shake ? "ON" : "OFF"), () => (set.shake = !set.shake), () => (set.shake = !set.shake));
+        row(320, "CRT effect (KrelTV)", () => (set.crt ? "ON" : "OFF"), () => (set.crt = !set.crt), () => (set.crt = !set.crt));
+        row(360, "Character voices", () => (set.voices !== false ? "ON" : "OFF"), () => (set.voices = set.voices === false), () => (set.voices = set.voices === false));
+        row(400, "Voice volume", () => pct(set.voiceVolume ?? 0.8), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) - 0.1)), () => (set.voiceVolume = clamp((set.voiceVolume ?? 0.8) + 0.1)));
+        row(440, "Voice speed", () => `${(set.voiceSpeed ?? 1.3).toFixed(1)}x`, () => (set.voiceSpeed = Math.max(0.8, Math.round(((set.voiceSpeed ?? 1.3) - 0.1) * 10) / 10)), () => (set.voiceSpeed = Math.min(2, Math.round(((set.voiceSpeed ?? 1.3) + 0.1) * 10) / 10)));
+        add(button(this, 360, 495, "CONTROLS", () => this.openControls("settings"), { w: 180 }));
+        add(button(this, 600, 495, "◀ BACK", () => (this.caller === "Title" ? this.close() : this.render("pause")), { w: 180 }));
         break;
       }
       case "quests": {

@@ -192,7 +192,7 @@ export const voice = {
       if (v) u.voice = v;
       u.lang = v?.lang ?? "en-GB";
       u.pitch = Math.max(0, Math.min(2, prof.pitch));
-      u.rate = Math.max(0.5, Math.min(2, prof.rate));
+      u.rate = Math.max(0.5, Math.min(2, prof.rate * (G.meta.settings.voiceSpeed ?? 1.3)));
       u.volume = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1);
       return u;
     });
