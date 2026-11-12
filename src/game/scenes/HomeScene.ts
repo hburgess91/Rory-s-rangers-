@@ -91,7 +91,7 @@ export class HomeScene extends Phaser.Scene {
         ]);
       }
     });
-    synth.music("hub", true);
+    synth.music("home", true);
     this.time.delayedCall(600, () => void this.arrive());
   }
 

@@ -843,7 +843,7 @@ export class TVScene extends Phaser.Scene {
       this.scene.resume(this.caller);
       const c = this.scene.get(this.caller);
       c.events.emit("ui-resume");
-      synth.music(({ Hub: "hub", Pub: "pub" } as Record<string, string>)[this.caller] ?? (DUNGEON_MUSIC[G.rt.dungeonId] ?? "hub"));
+      synth.music(({ Hub: "hub", Pub: "pub", Home: "home" } as Record<string, string>)[this.caller] ?? (DUNGEON_MUSIC[G.rt.dungeonId] ?? "hub"));
     }
     this.scene.stop();
   }
