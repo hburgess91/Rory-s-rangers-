@@ -22,6 +22,16 @@ export class Controls {
     this.keys = kb.addKeys("ESC,TAB") as Record<string, Phaser.Input.Keyboard.Key>;
     kb.addCapture("SPACE,TAB,UP,DOWN,LEFT,RIGHT");
     scene.input.mouse?.disableContextMenu();
+    // moving the mouse always takes aim back from a gamepad (Windows often reports phantom or drifting pads)
+    scene.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+      if (!p.wasTouch) this.aimFromPad = false;
+    });
+  }
+
+  /** The pointer to aim with: the real mouse unless you're actually using touch. */
+  private aimPtr(): Phaser.Input.Pointer {
+    const a = this.scene.input.activePointer;
+    return a.wasTouch ? a : this.scene.input.mousePointer ?? a;
   }
 
   /** Is any key bound to this action held? (Bindings are read live, so rebinding in the menu applies at once.) */
@@ -77,12 +87,13 @@ export class Controls {
       return this.pointerAngle;
     }
     const p = this.pad();
-    if (p && Math.hypot(p.rightStick.x, p.rightStick.y) > 0.3) {
+    if (p && Math.hypot(p.rightStick.x, p.rightStick.y) > 0.5) {
       this.aimFromPad = true;
       this.pointerAngle = Math.atan2(p.rightStick.y, p.rightStick.x);
       return this.pointerAngle;
     }
-    const ptr = this.scene.input.activePointer;
+    const ptr = this.aimPtr();
+    // the pointer's screen position, re-projected every frame (the camera moves as you walk, so the aim follows)
     const wp = this.scene.cameras.main.getWorldPoint(ptr.x, ptr.y);
     if (!this.aimFromPad || ptr.isDown) {
       this.pointerAngle = Math.atan2(wp.y - py, wp.x - px);
@@ -92,7 +103,7 @@ export class Controls {
   }
 
   aimPoint(): { x: number; y: number } {
-    const ptr = this.scene.input.activePointer;
+    const ptr = this.aimPtr();
     if (TOUCH.enabled && ptr.wasTouch && this.autoAimPoint) return this.autoAimPoint;
     return this.scene.cameras.main.getWorldPoint(ptr.x, ptr.y);
   }

@@ -105,7 +105,7 @@ export const defaultSettings = (): Settings => ({
   textSpeed: 1,
   voices: true,
   voiceVolume: 0.8,
-  voiceSpeed: 1.3,
+  voiceSpeed: 1.5,
 });
 
 export function newMeta(): MetaState {
@@ -187,7 +187,7 @@ export class SaveManager {
       return {
         ...m,
         ...p,
-        settings: { ...m.settings, ...(p.settings || {}) },
+        settings: { ...m.settings, ...(p.settings || {}), ...(p.settings?.voiceSpeed === 1.3 ? { voiceSpeed: 1.5 } : {}) },
         archiveUnlocked: Array.isArray(p.archiveUnlocked) ? p.archiveUnlocked : [],
         tvWatched: Array.isArray(p.tvWatched) ? p.tvWatched : [],
         completedWith: Array.isArray(p.completedWith) ? p.completedWith : [],

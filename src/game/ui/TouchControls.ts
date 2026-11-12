@@ -119,5 +119,7 @@ export class TouchControls {
 }
 
 export function isTouchDevice(game: Phaser.Game): boolean {
-  return !!game.device.input.touch && (navigator.maxTouchPoints ?? 0) > 0;
+  // touchscreen laptops report touch too: only show the stick when touch is the main way in (phones, tablets)
+  const coarse = typeof window.matchMedia === "function" ? window.matchMedia("(pointer: coarse)").matches : true;
+  return !!game.device.input.touch && (navigator.maxTouchPoints ?? 0) > 0 && coarse;
 }
