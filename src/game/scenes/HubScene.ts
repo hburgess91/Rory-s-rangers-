@@ -253,11 +253,45 @@ export class HubScene extends Phaser.Scene {
     G.emit("rule", null);
     synth.music("hub");
     synth.ambience("town");
+    this.weather();
     G.save();
     this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover));
   }
 
   /** First time out of the front door: a slow look round Krelford. */
+  /**
+   * Weather and time of day in town, from the real clock: night-time after 8pm (lights on, sky dark), and on some days
+   * it rains (or in December, snows). Drawn PixelLab weather loops tiled over the screen.
+   */
+  private weather() {
+    const now = new Date();
+    const h = now.getHours();
+    const day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
+    const roll = ((day * 9301 + 49297) % 233280) / 233280;
+    const kind = now.getMonth() === 11 ? (roll < 0.6 ? "snow" : null) : roll < 0.25 ? "rain" : null;
+    const night = h >= 20 || h < 6;
+    const dusk = h === 19 || h === 6;
+    if (night || dusk) {
+      this.add.rectangle(480, 270, 960, 540, 0x0b1440, night ? 0.42 : 0.22).setScrollFactor(0).setDepth(4900).setBlendMode(Phaser.BlendModes.MULTIPLY);
+      this.add.rectangle(480, 270, 960, 540, 0x1e2a6b, night ? 0.18 : 0.08).setScrollFactor(0).setDepth(4901);
+      // warm light pooling round every door
+      for (const b of BUILDINGS) {
+        if (!b.door) continue;
+        const glow = this.add.ellipse(b.door.x, b.door.y + 6, 120, 60, 0xffc46b, night ? 0.22 : 0.12).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: glow, alpha: { from: glow.alpha, to: glow.alpha * 0.7 }, yoyo: true, repeat: -1, duration: 1800 + Math.random() * 1200 });
+      }
+    }
+    if (!kind || !hasVfx(this, kind === "rain" ? "vfx_rain" : "vfx_snow")) return;
+    if (kind === "rain") this.add.rectangle(480, 270, 960, 540, 0x334155, 0.16).setScrollFactor(0).setDepth(4903);
+    const key = kind === "rain" ? "vfx_rain" : "vfx_snow";
+    for (let gx = 0; gx < 3; gx++)
+      for (let gy = 0; gy < 3; gy++) {
+        const sp = vfx(this, key, 160 + gx * 320, 100 + gy * 200, { fixed: true, scale: 2, depth: 4950, alpha: kind === "rain" ? 0.75 : 0.9 });
+        // stagger the tiles so the pattern doesn't repeat in lockstep
+        sp?.anims.setProgress(Math.random());
+      }
+  }
+
   private async flyover() {
     const s = G.s;
     s.flags.flyover_seen = true;

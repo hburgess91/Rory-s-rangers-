@@ -73,7 +73,7 @@ export interface Prize {
 export const PRIZES: Prize[] = [
   { id: "krezz", name: "NEON KREZZ", icon: "💜", desc: "Your krezz beam hits 25% harder and glows neon pink. Stacks three times.", key: "kd_krezz", max: 3 },
   { id: "gas", name: "CASINO GAS", icon: "💨", desc: "Farts are 20% bigger and harder, and come out sparkly purple. Stacks three times.", key: "kd_gas", max: 3 },
-  { id: "violence", name: "EXTRA VIOLENCE MODE", icon: "🩸", desc: "Blood spatters on every hit. Enemies come apart in pieces when they die. (Switch it off at the Prize Counter.)", key: "kd_violence", max: 1 },
+  { id: "violence", name: "BLOOD BATH", icon: "🩸", desc: "Gore mode, turned up: kills now and then splash blood right across your screen. (Gore itself is in Settings.)", key: "kd_violence", max: 1 },
   { id: "gold", name: "GOLD-PLATED GUNS", icon: "🪙", desc: "Every gun you hold turns gold, and so do the bullets. They hit 10% harder because they're gold.", key: "kd_gold", max: 1 },
   { id: "tracer", name: "NEON TRACERS", icon: "✨", desc: "Your bullets leave glowing neon trails.", key: "kd_tracer", max: 1 },
   { id: "jackpot", name: "JACKPOT ROUNDS", icon: "🎰", desc: "One hit in eight pays out: a little explosion and a shower of coins.", key: "kd_jackpot", max: 1 },

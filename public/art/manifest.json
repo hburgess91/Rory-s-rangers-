@@ -6153,6 +6153,16 @@
    "ox": 0.517,
    "oy": 0.512
   },
+  "vfx_rain": {
+   "file": "vfx/vfx_rain.png",
+   "w": 160,
+   "h": 100,
+   "frames": 32,
+   "fps": 30,
+   "loop": true,
+   "ox": 0.5,
+   "oy": 0.5
+  },
   "vfx_shock": {
    "file": "vfx/vfx_shock.png",
    "w": 116,
@@ -6182,6 +6192,16 @@
    "loop": true,
    "ox": 0.5,
    "oy": 1.0
+  },
+  "vfx_snow": {
+   "file": "vfx/vfx_snow.png",
+   "w": 160,
+   "h": 100,
+   "frames": 32,
+   "fps": 10,
+   "loop": true,
+   "ox": 0.5,
+   "oy": 0.5
   },
   "vfx_sparks": {
    "file": "vfx/vfx_sparks.png",

@@ -190,6 +190,8 @@ export interface Settings {
   voiceVolume?: number;
   /** Multiplies every character's speaking rate (the browser caps the result at 2x). */
   voiceSpeed?: number;
+  /** Gore mode: blood and dismemberment (default on). */
+  gore?: boolean;
   /** Custom key bindings (action id -> Phaser key names). Missing actions use the defaults. */
   keys?: Record<string, string[]>;
 }

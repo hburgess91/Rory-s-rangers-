@@ -1,3 +1,4 @@
+import { G } from "../G";
 import type { GameState } from "../../data/types";
 import { PRIZES, PRIZE, type Prize } from "../../content/kreddle";
 import { GUNS, gunMax } from "../combat/Guns";
@@ -7,9 +8,9 @@ export function kd(s: GameState, key: string): number {
   return s.upgrades?.[key] ?? 0;
 }
 
-/** Extra violence is on when you've won it and haven't switched it off. */
-export function extraViolence(s: GameState): boolean {
-  return kd(s, "kd_violence") > 0 && !s.flags.kd_violence_off;
+/** Gore mode (blood, dismemberment): on by default, switched off in Settings. */
+export function extraViolence(_s?: GameState): boolean {
+  return G.meta.settings.gore !== false;
 }
 
 /** Can this prize still do something for you? (Guns can always be won again: it's a refill.) */

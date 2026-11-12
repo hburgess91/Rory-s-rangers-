@@ -428,10 +428,11 @@ export class HomeScene extends Phaser.Scene {
     const top = 150 + Math.ceil(list.length / per) * 104 - 20;
     root.add(this.add.text(120, top, "KREDDLE PERKS", { fontFamily: FONT, fontSize: "14px", color: "#ff7ad9", fontStyle: "bold" }));
     root.add(this.add.text(120, top + 22, perks.length ? perks.join("     ") : "None yet. Cross the bridge to Kreddle and win some.", { fontFamily: FONT, fontSize: "12px", color: "#e2e8f0", wordWrap: { width: 720 }, lineSpacing: 6 }));
-    if (kd(s, "kd_violence") > 0) {
-      const on = !s.flags.kd_violence_off;
+    {
+      const on = G.meta.settings.gore !== false;
       this.button(root, 480, 462, 260, 36, `🩸 GORE MODE: ${on ? "ON" : "OFF"}`, () => {
-        s.flags.kd_violence_off = on;
+        G.meta.settings.gore = !on;
+        G.saveMeta();
         G.save();
         close();
         this.armouryPanel();

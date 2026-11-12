@@ -991,20 +991,21 @@ export class KreddleScene extends Phaser.Scene {
       this.closePanel();
       this.prizeCounter(i);
     };
-    if (kd(s, "kd_violence")) {
-      this.btn(250, 470, `EXTRA VIOLENCE: ${s.flags.kd_violence_off ? "OFF" : "ON"}`, () => {
-        G.s.flags.kd_violence_off = !G.s.flags.kd_violence_off;
+    if (true) {
+      this.btn(250, 470, `GORE: ${G.meta.settings.gore === false ? "OFF" : "ON"}`, () => {
+        G.meta.settings.gore = G.meta.settings.gore === false;
+        G.saveMeta();
         G.save();
         this.closePanel();
         this.prizeCounter(cur);
-      }, 240, s.flags.kd_violence_off ? 0x27213a : 0x7f1d1d);
+      }, 240, G.meta.settings.gore === false ? 0x27213a : 0x7f1d1d);
     }
-    this.btn(kd(s, "kd_violence") ? 560 : 400, 470, "💰 KREZZCOIN COUNTER →", () => {
+    this.btn(true ? 560 : 400, 470, "💰 KREZZCOIN COUNTER →", () => {
       if (buying) return;
       this.closePanel();
       this.krezzcoinCounter();
     }, 220, 0x166534);
-    this.btn(kd(s, "kd_violence") ? 760 : 620, 470, "LEAVE", () => !buying && this.closePanel(), 140);
+    this.btn(true ? 760 : 620, 470, "LEAVE", () => !buying && this.closePanel(), 140);
     const move = (d: number) => {
       cur = (cur + d + rows.length) % rows.length;
       focus();

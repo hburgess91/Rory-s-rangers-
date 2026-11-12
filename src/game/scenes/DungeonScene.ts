@@ -2314,7 +2314,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.events.emit("fuel-tank-dead", e.x, e.y);
       return;
     }
-    if (extraViolence(s) && !e.isBoss) this.dismember(e);
+    if (extraViolence(s) && !e.isBoss) {
+      this.dismember(e);
+      // the Kreddle BLOOD BATH prize: now and then it hits the lens
+      if (kd(s, "kd_violence") > 0 && Math.random() < 0.18) this.screenSplat(2);
+    }
     else if (e.isBoss || !hasVfx(this, "vfx_pixeldeath")) this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
     // a kill has its own little pop (not every one in a swarm)
     if (!e.isBoss && this.now() - this.lastKillPop > 90) {
