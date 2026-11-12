@@ -412,20 +412,48 @@ function spritePortrait(scene: Phaser.Scene, sprKey: string, bg: number): string
   const [tmp, tctx] = canvas(fr.cutWidth, fr.cutHeight);
   tctx.drawImage(src, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fr.cutWidth, fr.cutHeight);
   const data = tctx.getImageData(0, 0, fr.cutWidth, fr.cutHeight).data;
-  let minX = fr.cutWidth, minY = fr.cutHeight, maxX = 0, maxY = 0;
-  for (let y = 0; y < fr.cutHeight; y++)
-    for (let x = 0; x < fr.cutWidth; x++)
-      if (data[(y * fr.cutWidth + x) * 4 + 3] > 40) {
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
+  // each row's leftmost/rightmost solid pixel
+  const W = fr.cutWidth;
+  const rowL: number[] = [];
+  const rowR: number[] = [];
+  let minY = -1, maxY = -1;
+  for (let y = 0; y < fr.cutHeight; y++) {
+    let l = -1, r = -1;
+    for (let x = 0; x < W; x++)
+      if (data[(y * W + x) * 4 + 3] > 40) {
+        if (l < 0) l = x;
+        r = x;
       }
-  if (maxX <= minX) return null;
+    rowL.push(l);
+    rowR.push(r);
+    if (l >= 0) {
+      if (minY < 0) minY = y;
+      maxY = y;
+    }
+  }
+  if (minY < 0) return null;
   const h = maxY - minY + 1;
-  const side = Math.max(12, Math.round(h * 0.42));
-  const cx = Math.round((minX + maxX) / 2);
-  const sx = Phaser.Math.Clamp(cx - Math.round(side / 2), 0, Math.max(0, fr.cutWidth - side));
+  // the neck: the narrowest row a quarter to two-thirds of the way down. Frame the head above it
+  // (big hair and big heads included), but never tighter than the old crop or looser than the chest.
+  let neck = minY + Math.round(h * 0.4);
+  let best = 1e9;
+  for (let y = minY + Math.floor(h * 0.25); y < minY + Math.floor(h * 0.6); y++) {
+    const w = rowL[y] < 0 ? 1e9 : rowR[y] - rowL[y] + 1;
+    if (w < best) {
+      best = w;
+      neck = y;
+    }
+  }
+  const side = Math.max(12, Math.min(fr.cutHeight, Phaser.Math.Clamp(Math.round((neck - minY) * 1.3), Math.round(h * 0.58), Math.round(h * 0.72))));
+  // centre on the top of the head (not on arms or props)
+  let hl = W, hr = 0;
+  for (let y = minY; y < minY + Math.max(2, Math.floor((neck - minY) / 2)); y++)
+    if (rowL[y] >= 0) {
+      hl = Math.min(hl, rowL[y]);
+      hr = Math.max(hr, rowR[y]);
+    }
+  const cx = Math.round((hl + hr) / 2);
+  const sx = Phaser.Math.Clamp(cx - Math.round(side / 2), 0, Math.max(0, W - side));
   const [cv, ctx] = canvas(64, 64);
   const g = ctx.createRadialGradient(32, 26, 4, 32, 32, 46);
   const col = (n: number, k: number) => `rgb(${(((n >> 16) & 255) * k) | 0},${(((n >> 8) & 255) * k) | 0},${((n & 255) * k) | 0})`;
@@ -434,7 +462,7 @@ function spritePortrait(scene: Phaser.Scene, sprKey: string, bg: number): string
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 64, 64);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tmp, sx, Math.max(0, minY - 1), side, side, 4, 6, 56, 56);
+  ctx.drawImage(tmp, sx, Phaser.Math.Clamp(minY - 1, 0, Math.max(0, fr.cutHeight - side)), side, side, 4, 6, 56, 56);
   addImage(scene, key, cv);
   return key;
 }
@@ -472,7 +500,7 @@ export function portraitKey(scene: Phaser.Scene, speaker: string): string | null
                   ? "p_tankc"
                   : s.includes("JAM QUEEN")
                     ? "p_jam"
-                    : s === "UNCLE RIK" && scene.scene.key === "Dungeon"
+                    : s === "UNCLE RIK"
                       ? "p_rik"
                       : "";
   if (art && scene.textures.exists(art)) return art;
