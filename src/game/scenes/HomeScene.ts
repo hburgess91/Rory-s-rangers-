@@ -123,7 +123,7 @@ export class HomeScene extends Phaser.Scene {
       synth.play("ding");
       G.save();
     }
-    if (s.flags.home_seen) return;
+    if (s.flags.home_seen || s.flags.prologue_done) return;
     s.flags.home_seen = true;
     G.save();
     await this.welcome();
@@ -536,7 +536,7 @@ export class HomeScene extends Phaser.Scene {
     this.busy = true;
     synth.play("door");
     // the first time out: a look round the whole town
-    const flyover = !s.flags.flyover_seen;
+    const flyover = !s.flags.flyover_seen && !s.flags.prologue_done;
     this.cameras.main.fadeOut(350);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "HOME", flyover }));
   }

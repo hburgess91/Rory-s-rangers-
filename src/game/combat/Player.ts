@@ -278,6 +278,7 @@ export class Player {
     superTick(this, now);
     // Krezz trickle
     s.krezz = Math.min(maxKrezz(s), s.krezz + dt * 0.0022 * (1 + 0.3 * (s.upgrades.pk_krezz ?? 0)));
+    if (s.flags.debug_mode) s.krezz = maxKrezz(s); // debug: infinite Krezz
     // Krez Loan interest
     if (this.interestUntil > now && this.loanUntil < now) {
       const rate = (maxHp(s) * (s.upgrades.kz3 ? 0.075 : 0.15)) / 4000;

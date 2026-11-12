@@ -321,7 +321,7 @@ export class HubScene extends Phaser.Scene {
 
   private async onArrive(from?: string, flyover?: boolean) {
     const s = G.s;
-    if (flyover && !s.flags.flyover_seen) await this.flyover();
+    if (flyover && !s.flags.flyover_seen && !s.flags.prologue_done) await this.flyover();
     if (s.chapter > 1 && !s.flags[`ch${s.chapter}_intro`]) {
       s.flags[`ch${s.chapter}_intro`] = true;
       const ch = chapterDef(s.chapter);

@@ -2608,6 +2608,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     delta *= this.slowmo;
     this.vClock += delta;
     if (!this.player || this.transitioning || !this.player.spr.body) return;
+    if (G.s.flags.debug_mode) G.rt.fart = 100; // debug: IBS attack always ready
     if (this.controls.pause() && !this.busy && !this.dying) {
       this.scene.launch("Menu", { mode: "pause", caller: "Dungeon" });
       this.scene.pause();

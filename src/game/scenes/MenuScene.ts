@@ -18,7 +18,7 @@ import { say } from "../../content/dsl";
 type Mode = "pause" | "settings" | "bank" | "tribunal" | "death" | "quests" | "controls";
 
 /** Overlay menus: pause, settings, bank (upgrades), ban tribunal, quests, death. */
-const BANK_PERKS = [
+export const BANK_PERKS = [
   { id: "pk_armor", name: "Krez-Proof Vest", desc: "Armour: take 10% less damage per level. Hi-vis. Smells of Lynx Africa.", cost: 170, max: 3 },
   { id: "pk_krezz", name: "Krezz Regeneration Serum", desc: "Krezz refills 30% faster per level (specials come back sooner).", cost: 190, max: 3 },
   { id: "pk_meter", name: "Pre-Workout (Bootleg)", desc: "Wonk and Fart meters fill 30% faster per level.", cost: 160, max: 2 },
@@ -31,7 +31,7 @@ const BANK_PERKS = [
   { id: "pk_ammo", name: "Bigger Pockets", desc: "+25% max ammo for every gun per level. Krez-ousers with cargo pockets.", cost: 180, max: 2 },
   { id: "pk_dodge", name: "Ninja Backflip Lessons", desc: "Dodge cooldown -15% per level. Taught by Flenky. Got out just in time.", cost: 170, max: 2 },
 ];
-const BANK_MOVES = [
+export const BANK_MOVES = [
   { id: "mv_charge", name: "Pub Shove", desc: "Your dodge becomes a shoulder charge: damages and flings anything you barrel through.", cost: 320 },
   { id: "mv_fart", name: "Fart Propulsion", desc: "Every dodge leaves a lingering fart cloud that hurts and slows enemies.", cost: 280 },
   { id: "mv_lastorders", name: "Last Orders", desc: "Drinking pussy juice (Q) sends out a shockwave that knocks everything around you flying.", cost: 360 },
