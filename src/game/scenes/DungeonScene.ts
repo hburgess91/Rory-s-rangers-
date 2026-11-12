@@ -19,7 +19,7 @@ import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
 import { Spice } from "../combat/Spice";
 import { equipBest, fitTo, giveAmmo, ownedGuns, rollCrate, GUNS, gunMax } from "../combat/Guns";
-import { leadCamera } from "../gfx/HD";
+import { charMeta, leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
 import { SanBrother } from "../combat/SanBrother";
@@ -1046,6 +1046,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.roomCleared = true;
     this.markCleared();
     synth.play("ding");
+    this.player?.cheer(this.now(), 1300);
     for (let i = 0; i < 6; i++) this.dropPickup(this.player.x + (Math.random() - 0.5) * 140, this.player.y - 40 + (Math.random() - 0.5) * 80, "coin", 3);
     // every cleared room pays out some ammo
     if (ownedGuns().length) this.dropPickup(this.player.x + 40, this.player.y - 30, "ammo", 1.5);
@@ -1605,6 +1606,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   private async onBossDefeated(b: Boss) {
+    this.player?.cheer(this.now(), 2600);
     this.busy = true;
     {
       const hd = (b.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;
@@ -2711,9 +2713,25 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.player.dead = true;
     synth.play("death");
     (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    const menu = () => {
+      this.scene.launch("Menu", { mode: "death", caller: "Dungeon", dungeon: this.dungeon.id, room: this.roomIdx, bossHpPct: undefined, rush: this.boss ? this.rushIdx : 0 });
+      this.scene.pause();
+    };
+    // drawn collapse if the character has one, then the death menu
+    const meta = charMeta(this, this.player.spr.texture.key);
+    const f = (this.player.spr.getData("facing") as string) ?? "south";
+    const side = f === "east" || f === "west";
+    const fall = meta?.death ? ((side ? meta.death.east : meta.death.south) ?? meta.death.east ?? meta.death.south) : undefined;
+    if (fall?.length) {
+      const spr = this.player.spr.setFlipX(f === "west").setAlpha(1).clearTint();
+      (spr.body as Phaser.Physics.Arcade.Body).enable = false;
+      this.player.gunSpr?.setVisible(false);
+      fall.forEach((fr, i) => this.time.delayedCall(i * 110, () => spr.active && spr.setFrame(fr)));
+      this.time.delayedCall(fall.length * 110 + 700, menu);
+      return;
+    }
     this.player.spr.setAngle(90).setTint(0x888888);
-    this.scene.launch("Menu", { mode: "death", caller: "Dungeon", dungeon: this.dungeon.id, room: this.roomIdx, bossHpPct: undefined, rush: this.boss ? this.rushIdx : 0 });
-    this.scene.pause();
+    menu();
   }
 
   // ------------------------------------------------------------------ update

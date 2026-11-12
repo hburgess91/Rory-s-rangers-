@@ -17,6 +17,10 @@ export interface CharMeta {
   idle: Record<string, number>;
   walk: Record<string, number[]>;
   attack?: Record<string, number[]>;
+  /** taking a hit, cheering, collapsing (south + east; west is east flipped) */
+  hurt?: Record<string, number[]>;
+  victory?: Record<string, number[]>;
+  death?: Record<string, number[]>;
 }
 
 export interface ArtManifest {

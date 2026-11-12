@@ -85,6 +85,9 @@ export class Player {
   stillTime = 0;
   attackHeldTime = 0;
   dead = false;
+  /** flinch / cheer animation windows */
+  hurtUntil = 0;
+  cheerUntil = 0;
   grappledUntil = 0;
   /** where the aim is pointing (world), for lobbed attacks */
   aimAt: { x: number; y: number } | null = null;
@@ -249,7 +252,16 @@ export class Player {
       let f = moving && !fighting ? facingFrom(mv.x, mv.y, (this.spr.getData("facing") as any) ?? "south") : facingFrom(Math.cos(this.aim), Math.sin(this.aim));
       if (side) f = (moving && !fighting && Math.abs(mv.x) > 0.1 ? mv.x : Math.cos(this.aim)) < 0 ? "west" : "east";
       this.spr.setData("facing", f);
-      if (now < this.attackAnimUntil) {
+      const sideF = f === "east" || f === "west";
+      const pick = (m?: Record<string, number[]>) => (m ? (sideF ? m.east : m.south) ?? m.east ?? m.south : undefined);
+      const hurt = pick(meta.hurt);
+      const cheer = pick(meta.victory);
+      if (now < this.hurtUntil && hurt?.length && !(now < this.attackAnimUntil)) {
+        const t = 1 - (this.hurtUntil - now) / 320;
+        this.spr.setFlipX(f === "west").setFrame(hurt[Math.max(0, Math.min(hurt.length - 1, Math.floor(t * hurt.length)))]);
+      } else if (now < this.cheerUntil && cheer?.length && !moving && !fighting) {
+        this.spr.setFlipX(f === "west").setFrame(cheer[Math.floor(now / 110) % cheer.length]);
+      } else if (now < this.attackAnimUntil) {
         const side = f === "east" || f === "west";
         const cyc = (side ? meta.attack?.east : meta.attack?.south) ?? meta.attack?.east ?? [3];
         const t = 1 - (this.attackAnimUntil - now) / 200;
@@ -882,6 +894,7 @@ export class Player {
     s.hp -= a;
     this.recentDamage.push({ t: now, amt: a });
     this.iframesUntil = now + 450;
+    if (a > 0.5) this.hurtUntil = now + 320;
     if (s.hp <= 0) {
       if (this.id === "FLENKY" && !this.readmissionUsed) {
         this.readmissionUsed = true;
@@ -893,6 +906,11 @@ export class Player {
       s.hp = 0;
     }
     return true;
+  }
+
+  /** A little celebration (room cleared, boss down). Moving or shooting cuts it short. */
+  cheer(now: number, ms = 1500) {
+    this.cheerUntil = now + ms;
   }
 
   refillBottles() {
