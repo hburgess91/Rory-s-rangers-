@@ -48,7 +48,6 @@ const BUILDINGS: Building[] = [
   { id: "ARCHIVE", name: "HISTORICAL ARCHIVE (FGM War Room below)", x: 1900, y: 420, w: 300, h: 200, wall: 0x8a7a5a, roof: 0x3a2f1f, door: { x: 1900, y: 520 } },
   { id: "BAN_TRIBUNAL", name: "BAN TRIBUNAL", x: 660, y: 420, w: 280, h: 190, wall: 0x6b6b7a, roof: 0x7c2d12, door: { x: 660, y: 515 } },
   { id: "PUB", name: "THE KREZZ ARMS", x: 560, y: 820, w: 300, h: 200, wall: 0x7a5230, roof: 0x3b2a1a, door: { x: 560, y: 920 } },
-  { id: "BANK", name: "CENTRAL BANK OF KRELWORLD", x: 2000, y: 820, w: 280, h: 190, wall: 0xd6c49a, roof: 0x2f6b3a, door: { x: 2000, y: 915 } },
   { id: "HOME", name: "YOUR HOUSE", x: 520, y: 1250, w: 260, h: 180, wall: 0xb08d57, roof: 0x7a1f2b, door: { x: 520, y: 1340 } },
   { id: "WILDERN", name: "WILDERN ACADEMY (Krelford)", x: 1280, y: 1300, w: 420, h: 220, wall: 0xa0522d, roof: 0x5a5a6a, door: { x: 1280, y: 1410 } },
   { id: "MINISTRY", name: "MINISTRY OF BONER CONTROL", x: 2000, y: 1270, w: 340, h: 220, wall: 0x4b5563, roof: 0xd97706, door: { x: 2000, y: 1380 } },
@@ -213,7 +212,7 @@ export class HubScene extends Phaser.Scene {
       const who = CHARACTERS[s.flags.companion as string]?.name ?? "Your lad";
       delete s.flags.companion;
       delete s.flags.companion_used;
-      this.time.delayedCall(1500, () => G.emit("toast", { title: "CONTRACT ENDED", text: `${who} has gone home. Hire another at the Central Bank.` }));
+      this.time.delayedCall(1500, () => G.emit("toast", { title: "CONTRACT ENDED", text: `${who} has gone home. Hire another at the Kreddle Exchange (over the bridge).` }));
     }
     this.chainMeetings = !!(data?.advance || data?.chain);
     s.phase = "hub";

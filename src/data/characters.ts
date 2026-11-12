@@ -108,7 +108,7 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     range: 320,
     combatBlurb: "Ranged alchemist. Krezz-glazed Fart Blaster. Finances everything on credit.",
     signature: { id: "krez_loan", name: "Krez Loan", desc: "Instantly borrow a full Krezz tank and +50% damage for 8s. Interest is paid in health afterwards.", cost: 0, cooldown: 12000 },
-    passive: { name: "Krelfund", desc: "Enemies drop 35% more Krezzcoin. Bank upgrades 10% cheaper." },
+    passive: { name: "Krelfund", desc: "Enemies drop 35% more Krezzcoin. Kreddle Exchange upgrades 10% cheaper." },
     branch: [
       { id: "kz1", name: "Krezzpy Kreme", desc: "Fart Blaster puffs leave a sticky slowing glaze.", cost: 120 },
       { id: "kz2", name: "Pussy Juice Vending Rights", desc: "Vending machines heal double and accept IOUs.", cost: 260 },

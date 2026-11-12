@@ -363,12 +363,12 @@ export const ARCS: Arc[] = [
       },
       {
         id: "sell",
-        text: "Sell the house at the Central Bank.",
-        at: "BANK",
+        text: "Sell the house at the Town Hall property desk.",
+        at: "TOWN_HALL",
         step: {
           kind: "dialogue",
           lines: [
-            dir("The Central Bank's property desk. The valuation comes back."),
+            dir("The Town Hall property desk. The valuation comes back."),
             dir("4.8 MILLION KREZZCOIN."),
             say("SCROMBUS", "4.8 million. That's the exact amount we needed for the Extra Virgin Krezz oil ransom. The universe is sending me coded messages."),
             say("SCROMBUS", "With this kind of money, a man could buy influence. Ministers. An army. A podium."),
@@ -474,8 +474,8 @@ export const ARCS: Arc[] = [
       },
       {
         id: "business",
-        text: "Kreblis has a business plan. Put 50 Krezzcoin into it at the bank. It can't lose.",
-        at: "BANK",
+        text: "Kreblis has a business plan. Put 50 Krezzcoin into it at his 'office' (a table in the Krezz Arms). It can't lose.",
+        at: "PUB",
         step: {
           kind: "pay",
           cost: 50,
@@ -584,8 +584,8 @@ export const ARCS: Arc[] = [
       },
       {
         id: "the_shirt",
-        text: "Krezwonk says you need a better shirt. Buy one at the bank's 'luxury concession' (40 Krezzcoin).",
-        at: "BANK",
+        text: "Krezwonk says you need a better shirt. Buy one off the man who sells shirts in the Krezz Arms (40 Krezzcoin).",
+        at: "PUB",
         step: {
           kind: "pay",
           cost: 40,
@@ -862,8 +862,8 @@ export const ARCS: Arc[] = [
       },
       {
         id: "sugar_parcel",
-        text: "The Colonel demands a 'special package'. Post him one from the bank (15 Krezzcoin). Wrap it properly.",
-        at: "BANK",
+        text: "The Colonel demands a 'special package'. Post him one from the Town Hall post office (15 Krezzcoin). Wrap it properly.",
+        at: "TOWN_HALL",
         step: {
           kind: "pay",
           cost: 15,
@@ -1018,12 +1018,12 @@ export const ARCS: Arc[] = [
       },
       {
         id: "blanket",
-        text: "Buy Polson a blanket (and a pillow) at the bank's homeware concession. 40 Krezzcoin.",
-        at: "BANK",
+        text: "Buy Polson a blanket (and a pillow) at the Town Hall jumble sale. 40 Krezzcoin.",
+        at: "TOWN_HALL",
         step: {
           kind: "pay",
           cost: 40,
-          intro: [say("KREZMAR", "The bank does homeware now. Don't ask. Blanket and pillow, forty Krezzcoin. I'll waive the interest. Once.")],
+          intro: [say("KREZMAR", "The Town Hall jumble sale does homeware. Don't ask. Blanket and pillow, forty Krezzcoin. I'll waive the interest. Once.")],
           success: [say("POLSON", "A blanket. For the sofa bed. In my house."), say("POLSON", "It's a huge end to an era!!!"), dir("He puts the blanket on himself, not the sofa bed, and falls asleep.")],
         },
       },
@@ -1054,8 +1054,8 @@ export const ARCS: Arc[] = [
       },
       {
         id: "book",
-        text: "Book Kreblis's flight at the bank (80 Krezzcoin). He'll pay you back. He will not pay you back.",
-        at: "BANK",
+        text: "Book Kreblis's flight at the Krelford International ticket desk (80 Krezzcoin). He'll pay you back. He will not pay you back.",
+        at: "AIRPORT",
         step: {
           kind: "pay",
           cost: 80,

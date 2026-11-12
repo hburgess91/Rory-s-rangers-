@@ -55,7 +55,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
       { id: "don3", label: "Donation: the Abbé's Krezzcoin (vintage)", where: { dungeon: "krezteua", room: 1 } },
     ],
     turnIn: {
-      at: "BANK",
+      at: "TOWN_HALL",
       speaker: "PROCTUS",
       text: "Deposit the Krelfund",
       lines: [

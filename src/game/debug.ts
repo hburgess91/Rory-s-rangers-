@@ -4,6 +4,7 @@ import { switchTo } from "./Flow";
 import type { PlayableId } from "../data/types";
 import { maxHp } from "./systems/stats";
 import { jetStream } from "./combat/Wonk";
+import { kreltality } from "./combat/Kreltality";
 
 /**
  * Debug hooks for testing (window.__krel). Not shown anywhere in the UI.
@@ -45,6 +46,16 @@ export function installDebug(game: Phaser.Game) {
     jet: () => {
       const d = game.scene.getScene("Dungeon") as unknown as { player?: Parameters<typeof jetStream>[0]; now: () => number };
       if (d?.player) jetStream(d.player, d.now());
+    },
+    /** Run a KRELTALITY on the current boss (or the nearest enemy). */
+    krel: (which?: "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten") => {
+      const d = game.scene.getScene("Dungeon") as any;
+      const e = d?.boss ?? d?.enemies?.[0];
+      if (!e) return;
+      const hd = e.texture?.customData?.hd ?? 1;
+      const ps = d.player.spr;
+      const phd = ps.texture.customData?.hd ?? 1;
+      void kreltality(d, { key: e.texture.key, frame: e.frame.name, x: e.x, y: e.y, scale: e.scaleX / hd, flip: e.flipX, name: "TEST DUMMY" }, { key: ps.texture.key, frame: 0, scale: ps.scaleX / phd }, which);
     },
     god: () => {
       G.s.hp = maxHp(G.s) * 100;

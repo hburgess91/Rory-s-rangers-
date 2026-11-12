@@ -212,7 +212,7 @@ export class MenuScene extends Phaser.Scene {
       case "bank": {
         if (!s) break;
         const minister = narrativeActor("KREZMAR", s.player);
-        add(title(this, 480, 52, "CENTRAL BANK OF KRELWORLD", 24, "#86efac"));
+        add(title(this, 480, 52, "THE KREDDLE EXCHANGE · KREZZCOIN COUNTER", 22, "#ff4fd8"));
         add(this.add.text(480, 78, `${CHARACTERS[minister as string]?.name}${minister === "PROCTUS" ? ` (${CHARACTERS[s.player].proctusTitle})` : ", Minister of Money and Loans"} · You have ${s.coins} Krezzcoin`, { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5));
         const tabs: [typeof this.bankTab, string][] = [["upgrades", "UPGRADES"], ["armoury", "ARMOURY"], ["perks", "PERKS"], ["moves", "LADS & MOVES"]];
         tabs.forEach(([k, label], i) => add(button(this, 255 + i * 150, 106, label, () => { this.bankTab = k; this.render("bank"); }, { w: 140, h: 28, size: 13, color: this.bankTab === k ? 0x22c55e : undefined })));
@@ -251,7 +251,7 @@ export class MenuScene extends Phaser.Scene {
             const g = GUNS[id];
             const owned = id in s.guns;
             if (g.shop && !owned) {
-              row(`${g.name}  ·  BANK EXCLUSIVE`, g.blurb, `BUY ${g.shop}`, s.coins < g.shop, () => this.buyGun(id), "#ffd23f");
+              row(`${g.name}  ·  EXCHANGE EXCLUSIVE`, g.blurb, `BUY ${g.shop}`, s.coins < g.shop, () => this.buyGun(id), "#ffd23f");
               continue;
             }
             if (!owned) continue;
@@ -279,7 +279,8 @@ export class MenuScene extends Phaser.Scene {
             row(m.name, m.desc, owned ? "OWNED" : `BUY ${m.cost}`, owned || s.coins < m.cost, () => this.buyBranch(m.id, m.cost), owned ? "#5ad35a" : "#ffffff");
           }
         }
-        add(button(this, 480, 518, "LEAVE THE BANK", () => this.close(), { w: 220, h: 30 }));
+        if (this.caller === "Kreddle") add(button(this, 300, 518, "🎟 KROKEN PRIZES →", () => { this.scene.get("Kreddle").events.emit("open-prizes"); this.close(); }, { w: 220, h: 30, color: 0x3b0764 }));
+        add(button(this, this.caller === "Kreddle" ? 620 : 480, 518, "LEAVE THE EXCHANGE", () => this.close(), { w: 220, h: 30 }));
         break;
       }
       case "tribunal": {

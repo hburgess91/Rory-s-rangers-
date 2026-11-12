@@ -63,6 +63,7 @@ export class KreddleScene extends Phaser.Scene {
   private coinText!: Phaser.GameObjects.Text;
   /** When the last machine was closed (so the ESC that closed it doesn't also walk you out). */
   private closedAt = 0;
+  private wantPrizes = false;
 
   constructor() {
     super("Kreddle");
@@ -88,6 +89,18 @@ export class KreddleScene extends Phaser.Scene {
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#1a0b24dd", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(3000).setVisible(false);
     this.coinText = this.add.text(950, 10, "", { fontFamily: FONT, fontSize: "15px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(1, 0).setScrollFactor(0).setDepth(4000);
     this.controls = new Controls(this);
+    // back from the Krezzcoin counter (the Menu scene)
+    this.events.off("ui-resume");
+    this.events.on("ui-resume", () => {
+      this.busy = false;
+      this.controls.swallow();
+      if (this.wantPrizes) {
+        this.wantPrizes = false;
+        this.prizeCounter();
+      }
+    });
+    this.events.off("open-prizes");
+    this.events.on("open-prizes", () => (this.wantPrizes = true));
     this.box = new DialogueBox(this, 6000, 0.2);
     if (!this.scene.isActive("UI")) this.scene.launch("UI", { mode: "hub" });
     else this.scene.get("UI").events.emit("mode", "hub");
@@ -185,9 +198,9 @@ export class KreddleScene extends Phaser.Scene {
     this.spots.push({ x: 1950, y: 620, r: 110, label: () => "E: KREDDLE KARDS (higher or lower) · 100 Krezzcoin a deal", use: () => this.cards() });
     // KRUNCHER HQ + the Prize Counter
     this.building("kd_bld_arcade", 2300, 1.6, "KREDDLE KRUNCHERS HQ", "#ff4fd8", 0x9be7ff);
-    const counter = this.add.rectangle(2520, 520, 110, 70, 0x2e1065).setStrokeStyle(3, 0xfacc15).setDepth(520);
-    this.add.text(counter.x, counter.y, "🏆\nPRIZE\nCOUNTER", { fontFamily: FONT, fontSize: "11px", color: "#facc15", align: "center", fontStyle: "bold" }).setOrigin(0.5).setDepth(521);
-    this.spots.push({ x: 2520, y: 560, r: 80, label: () => `E: PRIZE COUNTER (spend your ${krokens(G.s)} 🎟 Krokens)`, use: () => void this.prizeCounter() });
+    const counter = this.add.rectangle(2520, 515, 120, 84, 0x2e1065).setStrokeStyle(3, 0xfacc15).setDepth(520);
+    this.add.text(counter.x, counter.y, "🏆\nTHE KREDDLE\nEXCHANGE\n🎟 · 💰", { fontFamily: FONT, fontSize: "11px", color: "#facc15", align: "center", fontStyle: "bold" }).setOrigin(0.5).setDepth(521);
+    this.spots.push({ x: 2520, y: 560, r: 80, label: () => `E: THE KREDDLE EXCHANGE (🎟 ${krokens(G.s)} Krokens · 💰 ${G.s.coins} Krezzcoin)`, use: () => this.exchange() });
     void s;
   }
 
@@ -458,8 +471,8 @@ export class KreddleScene extends Phaser.Scene {
     if (o instanceof Phaser.GameObjects.Container) for (const c of o.list) this.pin(c);
   }
 
-  private btn(x: number, y: number, label: string, fn: () => void, w = 170, color?: number) {
-    const b = button(this, x, y, label, fn, { w, h: 40, size: 15, color });
+  private btn(x: number, y: number, label: string, fn: () => void, w = 170, color?: number, h = 40) {
+    const b = button(this, x, y, label, fn, { w, h, size: 15, color });
     this.panelRoot?.add(b);
     this.pin(b);
     return b;
@@ -965,14 +978,19 @@ export class KreddleScene extends Phaser.Scene {
       this.prizeCounter(i);
     };
     if (kd(s, "kd_violence")) {
-      this.btn(330, 470, `EXTRA VIOLENCE: ${s.flags.kd_violence_off ? "OFF" : "ON"}`, () => {
+      this.btn(250, 470, `EXTRA VIOLENCE: ${s.flags.kd_violence_off ? "OFF" : "ON"}`, () => {
         G.s.flags.kd_violence_off = !G.s.flags.kd_violence_off;
         G.save();
         this.closePanel();
         this.prizeCounter(cur);
       }, 240, s.flags.kd_violence_off ? 0x27213a : 0x7f1d1d);
     }
-    this.btn(kd(s, "kd_violence") ? 630 : 480, 470, "LEAVE", () => !buying && this.closePanel(), 200);
+    this.btn(kd(s, "kd_violence") ? 560 : 400, 470, "💰 KREZZCOIN COUNTER →", () => {
+      if (buying) return;
+      this.closePanel();
+      this.krezzcoinCounter();
+    }, 220, 0x166534);
+    this.btn(kd(s, "kd_violence") ? 760 : 620, 470, "LEAVE", () => !buying && this.closePanel(), 140);
     const move = (d: number) => {
       cur = (cur + d + rows.length) % rows.length;
       focus();
@@ -983,6 +1001,31 @@ export class KreddleScene extends Phaser.Scene {
     this.key("DOWN", () => move(3));
     this.key("SPACE", () => void buy(cur));
     this.key("ESC", () => !buying && this.closePanel());
+  }
+
+  /** THE KREDDLE EXCHANGE: Krokens buy prizes, Krezzcoin buys upgrades, guns, perks and lads. */
+  private exchange() {
+    this.openPanel("THE KREDDLE EXCHANGE", "#facc15");
+    this.add2(this.add.text(480, 120, "Kreddle took over the Central Bank of Krelworld. It was a very short negotiation.", { fontFamily: FONT, fontSize: "13px", color: "#c4b5fd", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
+    this.btn(480, 215, `🎟  PRIZE COUNTER\nSpend Krokens (you have ${krokens(G.s)}) on Kreddle prizes`, () => {
+      this.closePanel();
+      this.prizeCounter();
+    }, 540, 0x3b0764, 72);
+    this.btn(480, 325, `💰  KREZZCOIN COUNTER\nSpend Krezzcoin (you have ${G.s.coins}) on upgrades, guns, ammo, perks and lads`, () => {
+      this.closePanel();
+      this.krezzcoinCounter();
+    }, 540, 0x14532d, 72);
+    this.btn(480, 440, "LEAVE", () => this.closePanel(), 160);
+    this.key("ESC", () => this.closePanel());
+    this.key("ONE", () => (this.closePanel(), this.prizeCounter()));
+    this.key("TWO", () => (this.closePanel(), this.krezzcoinCounter()));
+  }
+
+  /** The old bank menu, now Kreddle's. */
+  private krezzcoinCounter() {
+    this.busy = true;
+    this.scene.launch("Menu", { mode: "bank", caller: "Kreddle" });
+    this.scene.pause();
   }
 
   /** Krokens! A little ticket pops out. */

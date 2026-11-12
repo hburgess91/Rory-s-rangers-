@@ -149,7 +149,7 @@ export const NPC_TALK: Record<string, TalkSet[]> = {
   KREZMAR: [
     ...playerSpecificSets("KREZMAR"),
     T(36, { ngPlus: true }, [say("KREZMAR", "Have we done this before? I feel like I've already had these fizzy bongo withdrawals.")], "ng_KREZMAR"),
-    T(10, ch(1), [canon("bongo_withdrawals"), say("KREZMAR", "Central Bank's open. Upgrades for Krezzcoin. Loans for everyone. Interest is... we'll discuss.")]),
+    T(10, ch(1), [canon("bongo_withdrawals"), say("KREZMAR", "The bank's gone. Everything moved over the bridge to the Kreddle Exchange. Upgrades for Krezzcoin. Prizes for Krokens. Interest is... we'll discuss.")]),
     T(10, ch(2), [say("KREZMAR", "Polson Towers. Mate. If you saw the state of his chats. Endless. Relentless. Send you delirious.")]),
     T(10, ch(3), [canon("vending"), say("KREZMAR", "Get the pumps working and every vending machine in Krelford comes back online. My legacy.")]),
     T(10, ch(4), [say("KREZMAR", "The Bonky Cult's banning people for using money. That's my whole ministry, mate.")]),

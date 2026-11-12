@@ -31,6 +31,7 @@ import { FONT } from "../ui/theme";
 import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
 import { extraViolence, kd } from "../systems/kreddle";
+import { kreltality, type KrelTarget } from "../combat/Kreltality";
 
 interface Shot {
   spr: Phaser.GameObjects.Image;
@@ -1316,8 +1317,27 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     b.nextPattern = this.now() + 1200;
   }
 
+  /** Where the boss died and what they looked like (for the KRELTALITY stand-in). */
+  private krelTarget: KrelTarget | null = null;
+
+  /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
+  private async maybeKreltality(b: Boss) {
+    if (["drongus", "cronster", "reinhardt", "krozno"].includes(b.bossId) || !this.krelTarget) return;
+    const ps = this.player.spr;
+    const phd = (ps.texture.customData as { hd?: number } | undefined)?.hd ?? 1;
+    this.busy = true;
+    const done = await kreltality(this, this.krelTarget, { key: ps.texture.key, frame: 0, scale: ps.scaleX / phd });
+    if (done) bump(G.s, "kreltalities");
+    this.krelTarget = null;
+    this.cameras.main.startFollow(this.player.spr, true, 0.12, 0.12);
+  }
+
   private async onBossDefeated(b: Boss) {
     this.busy = true;
+    {
+      const hd = (b.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;
+      this.krelTarget = b.texture ? { key: b.texture.key, frame: b.frame.name, x: b.x, y: b.y, scale: b.scaleX / hd, flip: b.flipX, name: BOSS_TEXT[b.bossId]?.name ?? "THE BOSS" } : null;
+    }
     const s = G.s;
     const rush = this.room.bossRush ?? [];
     if (this.rushIdx < rush.length) {
@@ -1328,6 +1348,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
       await this.talk(BOSS_TEXT[b.bossId].outro);
+      await this.maybeKreltality(b);
       this.boss = null;
       const next = rush[this.rushIdx++];
       s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.35);
@@ -1351,6 +1372,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
       await this.talk(BOSS_TEXT[b.bossId].outro);
+      await this.maybeKreltality(b);
       await this.crystalGet(b);
       this.boss = null;
       this.roomCleared = true;
@@ -1376,6 +1398,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (this.dungeon.arenaFlag) {
       await this.talk(BOSS_TEXT[b.bossId].outro);
+      await this.maybeKreltality(b);
       // Uncle Rik is Chapter 5's boss now: his crystal, and the chapter's done
       if (b.bossId === "rik") {
         await this.crystalGet(b);
@@ -1428,6 +1451,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     const txt = BOSS_TEXT[b.bossId];
     await this.talk(txt.outro);
+    await this.maybeKreltality(b);
     await this.crystalGet(b);
     this.completeChapter(b.bossId);
   }
@@ -2332,8 +2356,49 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     });
   }
 
+  /** A bottled fairy: out she comes, round you she goes, and you're back on your feet. */
+  private fairyRevive() {
+    const s = G.s;
+    s.upgrades.fairies = Math.max(0, (s.upgrades.fairies ?? 0) - 1);
+    s.hp = maxHp(s);
+    const p = this.player;
+    p.iframesUntil = this.now() + 2500;
+    G.save();
+    this.hitStop(120);
+    this.cameras.main.flash(400, 255, 200, 240);
+    [1047, 1319, 1568, 2093].forEach((f, i) => this.time.delayedCall(i * 110, () => synth.play("ding")));
+    synth.play("perfect");
+    this.bigText("A FAIRY REVIVES YOU!", "#ff9ad5", 34);
+    const fairy = this.add.container(p.x, p.y).setDepth(980);
+    const glow = this.add.circle(0, 0, 16, 0xffc0eb, 0.45).setBlendMode(Phaser.BlendModes.ADD);
+    const body = this.add.circle(0, 0, 6, 0xffffff);
+    const wl = this.add.ellipse(-8, -4, 12, 18, 0xbfe9ff, 0.8);
+    const wr = this.add.ellipse(8, -4, 12, 18, 0xbfe9ff, 0.8);
+    fairy.add([glow, wl, wr, body]);
+    this.tweens.add({ targets: [wl, wr], scaleX: 0.3, yoyo: true, repeat: -1, duration: 60 });
+    const t0 = this.time.now;
+    const orbit = this.time.addEvent({ delay: 16, loop: true, callback: () => {
+      const a = (this.time.now - t0) / 140;
+      const r = 46 - Math.min(30, (this.time.now - t0) / 60);
+      fairy.setPosition(p.x + Math.cos(a) * r, p.y - 10 + Math.sin(a) * r * 0.6);
+      if (Math.random() < 0.6) {
+        const sp = this.add.star(fairy.x, fairy.y, 4, 1.5, 4, [0xffc0eb, 0xffffff, 0xbfe9ff][Math.floor(Math.random() * 3)]).setDepth(979).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: sp, y: sp.y + 20, alpha: 0, duration: 600, onComplete: () => sp.destroy() });
+      }
+    } });
+    this.time.delayedCall(1800, () => {
+      orbit.remove();
+      this.tweens.add({ targets: fairy, y: fairy.y - 200, alpha: 0, duration: 600, onComplete: () => fairy.destroy() });
+    });
+    this.toast("SAVED BY A FAIRY", `Full health. ${s.upgrades.fairies ? `${s.upgrades.fairies} fairy left in the bottle.` : "That was your last fairy. Get more at the Kreddle Exchange."}`);
+  }
+
   private die() {
     if (this.dying) return;
+    if ((G.s.upgrades.fairies ?? 0) > 0 && this.player && !this.player.dead) {
+      this.fairyRevive();
+      return;
+    }
     this.dying = true;
     this.player.dead = true;
     synth.play("death");

@@ -1,0 +1,324 @@
+import Phaser from "phaser";
+import { synth } from "../audio/Synth";
+import { FONT } from "../ui/theme";
+
+/**
+ * KRELTALITY. After a boss goes down: "FUCKING KILL THEM!!" — press it (or don't) for an over-the-top,
+ * cartoonish finishing move. Everything here is deliberately silly: rubbery, sausagey, splattery.
+ */
+
+export interface KrelTarget {
+  key: string;
+  frame: string | number;
+  x: number;
+  y: number;
+  /** the scale to give an image of this texture */
+  scale: number;
+  flip: boolean;
+  name: string;
+}
+
+type Finisher = "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten";
+const FINISHERS: Finisher[] = ["spine", "explode", "halved", "headboot", "slit", "flatten"];
+const NAMES: Record<Finisher, string> = {
+  spine: "SPINE RIP!",
+  explode: "KREZZPLOSION!",
+  halved: "HALVED!",
+  headboot: "HEAD BOOT!",
+  slit: "THROAT SLIT!",
+  flatten: "FLATTENED!",
+};
+
+const D = 2000; // above everything in the room
+
+/** Ask. Resolves true if they said yes (and the finisher has played). */
+export async function kreltality(sc: Phaser.Scene, target: KrelTarget, player: { key: string; frame: string | number; scale: number }, force?: Finisher): Promise<boolean> {
+  const yes = await prompt(sc);
+  if (!yes) return false;
+  await stage(sc, target, player, force ?? FINISHERS[Math.floor(Math.random() * FINISHERS.length)]);
+  return true;
+}
+
+// ------------------------------------------------------------------ the prompt
+
+function prompt(sc: Phaser.Scene): Promise<boolean> {
+  return new Promise((resolve) => {
+    const cam = sc.cameras.main;
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const pin = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
+      (o as unknown as { setScrollFactor: (x: number, y?: number) => void }).setScrollFactor(0, 0);
+      objs.push(o);
+      return o;
+    };
+    const k = 1 / cam.zoom;
+    const cx = 480;
+    const cy = 270;
+    const dim = pin(sc.add.rectangle(cx, cy, 4000, 4000, 0x2a0000, 0.55).setDepth(D + 50).setInteractive());
+    const t = pin(sc.add.text(cx, cy - 90 * k, "FUCKING KILL THEM!!", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#ef4444", stroke: "#000", strokeThickness: 9 }).setOrigin(0.5).setDepth(D + 51).setScale(k));
+    synth.play("roar");
+    sc.tweens.add({ targets: t, x: { from: cx - 4 * k, to: cx + 4 * k }, yoyo: true, repeat: -1, duration: 50 });
+    const mk = (x: number, label: string, bg: string, fn: () => void) => {
+      const b = pin(sc.add.text(cx + x * k, cy + 10 * k, label, { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff", backgroundColor: bg, padding: { x: 18, y: 10 } }).setOrigin(0.5).setDepth(D + 52).setScale(k).setInteractive({ useHandCursor: true }));
+      b.on("pointerdown", fn);
+      return b;
+    };
+    const yesB = mk(-140, "☠ KRELTALITY (K)", "#991b1b", () => done(true));
+    mk(150, "spare them (ESC)", "#1f2937", () => done(false));
+    sc.tweens.add({ targets: yesB, scale: { from: k, to: k * 1.08 }, yoyo: true, repeat: -1, duration: 300 });
+    const bar = pin(sc.add.rectangle(cx - 200 * k, cy + 70 * k, 400 * k, 6 * k, 0xef4444).setOrigin(0, 0.5).setDepth(D + 52));
+    sc.tweens.add({ targets: bar, scaleX: 0, duration: 7000, onComplete: () => done(false) });
+    const kb = sc.input.keyboard;
+    const onK = () => done(true);
+    const onEsc = () => done(false);
+    kb?.on("keydown-K", onK);
+    kb?.on("keydown-ESC", onEsc);
+    let fin = false;
+    function done(v: boolean) {
+      if (fin) return;
+      fin = true;
+      kb?.off("keydown-K", onK);
+      kb?.off("keydown-ESC", onEsc);
+      for (const o of objs) {
+        sc.tweens.killTweensOf(o);
+        o.destroy();
+      }
+      if (!v) synth.play("select");
+      resolve(v);
+    }
+    void dim;
+  });
+}
+
+// ------------------------------------------------------------------ the show
+
+async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame: string | number; scale: number }, which: Finisher) {
+  const cam = sc.cameras.main;
+  const wait = (ms: number) => new Promise<void>((r) => sc.time.delayedCall(ms, () => r()));
+  const tw = (cfg: Phaser.Types.Tweens.TweenBuilderConfig) => new Promise<void>((r) => sc.tweens.add({ ...cfg, onComplete: () => r() }));
+  const junk: Phaser.GameObjects.GameObject[] = [];
+  const keep = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
+    junk.push(o);
+    return o;
+  };
+  // the arena goes dark and red; lightning
+  const sky = keep(sc.add.rectangle(tg.x, tg.y, 6000, 6000, 0x1a0000, 0).setDepth(D));
+  sc.tweens.add({ targets: sky, fillAlpha: 0.9, duration: 400 });
+  cam.stopFollow();
+  cam.pan(tg.x, tg.y - 20, 500, "Sine.easeInOut");
+  cam.zoomTo(1.6, 500);
+  synth.play("boom");
+  const flash = () => {
+    cam.flash(120, 255, 230, 230);
+    synth.play("crit");
+  };
+  // the victim, dazed, swaying
+  const body = keep(sc.add.image(tg.x, tg.y, tg.key, tg.frame).setScale(tg.scale).setFlipX(tg.flip).setDepth(D + 2));
+  const fw = body.frame.width;
+  const fh = body.frame.height;
+  const H = fh * tg.scale;
+  const W = fw * tg.scale;
+  const floor = tg.y + H * 0.45;
+  sc.tweens.add({ targets: body, angle: { from: -6, to: 6 }, yoyo: true, repeat: -1, duration: 500, ease: "Sine.inOut" });
+  // you, walking over
+  const me = keep(sc.add.sprite(tg.x - W * 0.5 - 120, floor - 30, pl.key, pl.frame).setScale(pl.scale).setDepth(D + 3).setFlipX(false));
+  await wait(500);
+  await tw({ targets: me, x: tg.x - W * 0.5 - 30, duration: 450, ease: "Quad.out" });
+  sc.tweens.killTweensOf(body);
+  body.setAngle(0);
+  await wait(200);
+
+  // ---- helpers: blood, guts, bones
+  const blood = (x: number, y: number, n: number, power = 1, up = false) => {
+    for (let i = 0; i < n; i++) {
+      const sz = 2 + Math.random() * 5;
+      const r = keep(sc.add.rectangle(x, y, sz, sz, Math.random() < 0.7 ? 0xdc2626 : 0x7f1d1d).setDepth(D + 6));
+      let vx = (Math.random() - 0.5) * 10 * power;
+      let vy = up ? -(5 + Math.random() * 10) * power : (Math.random() - 0.7) * 9 * power;
+      const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => {
+        vy += 0.5;
+        r.x += vx;
+        r.y += vy;
+        vx *= 0.99;
+        if (r.y >= floor) {
+          ev.remove();
+          keep(sc.add.ellipse(r.x, floor + Math.random() * 6, 6 + Math.random() * 16, 3 + Math.random() * 3, 0xb91c1c, 0.95).setDepth(D + 1));
+          r.destroy();
+        }
+      } });
+      sc.time.delayedCall(4000, () => ev.remove());
+    }
+  };
+  const fountain = (x: number, y: number, ms: number) => {
+    const ev = sc.time.addEvent({ delay: 45, loop: true, callback: () => blood(x, y, 4, 0.9, true) });
+    sc.time.delayedCall(ms, () => ev.remove());
+  };
+  /** A rope of sausagey guts flung from (x,y) towards angle a. */
+  const guts = (x: number, y: number, a: number, len = 120) => {
+    const n = 11;
+    for (let i = 0; i < n; i++) {
+      const c = keep(sc.add.circle(x, y, 7 - i * 0.25, i % 2 ? 0xf472b6 : 0xbe185d).setStrokeStyle(1.5, 0x831843).setDepth(D + 5));
+      const d = (len * (i + 1)) / n;
+      const sag = Math.sin((i / n) * Math.PI) * 30;
+      sc.tweens.add({ targets: c, x: x + Math.cos(a) * d, y: Math.min(floor, y + Math.sin(a) * d + sag), duration: 380 + i * 30, ease: "Quad.out", delay: i * 18 });
+    }
+  };
+  /** A spinal column hanging off a head. */
+  const spine = (head: Phaser.GameObjects.Image) => {
+    const bones: Phaser.GameObjects.Shape[] = [];
+    for (let i = 0; i < 8; i++) {
+      bones.push(keep(sc.add.rectangle(head.x, head.y, 14 - i * 0.6, 7, 0xf5ecd7).setStrokeStyle(1.5, 0x9f1239).setDepth(D + 4)));
+      if (i % 2) bones.push(keep(sc.add.rectangle(head.x, head.y, 4, 4, 0xdc2626).setDepth(D + 4)));
+    }
+    const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => {
+      bones.forEach((b, i) => b.setPosition(head.x + Math.sin(sc.time.now / 120 + i * 0.5) * (i * 0.6), head.y + H * 0.14 + i * 6));
+    } });
+    sc.time.delayedCall(5000, () => ev.remove());
+  };
+  const cropTop = (frac: number) => {
+    const t = keep(sc.add.image(body.x, body.y, tg.key, tg.frame).setScale(tg.scale).setFlipX(tg.flip).setDepth(D + 3).setCrop(0, 0, fw, fh * frac));
+    body.setCrop(0, fh * frac, fw, fh * (1 - frac));
+    return t;
+  };
+  const neckY = tg.y - H * 0.5 + H * 0.3;
+  const label = (t: string) => {
+    const x = keep(sc.add.text(tg.x, tg.y - H * 0.7, t, { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#fde047", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setDepth(D + 10).setScale(0.3 / cam.zoom));
+    sc.tweens.add({ targets: x, scale: 1 / cam.zoom, duration: 250, ease: "Back.out" });
+  };
+
+  // ---- the finishers
+  switch (which) {
+    case "spine": {
+      flash();
+      synth.play("punch_big");
+      await tw({ targets: me, x: tg.x - 10, duration: 120 });
+      const head = cropTop(0.32);
+      spine(head);
+      synth.play("splat");
+      label(NAMES.spine);
+      sc.tweens.add({ targets: head, y: head.y - 70, x: me.x + 10, angle: -15, duration: 420, ease: "Back.out" });
+      sc.tweens.add({ targets: me, y: me.y - 16, duration: 420, ease: "Back.out" });
+      fountain(tg.x, neckY, 1800);
+      await wait(500);
+      sc.tweens.add({ targets: body, angle: tg.flip ? -90 : 90, y: floor - W * 0.2, duration: 700, ease: "Quad.in" });
+      guts(tg.x, neckY, -0.4, 90);
+      await wait(1500);
+      break;
+    }
+    case "explode": {
+      synth.voice("grunt", 0.7, 0.8);
+      body.setTint(0xff9999);
+      sc.tweens.add({ targets: body, x: { from: tg.x - 3, to: tg.x + 3 }, yoyo: true, repeat: 20, duration: 40 });
+      await tw({ targets: body, scaleX: tg.scale * 1.7, scaleY: tg.scale * 1.5, duration: 1200, ease: "Quad.in" });
+      flash();
+      synth.play("explode");
+      synth.play("boom");
+      cam.shake(500, 0.03);
+      body.setVisible(false);
+      for (let cx = 0; cx < 3; cx++)
+        for (let cy = 0; cy < 3; cy++) {
+          const ch = keep(sc.add.image(tg.x, tg.y, tg.key, tg.frame).setScale(tg.scale).setFlipX(tg.flip).setDepth(D + 4).setCrop((fw / 3) * cx, (fh / 3) * cy, fw / 3, fh / 3).setTint(0xffb4b4));
+          sc.tweens.add({ targets: ch, x: tg.x + (cx - 1) * (120 + Math.random() * 140), y: floor - Math.random() * 20, angle: (Math.random() - 0.5) * 900, duration: 700 + Math.random() * 300, ease: "Quad.out" });
+        }
+      for (let i = 0; i < 5; i++) guts(tg.x, tg.y, -Math.PI / 2 + (i - 2) * 0.7, 110 + Math.random() * 80);
+      blood(tg.x, tg.y, 70, 1.6, true);
+      label(NAMES.explode);
+      await wait(2000);
+      break;
+    }
+    case "halved": {
+      flash();
+      synth.play("swing");
+      const line = keep(sc.add.rectangle(tg.x, tg.y, 4, H * 1.4, 0xffffff).setDepth(D + 8));
+      sc.tweens.add({ targets: line, scaleY: { from: 0, to: 1 }, duration: 140 });
+      await wait(260);
+      line.destroy();
+      synth.play("crit");
+      const left = keep(sc.add.image(tg.x, tg.y, tg.key, tg.frame).setScale(tg.scale).setFlipX(tg.flip).setDepth(D + 3).setCrop(0, 0, fw / 2, fh));
+      body.setCrop(fw / 2, 0, fw / 2, fh);
+      label(NAMES.halved);
+      await wait(500);
+      sc.tweens.add({ targets: left, x: tg.x - 40, angle: -70, y: floor - W * 0.25, duration: 900, ease: "Quad.in" });
+      sc.tweens.add({ targets: body, x: tg.x + 40, angle: 70, y: floor - W * 0.25, duration: 900, ease: "Quad.in" });
+      fountain(tg.x, tg.y - H * 0.2, 1200);
+      for (let i = 0; i < 3; i++) guts(tg.x, tg.y + i * 10, Math.PI / 2 + (i - 1) * 0.6, 60);
+      await wait(1800);
+      break;
+    }
+    case "headboot": {
+      flash();
+      synth.play("punch_big");
+      sc.tweens.add({ targets: me, y: me.y - 30, yoyo: true, duration: 150 });
+      const head = cropTop(0.3);
+      label(NAMES.headboot);
+      fountain(tg.x, neckY, 1600);
+      await tw({ targets: head, y: tg.y - 600, angle: 720, duration: 700, ease: "Quad.out" });
+      sc.tweens.add({ targets: body, angle: tg.flip ? -90 : 90, y: floor - W * 0.2, duration: 700, ease: "Quad.in" });
+      await wait(400);
+      head.setPosition(me.x + 40, tg.y - 500);
+      await tw({ targets: head, y: floor - 30, angle: 1080, duration: 700, ease: "Quad.in" });
+      synth.play("punch_big");
+      sc.tweens.add({ targets: me, angle: -20, yoyo: true, duration: 120 });
+      const goal = keep(sc.add.text(me.x + 120, me.y - 80, "GOOOAL!", { fontFamily: "Impact, sans-serif", fontSize: "20px", color: "#ffffff", stroke: "#000", strokeThickness: 4 }).setDepth(D + 10).setScale(1 / cam.zoom));
+      void goal;
+      await tw({ targets: head, x: head.x + 700, y: head.y - 300, angle: 1800, duration: 700, ease: "Quad.out" });
+      synth.play("cheer");
+      await wait(600);
+      break;
+    }
+    case "slit": {
+      synth.play("swing");
+      const g = keep(sc.add.graphics().setDepth(D + 8));
+      const p = { t: 0 };
+      await tw({ targets: p, t: 1, duration: 140, onUpdate: () => g.clear().lineStyle(5, 0xffffff, 1).lineBetween(tg.x - W * 0.35, neckY - 6, tg.x - W * 0.35 + W * 0.7 * p.t, neckY + 6) });
+      synth.play("crit");
+      flash();
+      label(NAMES.slit);
+      sc.tweens.add({ targets: g, alpha: 0, duration: 400 });
+      fountain(tg.x, neckY, 1400);
+      body.setTint(0xffb0b0);
+      await wait(700);
+      sc.tweens.add({ targets: body, angle: tg.flip ? -84 : 84, y: floor - W * 0.2, duration: 700, ease: "Quad.in" });
+      await wait(1200);
+      break;
+    }
+    case "flatten": {
+      // you go up… and come down on them
+      synth.play("lob");
+      await tw({ targets: me, x: tg.x, y: tg.y - H - 200, duration: 450, ease: "Quad.out" });
+      await tw({ targets: me, y: tg.y - H * 0.35, duration: 220, ease: "Quad.in" });
+      flash();
+      synth.play("splat");
+      synth.play("boom");
+      cam.shake(400, 0.025);
+      sc.tweens.add({ targets: body, scaleY: tg.scale * 0.08, scaleX: tg.scale * 1.8, y: floor - 4, duration: 120 });
+      sc.tweens.add({ targets: me, y: floor - 40, duration: 120 });
+      blood(tg.x, floor - 6, 60, 1.4, true);
+      for (let i = 0; i < 4; i++) guts(tg.x, floor - 6, i < 2 ? Math.PI + 0.2 * i : -0.2 * (i - 2), 100);
+      label(NAMES.flatten);
+      await wait(1800);
+      break;
+    }
+  }
+
+  // ---- KRELTALITY
+  const kz = 1 / cam.zoom;
+  const big = keep(sc.add.text(480, 270 - 130 * kz, "KRELTALITY", { fontFamily: "Impact, sans-serif", fontSize: "84px", color: "#dc2626", stroke: "#000", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(D + 60).setScale(2 * kz).setAlpha(0));
+  sc.tweens.add({ targets: big, scale: kz, alpha: 1, duration: 300, ease: "Quad.out" });
+  synth.play("boom");
+  cam.shake(300, 0.02);
+  // drips off the letters
+  for (let i = 0; i < 14; i++) {
+    const d = keep(sc.add.rectangle(480 + (i - 6.5) * 34 * kz, 270 - 95 * kz, 5 * kz, 4 * kz, 0xb91c1c).setOrigin(0.5, 0).setScrollFactor(0).setDepth(D + 59));
+    sc.tweens.add({ targets: d, scaleY: 8 + Math.random() * 16, delay: 300 + Math.random() * 600, duration: 1200 + Math.random() * 800 });
+  }
+  const sub = keep(sc.add.text(480, 270 - 65 * kz, `${tg.name} HAS BEEN KRELTALISED`, { fontFamily: FONT, fontSize: "16px", color: "#fca5a5", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(D + 60).setScale(kz));
+  void sub;
+  await wait(2600);
+  // and back to the room
+  for (const o of junk) {
+    sc.tweens.killTweensOf(o);
+    o.destroy();
+  }
+  cam.zoomTo(1, 400);
+  await wait(400);
+}

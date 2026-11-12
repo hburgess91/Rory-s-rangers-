@@ -309,7 +309,7 @@ export class UIScene extends Phaser.Scene {
     this.kzT.setText(kzS);
     this.statT.setText(
       [
-        `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)${s.flags.rock_points ? `   🤘 ${s.flags.rock_points}` : ""}`,
+        `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)${s.upgrades.fairies ? `   🧚 ${s.upgrades.fairies}` : ""}${s.flags.rock_points ? `   🤘 ${s.flags.rock_points}` : ""}`,
         ...(ownedGuns(s).length
           ? [currentGun(s) ? `🔫 ${currentGun(s)!.name} ${s.guns![s.gun!]}/${gunMax(currentGun(s)!, s)}  (X: swap · hold X: choose)` : `💨 Fart Blaster ∞${ownedGuns(s).length ? ` · ${ownedGuns(s).length} gun${ownedGuns(s).length > 1 ? "s" : ""}  (X: swap · hold X: choose)` : ""}`]
           : []),
