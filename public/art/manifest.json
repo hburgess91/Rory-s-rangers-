@@ -5555,6 +5555,24 @@
   },
   "p_trophyshelf": {
    "file": "props/home/p_trophyshelf.png"
+  },
+  "ui_panel": {
+   "file": "ui/ui_panel.png"
+  },
+  "ui_button": {
+   "file": "ui/ui_button.png"
+  },
+  "p_door_locked": {
+   "file": "props/p_door_locked.png",
+   "hd": 0.55
+  },
+  "p_door": {
+   "file": "props/p_door.png",
+   "hd": 0.55
+  },
+  "p_pipe": {
+   "file": "props/p_pipe.png",
+   "hd": 0.5
   }
  },
  "sheets": {

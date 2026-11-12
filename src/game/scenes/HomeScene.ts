@@ -4,7 +4,7 @@ import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
 import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
-import { FONT } from "../ui/theme";
+import { FONT, uiFrame } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { animateWalker, backdrop } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
@@ -357,6 +357,11 @@ export class HomeScene extends Phaser.Scene {
     const bg = this.add.rectangle(480, 270, 900, 500, 0x0b0a14, 0.96).setStrokeStyle(3, Phaser.Display.Color.HexStringToColor(color).color);
     bg.setInteractive();
     root.add(bg);
+    const art = uiFrame(this, 480, 270, 900, 500, "ui_panel");
+    if (art) {
+      bg.setStrokeStyle(0);
+      root.add(art.setTint(Phaser.Display.Color.HexStringToColor(color).color | 0x606060));
+    }
     root.add(this.add.text(480, 48, title, { fontFamily: "Impact, sans-serif", fontSize: "32px", color, stroke: "#000", strokeThickness: 6 }).setOrigin(0.5));
     let closed = false;
     const close = () => {

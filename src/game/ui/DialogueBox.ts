@@ -8,7 +8,7 @@ import { evalCond } from "../systems/conditions";
 import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
-import { FONT, UI } from "./theme";
+import { FONT, UI, uiFrame } from "./theme";
 
 export interface PlayOptions {
   historical?: boolean;
@@ -35,6 +35,18 @@ const REGISTER_JIBES = [
   "Stay six feet away, sicko. Twelve.",
   "Don't make it weird. Well. Weirder.",
 ];
+
+/** PixelLab viseme order: rest, closed, small_open, medium_open, wide_open, round, teeth. */
+function mouthFor(ch: string): number {
+  const c = ch.toLowerCase();
+  if (!/[a-z]/.test(c)) return 0;
+  if ("mbp".includes(c)) return 1;
+  if (c === "a") return 4;
+  if ("ei".includes(c)) return 3;
+  if ("ouwq".includes(c)) return 5;
+  if ("fvst".includes(c)) return 6;
+  return 2;
+}
 
 export class DialogueBox {
   private scene: Phaser.Scene;
@@ -75,7 +87,10 @@ export class DialogueBox {
       .setShadow(1, 1, "#000", 0);
     this.hint = scene.add.text(W - 30, H - 22, "▼ E / Space   ·   Tab skip", { fontFamily: FONT, fontSize: "11px", color: "#8a8fa0" }).setOrigin(1, 0.5);
     this.overlay = scene.add.container(0, 0);
-    this.root.add([this.box, this.portraitFrame, this.portrait, this.nameText, this.titleText, this.bodyText, this.hint, this.overlay]);
+    // the PixelLab window frame (9-slice), drawn over the dim and under everything else
+    this.frame = uiFrame(scene, W / 2, 362 + 83, W - 32, 166, "ui_panel");
+    this.frame?.setVisible(false);
+    this.root.add([this.box, ...(this.frame ? [this.frame] : []), this.portraitFrame, this.portrait, this.nameText, this.titleText, this.bodyText, this.hint, this.overlay]);
     this.root.setVisible(false);
 
     this.keyHandler = (e: KeyboardEvent) => {
@@ -129,19 +144,30 @@ export class DialogueBox {
     r?.();
   }
 
+  private talkKey: string | null = null;
+
   private finishTyping() {
+    if (this.talkKey) this.portrait.setFrame(0);
     this.typing = false;
     this.typeTimer?.remove();
     this.typeTimer = null;
     this.bodyText.setText(this.fullText);
   }
 
+  private frame: Phaser.GameObjects.NineSlice | null = null;
+
   private drawBox(kind: "speech" | "dir" | "notify") {
     const g = this.box;
     g.clear();
+    this.frame?.setVisible(false);
     if (kind === "notify") return;
     g.fillStyle(0x000000, this.dim);
     g.fillRect(0, 0, W, H);
+    if (this.frame) {
+      // stage directions get a greyed frame
+      this.frame.setVisible(true).setTint(kind === "dir" ? 0x9aa0b4 : 0xffffff);
+      return;
+    }
     g.fillStyle(UI.panel, 0.97);
     g.fillRoundedRect(16, 362, W - 32, 166, 10);
     g.lineStyle(3, kind === "dir" ? 0x5b5f73 : UI.accent, 1);
@@ -159,7 +185,11 @@ export class DialogueBox {
       this.portrait.setVisible(false);
       return;
     }
-    this.portrait.setTexture(key).setDisplaySize(112, 112).setVisible(true);
+    // a talking portrait (PixelLab mouth shapes, talk_<SPEAKER>) if this speaker has one
+    const tk = `talk_${speaker.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
+    this.talkKey = this.scene.textures.exists(tk) ? tk : null;
+    if (this.talkKey) this.portrait.setTexture(this.talkKey, 0).setDisplaySize(112, 112).setVisible(true);
+    else this.portrait.setTexture(key).setDisplaySize(112, 112).setVisible(true);
     const col = CHARACTERS[speaker]?.color ?? 0x888888;
     this.portraitFrame.fillStyle(0x000000, 1);
     this.portraitFrame.fillRect(24, 392, 120, 120);
@@ -186,6 +216,8 @@ export class DialogueBox {
       callback: () => {
         this.shown = Math.min(this.fullText.length, this.shown + perTick);
         this.bodyText.setText(this.fullText.slice(0, this.shown));
+        // lip-sync: the mouth shape for the letter just typed (every couple of letters, so it doesn't buzz)
+        if (this.talkKey && this.shown % 2 === 0) this.portrait.setFrame(mouthFor(this.fullText[this.shown - 1] ?? " "));
         if (this.shown % 3 === 0) synth.play("type");
         if (this.shown >= this.fullText.length) this.finishTyping();
       },

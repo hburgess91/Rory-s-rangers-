@@ -5,7 +5,7 @@ import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
 import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
-import { FONT, button } from "../ui/theme";
+import { FONT, button, uiFrame } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { animateWalker } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
@@ -74,6 +74,7 @@ export class KreddleScene extends Phaser.Scene {
   create() {
     const s = G.s;
     this.busy = false;
+    synth.ambience("casino");
     this.npcs = [];
     this.spots = [];
     this.gambled = false;
@@ -449,6 +450,12 @@ export class KreddleScene extends Phaser.Scene {
     root.add(this.add.rectangle(480, 270, 960, 540, 0x05010c, 0.78).setInteractive());
     const frame = this.add.rectangle(480, 270, 760, 470, 0x16072b, 0.97).setStrokeStyle(4, Phaser.Display.Color.HexStringToColor(color).color);
     root.add(frame);
+    // the PixelLab window frame, tinted to the machine's neon
+    const art = uiFrame(this, 480, 270, 760, 470, "ui_panel");
+    if (art) {
+      frame.setFillStyle(0x16072b, 0.6).setStrokeStyle(0);
+      root.add(art.setTint(Phaser.Display.Color.HexStringToColor(color).color | 0x404040));
+    }
     const t = this.add.text(480, 58, title, { fontFamily: "Impact, sans-serif", fontSize: "34px", color, stroke: "#12001f", strokeThickness: 6 }).setOrigin(0.5);
     t.setShadow(0, 0, color, 14, true, true);
     root.add(t);

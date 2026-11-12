@@ -183,6 +183,40 @@ export class Synth {
         }
       }),
     );
+    if (this.ambWant) this.ambience(this.ambWant);
+  }
+
+  // ------------------------------------------------------------ ambience: a quiet looping bed under the music
+
+  private amb: { id: string; src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private ambWant: string | null = null;
+
+  /** Loop the recorded ambience "amb_<id>" (town, pub, casino, dungeon...), or stop it with null. Crossfades. */
+  ambience(id: string | null) {
+    this.ambWant = id;
+    if (!this.ctx) return;
+    if (this.amb?.id === id) return;
+    const t = this.ctx.currentTime;
+    if (this.amb) {
+      const old = this.amb;
+      old.gain.gain.cancelScheduledValues(t);
+      old.gain.gain.setValueAtTime(old.gain.gain.value, t);
+      old.gain.gain.linearRampToValueAtTime(0, t + 0.8);
+      old.src.stop(t + 0.85);
+      this.amb = null;
+    }
+    const buf = id ? this.files[`amb_${id}`] : null;
+    if (!id || !buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.45, t + 1.2);
+    src.connect(gain);
+    gain.connect(this.sfxGain);
+    src.start(t, Math.random() * Math.max(0, buf.duration - 1));
+    this.amb = { id, src, gain };
   }
 
   /** A recorded take of this sound (one of id, id_1, id_2…), or null to synthesise it. */

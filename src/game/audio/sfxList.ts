@@ -1,6 +1,12 @@
 // Generated: the recorded sound effects in public/audio/sfx (PixelLab). "<id>_<n>" are alternate takes of "<id>".
 export const SFX_KEYS: string[] = [
   "alarm",
+  "amb_casino",
+  "amb_colon",
+  "amb_dungeon",
+  "amb_factory",
+  "amb_pub",
+  "amb_town",
   "archive",
   "banhammer",
   "bonecrack",

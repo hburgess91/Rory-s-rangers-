@@ -252,6 +252,7 @@ export class HubScene extends Phaser.Scene {
     G.emit("boss", null);
     G.emit("rule", null);
     synth.music("hub");
+    synth.ambience("town");
     G.save();
     this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover));
   }

@@ -1,3 +1,4 @@
+import { synth } from "./audio/Synth";
 import { offerFacts, adoptFact } from "../data/historicalRevisions";
 import { requiredArcSteps } from "./systems/arcs";
 import Phaser from "phaser";
@@ -16,6 +17,8 @@ export interface Next {
 
 /** Stop every running scene, then start `key`. Overlays never leak between modes. */
 export function switchTo(from: Phaser.Scene, key: string, data?: any) {
+  // each place sets its own background ambience; anywhere else is quiet
+  synth.ambience(null);
   const mgr = from.game.scene;
   for (const sc of mgr.getScenes(false)) {
     const k = sc.scene.key;

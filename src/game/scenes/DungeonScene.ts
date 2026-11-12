@@ -270,6 +270,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.emit("room", { name: `${this.dungeon.name} · ${r.name}`, idx: this.roomIdx, total: this.dungeon.rooms.length });
     G.emit("boss", null);
     synth.music(r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : r.music ?? this.dungeon.music);
+    // background ambience for the place (quiet, under the music)
+    synth.ambience(this.dungeon.id === "rik_colon" ? "colon" : r.theme === "industrial" || this.dungeon.id === "crobley_factory" ? "factory" : "dungeon");
     this.player.headbuttMode = r.boss === "troll";
     if (this.dungeon.timerSec && this.roomIdx === 0 && !G.rt.timerEnd) G.rt.timerEnd = Date.now() + this.dungeon.timerSec * 1000;
 
@@ -492,7 +494,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.obstacles = this.physics.add.staticGroup();
     this.decorate(r);
     // door
-    this.door = this.add.image(r.w / 2, 14, "p_door_locked").setScale(2).setDepth(2);
+    // the door sits in the back wall, its foot on the floor line (the PixelLab door is a full doorway)
+    this.door = this.add.image(r.w / 2, 60, "p_door_locked").setOrigin(0.5, 1).setScale(2).setDepth(2);
     this.doorZone = new Phaser.Geom.Rectangle(r.w / 2 - 40, 0, 80, 46);
     this.add.text(r.w / 2, 40, r.boss ? "" : "EXIT", { fontFamily: FONT, fontSize: "10px", color: "#ffffff" }).setOrigin(0.5).setDepth(2);
     // room title

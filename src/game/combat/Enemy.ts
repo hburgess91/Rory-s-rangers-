@@ -78,9 +78,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     const p = this.world.player;
     this.animT += dt;
-    if (this.animT > 220) {
+    // cycle the sheet's frames (old art has 2; the animated PixelLab sheets have more, played quicker)
+    const nf = Math.max(1, this.texture.frameTotal - 1);
+    if (this.animT > (nf > 2 ? 110 : 220)) {
       this.animT = 0;
-      this.setFrame(String(this.frame.name) === "0" ? 1 : 0);
+      this.setFrame((Number(this.frame.name) + 1) % nf);
     }
     if (now < this.flashUntil) this.setTintFill(0xffffff);
     else if (now < this.markedUntil) this.setTint(0xd8b4fe);

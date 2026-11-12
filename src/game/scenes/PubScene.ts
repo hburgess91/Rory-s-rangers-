@@ -41,6 +41,7 @@ export class PubScene extends Phaser.Scene {
     this.sanmikOn = Math.random() < 0.7;
     this.busy = false;
     this.cameras.main.fadeIn(300);
+    synth.ambience("pub");
     const pubBg = this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
     if (backdrop(this, "bg_pub", { dim: 0.2, depth: -10 })) pubBg.setVisible(false);
     const g = this.add.graphics();
