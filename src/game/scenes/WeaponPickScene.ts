@@ -6,7 +6,7 @@ import { keysFor } from "../systems/keybinds";
 import { ammoLabel, weaponIcon, weaponList, type WeaponEntry } from "../ui/weapons";
 
 /**
- * Hold SWAP: the action freezes and you pick a weapon.
+ * Hold SWAP: the world drops into slow motion and you pick a weapon.
  * Click/tap one, or arrows/A-D + SPACE, or 1-9, or just let go of SWAP on the one you want.
  */
 export class WeaponPickScene extends Phaser.Scene {
@@ -28,9 +28,9 @@ export class WeaponPickScene extends Phaser.Scene {
     const s = G.s;
     this.list = weaponList(s);
     this.cur = Math.max(0, this.list.findIndex((w) => w.id === (s.gun ?? null)));
-    this.add.rectangle(480, 270, 960, 540, 0x05010c, 0.72).setInteractive().on("pointerdown", (_: unknown, __: unknown, ___: unknown, ev?: Phaser.Types.Input.EventData) => ev?.stopPropagation?.());
+    this.add.rectangle(480, 270, 960, 540, 0x05010c, 0.45).setInteractive().on("pointerdown", (_: unknown, __: unknown, ___: unknown, ev?: Phaser.Types.Input.EventData) => ev?.stopPropagation?.());
     this.add.text(480, 70, "CHOOSE YOUR WEAPON", { fontFamily: "Impact, sans-serif", fontSize: "38px", color: "#67e8f9", stroke: "#001018", strokeThickness: 7 }).setOrigin(0.5);
-    this.add.text(480, 108, "Tap one · or ←/→ and SPACE · or 1–9 · or let go of SWAP on it · ESC to cancel", { fontFamily: FONT, fontSize: "12px", color: "#cbd5e1" }).setOrigin(0.5);
+    this.add.text(480, 108, "(the world's slowed right down) · Tap one · or ←/→ and SPACE · or 1–9 · or let go of SWAP on it · ESC to cancel", { fontFamily: FONT, fontSize: "12px", color: "#cbd5e1" }).setOrigin(0.5);
     const perRow = Math.min(7, this.list.length);
     const rows = Math.ceil(this.list.length / perRow);
     const TW = 116;
@@ -109,10 +109,7 @@ export class WeaponPickScene extends Phaser.Scene {
   private close() {
     if (this.done) return;
     this.done = true;
-    if (this.scene.isPaused(this.caller)) {
-      this.scene.resume(this.caller);
-      this.scene.get(this.caller).events.emit("ui-resume");
-    }
+    this.scene.get(this.caller)?.events.emit("weapon-picked");
     this.scene.stop();
   }
 }

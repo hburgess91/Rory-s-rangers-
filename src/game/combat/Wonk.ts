@@ -60,7 +60,10 @@ export function startWonk(p: Player, now: number) {
   // hazards that chase you (the Giant Mincer) wait while you're busy krezzing
   (sc as unknown as { wonkUntil?: number }).wonkUntil = now + TIME + 3000;
   w.hitStop(200);
-  synth.play("wonk");
+  synth.charge();
+  // each lad moans in their own register
+  const pitch = ({ GRONNY: 0.75, KREZWONK: 0.85, KREBON: 0.9, KREZMAR: 0.95, SCROMBUS: 1, FLENKY: 1.05, MIKEY: 1.1, KREBLIS: 1.15, CRONGUS: 1.35 } as Record<string, number>)[p.id] ?? 1;
+  let nextMoan = 0;
 
   // ---- the "cutscene"
   const ui = sc.add.container(0, 0).setScrollFactor(0).setDepth(3500);
@@ -160,6 +163,12 @@ export function startWonk(p: Player, now: number) {
       prog.setSize(20, 256 * Math.min(1, inZone / NEED));
       timeBar.setSize(520 * Math.max(0, 1 - t / TIME), 10);
       const rate = presses.length;
+      // the moaning: more of it, louder and higher, the closer you get
+      if (t > nextMoan && rate > 0) {
+        nextMoan = t + 380 + Math.random() * 260 - Math.min(180, rate * 22);
+        const k = Math.min(1, gauge * 1.1);
+        synth.voice(gauge > ZONE_HI ? "grunt" : zone ? "oh" : Math.random() < 0.3 ? "grunt" : "mmm", 0.22 + k * 0.38, pitch * (0.88 + k * 0.4));
+      }
       hero.setX(320 + (Math.random() - 0.5) * Math.min(14, rate * 1.6));
       hero.setAngle((Math.random() - 0.5) * Math.min(8, rate));
       status.setText(gauge > ZONE_HI ? "TOO MUCH! EASE OFF!" : zone ? "IN THE ZONE..." : gauge > ZONE_LO - 0.2 ? "MORE!" : "WONK IT!").setColor(gauge > ZONE_HI ? "#f87171" : zone ? "#86efac" : "#ffffff");
@@ -186,6 +195,15 @@ export function startWonk(p: Player, now: number) {
     ui.add(big);
     sc.tweens.add({ targets: big, scale: 1, duration: 260, ease: "Back.out" });
     if (result !== "perfect") synth.play("trombone");
+    if (result === "perfect") {
+      // the big finish
+      synth.voice("oh", 0.8, pitch * 1.3);
+      synth.voice("grunt", 0.6, pitch * 1.1, 0.25);
+      synth.voice("oh", 0.75, pitch * 1.6, 0.45);
+    } else if (result === "over") {
+      synth.voice("grunt", 0.7, pitch * 0.8);
+      synth.voice("oh", 0.45, pitch * 0.65, 0.2);
+    } else synth.voice("mmm", 0.4, pitch * 0.75);
     sc.time.delayedCall(result === "perfect" ? 700 : 1100, () => {
       sc.tweens.add({ targets: ui, alpha: 0, duration: 220, onComplete: () => ui.destroy() });
       const n = w.now();
@@ -266,7 +284,7 @@ export function jetStream(p: Player, now: number) {
   let ang = tgt ? Math.atan2(tgt.y - p.y, tgt.x - p.x) : p.aim;
   const LEN = 1100;
   const WIDTH = 34;
-  synth.play("jet");
+  synth.laser((1300 + 500 * kd(G.s, "kd_krezzlong")) / 1000 + 0.3);
   w.shake(1300, 0.012);
   sc.cameras.main.flash(120, 255, 255, 255);
   w.floatText(p.x, p.y - 70, "WONK IT 'TIL YOU KREZZ!", "#ffffff", 24);

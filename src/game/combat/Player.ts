@@ -292,8 +292,7 @@ export class Player {
     if ((swapDown || swapEdge) && this.swapDownAt === 0) this.swapDownAt = now;
     if (swapDown && this.swapDownAt > 0 && now - this.swapDownAt > 260 && this.world.sc.scene.key === "Dungeon") {
       this.swapDownAt = -1; // consumed: wait for the key to come up
-      this.world.sc.scene.launch("WeaponPick", { caller: "Dungeon" });
-      this.world.sc.scene.pause();
+      (this.world.sc as unknown as { openWeaponPicker: () => void }).openWeaponPicker();
       return;
     }
     if (!swapDown && this.swapDownAt !== 0) {
@@ -443,7 +442,7 @@ export class Player {
       const beam = this.world.sc.add.rectangle(mx, my, g.range, 3, g.color, 0.7).setOrigin(0, 0.5).setRotation(this.aim).setDepth(598);
       this.world.sc.tweens.add({ targets: beam, alpha: 0, scaleY: 4, duration: 180, onComplete: () => beam.destroy() });
     }
-    synth.play(g.id === "rocket" || g.id === "disco" ? "lob" : g.id === "chainsaw" || g.id === "kreddler" ? "gun_smg" : g.id === "flush" ? "gun_shotgun" : `gun_${g.id}`);
+    synth.play(g.id === "rocket" ? "lob" : `gun_${g.id}`);
     if (g.id === "shotgun" || g.id === "rocket") this.world.shake(70, 0.003);
     if (s.guns[g.id] === 0) this.world.floatText(this.x, this.y - 44, "LAST ONE", "#ffd23f", 12);
     return true;

@@ -122,6 +122,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   spice: Spice | null = null;
   private lastKillStop = 0;
   private lastSplat = 0;
+  /** 1 = normal speed. The weapon picker drops it right down. */
+  private slowmo = 1;
+  /** The weapon picker is open: the world crawls and you're choosing, not fighting. */
+  picking = false;
   private lastMeterHit = 0;
   /** Kills since the last ammo drop (bad-luck protection). */
   private ammoDry = 0;
@@ -165,6 +169,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = false;
     this.paused = false;
     this.dying = false;
+    this.picking = false;
+    this.slowmo = 1;
+    this.vClock = this.time.now;
     this.rule = null;
     this.machineUses = {};
     this.lastWitness = "none";
@@ -179,8 +186,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.rushIdx = Math.max(0, Math.min(data.rush ?? 0, this.room?.bossRush?.length ?? 0));
   }
 
+  /** The fight's own clock: runs at the slow-motion rate (Phaser's scene clock doesn't). */
+  private vClock = 0;
   now() {
-    return this.time.now;
+    return this.vClock;
   }
 
   create() {
@@ -2336,7 +2345,31 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   // ------------------------------------------------------------------ update
 
+  /** Bullet time: everything (timers, tweens, physics, the update loop) runs at `k` speed. */
+  setSlowmo(k: number) {
+    this.slowmo = k;
+    this.time.timeScale = k;
+    this.tweens.timeScale = k;
+    this.physics.world.timeScale = 1 / k;
+  }
+
+  /** Hold SWAP: the action slows right down and the weapon picker opens. */
+  openWeaponPicker() {
+    if (this.picking || this.busy || this.dying) return;
+    this.picking = true;
+    this.setSlowmo(0.08);
+    (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    this.events.once("weapon-picked", () => {
+      this.picking = false;
+      this.setSlowmo(1);
+      this.controls.swallow();
+    });
+    this.scene.launch("WeaponPick", { caller: "Dungeon" });
+  }
+
   update(time: number, delta: number) {
+    delta *= this.slowmo;
+    this.vClock += delta;
     if (!this.player || this.transitioning || !this.player.spr.body) return;
     if (this.controls.pause() && !this.busy && !this.dying) {
       this.scene.launch("Menu", { mode: "pause", caller: "Dungeon" });
@@ -2370,7 +2403,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const ne = this.nearestEnemy(this.player.x, this.player.y, 520);
     this.controls.autoAim = ne ? Math.atan2(ne.y - this.player.y, ne.x - this.player.x) : null;
     this.controls.autoAimPoint = ne ? { x: ne.x, y: ne.y } : { x: this.player.x + Math.cos(this.player.aim) * 180, y: this.player.y + Math.sin(this.player.aim) * 180 };
-    if (!this.busy) this.player.update(dt, now, this.controls);
+    if (!this.busy && !this.picking) this.player.update(dt, now, this.controls);
     else (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     {
       const pb = this.player.spr.body as Phaser.Physics.Arcade.Body;

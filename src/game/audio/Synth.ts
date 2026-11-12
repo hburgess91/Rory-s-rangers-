@@ -258,6 +258,140 @@ export class Synth {
     if (kind !== "mmm") this.burst(dur * 0.6, vol * (kind === "grunt" ? 0.5 : 0.18), when, kind === "grunt" ? 700 : 1400, undefined, 0.6);
   }
 
+  // ------------------------------------------------------------ the gun kit: punchy, layered, a bit gritty
+
+  private crunchNode: WaveShaperNode | null = null;
+  /** A soft-clipping bus that gives gunshots some grit. */
+  private crunch(): AudioNode {
+    if (!this.ctx) return this.sfxGain;
+    if (!this.crunchNode) {
+      const ws = this.ctx.createWaveShaper();
+      const n = 1024;
+      const curve = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const x = (i / (n - 1)) * 2 - 1;
+        curve[i] = Math.tanh(x * 3.2) / Math.tanh(3.2);
+      }
+      ws.curve = curve;
+      ws.connect(this.sfxGain);
+      this.crunchNode = ws;
+    }
+    return this.crunchNode;
+  }
+
+  /** The crack of a shot: noise through a low-pass that snaps shut. */
+  private crack(dur: number, vol: number, from = 7000, to = 600, when = 0, dest?: AudioNode) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + when;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noise;
+    const f = this.ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(from, t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(60, to), t + dur);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(dest ?? this.crunch());
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + dur + 0.02);
+  }
+
+  /** The punch underneath: a sine that drops in pitch. */
+  private thump(f0: number, f1: number, dur: number, vol: number, when = 0) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + when;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    g.connect(this.crunch());
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+
+  /** A whoosh: noise through a band-pass that sweeps. */
+  private whoosh(dur: number, vol: number, from: number, to: number, when = 0, q = 1.2) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + when;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noise;
+    const f = this.ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.Q.value = q;
+    f.frequency.setValueAtTime(from, t);
+    f.frequency.exponentialRampToValueAtTime(to, t + dur);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.25);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(this.sfxGain);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + dur + 0.02);
+  }
+
+  /**
+   * THE KREZZ LASER: a charge, a zap, then a fat wobbling beam for `dur` seconds that fades out.
+   */
+  laser(dur = 1.6) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    // the zap
+    this.tone(2400, 0.18, "sawtooth", 0.22, 0, 0.12);
+    this.crack(0.15, 0.4, 9000, 1500);
+    // the beam: two detuned saws and a sine an octave up, through a sweeping filter, with a wobble
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.32, t + 0.08);
+    out.gain.setValueAtTime(0.32, t + Math.max(0.1, dur - 0.35));
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.Q.value = 6;
+    f.frequency.setValueAtTime(600, t);
+    f.frequency.exponentialRampToValueAtTime(2600, t + 0.25);
+    f.frequency.exponentialRampToValueAtTime(900, t + dur);
+    f.connect(out);
+    out.connect(this.sfxGain);
+    const lfo = ctx.createOscillator();
+    const lg = ctx.createGain();
+    lfo.frequency.value = 11;
+    lg.gain.value = 9;
+    lfo.connect(lg);
+    for (const [fq, type, v] of [[196, "sawtooth", 0.5], [199, "sawtooth", 0.5], [392, "sine", 0.6]] as [number, OscillatorType, number][]) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(fq, t);
+      lg.connect(o.frequency);
+      g.gain.value = v;
+      o.connect(g);
+      g.connect(f);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    }
+    lfo.start(t);
+    lfo.stop(t + dur + 0.05);
+    // and a crackle all the way along
+    for (let k = 0.1; k < dur - 0.2; k += 0.18 + Math.random() * 0.1) this.burst(0.06, 0.08, k, 5000 + Math.random() * 2000, undefined, 3);
+  }
+
+  /** The charge-up before you krezz. */
+  charge() {
+    this.tone(140, 0.7, "sawtooth", 0.14, 0, 6);
+    this.tone(70, 0.7, "sine", 0.25, 0, 3);
+    this.whoosh(0.7, 0.18, 300, 3000);
+  }
+
   private burst(dur: number, vol: number, when = 0, filterFreq = 2000, dest?: AudioNode, q = 0.7) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime + when;
@@ -489,22 +623,69 @@ export class Synth {
         this.tone(1050, 0.1, "square", 0.12, 0.08);
         break;
       case "gun_pistol":
-        this.burst(0.08, 0.35, 0, 3000, undefined, 0.6);
-        this.tone(520, 0.07, "square", 0.15, 0, 0.4);
+        this.crack(0.13, 0.55, 7000, 700);
+        this.thump(190 * (0.95 + Math.random() * 0.1), 55, 0.11, 0.6);
+        this.tone(1900, 0.012, "square", 0.12);
         break;
       case "gun_smg":
-        this.burst(0.05, 0.22, 0, 4000, undefined, 0.7);
+        this.crack(0.07, 0.38, 6500, 900);
+        this.thump(230 * (0.92 + Math.random() * 0.16), 80, 0.06, 0.4);
         break;
       case "gun_shotgun":
-        this.burst(0.3, 0.6, 0, 900, undefined, 0.4);
-        this.tone(120, 0.18, "sawtooth", 0.25, 0, 0.4);
+        this.crack(0.38, 0.85, 5000, 220);
+        this.thump(130, 38, 0.32, 0.9);
+        // chk-chk
+        this.burst(0.03, 0.25, 0.3, 2500, undefined, 4);
+        this.burst(0.04, 0.3, 0.38, 1800, undefined, 4);
         break;
       case "gun_rail":
-        this.tone(1800, 0.35, "sawtooth", 0.18, 0, 0.1);
-        this.burst(0.2, 0.3, 0, 6000, undefined, 0.5);
+        this.tone(500, 0.07, "sawtooth", 0.12, 0, 5);
+        this.tone(2800, 0.4, "sawtooth", 0.2, 0.06, 0.08);
+        this.crack(0.3, 0.4, 12000, 3000, 0.06);
+        this.thump(160, 40, 0.25, 0.5, 0.06);
+        break;
+      case "gun_gatling":
+        this.crack(0.06, 0.35, 5500, 1200);
+        this.burst(0.05, 0.18, 0, 2600, undefined, 4);
+        this.thump(260 * (0.9 + Math.random() * 0.2), 90, 0.05, 0.35);
+        break;
+      case "gun_sniper":
+        this.crack(0.45, 0.9, 9000, 300);
+        this.thump(100, 28, 0.4, 0.9);
+        // the echo off the far wall
+        this.crack(0.35, 0.22, 2500, 200, 0.22);
+        break;
+      case "gun_flamer":
+        this.whoosh(0.2, 0.3, 700, 300 + Math.random() * 200, 0, 0.8);
+        this.burst(0.12, 0.1, 0, 4000, undefined, 2);
+        break;
+      case "gun_bfk":
+        this.thump(85, 22, 0.7, 1);
+        this.crack(0.6, 0.9, 4000, 120);
+        this.burst(0.9, 0.35, 0.05, 260, undefined, 0.6);
+        break;
+      case "gun_chainsaw":
+        // a rev that, fired fast, blurs into a snarl
+        this.tone(68 + Math.random() * 14, 0.08, "sawtooth", 0.2, 0, 1.25);
+        this.burst(0.07, 0.16, 0, 1400, undefined, 2.5);
+        break;
+      case "gun_kreddler":
+        this.crack(0.05, 0.32, 7000, 1400);
+        this.thump(300 * (0.9 + Math.random() * 0.2), 110, 0.045, 0.3);
+        this.tone(420, 0.05, "triangle", 0.05);
+        break;
+      case "gun_disco":
+        this.whoosh(0.3, 0.3, 400, 2400);
+        this.thump(220, 80, 0.15, 0.5);
+        [1568, 2093, 2637].forEach((f, i) => this.tone(f, 0.12, "sine", 0.1, 0.05 + i * 0.05));
+        break;
+      case "gun_flush":
+        for (let i = 0; i < 3; i++) this.burst(0.035, 0.28, i * 0.025, 4200, undefined, 2.5);
+        this.tone(900, 0.06, "triangle", 0.12, 0, 2);
         break;
       case "lob":
-        this.tone(300, 0.2, "triangle", 0.2, 0, 2);
+        this.whoosh(0.35, 0.3, 300, 1800);
+        this.thump(180, 60, 0.18, 0.6);
         break;
       case "explode":
       case "boom":

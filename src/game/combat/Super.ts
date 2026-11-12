@@ -249,7 +249,7 @@ export function cumehameha(p: Player, now: number) {
     halo.destroy();
     if (p.dead) return;
     w.floatText(p.x, p.y - 100, "HAAAAAAAAAAA!!!", "#ffffff", 30);
-    synth.play("jet");
+    synth.laser(1.4);
     w.shake(900, 0.022);
     sc.cameras.main.flash(160, 220, 235, 255);
     const ang = p.aim;
