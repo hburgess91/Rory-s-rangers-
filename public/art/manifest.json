@@ -4497,7 +4497,7 @@
    "file": "props/d_statue.png"
   },
   "d_statue": {
-   "file": "props/d_statue.png"
+   "file": "props/home/d_statue.png"
   },
   "hd_swings": {
    "file": "props/d_swings.png"
@@ -5522,6 +5522,39 @@
   },
   "wall_colon": {
    "file": "props/wall_colon.png"
+  },
+  "d_disco": {
+   "file": "props/home/d_disco.png"
+  },
+  "d_fish": {
+   "file": "props/home/d_fish.png"
+  },
+  "d_lava": {
+   "file": "props/home/d_lava.png"
+  },
+  "d_plant": {
+   "file": "props/home/d_plant.png"
+  },
+  "d_rug": {
+   "file": "props/home/d_rug.png"
+  },
+  "d_slot": {
+   "file": "props/home/d_slot.png"
+  },
+  "d_toilet": {
+   "file": "props/home/d_toilet.png"
+  },
+  "p_console": {
+   "file": "props/home/p_console.png"
+  },
+  "p_gunrack": {
+   "file": "props/home/p_gunrack.png"
+  },
+  "p_laptop": {
+   "file": "props/home/p_laptop.png"
+  },
+  "p_trophyshelf": {
+   "file": "props/home/p_trophyshelf.png"
   }
  },
  "sheets": {

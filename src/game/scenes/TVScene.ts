@@ -279,6 +279,14 @@ export class TVScene extends Phaser.Scene {
     });
     items.push({ label: "⏏ Turn off", dim: false, action: () => this.exit() });
     this.renderList(this.fromTitle ? "KRELWORLD MEDIA ARCHIVE" : "KRELTV — CHANNEL GUIDE", items);
+    if (!this.fromTitle) {
+      // the TV log: what you've seen, what's left, and how many gifts are still out there
+      const all = ALL_EPISODES.filter((e) => this.unlocked(e));
+      const seen = all.filter((e) => G.s.tvWatched.includes(e.id)).length;
+      const locked = ALL_EPISODES.length - all.length;
+      const log = `📺 TV LOG · Seen ${seen} of ${all.length} · 🎁 ${all.length - seen} Kreddle gift${all.length - seen === 1 ? "" : "s"} still to claim${locked ? ` · 🔒 ${locked} more shows unlock as the story goes on` : ""}`;
+      this.ui.add(this.add.text(SX + SW / 2, SY + SH - 22, log, { fontFamily: FONT, fontSize: "12px", color: "#facc15", align: "center", wordWrap: { width: SW - 30 } }).setOrigin(0.5));
+    }
   }
 
   /** While the Crobley story is breaking, every channel is the Crobley story. */

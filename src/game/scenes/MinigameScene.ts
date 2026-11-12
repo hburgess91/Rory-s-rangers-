@@ -1,3 +1,4 @@
+import { addKrokens } from "../systems/kreddle";
 import Phaser from "phaser";
 import type { Line } from "../../data/types";
 import { G } from "../G";
@@ -69,8 +70,12 @@ export class MinigameScene extends Phaser.Scene {
   private resume: { dungeon: string; room: number } | null = null;
   private startData: any = null;
 
-  create(data: { mode: string; returnAt?: string; chain?: string[]; resume?: { dungeon: string; room: number } }) {
+  /** Played on the games console at home: back home after, with a few Krokens for a win. */
+  private fromConsole = false;
+
+  create(data: { mode: string; returnAt?: string; chain?: string[]; resume?: { dungeon: string; room: number }; console?: boolean }) {
     this.startData = data;
+    this.fromConsole = !!data.console;
     this.chain = data.chain ?? [];
     this.resume = data.resume ?? null;
     this.mode = data.mode;
@@ -125,6 +130,20 @@ export class MinigameScene extends Phaser.Scene {
       }
     }
     if (success) G.s.flags[`mg_${this.mode}_won`] = true;
+    G.s.flags[`mg_${this.mode}_played`] = true;
+    if (this.fromConsole) {
+      // a win on the console pays out once per game per chapter
+      const k = `console_${this.mode}_ch${G.s.chapter}`;
+      if (success && !G.s.flags[k]) {
+        G.s.flags[k] = true;
+        addKrokens(G.s, 5);
+        lines.push(dir("🎮 CONSOLE WIN: +5 Krokens. (Each game pays out once a chapter.)"));
+      } else lines.push(dir(success ? "🎮 You win. (You've already had this chapter's Krokens for this one.)" : "🎮 GAME OVER. Have another go?"));
+      G.save();
+      await this.box.play(lines);
+      fadeThen(this, 250, () => switchTo(this, "Home", { from: "console" }));
+      return;
+    }
     G.save();
     if (this.resume) {
       // part of a level: win to carry on, lose to go again

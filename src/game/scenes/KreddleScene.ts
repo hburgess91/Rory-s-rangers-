@@ -8,6 +8,7 @@ import { FONT, button } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { animateWalker } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { DECOR } from "../../content/home";
 import { INSULT, KRUNCHERS, KRUNCHER_BOAST, LOCAL_CHAT, PRIZE, PRIZES, SHOVES, WELCOME_SPEECH } from "../../content/kreddle";
 import { addKrokens, awardPrize, kd, krokenPrice, krokens, prizeOpen, rollPrize } from "../systems/kreddle";
 import type { Line } from "../../data/types";
@@ -1007,18 +1008,80 @@ export class KreddleScene extends Phaser.Scene {
   private exchange() {
     this.openPanel("THE KREDDLE EXCHANGE", "#facc15");
     this.add2(this.add.text(480, 120, "Kreddle took over the Central Bank of Krelworld. It was a very short negotiation.", { fontFamily: FONT, fontSize: "13px", color: "#c4b5fd", align: "center", wordWrap: { width: 640 } }).setOrigin(0.5));
-    this.btn(480, 215, `🎟  PRIZE COUNTER\nSpend Krokens (you have ${krokens(G.s)}) on Kreddle prizes`, () => {
+    this.btn(480, 190, `🎟  PRIZE COUNTER\nSpend Krokens (you have ${krokens(G.s)}) on Kreddle prizes`, () => {
       this.closePanel();
       this.prizeCounter();
-    }, 540, 0x3b0764, 72);
-    this.btn(480, 325, `💰  KREZZCOIN COUNTER\nSpend Krezzcoin (you have ${G.s.coins}) on upgrades, guns, ammo, perks and lads`, () => {
+    }, 540, 0x3b0764, 66);
+    this.btn(480, 275, `💰  KREZZCOIN COUNTER\nSpend Krezzcoin (you have ${G.s.coins}) on upgrades, guns, ammo, perks and lads`, () => {
       this.closePanel();
       this.krezzcoinCounter();
-    }, 540, 0x14532d, 72);
-    this.btn(480, 440, "LEAVE", () => this.closePanel(), 160);
+    }, 540, 0x14532d, 66);
+    this.btn(480, 360, `🏠  HOME FURNISHINGS\nSpend Krokens on things for your flat (they turn up at home)`, () => {
+      this.closePanel();
+      this.furnishings();
+    }, 540, 0x7c2d12, 66);
+    this.btn(480, 450, "LEAVE", () => this.closePanel(), 160);
     this.key("ESC", () => this.closePanel());
     this.key("ONE", () => (this.closePanel(), this.prizeCounter()));
     this.key("TWO", () => (this.closePanel(), this.krezzcoinCounter()));
+    this.key("THREE", () => (this.closePanel(), this.furnishings()));
+  }
+
+  /** HOME FURNISHINGS: Kreddle tat for your flat. */
+  private furnishings(sel = 0) {
+    const s = G.s;
+    this.openPanel("HOME FURNISHINGS", "#fb923c");
+    this.add2(this.add.text(480, 92, `🎟 ${krokens(s)} KROKENS · everything is delivered to your flat, immediately, by a man called Kev`, { fontFamily: FONT, fontSize: "13px", color: "#38bdf8", fontStyle: "bold" }).setOrigin(0.5));
+    const info = this.add2(this.add.text(480, 400, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", align: "center", wordWrap: { width: 680 } }).setOrigin(0.5));
+    const rows = DECOR.map((d, i) => {
+      const owned = (s.upgrades[`home_${d.id}`] ?? 0) > 0;
+      const x = 330 + (i % 2) * 300;
+      const y = 140 + Math.floor(i / 2) * 50;
+      const b = this.btn(x, y, `${d.icon} ${d.name}  ·  ${owned ? "IN YOUR FLAT" : `${d.price} 🎟`}`, () => void buy(i), 288, owned ? 0x1f1f2e : krokens(s) >= d.price ? 0x7c2d12 : 0x27213a);
+      (b as unknown as { label: Phaser.GameObjects.Text }).label.setFontSize(12);
+      (b as unknown as { bg: Phaser.GameObjects.Rectangle }).bg.setSize(288, 42);
+      return { d, b, owned };
+    });
+    let cur = Math.min(sel, rows.length - 1);
+    const mark = this.add2(this.add.rectangle(0, 0, 294, 46).setStrokeStyle(3, 0xfb923c).setFillStyle(0, 0));
+    const focus = () => {
+      const r = rows[cur];
+      mark.setPosition(r.b.x, r.b.y);
+      info.setText(`${r.d.icon} ${r.d.name}: ${r.d.desc}`).setColor("#ffffff");
+    };
+    focus();
+    const buy = (i: number) => {
+      if (!this.panelRoot) return;
+      cur = i;
+      focus();
+      const r = rows[i];
+      if (r.owned) {
+        info.setText(`${r.d.name}: it's already in your flat.`).setColor("#facc15");
+        return;
+      }
+      if (krokens(G.s) < r.d.price) {
+        info.setText(`${r.d.name} costs ${r.d.price} Krokens. You have ${krokens(G.s)}. Go and gamble.`).setColor("#ef4444");
+        synth.play("tap_fail");
+        return;
+      }
+      addKrokens(G.s, -r.d.price);
+      G.s.upgrades[`home_${r.d.id}`] = 1;
+      G.save();
+      synth.play("cheer");
+      this.closePanel();
+      this.furnishings(i);
+    };
+    this.btn(480, 470, "LEAVE", () => this.closePanel(), 140);
+    const move = (d: number) => {
+      cur = (cur + d + rows.length) % rows.length;
+      focus();
+    };
+    this.key("LEFT", () => move(-1));
+    this.key("RIGHT", () => move(1));
+    this.key("UP", () => move(-2));
+    this.key("DOWN", () => move(2));
+    this.key("SPACE", () => buy(cur));
+    this.key("ESC", () => this.closePanel());
   }
 
   /** The old bank menu, now Kreddle's. */

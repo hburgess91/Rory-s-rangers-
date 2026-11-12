@@ -797,6 +797,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       "bellybomb",
     );
     bump(s, "kreltalities");
+    s.flags.krel_rik = true;
     bg.destroy();
     tub.destroy();
     cam.startFollow(this.player.spr, true, 0.12, 0.12);
@@ -1490,7 +1491,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const phd = (ps.texture.customData as { hd?: number } | undefined)?.hd ?? 1;
     this.busy = true;
     const done = await kreltality(this, this.krelTarget, { key: ps.texture.key, frame: 0, scale: ps.scaleX / phd });
-    if (done) bump(G.s, "kreltalities");
+    if (done) {
+      bump(G.s, "kreltalities");
+      G.s.flags[`krel_${b.bossId}`] = true; // a trophy for the shelf at home
+    }
     this.krelTarget = null;
     this.cameras.main.startFollow(this.player.spr, true, 0.12, 0.12);
   }
