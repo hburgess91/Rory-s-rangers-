@@ -1,10 +1,10 @@
 import type { Cond } from "./types";
 import { goat } from "../content/dsl";
 
-export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki";
+export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki" | "colon";
 
 export interface PropDef {
-  kind: "talker" | "mollor" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
+  kind: "bomb_spot" | "crystal_wall" | "talker" | "mollor" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
   x: number; // 0..1 of room width
   y: number; // 0..1 of room height
   id?: string;
@@ -26,7 +26,7 @@ export interface RoomDef {
   waves?: [string, number][][];
   props?: PropDef[];
   /** Special scripted event handled by the dungeon scene. */
-  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem";
+  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon";
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
@@ -410,48 +410,6 @@ export const DUNGEONS: Record<string, DungeonDef> = {
       },
     ],
   },
-  bonky_temple: {
-    id: "bonky_temple",
-    chapter: 4,
-    name: "THE BONKY TEMPLE",
-    music: "temple",
-    rooms: [
-      {
-        name: "The Temple Steps",
-        w: 1200,
-        h: 760,
-        theme: "temple",
-        rule: "still",
-        waves: [[["cultist", 6]], [["decree_drone", 3]]],
-        enterLines: [{ s: "NARRATOR", t: "The Bonky Temple. Built from a nickname: 'the bro formerly known as Bonky Bonkit'. Drongus rules are enforced here. Watch your BAN RISK meter.", dir: true }],
-      },
-      {
-        name: "Hall of Commandments",
-        w: 1300,
-        h: 780,
-        theme: "temple",
-        rule: "dodge",
-        waves: [[["cultist", 5], ["hammerling", 1], ["decree_turret", 1], ["bonky_bouncer", 2]], [["decree_drone", 3], ["cultist", 3]]],
-        enterLines: [{ s: "NARRATOR", t: "Commandment carved over the door: 'THOU SHALT REACT'. Underneath, smaller: 'THOU SHALT NOT DODGE (TODAY)'.", dir: true }],
-      },
-      {
-        name: "Shrine of the Nuclear Option",
-        w: 1300,
-        h: 800,
-        theme: "temple",
-        rule: "heal",
-        waves: [[["hammerling", 2], ["decree_drone", 2]], [["cultist", 6], ["hammerling", 1]], [["bonky_bouncer", 3], ["decree_turret", 2]]],
-        props: [{ kind: "sign", x: 0.5, y: 0.15, label: "THE NUCLEAR OPTION — est. 14/04/2022 by DRONGUS (Archive vandalism: ignore)" }],
-      },
-      {
-        name: "The Inner Sanctum",
-        w: 1300,
-        h: 860,
-        theme: "temple",
-        boss: "banhammer",
-      },
-    ],
-  },
   citadel: {
     id: "citadel",
     chapter: 6,
@@ -682,9 +640,41 @@ export const DUNGEONS: Record<string, DungeonDef> = {
       },
     ],
   },
+  rik_colon: {
+    id: "rik_colon",
+    chapter: 5,
+    name: "INSIDE UNCLE RIK (THE TRANSVERSE COLON)",
+    music: "ominous",
+    returnAt: "PUB",
+    rooms: [
+      {
+        name: "Uncle Rik's Transverse Colon",
+        w: 1500,
+        h: 900,
+        theme: "colon",
+        event: "colon",
+        exitFlag: "rik_bombs_done",
+        exitHint: "There's no way out but through. Plant all four bombs.",
+        waves: [[["gerbil", 6], ["poo", 3]], [["tumor", 3], ["gerbil", 5]], [["poo", 4], ["tumor", 2], ["gerbil", 7]]],
+        props: [
+          { kind: "crystal_wall", x: 0.5, y: 0.2, id: "rik_crystal" },
+          { kind: "bomb_spot", x: 0.14, y: 0.36, id: "b1" },
+          { kind: "bomb_spot", x: 0.86, y: 0.36, id: "b2" },
+          { kind: "bomb_spot", x: 0.2, y: 0.82, id: "b3" },
+          { kind: "bomb_spot", x: 0.8, y: 0.82, id: "b4" },
+        ],
+        enterLines: [
+          { s: "NARRATOR", t: "You are four millimetres tall, and you are inside Uncle Rik's large intestine. Specifically the transverse colon. The walls are pink, ridged (haustra) and wet (mucosa). They are slowly contracting (peristalsis).", dir: true },
+          { s: "GENIE", t: "(on the radio, from the lamp) Peristalsis. That's the squeezing. Don't touch the walls. Don't touch ANYTHING. Oh god, I'm going to be sick in my own lamp." },
+          { s: "SANMIK", t: "(on the radio) Find the crystal. Plant the bombs. Get out. Yee." },
+          { s: "NARRATOR", t: "Something in the dark is gnawing. Something else is screaming about being cancerous. TIP: prise the cum crystal out of the wall, then plant all four bombs (E on the red circles).", dir: true },
+        ],
+      },
+    ],
+  },
   crobley_factory: {
     id: "crobley_factory",
-    chapter: 0,
+    chapter: 4,
     view: "side",
     name: "THE CROBLEY FACTORY",
     music: "crobley_factory",

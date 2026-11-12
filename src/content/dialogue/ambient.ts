@@ -173,7 +173,7 @@ export const BARKS: Record<string, Bark[]> = {
     b("Breaking news: nothing has ever been normal here."),
     b("I've already phoned the real police. Again."),
     b("Threat level purple means… we act accordingly.", { chapterAtLeast: 2 }),
-    b("The Bonky Cult's banning people for blinking now.", { chapterAtLeast: 4 }),
+    b("Swig's factory's running all night. You can smell the crobleys from here.", { chapterAtLeast: 4 }),
   ],
   KREZWONK: [
     b("On the HGH now. My jaw's thinking about things.", { chapterAtLeast: 2, chapterAtMost: 3 }),

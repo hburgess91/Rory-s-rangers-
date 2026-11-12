@@ -51,7 +51,6 @@ const BUILDINGS: Building[] = [
   { id: "HOME", name: "YOUR HOUSE", x: 520, y: 1250, w: 260, h: 180, wall: 0xb08d57, roof: 0x7a1f2b, door: { x: 520, y: 1340 } },
   { id: "WILDERN", name: "WILDERN ACADEMY (Krelford)", x: 1280, y: 1300, w: 420, h: 220, wall: 0xa0522d, roof: 0x5a5a6a, door: { x: 1280, y: 1410 } },
   { id: "MINISTRY", name: "MINISTRY OF BONER CONTROL", x: 2000, y: 1270, w: 340, h: 220, wall: 0x4b5563, roof: 0xd97706, door: { x: 2000, y: 1380 } },
-  { id: "BONKY_TEMPLE", name: "THE BONKY TEMPLE", x: 2300, y: 220, w: 300, h: 200, wall: 0xc9a227, roof: 0x7c2d12, door: { x: 2300, y: 320 } },
   { id: "UNIVERSITY", name: "KRELFORD UNIVERSITY (Dept. of Philosophy & Psychology)", x: 840, y: 1260, w: 260, h: 180, wall: 0xb9b2a0, roof: 0x1e3a5f, door: { x: 840, y: 1350 } },
   { id: "GYM", name: "KRUNCH GYM", x: 2350, y: 600, w: 240, h: 170, wall: 0x3f3f46, roof: 0xf97316, door: { x: 2350, y: 685 } },
   { id: "FIXER_UPPER", name: "FIXER-UPPER (FOR SALE, AS SEEN)", x: 2350, y: 1300, w: 220, h: 160, wall: 0x8a7f6a, roof: 0x4a3f2f, door: { x: 2350, y: 1380 } },
@@ -1964,7 +1963,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "HOME":
         return "Go home (sleep · save · TV)";
       case "BAN_TRIBUNAL":
-        return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the constitutional crisis)";
+        return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the Cronster briefing)";
       case "BOOTH":
         return "The Booth (Bully Mikey · vent your frustration)";
       case "CROBLEY_FACTORY":
@@ -1991,7 +1990,6 @@ You are required by law to sign the Sex Offenders Register.`, {
         return `DA DRONGUS DUNGEON (sealed: ${crystalCount(s)}/${CRYSTALS_NEEDED} cum crystals)`;
       case "WILDERN":
       case "MINISTRY":
-      case "BONKY_TEMPLE":
       case "POLSON_ROAD":
         return `${b.name} (not this chapter)`;
     }
@@ -2122,6 +2120,11 @@ You are required by law to sign the Sex Offenders Register.`, {
         );
         return;
       case "POLICE":
+        if (s.chapter === 4 && s.flags.crobley_briefed && !s.flags.vig_crobley_presser) {
+          await this.talk([dir("The Constabulary briefing room is packed. Every journalist in Krelford is here. Most of them are wearing stab vests. They've met Swig before.")]);
+          this.go("Vignette", { id: "crobley_presser", returnAt: "POLICE" });
+          return;
+        }
         await this.talk(
           s.flags.cronster_caught
             ? [dir("Krelford Constabulary. Sergeant Swig is asleep at his desk, surrounded by wrappers. A sign reads 'CRONSTER: CAUGHT (by us, basically)'.")]
@@ -2206,6 +2209,12 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       }
       case "HOME":
+        // Chapter 4: the telly's already on, and it's the Crobley story
+        if (s.chapter === 4 && !s.flags.vig_crobley_news) {
+          await this.talk([dir("You get in, put the telly on. Every channel is showing the same thing.")]);
+          this.go("Vignette", { id: "crobley_news", returnAt: "HOME" });
+          return;
+        }
         this.go("Home", {});
         return;
       case "BAN_TRIBUNAL":

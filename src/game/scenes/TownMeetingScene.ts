@@ -85,7 +85,7 @@ export class TownMeetingScene extends Phaser.Scene {
     }
     // podium screen
     this.add.rectangle(W / 2, 52, 230, 80, 0x0a0a12).setStrokeStyle(4, 0x444466);
-    this.screenText = this.add.text(W / 2, 52, fgm ? "OPERATION FRAGMAR\nCLASSIFICATION: EXTREMELY PETTY" : "THE KREZZING HOUR\nSeen by 9", { fontFamily: FONT, fontSize: "13px", color: "#7fb3ff", align: "center" }).setOrigin(0.5);
+    this.screenText = this.add.text(W / 2, 52, fgm ? (m.id === "crobley_briefing" ? "OPERATION NIBBLE\nCLASSIFICATION: CHEWY" : "OPERATION FRAGMAR\nCLASSIFICATION: EXTREMELY PETTY") : "THE KREZZING HOUR\nSeen by 9", { fontFamily: FONT, fontSize: "13px", color: "#7fb3ff", align: "center" }).setOrigin(0.5);
     // reaction display
     this.add.rectangle(W - 120, 60, 210, 90, 0x0a0a12).setStrokeStyle(3, UI.messenger);
     this.add.text(W - 120, 26, "NATIONAL REACTION DISPLAY", { fontFamily: FONT, fontSize: "10px", color: "#7fb3ff" }).setOrigin(0.5);
@@ -100,7 +100,7 @@ export class TownMeetingScene extends Phaser.Scene {
     // horseshoe table (half-ellipse)
     if (this.textures.exists("p_meeting_table")) {
       this.add.image(W / 2, 258, "p_meeting_table").setScale(1.5).setDepth(2);
-      if (fgm) this.add.text(W / 2, 290, "12:00 MIDDAY · OPERATION FRAGMAR", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(3);
+      if (fgm) this.add.text(W / 2, 290, m.id === "crobley_briefing" ? "OPERATION NIBBLE" : "12:00 MIDDAY · OPERATION FRAGMAR", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(3);
       return;
     }
     const g = this.add.graphics();

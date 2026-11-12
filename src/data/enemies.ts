@@ -17,6 +17,8 @@ export interface EnemyDef {
   krezz: number;
   counter?: string;
   spawns?: string;
+  /** Things it shouts now and then. */
+  shout?: string[];
 }
 
 export const ENEMIES: Record<string, EnemyDef> = {
@@ -65,6 +67,10 @@ export const ENEMIES: Record<string, EnemyDef> = {
   // The SanMikverse (Catford, allegedly)
   catford_fox: { id: "catford_fox", name: "Catford Fox", behavior: "swarm", hp: 18, speed: 150, damage: 7, size: 11, color: 0xf97316, accent: 0xffffff, shape: "mite", coins: 2, krezz: 2 },
   imaginary_mandem: { id: "imaginary_mandem", name: "Imaginary Mandem", behavior: "blinker", hp: 46, speed: 105, damage: 13, size: 16, color: 0x6b21a8, accent: 0xe9d5ff, shape: "ghost", label: "?", coins: 6, krezz: 5 },
+  // Inside Uncle Rik
+  gerbil: { id: "gerbil", name: "Deranged Gerbil", behavior: "swarm", hp: 22, speed: 165, damage: 8, size: 13, color: 0xd6a36b, accent: 0xef4444, shape: "mite", coins: 2, krezz: 2, shout: ["SKREEEE!", "SQUEEEAK!", "*frenzied gnawing*", "HE PUT ME HERE IN 2009!", "SKRRRK!"] },
+  tumor: { id: "tumor", name: "Cancerous Tumour", behavior: "turret", hp: 110, speed: 0, damage: 12, size: 20, color: 0xa855f7, accent: 0xf472b6, shape: "blob", projectile: { speed: 190, damage: 11, color: 0xc084fc, rate: 1600, spread: 0.3, count: 3 }, coins: 8, krezz: 6, shout: ["ARGHH IM A CANCEROUS TUMOR", "ARGHH IM A CANCEROUS TUMOR", "ARGHH IM A CANCEROUS TUMOR!!!"] },
+  poo: { id: "poo", name: "A Piece Of Poo", behavior: "chaser", hp: 34, speed: 70, damage: 10, size: 15, color: 0x7c4a1e, accent: 0x3f2a12, shape: "blob", coins: 3, krezz: 3, shout: ["*squelch*", "Oi.", "*plop*"] },
   corn_turd: { id: "corn_turd", name: "Turd (Has Got Corn In It)", behavior: "bomber", hp: 34, speed: 100, damage: 20, size: 14, color: 0x7c4a1e, accent: 0xfde047, shape: "blob", label: ":", coins: 4, krezz: 4 },
   jobcentre: { id: "jobcentre", name: "Job Centre Plus Advisor", behavior: "shooter", hp: 50, speed: 70, damage: 11, size: 16, color: 0x1e40af, accent: 0xfacc15, shape: "humanoid", label: "JC", projectile: { speed: 210, damage: 10, color: 0xf1f5f9, rate: 1300, spread: 0.2, count: 2 }, coins: 6, krezz: 5 },
   wet_pizza: { id: "wet_pizza", name: "Wet Pizza", behavior: "charger", hp: 52, speed: 90, damage: 14, size: 17, color: 0xf59e0b, accent: 0xdc2626, shape: "brute", coins: 6, krezz: 5 },

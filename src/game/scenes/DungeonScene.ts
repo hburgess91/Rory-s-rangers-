@@ -31,7 +31,7 @@ import { FONT } from "../ui/theme";
 import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
 import { extraViolence, kd } from "../systems/kreddle";
-import { kreltality, type KrelTarget } from "../combat/Kreltality";
+import { forcedKreltality, kreltality, type KrelTarget } from "../combat/Kreltality";
 
 interface Shot {
   spr: Phaser.GameObjects.Image;
@@ -465,7 +465,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.side) return this.buildSideRoom();
     const themeTile = `tile_${r.theme}`;
     this.add.tileSprite(0, 0, r.w, r.h, themeTile).setOrigin(0).setDepth(0);
-    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1 }[r.theme];
+    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a }[r.theme];
     const g = this.add.graphics().setDepth(1);
     g.fillStyle(wallCol, 1);
     g.fillRect(0, 0, r.w, 24);
@@ -536,7 +536,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.obstacles.add(this.add.rectangle(x, y + 10, 44, 24, 0, 0));
       });
     }
-    const n = r.boss ? 0 : 3;
+    const n = r.boss || r.theme === "colon" ? 0 : 3;
     for (let i = 0; i < n; i++) {
       const x = rnd.between(140, r.w - 140);
       const y = rnd.between(160, r.h - 200);
@@ -558,6 +558,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       temple: ["THOU SHALT REACT", "AND I MEAN IT", "pls"],
       prison: ["6 KREZ YEARS", "Ok, makes sense", "VERSION B"],
       wiki: ["[citation needed]", "This page does not exist", "Talk", "Edit source"],
+      colon: ["HAUSTRA", "MUCOSA (WET)", "1x SWEETCORN (2019)", "DO NOT TOUCH THE WALLS"],
     };
     const list = flav[r.theme] ?? [];
     list.forEach((txt, i) => {
@@ -675,6 +676,52 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.interactables.push({ x, y, r: 60, label: "Fragmar Prime: send the messages (in the right order)", enabled: () => !G.s.flags.fragmar_prime, use: () => this.fragmarPrime() });
         break;
       }
+      case "crystal_wall": {
+        // the cum crystal, wedged in the colon wall
+        const glow = this.add.circle(x, y, 46, 0xfff1f2, 0.25).setDepth(y - 1).setBlendMode(Phaser.BlendModes.ADD);
+        this.add.ellipse(x, y + 4, 90, 60, 0x9f1239).setStrokeStyle(4, 0x4c0519).setDepth(y - 2);
+        const cr = this.add.image(x, y, this.textures.exists("cum_crystal") ? "cum_crystal" : "p_scroll").setDepth(y);
+        cr.setScale(56 / Math.max(cr.height, 1));
+        this.tweens.add({ targets: [glow], scale: 1.3, alpha: 0.1, yoyo: true, repeat: -1, duration: 700 });
+        const lab = this.add.text(x, y - 48, "THE CUM CRYSTAL (WEDGED)", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(y + 1);
+        if (G.s.flags.rik_crystal_taken) [glow, cr, lab].forEach((o) => o.destroy());
+        this.interactables.push({
+          x,
+          y: y + 40,
+          r: 70,
+          label: "Prise out the cum crystal",
+          enabled: () => !G.s.flags.rik_crystal_taken,
+          use: () => void this.takeRikCrystal([glow, cr, lab]),
+        });
+        break;
+      }
+      case "bomb_spot": {
+        const ring = this.add.circle(x, y, 26, 0xef4444, 0.22).setStrokeStyle(3, 0xef4444).setDepth(3);
+        this.tweens.add({ targets: ring, scale: 1.2, yoyo: true, repeat: -1, duration: 500 });
+        const key = `rik_bomb_${p.id}`;
+        if (G.s.flags[key]) this.plantedBomb(x, y, ring);
+        this.interactables.push({
+          x,
+          y,
+          r: 55,
+          label: "Plant a bomb",
+          enabled: () => !G.s.flags[key],
+          use: () => {
+            if (!G.s.flags.rik_crystal_taken) {
+              this.toast("NOT YET", "Get the crystal out first. You don't want to blow it up with him.");
+              return;
+            }
+            G.s.flags[key] = true;
+            synth.play("pickup");
+            this.plantedBomb(x, y, ring);
+            const all = (this.room.props ?? []).filter((q) => q.kind === "bomb_spot");
+            const n = all.filter((q) => G.s.flags[`rik_bomb_${q.id}`]).length;
+            if (n < all.length) this.toast(`BOMB ${n} OF ${all.length} PLANTED`, n === 1 ? "SANMIK (radio): Yee. Lovely. Keep going." : n === 2 ? "GENIE (radio): Hurry. Something just MOVED in there." : "SANMIK (radio): One more, then leg it.");
+            else void this.colonFinale();
+          },
+        });
+        break;
+      }
       case "reaction_terminal": {
         const spr = this.add.image(x, y, "p_terminal").setScale(2.4).setDepth(y);
         this.add.text(x, y - 50, "REACTION NETWORK TERMINAL", { fontFamily: FONT, fontSize: "10px", color: "#7fb3ff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(y + 1);
@@ -689,6 +736,122 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         break;
       }
     }
+  }
+
+  private plantedBomb(x: number, y: number, ring: Phaser.GameObjects.Arc) {
+    this.tweens.killTweensOf(ring);
+    ring.setScale(1).setFillStyle(0x111111, 0.4);
+    this.add.circle(x, y, 13, 0x1f2937).setStrokeStyle(2, 0x000000).setDepth(y);
+    this.add.rectangle(x + 6, y - 12, 3, 9, 0xd6b370).setDepth(y);
+    const led = this.add.circle(x, y, 4, 0xff2020).setDepth(y + 1);
+    this.tweens.add({ targets: led, alpha: 0.15, yoyo: true, repeat: -1, duration: 300 });
+    this.add.text(x, y + 22, "ARMED", { fontFamily: FONT, fontSize: "9px", color: "#fca5a5", fontStyle: "bold" }).setOrigin(0.5).setDepth(y + 1);
+  }
+
+  private async takeRikCrystal(objs: Phaser.GameObjects.GameObject[]) {
+    G.s.flags.rik_crystal_taken = true;
+    synth.play("splat");
+    this.shake(300, 0.01);
+    objs.forEach((o) => o.destroy());
+    this.floatText(this.player.x, this.player.y - 50, "*SHLOOORP*", "#fda4af", 18);
+    await this.talk([
+      dir("You get both hands round the cum crystal and pull. The colon pulls back. You pull harder. With a noise you will hear for the rest of your life, it comes free."),
+      say("UNCLE RIK", "(from somewhere above, booming) OI. WHO'S IN THERE. I FELT THAT."),
+      say("SANMIK", "(radio) Yee. Now the bombs. Four of 'em. The red circles. Leave him a present."),
+      dir("NEW OBJECTIVE: plant all four bombs (the red circles)."),
+    ]);
+  }
+
+  /** The bombs are in. Out you go, back to full size… and then Uncle Rik's tummy. */
+  private async colonFinale() {
+    const s = G.s;
+    this.busy = true;
+    for (const e of [...this.enemies]) if (!e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
+    for (const sh of [...this.shots]) this.killShot(sh);
+    await this.talk([
+      say("SANMIK", "(radio) That's all four. LEG IT. Back the way you came. The Genie's reversing the shrink ray."),
+      dir("You run. Past the poo. Past the gerbils. Past a tumour, who shouts something about being cancerous as you go by. Then the shrink ray finds you, and the world goes white."),
+    ]);
+    const cam = this.cameras.main;
+    cam.flash(500, 255, 255, 255);
+    synth.play("lob");
+    await new Promise<void>((r) => this.time.delayedCall(600, () => r()));
+    // outside: Catford, full size, Uncle Rik having a sit-down
+    const cx = cam.scrollX + cam.width / 2;
+    const cy = cam.scrollY + cam.height / 2;
+    const bg = this.add.rectangle(cx, cy, 4000, 4000, 0x0b1a2a).setDepth(1500);
+    const tub = this.add.ellipse(cx, cy + 140, 700, 70, 0x1e293b).setDepth(1501);
+    const ps = this.player.spr;
+    const phd = (ps.texture.customData as { hd?: number } | undefined)?.hd ?? 1;
+    const tex = this.textures.exists("p_rik") ? "p_rik" : "boss_rik";
+    const frameH = this.textures.get(tex).get(0).height;
+    await this.talk([
+      dir("Catford. You pop out of the shrink ray at full size, next to the Giant Hot Tub. Uncle Rik is sat on the edge of it, scratching his belly."),
+      say("UNCLE RIK", "'Ello. Thought I 'eard summink. You ain't got me crystal, 'ave ya."),
+      say(s.player, "Have a look in your ass."),
+    ]);
+    await forcedKreltality(
+      this,
+      { key: tex, frame: 0, x: cx + 40, y: cy, scale: 210 / frameH, flip: true, name: "UNCLE RIK" },
+      { key: ps.texture.key, frame: 0, scale: ps.scaleX / phd },
+      "bellybomb",
+    );
+    bump(s, "kreltalities");
+    bg.destroy();
+    tub.destroy();
+    cam.startFollow(this.player.spr, true, 0.12, 0.12);
+    await this.talk([say("SANMIK", "that's for everything u did to me in the past!!!!")]);
+    await this.crystalGet({ bossId: "rik" } as unknown as Boss);
+    if (s.chapter === 5 && !s.flags.ch5_clear) {
+      s.flags.ch5_clear = true;
+      s.coins += Math.round(200 * activeMods(s).questRewardMult * 2);
+      s.bottles = maxBottles(s);
+      G.unlockArchive("arch_godric");
+      G.unlockArchive("arch_crobley");
+      G.drongus("boss_defeated");
+    }
+    s.flags.rik_bombs_done = true;
+    s.flags.sanmik_catford = true;
+    for (const k of Object.keys(s.flags)) if (k.startsWith("rik_bomb_") || k === "rik_crystal_taken") delete s.flags[k];
+    delete s.flags[clearKey(this.dungeon.id, 0)];
+    s.coins += 150;
+    s.hp = maxHp(s);
+    s.phase = "hub";
+    G.save();
+    this.time.delayedCall(800, () => {
+      this.transitioning = true;
+      switchTo(this, "Vignette", { id: "sanmik_finale", returnAt: this.dungeon.returnAt });
+    });
+  }
+
+  /** The Genie's shrink ray: zap, and you're four millimetres tall. */
+  private async shrinkRay() {
+    this.busy = true;
+    const p = this.player.spr;
+    await this.talk([
+      say("GENIE", "(from the lamp) I can get you in there. I have a shrink ray. Don't ask why a genie has a shrink ray. I've had a long life."),
+      say("SANMIK", "Yee. Shrink 'em. Go in. Get the crystal. And while you're in there… leave him a present."),
+      dir("The Genie hands you a bag. It's full of bombs. Four of them. You don't ask either."),
+    ]);
+    const lamp = this.add.circle(p.x - 160, p.y - 60, 10, 0xffd23f).setDepth(p.depth + 2);
+    synth.play("lob");
+    const beam = this.add.rectangle(lamp.x, lamp.y, 10, 14, 0x67e8f9, 0.9).setOrigin(0, 0.5).setDepth(p.depth + 1).setBlendMode(Phaser.BlendModes.ADD);
+    beam.setRotation(Phaser.Math.Angle.Between(lamp.x, lamp.y, p.x, p.y));
+    const len = Phaser.Math.Distance.Between(lamp.x, lamp.y, p.x, p.y);
+    await new Promise<void>((r) => this.tweens.add({ targets: beam, width: len, duration: 250, onComplete: () => r() }));
+    this.cameras.main.flash(200, 160, 255, 255);
+    for (let i = 0; i < 5; i++) {
+      synth.play("tap");
+      await new Promise<void>((r) => this.time.delayedCall(90, () => r()));
+    }
+    const sc0 = p.scaleX;
+    await new Promise<void>((r) => this.tweens.add({ targets: p, scaleX: sc0 * 0.05, scaleY: sc0 * 0.05, duration: 900, ease: "Quad.in", onComplete: () => r() }));
+    this.floatText(p.x, p.y - 20, "*zwoooop*", "#67e8f9", 16);
+    beam.destroy();
+    lamp.destroy();
+    await this.talk([dir("You are now four millimetres tall. Uncle Rik bends over to see where you've gone. That's all the opening you need.")]);
+    this.cameras.main.fadeOut(600, 60, 0, 20);
+    await new Promise<void>((r) => this.time.delayedCall(700, () => r()));
   }
 
   /** SanChz, the Job Centre staff toilet, and a jam donut. */
@@ -1322,7 +1485,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
   private async maybeKreltality(b: Boss) {
-    if (["drongus", "cronster", "reinhardt", "krozno"].includes(b.bossId) || !this.krelTarget) return;
+    if (["drongus", "cronster", "reinhardt", "krozno", "rik"].includes(b.bossId) || !this.krelTarget) return;
     const ps = this.player.spr;
     const phd = (ps.texture.customData as { hd?: number } | undefined)?.hd ?? 1;
     this.busy = true;
@@ -1399,15 +1562,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.dungeon.arenaFlag) {
       await this.talk(BOSS_TEXT[b.bossId].outro);
       await this.maybeKreltality(b);
-      // Uncle Rik is Chapter 5's boss now: his crystal, and the chapter's done
+      // Uncle Rik: the crystal is… somewhere else. Into the shrink ray.
       if (b.bossId === "rik") {
+        await this.shrinkRay();
+        this.transitioning = true;
+        switchTo(this, "Dungeon", { dungeon: "rik_colon", room: 0 });
+        return;
+      }
+      // Reinhardt is Chapter 4's boss: his crystal, and the chapter's done
+      if (b.bossId === "reinhardt") {
         await this.crystalGet(b);
-        if (s.chapter === 5 && !s.flags.ch5_clear) {
-          s.flags.ch5_clear = true;
+        if (s.chapter === 4 && !s.flags.ch4_clear) {
+          s.flags.ch4_clear = true;
           s.coins += Math.round(200 * activeMods(s).questRewardMult * 2);
           s.bottles = maxBottles(s);
-          G.unlockArchive("arch_godric");
-          G.unlockArchive("arch_crobley");
           G.drongus("boss_defeated");
         }
       }
@@ -2495,6 +2663,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
       if (!this.busy) e.tick(edt, now);
+      if (e.def.shout && !this.busy && Math.random() < edt / (e.def.id === "tumor" ? 2600 : 4200)) this.floatText(e.x, e.y - 30, e.def.shout[Math.floor(Math.random() * e.def.shout.length)], e.def.id === "tumor" ? "#e9d5ff" : "#ffffff", e.def.id === "tumor" ? 14 : 11);
       else (e.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
       if (this.enemyTimeScale < 1) {
         const b = e.body as Phaser.Physics.Arcade.Body;

@@ -98,7 +98,7 @@ export const NEWS_4 = ep(
 # GB KREWS 24
 INT. NEWSDESK - EVENING
 [MUSIC news fade]
-NEWSREADER: Good evening. Tonight: four thousand citizens have been banned by the Bonky Cult, including a man for having parents.
+NEWSREADER: Good evening. Tonight: Flenky Jenky has been banned again, this time from a ban. Officials say he was banned for having parents.
 NEWSREADER: Flenky Jenky has issued a statement. It reads, in full: "pls".
 NEWSREADER: The Ban Tribunal has opened. The Acting Exile Appeals Officer is also banned. He is appealing.
 NEWSREADER: In archaeology, an ancient krezzcanoe site has been excavated near Krelford, revealing an intact strip club frozen in time. Historians describe it as "Pompeii, but worse".

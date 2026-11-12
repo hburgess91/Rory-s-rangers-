@@ -127,12 +127,40 @@ export const CRONSTER_BRIEFING: MeetingScript = {
   subtitle: "Sweet hugs, sweeter squeezes",
   location: "TOWN_HALL",
   agenda: [
+    "0. Flenky is banned (again)",
     "1. The Cuddle Cronster",
     "2. Mollor",
     "3. Why it's the Ministry of Boner Control (nobody wants to say)",
     "4. Cum crystal number three",
   ],
   beats: [
+    dir("Flenky's chair is empty. A small sign on it reads 'BANNED'. Under that, in different handwriting: 'pls'."),
+    say("FLENKY", "I'm here. I'm right here. I'm in the corridor. My girlfriend's been kidnapped AND I'm banned. Can I come in?", { variants: { FLENKY: "(You are, once again, standing in the corridor. You are banned. You don't know what for. You never know what for. Also your girlfriend has been kidnapped.)" } }),
+    say("KREBLIS", "Before we start… what's he banned for this time", { cond: { notPlayer: "KREBLIS" } }),
+    say("KREZWONK", "Does it matter? It's the oldest institution in Krelworld. Older than the cabinet. Older than the Tap.", { role: true, proctus: "This is ancient! Older than the Tap! Older than me! Which isn't saying much, I was born on Tuesday." }),
+    dir("ARCHIVE PLAYBACK — FGM ULTRA, 8 SEPTEMBER 2022.", { sfx: "archive" }),
+    canon("post_source"),
+    canon("thats_fake"),
+    canon("removed_jenkins"),
+    canon("fucking_jenkins"),
+    canon("disrespectful"),
+    canon("banned_until_dies"),
+    canon("and_i_mean_it"),
+    canon("hope_she_doesnt"),
+    say("ARCHIVE", "ARCHIVAL FOOTNOTE: 'She' refers to Her Late Majesty. She died the same afternoon. Flenky's ban therefore lasted approximately four hours, which remains the shortest life sentence in Krelworld legal history."),
+    say("ARCHIVE", "Exhibit B: 'You removed James Jenkins from the group.' — recorded nine (9) times. Exhibit C: nicknames include 'DIRTY THIEF DO NOT ENGAGE', 'Fleminem', 'Jenko', 'Gentko', 'OGGIN' and 'SCROTTO JUMBLIN'. Exhibit D: a rule once banned anyone whose parents were still together. Jenko, uniquely, was excluded."),
+    dir("PLAYBACK ENDS."),
+    say("FLENKY", "Can't help it.", { variants: { FLENKY: "Can't help it. I really can't. I've tried." } }),
+    say("SCROMBUS", "We need an institution. A Ban Tribunal. Appeals, readmissions, the lot. Staffed by the most banned man in Krelworld.", { role: true, proctus: "A Tribunal! For bans! Staffed by the most banned man! ...is it me? I feel like it might be me." }),
+    say("FLENKY", "Exile Appeals Officer. I accept. Can I come in now.", { role: true, proctus: "Acting Exile Appeals Officer, Proctus Krelmor. I've already been banned from my own office. I'm appealing it. It's going well." }),
+    react("FLENKY: 'pls'", "flenky_pls", {
+      LIKE: [dir("A thumbs up. The corridor door clicks open. Flenky walks in. He is immediately banned again for walking in.", { set: { flenky_readmitted: true } })],
+      LOVE: [dir("A heart. Flenky is so moved he does a ninja backflip and is banned for property damage.", { set: { flenky_readmitted: true } })],
+      LAUGH: [say("FLENKY", "Just your opinion mate!!!"), dir("He comes in anyway.", { set: { flenky_readmitted: true } })],
+      ANGRY: [say("FLENKY", "Wow. Okay. I'll stay in the corridor then. It's quite nice out here actually.")],
+      SEEN: [dir("Seen. Flenky stays in the corridor. He knows the protocol. He wrote it.")],
+    }, "FLENKY"),
+    dir("Right. The actual Krelmergency."),
     dir("Everyone has a copy of the Krelford Gazette. Nobody has read past the headline. The headline is enough: 'CUDDLE CRONSTER STRIKES AGAIN: JENKO'S GIRLFRIEND TAKEN'."),
     say("KREBLIS", "Breaking news…", { role: true, proctus: "Breaking news! The Cuddle Cronster has struck! I'm going to read the note. I don't want to read the note." }),
     say("KREBLIS", "He left a note 👍", { cond: { notPlayer: "KREBLIS" } }),
@@ -153,8 +181,8 @@ export const CRONSTER_BRIEFING: MeetingScript = {
     say("FLENKY", "You are. We all are. We're getting Mollor back.", { variants: { FLENKY: "We're ALL going. Nobody squeezes my girlfriend except… nobody. Nobody squeezes her." } }),
     say("SCROMBUS", "Right. Ministry of Boner Control. Climb the tower, get in Da Squeezing Room, unmask him, bring Mollor home. And the crystal.", { role: true, proctus: "Off you pop! Up the tower! Unmask the man! Bring back the girl and the… the crystal! Not in that order!" }),
   ],
-  onComplete: { cronster_briefed: true },
-  unlocksArchive: [],
+  onComplete: { cronster_briefed: true, ban_tribunal_open: true },
+  unlocksArchive: ["arch_flenky_bans", "arch_parents_rule"],
 };
 
 export const NATIONAL_BEVERAGE_COMMITTEE: MeetingScript = {
@@ -356,6 +384,41 @@ export const FLENKY_CONSTITUTIONAL_CRISIS: MeetingScript = {
   ],
   onComplete: { ban_tribunal_open: true },
   unlocksArchive: ["arch_flenky_bans", "arch_parents_rule"],
+};
+
+export const CROBLEY_BRIEFING: MeetingScript = {
+  id: "crobley_briefing",
+  title: "KRELMERGENCY: REINHARDT CROBLEY",
+  subtitle: "The advert. The newsreader. The cameraman. Nobody remembers the cameraman.",
+  location: "WAR_ROOM",
+  agenda: [
+    "1. A man shot a newsreader on live telly",
+    "2. The advert (we all heard it)",
+    "3. What the police are doing (nothing)",
+    "4. Cum crystal number four",
+  ],
+  beats: [
+
+            dir("The FGM War Room. Somebody has pinned a photo of Reinhardt Crobley to the corkboard and drawn devil horns on it. Somebody else has drawn a second set of horns on the first set."),
+            say("KREBLIS", "Krelmergency… a man shot a newsreader on live telly and then confessed to killing his dad"),
+            say("KREBLIS", "On the six o'clock news"),
+            say("KREBLIS", "Headline news!"),
+            say("KREZMAR", "And the cameraman. Don't forget the cameraman. Nobody ever remembers the cameraman."),
+            say("SCROMBUS", "The advert though. Did you hear the jingle? I heard it. We all heard it. It even SAYS we heard it."),
+            say("KREZWONK", "I foresaw this. I foresaw it the moment he called his alter ego 'someone very close to me… you might even say… myself'."),
+            say("GRONNY", "Crobson was a good man. He gave out free Crobleys at my school. Every Christmas. Corn addiction my arse."),
+            say("FLENKY", "I mean… he's got a point though. The woke stuff has gone too far.", { cond: { notPlayer: "FLENKY" } }),
+            say("CRONGUS", "I mean… he's got a point though. The woke stuff has gone too far.", { cond: { player: "FLENKY" } }),
+            dir("Silence. Everyone turns slowly to look at him."),
+            say("KREBLIS", "He shot a newsreader."),
+            say("FLENKY", "Yeah, no, that bit's bad. I'm just saying. The woke stuff.", { cond: { notPlayer: "FLENKY" } }),
+            say("CRONGUS", "Yeah, no, that bit's bad. I'm just saying. The woke stuff.", { cond: { player: "FLENKY" } }),
+            say("KREZMAR", "Noted. Ignored. Right: Sergeant Swig's doing a press conference at the Constabulary. Let's see what the police are doing about it."),
+            say("SCROMBUS", "Nothing. They're going to do nothing. I'll bet you a Crobley."),
+    say("SCROMBUS", "And Reinhardt's one of Drongus's best boys. He's got cum crystal number four. Of course he has."),
+  ],
+  onComplete: { crobley_briefed: true },
+  unlocksArchive: [],
 };
 
 export const KREBON_QUESTION: MeetingScript = {

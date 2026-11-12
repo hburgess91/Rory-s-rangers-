@@ -28,7 +28,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "form1", label: "Apology Form B-4N (\"I'm sorry for the Queen one\")", where: { dungeon: "wildern", room: 1 } },
       { id: "form2", label: "Apology Form B-4N (\"I'm sorry my parents are together\")", where: { dungeon: "ministry", room: 1 } },
-      { id: "form3", label: "Apology Form B-4N (\"I'm sorry for the headmaster\")", where: { dungeon: "bonky_temple", room: 2 } },
+      { id: "form3", label: "Apology Form B-4N (\"I'm sorry for the headmaster\")", where: { dungeon: "citadel", room: 1 } },
     ],
     turnIn: {
       at: "BAN_TRIBUNAL",
@@ -52,7 +52,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "don1", label: "Donation: an Uber Eats voucher (expired)", where: { dungeon: "polson_towers", room: 1 } },
       { id: "don2", label: "Donation: one (1) crobley, slightly nibbled", where: { dungeon: "ministry", room: 2 } },
-      { id: "don3", label: "Donation: the Abbé's Krezzcoin (vintage)", where: { dungeon: "bonky_temple", room: 1 } },
+      { id: "don3", label: "Donation: the Abbé's Krezzcoin (vintage)", where: { dungeon: "citadel", room: 2 } },
     ],
     turnIn: {
       at: "TOWN_HALL",
@@ -98,7 +98,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "sig1", label: "Sigil Fragment: Prophecy", where: { dungeon: "wildern", room: 2 } },
       { id: "sig2", label: "Sigil Fragment: Butter", where: { dungeon: "ministry", room: 1 } },
-      { id: "sig3", label: "Sigil Fragment: Lurk", where: { dungeon: "bonky_temple", room: 2 } },
+      { id: "sig3", label: "Sigil Fragment: Lurk", where: { dungeon: "polson_towers", room: 2 } },
     ],
     turnIn: {
       at: "ARCHIVE",
@@ -121,7 +121,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "bb1", label: "Big Bertha: the crusty lever", where: { dungeon: "wildern", room: 2 } },
       { id: "bb2", label: "Big Bertha: the pressure gauge (stuck on 'HELP')", where: { dungeon: "ministry", room: 3 } },
-      { id: "bb3", label: "Big Bertha: the original 'reach' (pre-around)", where: { dungeon: "bonky_temple", room: 1 } },
+      { id: "bb3", label: "Big Bertha: the original 'reach' (pre-around)", where: { dungeon: "polson_towers", room: 2 } },
     ],
     turnIn: {
       at: "HOME",
@@ -145,7 +145,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "menu", label: "The Menu (\"Krebon — Real butter\")", where: { hub: "PUB_MENU" } },
       { id: "map", label: "The Abbé Krezia's Map", where: { dungeon: "polson_towers", room: 2 } },
-      { id: "treasure", label: "Krezmond's Treasure (a single pat of real butter)", where: { dungeon: "bonky_temple", room: 3 } },
+      { id: "treasure", label: "Krezmond's Treasure (a single pat of real butter)", where: { dungeon: "citadel", room: 3 } },
     ],
     turnIn: {
       at: "PUB",
@@ -169,7 +169,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     pickups: [
       { id: "leak1", label: "Leaked Footage: Part 1 (it's a wrist)", where: { dungeon: "wildern", room: 1 } },
       { id: "leak2", label: "Leaked Footage: Part 2 (still the wrist)", where: { dungeon: "polson_towers", room: 3 } },
-      { id: "leak3", label: "Leaked Footage: Part 3 (a different wrist?)", where: { dungeon: "bonky_temple", room: 1 } },
+      { id: "leak3", label: "Leaked Footage: Part 3 (a different wrist?)", where: { dungeon: "ministry", room: 2 } },
     ],
     turnIn: {
       at: "HOME",
@@ -191,7 +191,7 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     blurb: "'He's holding my trousers ransom guys, help, I'm so cold.' Recover your Krez-ousers. All of them.",
     pickups: [
       { id: "leg1", label: "Krez-ousers: Left Leg", where: { dungeon: "polson_towers", room: 1 } },
-      { id: "leg2", label: "Krez-ousers: Right Leg", where: { dungeon: "bonky_temple", room: 2 } },
+      { id: "leg2", label: "Krez-ousers: Right Leg", where: { dungeon: "wildern", room: 2 } },
       { id: "waist", label: "Krez-ousers: Waistband (ransom note attached)", where: { dungeon: "citadel", room: 1 } },
     ],
     turnIn: {
@@ -215,8 +215,8 @@ export const PERSONAL_QUESTS: PersonalQuest[] = [
     blurb: "Finish what you started in April 2022: deliver the original friend request, recover the unsent messages, and correct the Archive.",
     pickups: [
       { id: "orig", label: "The Original Friend Request (16/04/2022, 12:00)", where: { dungeon: "polson_towers", room: 3 }, cond: { flag: "mikey_route" } },
-      { id: "unsent", label: "The Unsent Messages (you were told to unsend them)", where: { dungeon: "bonky_temple", room: 1 } },
-      { id: "footnote", label: "A Red Pen (for the Archive)", where: { dungeon: "bonky_temple", room: 3 } },
+      { id: "unsent", label: "The Unsent Messages (you were told to unsend them)", where: { dungeon: "wildern", room: 3 } },
+      { id: "footnote", label: "A Red Pen (for the Archive)", where: { dungeon: "polson_towers", room: 1 } },
     ],
     turnIn: {
       at: "ARCHIVE",

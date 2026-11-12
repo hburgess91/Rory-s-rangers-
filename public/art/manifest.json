@@ -5516,6 +5516,12 @@
   },
   "bg_home": {
    "file": "backdrops/bg_home.png"
+  },
+  "tile_colon": {
+   "file": "tiles/tile_colon.png"
+  },
+  "wall_colon": {
+   "file": "props/wall_colon.png"
   }
  },
  "sheets": {
@@ -5865,6 +5871,24 @@
    "frameWidth": 88,
    "frameHeight": 128,
    "hd": 0.3846
+  },
+  "en_gerbil": {
+   "file": "combat/en_gerbil.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_tumor": {
+   "file": "combat/en_tumor.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_poo": {
+   "file": "combat/en_poo.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
   }
  }
 }

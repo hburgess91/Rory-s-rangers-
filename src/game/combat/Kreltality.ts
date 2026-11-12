@@ -18,7 +18,7 @@ export interface KrelTarget {
   name: string;
 }
 
-type Finisher = "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten" | "vice";
+export type Finisher = "spine" | "explode" | "halved" | "headboot" | "slit" | "flatten" | "vice" | "bellybomb";
 const FINISHERS: Finisher[] = ["spine", "explode", "halved", "headboot", "slit", "flatten", "vice"];
 const NAMES: Record<Finisher, string> = {
   spine: "SPINE RIP!",
@@ -28,6 +28,7 @@ const NAMES: Record<Finisher, string> = {
   slit: "THROAT SLIT!",
   flatten: "FLATTENED!",
   vice: "VICE-D!",
+  bellybomb: "BELLY BOMB!",
 };
 
 const D = 2000; // above everything in the room
@@ -38,6 +39,11 @@ export async function kreltality(sc: Phaser.Scene, target: KrelTarget, player: {
   if (!yes) return false;
   await stage(sc, target, player, force ?? FINISHERS[Math.floor(Math.random() * FINISHERS.length)]);
   return true;
+}
+
+/** No asking: it just happens (story Kreltalities, like Uncle Rik's). */
+export async function forcedKreltality(sc: Phaser.Scene, target: KrelTarget, player: { key: string; frame: string | number; scale: number }, which: Finisher): Promise<void> {
+  await stage(sc, target, player, which);
 }
 
 // ------------------------------------------------------------------ the prompt
@@ -377,6 +383,75 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     label(NAMES.vice);
     sc.tweens.add({ targets: [L, R], x: 0, duration: 120 });
     await wait(2200);
+  }
+
+  if (which === "bellybomb") {
+    // the bombs you planted, blinking through his skin
+    const lights = [
+      [-0.14, 0.0],
+      [0.12, -0.03],
+      [-0.06, 0.1],
+      [0.1, 0.09],
+    ].map(([dx, dy]) => keep(sc.add.circle(tg.x + dx * W, tg.y + dy * H, 4, 0xff2020).setDepth(D + 4)));
+    const say = (t: string, col = "#ffffff") => {
+      const p = keep(sc.add.text(tg.x + W * 0.45, tg.y - H * 0.55, t, { fontFamily: "Impact, sans-serif", fontSize: "20px", color: col, stroke: "#000", strokeThickness: 5 }).setOrigin(0, 0.5).setDepth(D + 10).setScale(1 / cam.zoom));
+      return p;
+    };
+    let p = say("'Ere. What's that beeping?");
+    for (let i = 0; i < 6; i++) {
+      lights.forEach((l) => l.setFillStyle(i % 2 ? 0x550000 : 0xff2020));
+      synth.play("tap");
+      await wait(330 - i * 30);
+    }
+    p.destroy();
+    p = say("Oh no. Me tummy.", "#fecaca");
+    // he swells
+    body.setTint(0xffb0b0);
+    sc.tweens.add({ targets: body, x: { from: tg.x - 2, to: tg.x + 2 }, yoyo: true, repeat: 30, duration: 35 });
+    const beep = sc.time.addEvent({ delay: 90, loop: true, callback: () => { synth.play("tap"); lights.forEach((l) => l.setFillStyle(l.fillColor === 0xff2020 ? 0x550000 : 0xff2020)); } });
+    synth.voice("oh", 0.6, 0.7);
+    await tw({ targets: body, scaleX: tg.scale * 1.45, scaleY: tg.scale * 1.15, duration: 1100, ease: "Quad.in" });
+    beep.remove();
+    p.destroy();
+    // BOOM, belly first
+    flash();
+    synth.play("explode");
+    synth.play("boom");
+    synth.play("splat");
+    cam.shake(700, 0.04);
+    lights.forEach((l) => l.destroy());
+    body.setScale(tg.scale * 1.2, tg.scale);
+    const bx = tg.x;
+    const by = tg.y + H * 0.04;
+    // the front of his belly, in bits
+    for (let cx = 0; cx < 3; cx++) {
+      const ch = keep(sc.add.image(tg.x, tg.y, tg.key, tg.frame).setScale(tg.scale * 1.2, tg.scale).setFlipX(tg.flip).setDepth(D + 4).setCrop(fw * (0.3 + cx * 0.14), fh * 0.42, fw * 0.14, fh * 0.2).setTint(0xffa0a0));
+      sc.tweens.add({ targets: ch, x: tg.x + (cx - 1) * (220 + Math.random() * 120), y: floor - Math.random() * 10, angle: (Math.random() - 0.5) * 1200, duration: 800 + Math.random() * 300, ease: "Quad.out" });
+    }
+    // a great hole where his belly was
+    keep(sc.add.ellipse(bx, by, W * 0.34, H * 0.17, 0x450a0a).setStrokeStyle(3, 0x9f1239).setDepth(D + 3));
+    keep(sc.add.ellipse(bx, by, W * 0.22, H * 0.1, 0x7f1d1d).setDepth(D + 3));
+    // intestines: lots of them, a long way
+    for (let i = 0; i < 7; i++) guts(bx, by, -Math.PI / 2 + (i - 3) * 0.5, 120 + Math.random() * 140);
+    for (let i = 0; i < 4; i++) guts(bx, by, (i < 2 ? Math.PI : 0) + (Math.random() - 0.5) * 0.4, 200 + Math.random() * 120);
+    // and the rest of what was in there: poo, a gerbil, a tumour
+    const bits: [number, number][] = [[0x7c4a1e, 9], [0x7c4a1e, 7], [0x5b3714, 8], [0xd6a36b, 7], [0xa855f7, 10], [0x7c4a1e, 6]];
+    for (const [col, r] of bits) {
+      const c = keep(sc.add.circle(bx, by, r, col).setStrokeStyle(2, 0x1f1206).setDepth(D + 5));
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.8;
+      const d = 150 + Math.random() * 250;
+      sc.tweens.add({ targets: c, x: bx + Math.cos(a) * d, y: floor - Math.random() * 8, angle: 720, duration: 900 + Math.random() * 300, ease: "Quad.out" });
+    }
+    fountain(bx, by, 2400);
+    blood(bx, by, 120, 2, true);
+    bones(bx, by, 6);
+    label(NAMES.bellybomb);
+    await wait(900);
+    p = say("…'ello.", "#fecaca");
+    await wait(900);
+    p.destroy();
+    sc.tweens.add({ targets: body, angle: tg.flip ? -90 : 90, y: floor - W * 0.2, duration: 800, ease: "Quad.in" });
+    await wait(1400);
   }
 
   // ---- KRELTALITY

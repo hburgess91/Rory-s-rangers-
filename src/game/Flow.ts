@@ -112,7 +112,6 @@ export function townHallAction(): TownHallAction {
     if (f.ch1_clear && f.wildern_destroyed && !f.ch1_fact) return f.krazy_fact_ready ? { kind: "fact" } : { kind: "meeting", id: "krazy_fact_emergency" };
   }
   if (n === 3 && !f.cronster_briefed) return { kind: "meeting", id: "cronster_briefing" };
-  if (n === 4 && !f.ban_tribunal_open) return { kind: "meeting", id: "flenky_constitutional_crisis" };
   if (n === 5 && !f.krebon_question) return { kind: "meeting", id: "krebon_question" };
   if (n === 6 && !f.final_reading) return { kind: "meeting", id: "final_reading" };
   if (n >= 2 && n <= 5 && f[`ch${n}_clear`] && !f[`ch${n}_fact`]) return f[`ch${n}_outro`] ? { kind: "fact" } : { kind: "outro" };
@@ -124,6 +123,7 @@ export function archiveAction(): { kind: "meeting"; id: string } | { kind: "brow
   const s = G.s;
   if (s.chapter === 1 && s.flags.met_emergency && !s.flags.founding_seen) return { kind: "meeting", id: "founding_cabinet" };
   if (s.chapter === 2 && !s.flags.fragmar_briefed) return { kind: "meeting", id: "fragmar_briefing" };
+  if (s.chapter === 4 && s.flags.vig_crobley_news && !s.flags.crobley_briefed) return { kind: "meeting", id: "crobley_briefing" };
   return { kind: "browse" };
 }
 
