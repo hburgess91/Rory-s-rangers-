@@ -20,6 +20,7 @@ const SHOUTS: Record<string, [number, number][]> = {
 export const MUSIC_FILES: Record<string, string> = {
   title: "audio/krel_world.mp3",
   hub: "audio/hub.mp3",
+  klerble: "audio/klerble.mp3",
   pub: "audio/pub.mp3",
   meeting: "audio/pixel_quest.mp3",
   archive: "audio/pixel_quest.mp3",

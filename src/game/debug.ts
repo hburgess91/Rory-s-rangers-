@@ -1,5 +1,6 @@
 import type Phaser from "phaser";
 import { G } from "./G";
+import { synth } from "./audio/Synth";
 import { switchTo } from "./Flow";
 import type { PlayableId } from "../data/types";
 import { maxHp } from "./systems/stats";
@@ -13,6 +14,7 @@ import { kreltality } from "./combat/Kreltality";
 export function installDebug(game: Phaser.Game) {
   const api = {
     G,
+    synth,
     game,
     active: () => game.scene.getScenes(true).map((s) => s.scene.key),
     newRun: (p: PlayableId = "FLENKY", ngPlus = 0) => G.newRun(p, ngPlus),

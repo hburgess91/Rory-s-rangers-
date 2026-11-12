@@ -219,6 +219,7 @@ INT. NEWSDESK - EVENING
 [MUSIC news fade]
 NEWSREADER: Good evening. We interrupt this programme for a message from our neighbours across the bridge. We have been told we have to show it. We were not told why.
 INT. PRESS CONFERENCE - DAY
+[MUSIC klerble start]
 # LIVE: THE PRESIDENTIAL PALACE, KREDDLE
 PRESIDENT KLERBLE: Hello, Krelworld. My name is President Klerble. I am the President of Kreddle.
 PRESIDENT KLERBLE: Kreddle is your neighbour. Over the bridge. To the west. You can't miss it. It's the bit that's on fire with neon.
@@ -239,6 +240,7 @@ PRESIDENT KLERBLE: …so you won't notice it when I put my terrorist plan into a
 PRESIDENT KLERBLE: Er… I mean… nothing! Ignore what I just said!
 PRESIDENT KLERBLE: As a gesture of friendship, every time you watch a new KrelTV show, you will receive a gift from Kreddle. Krokens! Krezzcoin! Absolutely free! Nothing suspicious about it at all!
 PRESIDENT KLERBLE: Keep watching, Krelworld. Keep watching. NO FURTHER QUESTIONS!
+[MUSIC klerble stop]
 INT. NEWSDESK - EVENING
 NEWSREADER: (long pause) …Well, that was lovely. We now return you to whatever you were watching. Keep watching.
 [FADE]
@@ -260,6 +262,7 @@ INT. NEWSDESK - DAY
 [MUSIC news fade]
 NEWSREADER: Breaking news. The President of neighbouring Kreddle, President Klerble, has called an emergency press conference. We go there live.
 INT. PRESS CONFERENCE - DAY
+[MUSIC klerble start]
 # LIVE: THE PRESIDENTIAL PALACE, KREDDLE
 PRESIDENT KLERBLE: People of Kreddle. And people of Krelworld, who I hope are watching. Hello.
 PRESIDENT KLERBLE: In a few minutes, I am going to hijack a train.
@@ -273,6 +276,7 @@ PRESIDENT KLERBLE: Their right to drink pussy juice, for example! This is not a 
 PRESIDENT KLERBLE: Grrr!!
 REPORTER: Sir, with respect, it's your own national railway. You don't need to hijack it.
 PRESIDENT KLERBLE: NO FURTHER QUESTIONS!
+[MUSIC klerble stop]
 [SMASH CUT]
 INT. TRAIN CAB - DAY
 # LIVE: THE KREDDLE EXPRESS · 300 MPH · DESTINATION: KREL TOWER
