@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { hasVfx, vfx } from "../gfx/Vfx";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -66,6 +67,41 @@ export class VignetteScene extends Phaser.Scene {
           ? () => switchTo(this, "Dungeon", { dungeon: "arena_sanmik", room: 0 })
           : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
     fadeThen(this, 250, next);
+  }
+
+  /** A drawn explosion (PixelLab VFX) plus smoke; false if the art isn't loaded. Pass a container to put it inside one. */
+  private boomAt(x: number, y: number, size = 1, depth = 60, into?: Phaser.GameObjects.Container): boolean {
+    const big = size >= 1.3 && hasVfx(this, "vfx_bigboom");
+    const s = vfx(this, big ? "vfx_bigboom" : "vfx_boom", x, y, { scale: big ? size : size * 1.2, depth });
+    if (!s) return false;
+    const sm = vfx(this, "vfx_smoke", x + (Math.random() - 0.5) * 20, y - 12 * size, { scale: size, depth: depth - 1, delay: 380 });
+    if (into) into.add([s, ...(sm ? [sm] : [])]);
+    return true;
+  }
+
+  /** A fire that keeps burning (wreckage): drawn flames and a smoke column, or a glowing blob if the art's missing. Destroy the container to put it out. */
+  private fireBlob(x: number, y: number, size: number, depth: number): Phaser.GameObjects.Container {
+    const c = this.add.container(0, 0).setDepth(depth);
+    if (hasVfx(this, "vfx_fire")) {
+      for (let i = 0; i < 3; i++) {
+        const f = vfx(this, "vfx_fire", x + (i - 1) * size * 0.45, y + 10 + (i === 1 ? -6 : 0), { scale: (size / 50) * (i === 1 ? 1.3 : 0.9), depth, delay: i * 90 });
+        if (f) c.add(f);
+      }
+      const sm = vfx(this, "vfx_smokecol", x, y - size * 0.4, { scale: size / 40, depth: depth - 1, alpha: 0.85 });
+      if (sm) c.add(sm);
+      return c;
+    }
+    const blob = this.add.circle(x, y, 20, 0xff7a00, 0.95);
+    c.add(blob);
+    this.tween({ targets: blob, radius: size, duration: 600 });
+    return c;
+  }
+
+  /** A tower coming down: rolling booms up its height, a big smoke column at the base, dust rolling out. */
+  private collapseFx(x: number) {
+    for (let i = 0; i < 6; i++) this.time.delayedCall(i * 380, () => this.boomAt(x + (Math.random() - 0.5) * 120, 150 + i * 45, 1.2 + Math.random() * 0.6, 41));
+    vfx(this, "vfx_blastsmoke", x, 430, { scale: 2.2, depth: 42, delay: 600 });
+    for (let i = 0; i < 4; i++) vfx(this, "vfx_dust", x + (i - 1.5) * 120, 425, { scale: 2.4, depth: 43, delay: 900 + i * 150 });
   }
 
   /** Wipe the set for the next shot, but keep the dialogue box (depth 1000+) alive. */
@@ -166,12 +202,12 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("boom");
     this.cameras.main.flash(500, 255, 240, 200);
     this.cameras.main.shake(1200, 0.025);
-    const fire = this.add.circle(560, 270, 20, 0xff7a00, 0.95).setDepth(15);
-    this.tween({ targets: fire, radius: 70, duration: 600 });
+    this.boomAt(560, 270, 2.2, 16);
+    const fire = this.fireBlob(560, 275, 70, 15);
     this.people(people, "!!");
     synth.play("gasp");
     await this.talk([say("KREBLIS", "This is a Krelmergency message… Kreltower has been hit. I repeat. Kreltower has been hit"), say("KREBLIS", "Thinking about it…"), say("KREBLIS", "Again")]);
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < (hasVfx(this, "vfx_smokecol") ? 0 : 16); i++) {
       const smoke = this.add.circle(560 + (Math.random() - 0.5) * 80, 260 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 160, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
     }
@@ -180,7 +216,8 @@ export class VignetteScene extends Phaser.Scene {
     this.cameras.main.shake(2600, 0.03);
     fire.destroy();
     this.tween({ targets: tower, scaleY: 0.05, duration: 2600, ease: "Quad.in" });
-    for (let i = 0; i < 30; i++) {
+    this.collapseFx(560);
+    for (let i = 0; i < (hasVfx(this, "vfx_dust") ? 10 : 30); i++) {
       const dust = this.add.circle(560 + (Math.random() - 0.5) * 200, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
       this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 600, y: 380 - Math.random() * 120, scale: 3, alpha: 0, duration: 3500 });
     }
@@ -514,10 +551,11 @@ export class VignetteScene extends Phaser.Scene {
     this.caption("OPERATION CUSTARD STORM", "#ffd23f", 30);
     await Promise.all(tanks.map((t, i) => this.tween({ targets: t, x: 120 + i * 170, duration: 2600, ease: "Sine.out" })));
     const boom = (x: number, y: number) => {
-      for (let k = 0; k < 3; k++) {
-        const c = this.add.circle(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 60, 10, [0xffd23f, 0xff7a1a, 0xffffff][k], 0.95).setDepth(70);
-        this.tween({ targets: c, radius: 70 + Math.random() * 50, alpha: 0, duration: 600 + k * 150 });
-      }
+      if (!this.boomAt(x, y, 1.4, 70))
+        for (let k = 0; k < 3; k++) {
+          const c = this.add.circle(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 60, 10, [0xffd23f, 0xff7a1a, 0xffffff][k], 0.95).setDepth(70);
+          this.tween({ targets: c, radius: 70 + Math.random() * 50, alpha: 0, duration: 600 + k * 150 });
+        }
       synth.play("explode");
       this.cameras.main.shake(300, 0.02);
     };
@@ -1814,6 +1852,7 @@ export class VignetteScene extends Phaser.Scene {
     };
     const boom = (x: number, y: number) => {
       synth.play("explode");
+      if (this.boomAt(x, y, 1.2, layer.depth + 1, layer)) return;
       for (let i = 0; i < 3; i++) {
         const c = this.add.circle(x + (Math.random() - 0.5) * 50, y + (Math.random() - 0.5) * 40, 14, i % 2 ? 0xfde047 : 0xf97316);
         layer.add(c);
@@ -2101,6 +2140,7 @@ export class VignetteScene extends Phaser.Scene {
     // it goes, from the inside out
     const cam = this.cameras.main;
     const fire = (x: number, y: number, big: number) => {
+      if (this.boomAt(x, y, 0.9 + big * 0.8, 31)) return;
       const core = this.add.circle(x, y, 10, 0xfff7c2, 1).setDepth(31);
       const ring = this.add.circle(x, y, 14, 0xf97316, 0.95).setDepth(30);
       const smoke = this.add.circle(x, y - 10, 18, 0x3f3f46, 0.8).setDepth(29);
@@ -2323,9 +2363,9 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("boom");
     this.cameras.main.flash(500, 255, 240, 200);
     this.cameras.main.shake(1400, 0.03);
-    const fire = this.add.circle(620, 260, 20, 0xff7a00, 0.95).setDepth(15);
-    this.tween({ targets: fire, radius: 80, duration: 600 });
-    for (let i = 0; i < 18; i++) {
+    this.boomAt(620, 260, 2.4, 16);
+    const fire = this.fireBlob(620, 265, 80, 15);
+    for (let i = 0; i < (hasVfx(this, "vfx_smokecol") ? 0 : 18); i++) {
       const smoke = this.add.circle(620 + (Math.random() - 0.5) * 90, 250 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 170, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
     }
@@ -2344,7 +2384,8 @@ export class VignetteScene extends Phaser.Scene {
     this.cameras.main.shake(2800, 0.035);
     fire.destroy();
     this.tween({ targets: tw, scaleY: 0.05, duration: 2600, ease: "Quad.in" });
-    for (let i = 0; i < 34; i++) {
+    this.collapseFx(620);
+    for (let i = 0; i < (hasVfx(this, "vfx_dust") ? 10 : 34); i++) {
       const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
       this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 640, y: 380 - Math.random() * 130, scale: 3, alpha: 0, duration: 3500 });
     }

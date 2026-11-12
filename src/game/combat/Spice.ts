@@ -299,11 +299,14 @@ export class Spice {
       synth.play("explode");
       sc.shake(220, 0.012);
       sc.hitStop(50);
-      const boom = sc.add.circle(b.x, b.y, 10, 0xffd23f, 0.9).setDepth(1400);
-      sc.tweens.add({ targets: boom, radius: 100, alpha: 0, duration: 320, onComplete: () => boom.destroy() });
-      sc.burst(b.x, b.y, 0xf97316, 22);
-      sc.burst(b.x, b.y, 0x111827, 10);
-      sc.aoe(b.x, b.y, 100, 70, { knock: 380, noWonk: true, color: 0xf97316, label: undefined });
+      const drawn = sc.boomFx(b.x, b.y, 1.2, 1400);
+      if (!drawn) {
+        const boom = sc.add.circle(b.x, b.y, 10, 0xffd23f, 0.9).setDepth(1400);
+        sc.tweens.add({ targets: boom, radius: 100, alpha: 0, duration: 320, onComplete: () => boom.destroy() });
+        sc.burst(b.x, b.y, 0xf97316, 22);
+        sc.burst(b.x, b.y, 0x111827, 10);
+      }
+      sc.aoe(b.x, b.y, 100, 70, { knock: 380, noWonk: true, color: drawn ? undefined : 0xf97316, label: undefined });
       const p = sc.player;
       if (p && Phaser.Math.Distance.Between(p.x, p.y, b.x, b.y) < 80) sc.damagePlayer(14, { x: b.x, y: b.y }, { label: "-14 (BARREL)" });
       // chain reaction
@@ -408,7 +411,7 @@ export class Spice {
       sc.enemyAoe(e.x, e.y, 80, 16 * e.dmgMult, 650, 0xef4444);
       sc.time.delayedCall(650, () => {
         synth.play("explode");
-        sc.burst(e.x, e.y, 0xef4444, 16);
+        if (!sc.boomFx(e.x, e.y, 0.8)) sc.burst(e.x, e.y, 0xef4444, 16);
         this.hitAoe(e.x, e.y, 80, 99);
       });
     }

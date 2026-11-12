@@ -397,7 +397,9 @@ export class Player {
     const blast = (x: number, y: number) => {
       synth.play("explode");
       this.world.shake(140, 0.006);
-      if (disco) for (const c of [0xff4fd8, 0x22d3ee, 0xfacc15, 0x4ade80, 0xa855f7]) this.world.burst(x, y, c, 6);
+      if (!disco && this.world.boomFx?.(x, y, 0.8)) {
+        /* drawn explosion */
+      } else if (disco) for (const c of [0xff4fd8, 0x22d3ee, 0xfacc15, 0x4ade80, 0xa855f7]) this.world.burst(x, y, c, 6);
       else this.world.burst(x, y, 0xff6ec7, 14);
       this.world.aoe(x, y, g.blast!, this.dmg(g.dmg, now), { color: disco ? [0xff4fd8, 0x22d3ee, 0xfacc15][Math.floor(Math.random() * 3)] : 0xff6ec7, knock: g.knock ?? 200 });
     };
@@ -480,7 +482,7 @@ export class Player {
       this.world.sc.time.delayedCall(550, () => {
         die.destroy();
         synth.play("explode");
-        this.world.burst(dx, dy, 0xffffff, 12);
+        if (!this.world.boomFx?.(dx, dy, 0.7)) this.world.burst(dx, dy, 0xffffff, 12);
         this.world.aoe(dx, dy, 70, this.dmg(22, this.world.now()), { knock: 260, label: "SNAKE EYES" });
       });
     }
@@ -759,7 +761,8 @@ export class Player {
               this.world.sc.time.delayedCall(260, () => {
                 mark.destroy();
                 synth.play("explode");
-                this.world.aoe(bx, by, 50, d * 2.2, { knock: 160, color: 0xffa500 });
+                const drawn = this.world.boomFx?.(bx, by, 0.6);
+                this.world.aoe(bx, by, 50, d * 2.2, { knock: 160, color: drawn ? undefined : 0xffa500 });
               });
             });
           }

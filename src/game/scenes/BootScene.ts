@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { generateAll } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
 import { installHdScale, type ArtManifest } from "../gfx/HD";
+import { loadVfx, makeVfxAnims, type VfxDef } from "../gfx/Vfx";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -23,6 +24,7 @@ export class BootScene extends Phaser.Scene {
       for (const [key, c] of Object.entries(m.chars ?? {})) this.load.spritesheet(key, src(c.file), { frameWidth: c.frame, frameHeight: c.frame });
       for (const [key, im] of Object.entries(m.images ?? {})) this.load.image(key, src(im.file));
       for (const [key, sh] of Object.entries(m.sheets ?? {})) this.load.spritesheet(key, src(sh.file), { frameWidth: sh.frameWidth, frameHeight: sh.frameHeight });
+      loadVfx(this.load, (m as unknown as { vfx?: Record<string, VfxDef> }).vfx, src);
     });
     const t = this.add.text(480, 270, "LOADING LORE…", { fontFamily: "monospace", fontSize: "20px", color: "#ffd23f" }).setOrigin(0.5);
     this.load.on("progress", (p: number) => t.setText(`LOADING LORE… ${Math.round(p * 100)}%`));
@@ -58,6 +60,7 @@ export class BootScene extends Phaser.Scene {
       if (tex.startsWith("pt_")) this.textures.get(tex).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     generateAll(this);
+    makeVfxAnims(this);
     this.scene.start("Enter");
   }
 }

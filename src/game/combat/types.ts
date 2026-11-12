@@ -41,6 +41,8 @@ export interface ShotOpts {
 /** What entities need from the combat scene. Implemented by DungeonScene. */
 export interface CombatWorld {
   sc: Phaser.Scene;
+  /** a drawn explosion; false if the art isn't loaded */
+  boomFx?(x: number, y: number, size?: number, depth?: number): boolean;
   player: Player;
   enemies: Enemy[];
   enemyTimeScale: number;

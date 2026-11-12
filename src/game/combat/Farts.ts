@@ -5,6 +5,7 @@ import type { Player } from "./Player";
 import type { CombatWorld } from "./types";
 import { CHARACTERS } from "../../data/characters";
 import { kd } from "../systems/kreddle";
+import { hasVfx, vfx } from "../gfx/Vfx";
 
 /**
  * Fart attacks. A meter fills from landing hits; release it any time (G / 💨 / D-pad down).
@@ -116,8 +117,10 @@ export function releaseFart(p: Player, now: number) {
   if (!silent) synth.fart(level);
   if (id === "KREZMAR") synth.play("harmonica");
   w.floatText(p.x, p.y - 52, silent ? "..." : `${L.name}!`, "#b5e655", 14 + level * 3);
-  // clouds
-  const puffs = [3, 5, 9][level - 1];
+  // a drawn gas burst (PixelLab VFX) where it comes out, then the lingering clouds
+  const drawnGas = hasVfx(sc, "vfx_fart") && level > 1;
+  if (drawnGas) vfx(sc, "vfx_fart", bx, by, { scale: (r / 60) * 1.1, depth: 612 });
+  const puffs = drawnGas ? [3, 3, 5][level - 1] : [3, 5, 9][level - 1];
   for (let i = 0; i < puffs; i++) {
     const a = Math.random() * Math.PI * 2;
     const d = Math.random() * r * 0.6;
@@ -188,6 +191,9 @@ function ibsAttack(p: Player, now: number) {
     w.shake(1400, 0.018);
     w.hitStop(90);
     const b = w.bounds;
+    // a green mushroom cloud where you're standing
+    vfx(sc, "vfx_mushroom", p.x, p.y + 20, { scale: 2.4, depth: 640 });
+    vfx(sc, "vfx_shock", p.x, p.y + 20, { scale: 4, depth: 561, tint: 0xd4ff3a });
     // shockwave ring
     const ring = sc.add.circle(p.x, p.y, 20, 0xb5e655, 0).setStrokeStyle(10, 0xd4ff3a, 0.9).setDepth(560);
     sc.tweens.add({ targets: ring, radius: 900, alpha: 0, duration: 700, ease: "Quad.out", onComplete: () => ring.destroy() });

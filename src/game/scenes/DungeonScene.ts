@@ -32,6 +32,7 @@ import { CHARACTERS } from "../../data/characters";
 import { evalCond } from "../systems/conditions";
 import { extraViolence, kd } from "../systems/kreddle";
 import { forcedKreltality, kreltality, type KrelTarget } from "../combat/Kreltality";
+import { hasVfx, vfx } from "../gfx/Vfx";
 
 interface Shot {
   spr: Phaser.GameObjects.Image;
@@ -1160,8 +1161,26 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   // ------------------------------------------------------------------ Reinhardt Crobley: the end
 
   /** Cartoon blood: little red bits that arc, fall and leave splats on the floor. */
+  /** A drawn explosion (PixelLab VFX), with smoke after; false if the art isn't loaded. */
+  boomFx(x: number, y: number, size = 1, depth = 965): boolean {
+    const big = size >= 1.3 && hasVfx(this, "vfx_bigboom");
+    const s = vfx(this, big ? "vfx_bigboom" : "vfx_boom", x, y, { scale: big ? size : size * 1.2, depth });
+    if (!s) return false;
+    vfx(this, "vfx_smoke", x + (Math.random() - 0.5) * 20, y - 10 * size, { scale: size, depth: depth - 1, delay: 380 });
+    return true;
+  }
+
   private gore(x: number, y: number, n: number, power = 1, upward = false) {
     const floor = this.side ? this.groundY : this.bounds.bottom;
+    if (hasVfx(this, "vfx_blood")) {
+      // drawn blood: a burst (or a gush upwards), meat if it's a lot, a pool where it lands
+      const k = Math.min(2.4, 0.6 + n / 40) * Math.max(0.8, power * 0.8);
+      vfx(this, upward && hasVfx(this, "vfx_bloodspray") ? "vfx_bloodspray" : "vfx_blood", x, y, { scale: k, depth: 960, flipX: Math.random() < 0.5 });
+      if (n >= 30) vfx(this, "vfx_gore", x, y, { scale: k * 0.8, depth: 961, delay: 60 });
+      const pool = vfx(this, "vfx_bloodpool", x + (Math.random() - 0.5) * 20, floor - 1, { scale: Math.min(1.8, 0.6 + n / 50), depth: 6, hold: true, delay: 250 });
+      if (pool) this.tweens.add({ targets: pool, alpha: 0, delay: 9000, duration: 3000, onComplete: () => pool.destroy() });
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const sz = 2 + Math.random() * 5;
       const r = this.add.rectangle(x, y, sz, sz, Math.random() < 0.7 ? 0xdc2626 : 0x7f1d1d).setDepth(960);
@@ -1194,6 +1213,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private splatter(x: number, y: number, n: number, power = 1) {
     if (this.side) {
       this.gore(x, y, n, power);
+      return;
+    }
+    if (hasVfx(this, "vfx_blood")) {
+      vfx(this, "vfx_blood", x, y, { scale: Math.min(2, 0.5 + n / 30) * power, depth: 960, flipX: Math.random() < 0.5 });
+      const pool = vfx(this, "vfx_bloodpool", x + (Math.random() - 0.5) * 16, y + 8, { scale: Math.min(1.5, 0.4 + n / 40), depth: 6, hold: true, delay: 200 });
+      if (pool) this.tweens.add({ targets: pool, alpha: 0, delay: 8000, duration: 3000, onComplete: () => pool.destroy() });
       return;
     }
     for (let i = 0; i < n; i++) {
@@ -1231,10 +1256,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.tweens.add({ targets: piece, x: e.x + Math.cos(a) * d, y: floor ?? e.y + Math.sin(a) * d * 0.7, angle: (Math.random() - 0.5) * 540, duration: 420, ease: "Quad.out" });
         this.tweens.add({ targets: piece, alpha: 0, delay: 2500, duration: 900, onComplete: () => piece.destroy() });
       }
+    vfx(this, "vfx_gore", e.x, e.y, { scale: 1.1, depth: e.depth + 2 });
     this.splatter(e.x, e.y, 22, 1.4);
   }
 
   private screenSplat(n = 4) {
+    if (hasVfx(this, "vfx_blood")) {
+      // blood on the lens
+      for (let i = 0; i < n; i++) vfx(this, "vfx_blood", 80 + Math.random() * 800, 60 + Math.random() * 300, { scale: 2.5 + Math.random() * 2, fixed: true, depth: 990, delay: i * 70, flipX: Math.random() < 0.5 });
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const sp = this.add.circle(80 + Math.random() * 800, 60 + Math.random() * 300, 30 + Math.random() * 60, 0xb91c1c, 0.75).setScrollFactor(0).setDepth(990);
       this.tweens.add({ targets: sp, y: sp.y + 140, scaleY: 1.6, alpha: 0, delay: 700, duration: 2200, onComplete: () => sp.destroy() });
@@ -1361,6 +1392,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     fountain.remove();
     synth.play("explode");
     synth.play("boom");
+    this.boomFx(x, y, 1.8);
     this.screenSplat(7);
     this.bigText("CROBLITERATED", "#f472b6", 50, 220);
     cam.flash(250, 200, 0, 0);
@@ -1430,8 +1462,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         for (let i = 0; i < 14; i++)
           this.time.delayedCall(i * 120, () => {
             synth.play("explode");
-            const c = this.add.circle(tx + (Math.random() - 0.5) * 300, ty + (Math.random() - 0.5) * 200, 20, i % 2 ? 0xfde047 : 0xf97316, 0.9).setDepth(970);
-            this.tweens.add({ targets: c, radius: 160, alpha: 0, duration: 600, onComplete: () => c.destroy() });
+            const ex = tx + (Math.random() - 0.5) * 300;
+            const ey = ty + (Math.random() - 0.5) * 200;
+            if (!this.boomFx(ex, ey, 1.4 + Math.random() * 0.8, 970)) {
+              const c = this.add.circle(ex, ey, 20, i % 2 ? 0xfde047 : 0xf97316, 0.9).setDepth(970);
+              this.tweens.add({ targets: c, radius: 160, alpha: 0, duration: 600, onComplete: () => c.destroy() });
+            }
             this.cameras.main.shake(150, 0.02);
           });
         await new Promise<void>((r2) => this.time.delayedCall(1700, () => r2()));
@@ -1483,14 +1519,69 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   /** Where the boss died and what they looked like (for the KRELTALITY stand-in). */
   private krelTarget: KrelTarget | null = null;
+  private lastHitFx = 0;
+
+  /** The boss's drawn "defeated" animation (bossdie_<id>): staggering to their knees, then collapsing. */
+  private downSpr: Phaser.GameObjects.Sprite | null = null;
+  private downSplit = 0;
+
+  /** Stagger and drop to the knees (held there through their last words). */
+  private bossKneel(b: Boss): Promise<void> {
+    const key = `bossdie_${b.bossId}`;
+    // these have their own death scenes
+    if (["reinhardt", "krozno", "rik"].includes(b.bossId) || !this.textures.exists(key)) return Promise.resolve();
+    const tex = this.textures.get(key);
+    const n = tex.frameTotal - 1;
+    if (n < 4) return Promise.resolve();
+    const side = tex.get(0).height;
+    const fh = b.frame.height;
+    const k = b.displayHeight / fh; // screen px per source px, same as the boss sprite
+    const down = this.add.sprite(b.x, b.y + b.displayHeight * (1 - b.originY), key, 0).setOrigin(0.5, (side - 4) / side).setDepth(b.depth).setFlipX(b.flipX);
+    down.setScale(k);
+    b.setVisible(false);
+    this.downSpr = down;
+    this.downSplit = Math.max(2, Math.round(n * 0.6));
+    if (!this.anims.exists(`${key}_kneel`)) {
+      this.anims.create({ key: `${key}_kneel`, frames: this.anims.generateFrameNumbers(key, { start: 0, end: this.downSplit }), frameRate: 9, repeat: 0 });
+      this.anims.create({ key: `${key}_fall`, frames: this.anims.generateFrameNumbers(key, { start: this.downSplit, end: n - 1 }), frameRate: 9, repeat: 0 });
+    }
+    return new Promise((r) => {
+      down.play(`${key}_kneel`);
+      down.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => r());
+      this.time.delayedCall(2500, () => r());
+    });
+  }
+
+  /** ...and the rest: down they go. */
+  private bossFall(): Promise<void> {
+    const down = this.downSpr;
+    if (!down || !down.active) return Promise.resolve();
+    const key = down.texture.key;
+    return new Promise((r) => {
+      down.play(`${key}_fall`);
+      down.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+        synth.play("boom");
+        this.shake(200, 0.008);
+        vfx(this, "vfx_dust", down.x, down.y, { scale: 1.6, depth: down.depth + 1 });
+        r();
+      });
+      this.time.delayedCall(2500, () => r());
+    });
+  }
 
   /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
   private async maybeKreltality(b: Boss) {
-    if (["drongus", "cronster", "reinhardt", "krozno", "rik"].includes(b.bossId) || !this.krelTarget) return;
+    if (["drongus", "cronster", "reinhardt", "krozno", "rik"].includes(b.bossId) || !this.krelTarget) {
+      await this.bossFall();
+      return;
+    }
     const ps = this.player.spr;
     const phd = (ps.texture.customData as { hd?: number } | undefined)?.hd ?? 1;
     this.busy = true;
     const done = await kreltality(this, this.krelTarget, { key: ps.texture.key, frame: 0, scale: ps.scaleX / phd });
+    if (!done) await this.bossFall();
+    else this.downSpr?.destroy();
+    this.downSpr = null;
     if (done) {
       bump(G.s, "kreltalities");
       G.s.flags[`krel_${b.bossId}`] = true; // a trophy for the shelf at home
@@ -1505,12 +1596,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const hd = (b.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;
       this.krelTarget = b.texture ? { key: b.texture.key, frame: b.frame.name, x: b.x, y: b.y, scale: b.scaleX / hd, flip: b.flipX, name: BOSS_TEXT[b.bossId]?.name ?? "THE BOSS" } : null;
     }
+    this.downSpr?.destroy();
+    this.downSpr = null;
+    await this.bossKneel(b);
     const s = G.s;
     const rush = this.room.bossRush ?? [];
     if (this.rushIdx < rush.length) {
       // boss rush: next one up, same room, new set
       G.emit("boss", null);
       synth.play("boom");
+      this.boomFx(b.x, b.y, 1.3);
       this.shake(500, 0.02);
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
@@ -1535,6 +1630,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       // a boss half way through: beat it and the door opens
       G.emit("boss", null);
       synth.play("boom");
+      this.boomFx(b.x, b.y, 1.4);
       this.shake(600, 0.025);
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
@@ -1554,6 +1650,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (let i = 0; i < this.dungeon.rooms.length; i++) delete s.flags[clearKey(this.dungeon.id, i)];
     G.emit("boss", null);
     synth.play("boom");
+    this.boomFx(b.x, b.y, 1.6);
     this.shake(800, 0.03);
     for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
     for (const sh of [...this.shots]) this.killShot(sh);
@@ -1615,6 +1712,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (b.bossId === "drongus") {
       s.flags.ch6_clear = true;
       G.save();
+      await this.bossFall();
       this.time.delayedCall(1200, () => {
         this.transitioning = true;
         switchTo(this, "Ending", {});
@@ -1958,6 +2056,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.toast("WONKING MACHINE", "BYPRODUCTS HAVE BECOME SENTIENT.");
     } else {
       synth.play("explode");
+      this.boomFx(spr.x, spr.y + 40, 1.5);
       this.enemyAoe(spr.x, spr.y + 40, 120, 18, 500, 0xffd23f);
       this.aoe(spr.x, spr.y + 40, 160, 40, { knock: 300 });
       this.toast("WONKING MACHINE", "MACHINERY EXPLOSION. Big Bertha would never.");
@@ -2147,6 +2246,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.floatText(e.x + (Math.random() - 0.5) * 16, e.y - 20, txt, opts.label === "99" ? "#ff2a2a" : opts.crit ? "#ffd23f" : "#ffffff", opts.label === "99" ? 24 : opts.crit ? 18 : 13);
       synth.play(opts.crit ? "crit" : "hit");
       if (opts.crit) this.hitStop(50);
+      // a drawn hit spark where it landed (throttled so a minigun doesn't paint the room)
+      if (now - this.lastHitFx > 45 || opts.crit) {
+        this.lastHitFx = now;
+        vfx(this, opts.crit ? "vfx_crit" : "vfx_hit", e.x + (Math.random() - 0.5) * 10, e.y - 6 + (Math.random() - 0.5) * 10, { scale: opts.crit ? 1 : 0.8, depth: e.depth + 3 });
+      }
     }
     if (!opts.noWonk) {
       // meters fill with time spent landing hits, not raw hit count (so a gatling isn't a cheat code)

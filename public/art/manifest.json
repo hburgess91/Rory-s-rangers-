@@ -5923,5 +5923,237 @@
    "frameHeight": 32,
    "hd": 0.5
   }
+ },
+ "vfx": {
+  "vfx_bigboom": {
+   "file": "vfx/vfx_bigboom.png",
+   "w": 114,
+   "h": 124,
+   "frames": 15,
+   "fps": 16,
+   "loop": false,
+   "ox": 0.544,
+   "oy": 0.621
+  },
+  "vfx_blastsmoke": {
+   "file": "vfx/vfx_blastsmoke.png",
+   "w": 224,
+   "h": 216,
+   "frames": 32,
+   "fps": 10,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.796
+  },
+  "vfx_blood": {
+   "file": "vfx/vfx_blood.png",
+   "w": 92,
+   "h": 65,
+   "frames": 13,
+   "fps": 23,
+   "loop": false,
+   "ox": 0.511,
+   "oy": 0.677
+  },
+  "vfx_bloodpool": {
+   "file": "vfx/vfx_bloodpool.png",
+   "w": 88,
+   "h": 40,
+   "frames": 16,
+   "fps": 16,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.55
+  },
+  "vfx_bloodspray": {
+   "file": "vfx/vfx_bloodspray.png",
+   "w": 114,
+   "h": 114,
+   "frames": 15,
+   "fps": 16,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.623
+  },
+  "vfx_boom": {
+   "file": "vfx/vfx_boom.png",
+   "w": 96,
+   "h": 96,
+   "frames": 14,
+   "fps": 19,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.5
+  },
+  "vfx_coins": {
+   "file": "vfx/vfx_coins.png",
+   "w": 81,
+   "h": 81,
+   "frames": 13,
+   "fps": 15,
+   "loop": false,
+   "ox": 0.42,
+   "oy": 0.407
+  },
+  "vfx_confetti": {
+   "file": "vfx/vfx_confetti.png",
+   "w": 120,
+   "h": 106,
+   "frames": 15,
+   "fps": 15,
+   "loop": false,
+   "ox": 0.517,
+   "oy": 0.434
+  },
+  "vfx_crit": {
+   "file": "vfx/vfx_crit.png",
+   "w": 90,
+   "h": 96,
+   "frames": 11,
+   "fps": 24,
+   "loop": false,
+   "ox": 0.533,
+   "oy": 0.417
+  },
+  "vfx_dust": {
+   "file": "vfx/vfx_dust.png",
+   "w": 70,
+   "h": 59,
+   "frames": 13,
+   "fps": 17,
+   "loop": false,
+   "ox": 0.471,
+   "oy": 0.576
+  },
+  "vfx_fart": {
+   "file": "vfx/vfx_fart.png",
+   "w": 87,
+   "h": 68,
+   "frames": 13,
+   "fps": 14,
+   "loop": false,
+   "ox": 0.529,
+   "oy": 0.603
+  },
+  "vfx_fire": {
+   "file": "vfx/vfx_fire.png",
+   "w": 48,
+   "h": 76,
+   "frames": 10,
+   "fps": 12,
+   "loop": true,
+   "ox": 0.5,
+   "oy": 0.763
+  },
+  "vfx_gore": {
+   "file": "vfx/vfx_gore.png",
+   "w": 172,
+   "h": 90,
+   "frames": 14,
+   "fps": 19,
+   "loop": false,
+   "ox": 0.529,
+   "oy": 0.433
+  },
+  "vfx_heal": {
+   "file": "vfx/vfx_heal.png",
+   "w": 48,
+   "h": 81,
+   "frames": 12,
+   "fps": 14,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.704
+  },
+  "vfx_hit": {
+   "file": "vfx/vfx_hit.png",
+   "w": 45,
+   "h": 43,
+   "frames": 7,
+   "fps": 21,
+   "loop": false,
+   "ox": 0.467,
+   "oy": 0.512
+  },
+  "vfx_mushroom": {
+   "file": "vfx/vfx_mushroom.png",
+   "w": 189,
+   "h": 167,
+   "frames": 28,
+   "fps": 10,
+   "loop": false,
+   "ox": 0.513,
+   "oy": 0.766
+  },
+  "vfx_muzzle": {
+   "file": "vfx/vfx_muzzle.png",
+   "w": 44,
+   "h": 26,
+   "frames": 5,
+   "fps": 15,
+   "loop": false,
+   "ox": 0.091,
+   "oy": 0.5
+  },
+  "vfx_pixeldeath": {
+   "file": "vfx/vfx_pixeldeath.png",
+   "w": 87,
+   "h": 80,
+   "frames": 12,
+   "fps": 17,
+   "loop": false,
+   "ox": 0.517,
+   "oy": 0.512
+  },
+  "vfx_shock": {
+   "file": "vfx/vfx_shock.png",
+   "w": 116,
+   "h": 50,
+   "frames": 11,
+   "fps": 21,
+   "loop": false,
+   "ox": 0.5,
+   "oy": 0.5
+  },
+  "vfx_smoke": {
+   "file": "vfx/vfx_smoke.png",
+   "w": 73,
+   "h": 58,
+   "frames": 13,
+   "fps": 17,
+   "loop": false,
+   "ox": 0.534,
+   "oy": 0.603
+  },
+  "vfx_smokecol": {
+   "file": "vfx/vfx_smokecol.png",
+   "w": 36,
+   "h": 107,
+   "frames": 16,
+   "fps": 10,
+   "loop": true,
+   "ox": 0.5,
+   "oy": 1.0
+  },
+  "vfx_sparks": {
+   "file": "vfx/vfx_sparks.png",
+   "w": 88,
+   "h": 73,
+   "frames": 11,
+   "fps": 19,
+   "loop": false,
+   "ox": 0.398,
+   "oy": 0.493
+  },
+  "vfx_stars": {
+   "file": "vfx/vfx_stars.png",
+   "w": 47,
+   "h": 25,
+   "frames": 12,
+   "fps": 12,
+   "loop": true,
+   "ox": 0.489,
+   "oy": 0.68
+  }
  }
 }

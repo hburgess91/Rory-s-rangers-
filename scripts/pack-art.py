@@ -5,7 +5,7 @@ LIMIT = 48 * 1024
 d = sys.argv[1]
 m = json.load(open(f"{d}/art/manifest.json"))
 emb = set()
-for sec in ("chars", "images", "sheets"):
+for sec in ("chars", "images", "sheets", "vfx"):
     for k, v in m.get(sec, {}).items():
         f = v["file"]
         if f.startswith("data:"): continue

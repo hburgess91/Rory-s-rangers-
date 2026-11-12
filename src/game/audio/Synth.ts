@@ -1,7 +1,11 @@
 // Procedural WebAudio sound. Everything is synthesised: no copyrighted tracks, no files needed.
 // To use real audio later, register a file in AUDIO_FILES and it will be preferred.
 
+import { SFX_KEYS } from "./sfxList";
+
 export const AUDIO_FILES: Record<string, string> = {
+  // real sound effects (PixelLab), public/audio/sfx/<key>.mp3. "explode_1", "explode_2"… are takes of "explode".
+  ...Object.fromEntries(SFX_KEYS.map((k) => [k, `audio/sfx/${k}.mp3`])),
   // e.g. mork_voice: "audio/mork_voice.ogg"  (drop the file in public/audio)
   /** Studio-audience laugh track (sitcom canned laughter). Played in varied slices by "laugh"/"biglaugh". */
   laugh_track: "audio/laugh_track.mp3",
@@ -167,16 +171,35 @@ export class Synth {
   }
 
   private async loadFiles() {
-    for (const [id, url] of Object.entries(AUDIO_FILES)) {
-      try {
-        const res = await fetch(url);
-        const buf = await res.arrayBuffer();
-        this.files[id] = await this.ctx!.decodeAudioData(buf);
-      } catch {
-        /* missing file: fall back to synth */
-      }
-    }
+    await Promise.all(
+      Object.entries(AUDIO_FILES).map(async ([id, url]) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const buf = await res.arrayBuffer();
+          this.files[id] = await this.ctx!.decodeAudioData(buf);
+        } catch {
+          /* missing file: fall back to synth */
+        }
+      }),
+    );
   }
+
+  /** A recorded take of this sound (one of id, id_1, id_2…), or null to synthesise it. */
+  private take(id: string): AudioBuffer | null {
+    const opts: AudioBuffer[] = [];
+    if (this.files[id]) opts.push(this.files[id]);
+    for (let i = 1; i <= 5; i++) if (this.files[`${id}_${i}`]) opts.push(this.files[`${id}_${i}`]);
+    if (!opts.length) return null;
+    // don't play the same take twice in a row
+    let b = opts[Math.floor(Math.random() * opts.length)];
+    if (opts.length > 1 && b === this.lastTake[id]) b = opts[(opts.indexOf(b) + 1) % opts.length];
+    this.lastTake[id] = b;
+    return b;
+  }
+  private lastTake: Record<string, AudioBuffer> = {};
+  /** When each sound last started (so a shotgun of hits doesn't stack 30 copies). */
+  private lastPlayed: Record<string, number> = {};
 
   setVolumes(v: { master: number; music: number; sfx: number }) {
     this.vol = v;
@@ -542,9 +565,16 @@ export class Synth {
     // canned laughter: a random slice of the real laugh track (the big one plays most of it)
     if (id === "laugh" && this.clip("laugh_track", Math.random() * 1.6, 2.8 + Math.random() * 0.8, 1.1, 0.96 + Math.random() * 0.08)) return;
     if (id === "biglaugh" && this.clip("laugh_track", 0, 6.4, 1.3)) return;
-    if (this.files[id]) {
+    const rec = this.take(id);
+    if (rec) {
+      const now = this.ctx.currentTime;
+      // the same sound within 35ms is one sound
+      if (now - (this.lastPlayed[id] ?? -1) < 0.035) return;
+      this.lastPlayed[id] = now;
       const s = this.ctx.createBufferSource();
-      s.buffer = this.files[id];
+      s.buffer = rec;
+      // a touch of pitch wobble so repeats don't sound copy-pasted
+      s.playbackRate.value = 0.94 + Math.random() * 0.12;
       s.connect(this.sfxGain);
       s.start();
       return;

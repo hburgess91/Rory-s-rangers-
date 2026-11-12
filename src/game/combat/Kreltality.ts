@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { synth } from "../audio/Synth";
 import { FONT } from "../ui/theme";
+import { hasVfx, vfx } from "../gfx/Vfx";
 
 /**
  * KRELTALITY. After a boss goes down: "FUCKING KILL THEM!!" — press it (or don't) for an over-the-top,
@@ -134,8 +135,26 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
   body.setAngle(0);
   await wait(200);
 
-  // ---- helpers: blood, guts, bones
+  // ---- helpers: blood, guts, bones. Drawn effects (PixelLab VFX) when they're loaded; little shapes if not.
+  const drawn = hasVfx(sc, "vfx_blood");
+  const fx = (key: string, x: number, y: number, scale: number, extra: Parameters<typeof vfx>[4] = {}) => {
+    const s = vfx(sc, key, x, y, { depth: D + 6, scale, ...extra });
+    if (s) junk.push(s);
+    return s;
+  };
+  let pools = 0;
   const blood = (x: number, y: number, n: number, power = 1, up = false) => {
+    if (drawn) {
+      const k = Math.min(2.2, 0.7 + n / 50) * Math.max(0.8, power * 0.8);
+      fx(up && hasVfx(sc, "vfx_bloodspray") ? "vfx_bloodspray" : "vfx_blood", x, y, k, { flipX: Math.random() < 0.5 });
+      if (n >= 20) fx("vfx_blood", x + (Math.random() - 0.5) * 40, y - 10, k * 0.7, { delay: 120, flipX: true });
+      // a pool where it lands (only a few per finisher)
+      if (pools < 3 && hasVfx(sc, "vfx_bloodpool")) {
+        pools++;
+        fx("vfx_bloodpool", x + (Math.random() - 0.5) * 30, floor + 4, Math.min(2, 0.8 + n / 60), { hold: true, depth: D + 1, delay: 200 });
+      }
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const sz = 2 + Math.random() * 5;
       const r = keep(sc.add.rectangle(x, y, sz, sz, Math.random() < 0.7 ? 0xdc2626 : 0x7f1d1d).setDepth(D + 6));
@@ -156,11 +175,23 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     }
   };
   const fountain = (x: number, y: number, ms: number) => {
+    if (drawn) {
+      const ev = sc.time.addEvent({ delay: 420, loop: true, callback: () => fx(hasVfx(sc, "vfx_bloodspray") ? "vfx_bloodspray" : "vfx_blood", x + (Math.random() - 0.5) * 8, y, 1.1 + Math.random() * 0.4) });
+      fx(hasVfx(sc, "vfx_bloodspray") ? "vfx_bloodspray" : "vfx_blood", x, y, 1.3);
+      sc.time.delayedCall(ms, () => ev.remove());
+      return;
+    }
     const ev = sc.time.addEvent({ delay: 45, loop: true, callback: () => blood(x, y, 4, 0.9, true) });
     sc.time.delayedCall(ms, () => ev.remove());
   };
   /** A rope of sausagey guts flung from (x,y) towards angle a. */
   const guts = (x: number, y: number, a: number, len = 120) => {
+    if (hasVfx(sc, "vfx_gore")) {
+      // meaty chunks flung out along the angle, a splat where they land
+      fx("vfx_gore", x + Math.cos(a) * len * 0.35, Math.min(floor, y + Math.sin(a) * len * 0.35), 0.9 + len / 200, { flipX: Math.cos(a) < 0, delay: Math.random() * 120 });
+      fx("vfx_blood", x + Math.cos(a) * len * 0.8, Math.min(floor, y + Math.sin(a) * len * 0.8 + 20), 0.8, { delay: 160 + Math.random() * 120 });
+      return;
+    }
     const n = 11;
     for (let i = 0; i < n; i++) {
       const c = keep(sc.add.circle(x, y, 7 - i * 0.25, i % 2 ? 0xf472b6 : 0xbe185d).setStrokeStyle(1.5, 0x831843).setDepth(D + 5));
@@ -171,13 +202,20 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
   };
   /** A spinal column hanging off a head. */
   const spine = (head: Phaser.GameObjects.Image) => {
-    const bones: Phaser.GameObjects.Shape[] = [];
-    for (let i = 0; i < 8; i++) {
-      bones.push(keep(sc.add.rectangle(head.x, head.y, 14 - i * 0.6, 7, 0xf5ecd7).setStrokeStyle(1.5, 0x9f1239).setDepth(D + 4)));
-      if (i % 2) bones.push(keep(sc.add.rectangle(head.x, head.y, 4, 4, 0xdc2626).setDepth(D + 4)));
-    }
+    // vertebrae: a little drawn bone each (body, side wings, a knob), with red gristle between
+    const bones: Phaser.GameObjects.GameObject[] = [];
+    const vert = (w: number) => {
+      const c = sc.add.container(head.x, head.y).setDepth(D + 4);
+      c.add(sc.add.ellipse(0, 3, w + 6, 4, 0x9f1239, 0.9)); // gristle
+      c.add(sc.add.rectangle(-w / 2 - 3, 0, 6, 3, 0xe7dcc4).setStrokeStyle(1, 0x6b5a45)); // wings
+      c.add(sc.add.rectangle(w / 2 + 3, 0, 6, 3, 0xe7dcc4).setStrokeStyle(1, 0x6b5a45));
+      c.add(sc.add.ellipse(0, 0, w, 6, 0xf5ecd7).setStrokeStyle(1.2, 0x6b5a45));
+      c.add(sc.add.ellipse(-w * 0.15, -1, w * 0.4, 2, 0xffffff, 0.8)); // shine
+      return keep(c);
+    };
+    for (let i = 0; i < 9; i++) bones.push(vert(12 - i * 0.6));
     const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => {
-      bones.forEach((b, i) => b.setPosition(head.x + Math.sin(sc.time.now / 120 + i * 0.5) * (i * 0.6), head.y + H * 0.14 + i * 6));
+      bones.forEach((b, i) => (b as Phaser.GameObjects.Container).setPosition(head.x + Math.sin(sc.time.now / 120 + i * 0.5) * (i * 0.6), head.y + H * 0.14 + i * 6.5));
     } });
     sc.time.delayedCall(5000, () => ev.remove());
   };
@@ -230,6 +268,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
       await tw({ targets: body, scaleX: tg.scale * 1.7, scaleY: tg.scale * 1.5, duration: 1200, ease: "Quad.in" });
       flash();
       synth.play("explode");
+      fx("vfx_bigboom", tg.x, tg.y + H * 0.15, 1.5 * Math.max(1, W / 90), { depth: D + 7 });
       synth.play("boom");
       cam.shake(500, 0.03);
       body.setVisible(false);
@@ -368,6 +407,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     await wait(150);
     flash();
     synth.play("explode");
+    fx("vfx_bigboom", tg.x, tg.y + H * 0.15, 1.5 * Math.max(1, W / 90), { depth: D + 7 });
     synth.play("splat");
     synth.play("boom");
     cam.shake(600, 0.035);
@@ -416,6 +456,7 @@ async function stage(sc: Phaser.Scene, tg: KrelTarget, pl: { key: string; frame:
     // BOOM, belly first
     flash();
     synth.play("explode");
+    fx("vfx_bigboom", tg.x, tg.y + H * 0.15, 1.5 * Math.max(1, W / 90), { depth: D + 7 });
     synth.play("boom");
     synth.play("splat");
     cam.shake(700, 0.04);
