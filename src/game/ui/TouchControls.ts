@@ -8,6 +8,8 @@ export const TOUCH = {
   my: 0,
   attack: false,
   edges: new Set<string>(),
+  /** Buttons currently held down (for tap-vs-hold, e.g. GUN). */
+  held: new Set<string>(),
 };
 
 /** Virtual joystick + action buttons for phones and tablets. Lives in the UI scene. */
@@ -55,10 +57,12 @@ export class TouchControls {
       c.on("pointerdown", () => {
         if (hold) TOUCH.attack = true;
         else TOUCH.edges.add(key);
+        TOUCH.held.add(key);
         c.setFillStyle(color, 0.4);
       });
       const up = () => {
         if (hold) TOUCH.attack = false;
+        TOUCH.held.delete(key);
         c.setFillStyle(color, 0.18);
       };
       c.on("pointerup", up);

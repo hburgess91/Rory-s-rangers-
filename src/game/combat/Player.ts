@@ -43,6 +43,8 @@ export class Player {
   dodgeQueuedUntil = 0;
   dodgeUntil = 0;
   dodgeAngle = 0;
+  /** When SWAP went down (0 = up, -1 = used to open the picker). */
+  swapDownAt = 0;
   iframesUntil = 0;
   attackAnimUntil = 0;
   loanUntil = 0;
@@ -283,10 +285,25 @@ export class Player {
     }
     // inputs
     if (c.dodge()) this.tryDodge(now, mv);
-    if (c.swap()) {
-      const nm = cycleGun();
-      synth.play("pickup");
-      this.world.floatText(this.x, this.y - 44, nm.toUpperCase(), "#67e8f9", 13);
+    // SWAP: tap = next weapon (with a card saying what it is), hold = freeze and pick
+    const swapEdge = c.swap();
+    const swapDown = c.swapHeld();
+    // (a very quick tap can come and go inside one frame: the edge still counts it)
+    if ((swapDown || swapEdge) && this.swapDownAt === 0) this.swapDownAt = now;
+    if (swapDown && this.swapDownAt > 0 && now - this.swapDownAt > 260 && this.world.sc.scene.key === "Dungeon") {
+      this.swapDownAt = -1; // consumed: wait for the key to come up
+      this.world.sc.scene.launch("WeaponPick", { caller: "Dungeon" });
+      this.world.sc.scene.pause();
+      return;
+    }
+    if (!swapDown && this.swapDownAt !== 0) {
+      if (this.swapDownAt > 0) {
+        const nm = cycleGun();
+        synth.play("pickup");
+        this.world.floatText(this.x, this.y - 44, nm.toUpperCase(), "#67e8f9", 13);
+        G.emit("weaponCard", {});
+      }
+      this.swapDownAt = 0;
     }
     if (c.attackHeld()) {
       this.attackHeldTime += dt;

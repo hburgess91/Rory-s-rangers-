@@ -10,6 +10,7 @@ import { currentStep } from "../Flow";
 import { resentmentLabel } from "../systems/reactions";
 import { synth } from "../audio/Synth";
 import { TouchControls, isTouchDevice } from "../ui/TouchControls";
+import { ammoLabel, weaponIcon, weaponList } from "../ui/weapons";
 import { DRONGUS_STATUSES } from "../../content/dialogue/drongusStatuses";
 
 interface Toast {
@@ -102,10 +103,48 @@ export class UIScene extends Phaser.Scene {
     this.touch = new TouchControls(this, this.mode === "dungeon");
   }
 
+  private weaponCard: Phaser.GameObjects.Container | null = null;
+
+  /** Swapped weapon: a card at the bottom showing what's in hand now, and what's either side of it. */
+  private showWeaponCard() {
+    const s = G.s;
+    const list = weaponList(s);
+    const i = Math.max(0, list.findIndex((w) => w.id === (s.gun ?? null)));
+    this.weaponCard?.destroy();
+    const c = this.add.container(480, 430).setDepth(900);
+    this.weaponCard = c;
+    c.add(this.add.rectangle(0, 0, 440, 92, 0x0b1220, 0.9).setStrokeStyle(3, 0x67e8f9));
+    const side = (k: number, x: number) => {
+      if (list.length < 2) return;
+      const w = list[(k + list.length) % list.length];
+      const ic = weaponIcon(this, x, -6, w, 38).setAlpha(w.empty ? 0.2 : 0.45);
+      c.add(ic);
+      c.add(this.add.text(x, 30, ammoLabel(w), { fontFamily: FONT, fontSize: "9px", color: "#94a3b8" }).setOrigin(0.5));
+    };
+    side(i - 1, -175);
+    side(i + 1, 175);
+    c.add(this.add.text(-140, 0, "◀", { fontFamily: FONT, fontSize: "14px", color: "#475569" }).setOrigin(0.5));
+    c.add(this.add.text(140, 0, "▶", { fontFamily: FONT, fontSize: "14px", color: "#67e8f9" }).setOrigin(0.5));
+    const w = list[i];
+    c.add(weaponIcon(this, -70, 0, w, 58));
+    c.add(this.add.text(-30, -16, w.name.toUpperCase(), { fontFamily: "Impact, sans-serif", fontSize: "18px", color: "#ffffff", wordWrap: { width: 160 } }).setOrigin(0, 0.5));
+    c.add(this.add.text(-30, 14, ammoLabel(w), { fontFamily: FONT, fontSize: "13px", color: "#facc15", fontStyle: "bold" }).setOrigin(0, 0.5));
+    c.add(this.add.text(0, 54, "TAP SWAP: next · HOLD SWAP: choose", { fontFamily: FONT, fontSize: "10px", color: "#94a3b8", backgroundColor: "#0b1220cc", padding: { x: 4, y: 1 } }).setOrigin(0.5));
+    c.setScale(0.85).setAlpha(0);
+    this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 120, ease: "Back.out" });
+    this.tweens.add({ targets: c, alpha: 0, delay: 1400, duration: 300, onComplete: () => {
+      if (this.weaponCard === c) this.weaponCard = null;
+      c.destroy();
+    } });
+  }
+
   private onEvent(ev: string, d: any) {
     switch (ev) {
       case "toast":
         this.pushToast(d.title, d.text, false);
+        break;
+      case "weaponCard":
+        this.showWeaponCard();
         break;
       case "ping":
         this.pushToast(CHARACTERS[d.from]?.name ?? d.from, d.text, true, d.from);
@@ -272,7 +311,7 @@ export class UIScene extends Phaser.Scene {
       [
         `💰 ${s.coins} Krezzcoin   🍼 ${s.bottles}/${maxBottles(s)} (Q)   🍺 ${s.bongos} (B)${s.flags.rock_points ? `   🤘 ${s.flags.rock_points}` : ""}`,
         ...(ownedGuns(s).length
-          ? [currentGun(s) ? `🔫 ${currentGun(s)!.name} ${s.guns![s.gun!]}/${gunMax(currentGun(s)!, s)}  (X swap)` : `💨 Fart Blaster ∞${ownedGuns(s).length ? ` · ${ownedGuns(s).length} gun${ownedGuns(s).length > 1 ? "s" : ""}  (X swap)` : ""}`]
+          ? [currentGun(s) ? `🔫 ${currentGun(s)!.name} ${s.guns![s.gun!]}/${gunMax(currentGun(s)!, s)}  (X: swap · hold X: choose)` : `💨 Fart Blaster ∞${ownedGuns(s).length ? ` · ${ownedGuns(s).length} gun${ownedGuns(s).length > 1 ? "s" : ""}  (X: swap · hold X: choose)` : ""}`]
           : []),
         `${intoxLabel(s.intoxication)}${s.intoxication > 5 ? ` (${Math.round(s.intoxication)}%)` : ""}  ·  Drongus: ${resentmentLabel(s.drongusResentment)}${s.flags.tap_rush ? "  ·  💦 TAP RUSH (+50% HP, +25% dmg)" : ""}${s.flags.golden_charge ? "  ·  ⚡ GOLDEN JUICE (T to transform)" : ""}`,
       ].join("\n"),

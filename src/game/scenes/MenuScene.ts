@@ -459,7 +459,7 @@ export class MenuScene extends Phaser.Scene {
     s.banRisk = 0;
     const d = this.data0;
     const caller = this.scene.get("Dungeon");
-    switchTo(caller, "Dungeon", { dungeon: d.dungeon, room: d.room });
+    switchTo(caller, "Dungeon", { dungeon: d.dungeon, room: d.room, rush: d.rush });
     this.scene.stop();
   }
 

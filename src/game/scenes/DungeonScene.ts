@@ -138,7 +138,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.save();
   }
 
-  init(data: { dungeon: string; room?: number; bossHpPct?: number }) {
+  init(data: { dungeon: string; room?: number; bossHpPct?: number; rush?: number }) {
     this.sc = this;
     this.dungeon = DUNGEONS[data.dungeon] ?? DUNGEONS.wildern;
     this.roomIdx = data.room ?? 0;
@@ -175,7 +175,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     G.rt.dungeonId = this.dungeon.id;
     G.rt.room = this.roomIdx;
     (this as any)._bossHpPct = data.bossHpPct;
-    this.rushIdx = 0;
+    // boss rush checkpoint: died on Crobley N? Start again from Crobley N
+    this.rushIdx = Math.max(0, Math.min(data.rush ?? 0, this.room?.bossRush?.length ?? 0));
   }
 
   now() {
@@ -792,7 +793,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       return;
     }
     if (r.boss) {
-      await this.startBoss();
+      const rush = this.room.bossRush ?? [];
+      if (this.rushIdx > 0 && rush[this.rushIdx - 1]) {
+        // back from the dead mid-rush: the Crobley you died on, on its own set
+        const cur = rush[this.rushIdx - 1];
+        if (cur.backdrop && this.sideBg && this.textures.exists(cur.backdrop)) {
+          const src = this.textures.get(cur.backdrop).getSourceImage();
+          this.sideBgScale = 540 / src.height;
+          this.sideBg.setTexture(cur.backdrop).setTileScale(this.sideBgScale);
+        }
+        this.toast(`CROBLEY ${this.rushIdx + 1} OF ${rush.length + 1}`, "Checkpoint: straight back in where you died.");
+        await this.startBoss(cur.boss, cur.hp ?? 1);
+      } else await this.startBoss();
       return;
     }
     if (this.spice?.begin()) {
@@ -2055,6 +2067,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (live >= 9 || x < v.x - 30 || x > v.right + 30 || y < v.y - 30 || y > v.bottom + 30) o = { ...o, life: 1 };
       o = { ...o, speed: o.speed * 0.8, scale: (o.scale ?? 1) * 1.25 };
     }
+    // run'n'gun: your bullets should snap across the screen, not drift (slow guns felt awful side-on)
+    if (this.side && o.owner === "player") o = { ...o, speed: Math.max(o.speed * 1.7, 950) };
     const tex = o.texture ?? "fx_bullet";
     const spr = this.add.image(x, y, tex).setDepth(600).setScale((o.scale ?? 1) * (o.owner === "enemy" ? 1.8 : 1.6)).setTint(o.color ?? 0xffffff);
     spr.setRotation(o.angle);
@@ -2316,7 +2330,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     synth.play("death");
     (this.player.spr.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     this.player.spr.setAngle(90).setTint(0x888888);
-    this.scene.launch("Menu", { mode: "death", caller: "Dungeon", dungeon: this.dungeon.id, room: this.roomIdx, bossHpPct: undefined });
+    this.scene.launch("Menu", { mode: "death", caller: "Dungeon", dungeon: this.dungeon.id, room: this.roomIdx, bossHpPct: undefined, rush: this.boss ? this.rushIdx : 0 });
     this.scene.pause();
   }
 

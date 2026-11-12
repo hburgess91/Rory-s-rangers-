@@ -159,6 +159,11 @@ export class Controls {
   cume(): boolean {
     return this.edge("cume", this.down("cume"));
   }
+  /** Is SWAP being held right now? (Tap = next gun, hold = the weapon picker.) */
+  swapHeld(): boolean {
+    const p = this.pad();
+    return this.down("swap") || TOUCH.held.has("swap") || !!(p && p.up);
+  }
   /** Swap between fists and found guns. */
   swap(): boolean {
     const p = this.pad();

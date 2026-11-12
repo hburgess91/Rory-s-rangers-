@@ -57,6 +57,8 @@ export function startWonk(p: Player, now: number) {
   let presses: number[] = [];
   let done = false;
   p.shieldUntil = Math.max(p.shieldUntil, now + TIME + 2500);
+  // hazards that chase you (the Giant Mincer) wait while you're busy krezzing
+  (sc as unknown as { wonkUntil?: number }).wonkUntil = now + TIME + 3000;
   w.hitStop(200);
   synth.play("wonk");
 
@@ -187,6 +189,8 @@ export function startWonk(p: Player, now: number) {
     sc.time.delayedCall(result === "perfect" ? 700 : 1100, () => {
       sc.tweens.add({ targets: ui, alpha: 0, duration: 220, onComplete: () => ui.destroy() });
       const n = w.now();
+      // ...and while the beam is going
+      (sc as unknown as { wonkUntil?: number }).wonkUntil = n + (result === "perfect" ? 1300 + 500 * kd(G.s, "kd_krezzlong") + 600 : 600);
       if (result === "perfect") jetStream(p, n);
       else if (result === "over") overWonk(p, n);
       else underWonk(p, n);

@@ -285,7 +285,9 @@ export class SideLevel {
         synth.play("roar");
         sc.cameras.main.shake(400, 0.01);
       }
-      if (ch.started) {
+      // it waits while you're krezzing (you can't run mid-wonk)
+      const holding = now < ((sc as unknown as { wonkUntil?: number }).wonkUntil ?? 0);
+      if (ch.started && !holding) {
         // never too far behind, never faster than a sprint
         ch.x = Math.max(ch.x + (cfg.speed * dt) / 1000, sc.cameras.main.scrollX - 260);
         ch.wall.setX(ch.x);
@@ -293,7 +295,10 @@ export class SideLevel {
         if (p.x < ch.x + 20 && now > ch.hitAt) {
           ch.hitAt = now + 500;
           sc.damagePlayer(12, { x: ch.x, y: p.y }, { unblockable: true, label: `-12 (${cfg.label})` });
+          // spat out in FRONT of it, never left stuck behind it
+          if (p.x < ch.x + 20) p.spr.x = ch.x + 90;
           pb.setVelocity(520, -380);
+          p.iframesUntil = Math.max(p.iframesUntil, now + 600);
         }
         for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.x < ch.x + 10) sc.damageEnemy(e, 99999, { noWonk: true, label: "MINCED" });
         if (p.x > this.room.w * 0.9) {
