@@ -679,7 +679,7 @@ export class HubScene extends Phaser.Scene {
       await new Promise((r) => this.time.delayedCall(700, r));
     }
     // ...and GUSHES
-    synth.play("tap");
+    synth.play("splash");
     synth.play("boom");
     cam.shake(900, 0.014);
     cam.flash(300, 255, 120, 190);
@@ -1106,7 +1106,9 @@ export class HubScene extends Phaser.Scene {
     maskG.fillRect(b.x - b.w, bottom - b.h * 2, b.w * 2, b.h * 2);
     tower.setMask(maskG.createGeometryMask());
     this.tweens.add({ targets: tower, y: b.y, duration: 5200, ease: "Sine.out" });
-    const dust = this.time.addEvent({ delay: 70, repeat: 75, callback: () => {
+    // rolling drawn dust clouds along the base as it rises
+    if (hasVfx(this, "vfx_dust")) this.time.addEvent({ delay: 380, repeat: 13, callback: () => vfx(this, "vfx_dust", b.x + (Math.random() - 0.5) * b.w, bottom - 4, { scale: 1.8 + Math.random(), depth: bottom + 6, flipX: Math.random() < 0.5 }) });
+    const dust = this.time.addEvent({ delay: hasVfx(this, "vfx_dust") ? 210 : 70, repeat: hasVfx(this, "vfx_dust") ? 25 : 75, callback: () => {
       const d = this.add.circle(b.x + (Math.random() - 0.5) * b.w * 1.1, bottom - 6, 10 + Math.random() * 14, Math.random() < 0.5 ? 0x6b5a4a : 0x3f3f46, 0.8).setDepth(bottom + 6);
       this.tweens.add({ targets: d, x: d.x + (Math.random() - 0.5) * 160, y: d.y - 40 - Math.random() * 80, radius: 30, alpha: 0, duration: 1400, onComplete: () => d.destroy() });
       if (Math.random() < 0.35) {
@@ -2059,7 +2061,8 @@ You are required by law to sign the Sex Offenders Register.`, {
       await this.talk([dir(s.flags.wildern_destroyed ? "A smoking crater. Bits of desk. A gold star, fluttering. Somewhere underneath it all, a bell tinkles." : "The doors are chained shut. Mikey's bombs need planting round the outside: look for the red circles.")]);
       return;
     }
-    synth.play("door");
+    // a locked dungeon door doesn't sound like it opened
+    synth.play(b.id === ch.dungeonDoor && !dungeonOpen().open ? "tap_fail" : "door");
     if (!(b.id === ch.dungeonDoor && !dungeonOpen().open)) this.discover(b.id, b.name);
     // a side-quest step waiting at the dungeon building goes first
     if (b.id === ch.dungeonDoor && !(arcStepAt(s, b.id) && !this.buildingBusy(b.id))) {

@@ -7,7 +7,7 @@ import type { TVEpisode } from "../systems/tv";
 import { evalCond } from "../systems/conditions";
 import { DialogueBox } from "../ui/DialogueBox";
 import { button, FONT, label, title } from "../ui/theme";
-import { switchTo } from "../Flow";
+import { fadeThen, switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { bump, intoxLabel } from "../systems/stats";
 import { activeMods } from "../../data/historicalRevisions";
@@ -136,7 +136,10 @@ export class PubScene extends Phaser.Scene {
     const q = personalQuest(s);
     if (q && pickupsInHub(s).some((p) => p.anchor === "PUB_MENU")) items.push(["📜 Nick the menu off the bar", () => this.readMenu()]);
     if (canTurnIn(s, "PUB")) items.push(["✨ Open Krezmond's treasure", () => this.turnIn()]);
-    items.push(["🚪 Leave", () => switchTo(this, "Hub", { at: "PUB" })]);
+    items.push(["🚪 Leave", () => {
+      synth.play("door");
+      fadeThen(this, 250, () => switchTo(this, "Hub", { at: "PUB" }));
+    }]);
     const step = Math.min(42, 330 / Math.max(1, items.length - 1));
     const top = 190;
     items.forEach(([t, fn], i) => this.menu.add(button(this, 480, top + i * step, t, () => !this.busy && fn(), { w: 620, h: Math.max(24, step - 6), size: 14 })));
@@ -379,7 +382,8 @@ export class PubScene extends Phaser.Scene {
     G.save();
     this.busy = false;
     G.emit("toast", { title: "THROWN OUT OF THE KREZZ ARMS", text: won ? "Last one standing. +15 Krezzcoin (found on the floor)." : "You'll be back. You always come back." });
-    switchTo(this, "Hub", { at: "PUB" });
+    synth.play("door");
+    fadeThen(this, 250, () => switchTo(this, "Hub", { at: "PUB" }));
   }
 
   private async readMenu() {

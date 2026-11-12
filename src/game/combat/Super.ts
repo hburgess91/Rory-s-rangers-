@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../gfx/Vfx";
 import type { Player } from "./Player";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
@@ -64,8 +65,10 @@ export function goSuper(p: Player, now: number) {
     w.shake(900, 0.025);
     cam.flash(450, 255, 240, 160);
     for (let i = 0; i < 10; i++) sc.time.delayedCall(i * 60, () => bolt(p));
-    const ring = sc.add.circle(p.x, p.y, 10, 0xffffff, 0).setStrokeStyle(6, 0xfde047).setDepth(600);
-    sc.tweens.add({ targets: ring, radius: 160, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+    if (!vfx(sc, "vfx_shock", p.x, p.y + 16, { scale: 3, depth: 600, tint: 0xfde047 })) {
+      const ring = sc.add.circle(p.x, p.y, 10, 0xffffff, 0).setStrokeStyle(6, 0xfde047).setDepth(600);
+      sc.tweens.add({ targets: ring, radius: 160, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+    }
     w.floatText(p.x, p.y - 80, "AAAAAAAAAAAHHHHH!!!", "#fde047", 26);
     becomeGolden(p);
   });
@@ -203,9 +206,11 @@ export function megaMelee(p: Player, now: number) {
     hits++;
     const dmg = (e.isBoss ? p.dmg(28, now) + e.maxHp * 0.012 : p.dmg(60, now)) * (kd(G.s, "kd_aura") ? 1.3 : 1);
     w.damageEnemy(e, dmg, { knock: e.isBoss ? 180 : 620, angle: ang, crit: Math.random() < 0.25, noWonk: true });
-    w.burst(e.x, e.y, 0xfde047, 12);
-    const ring = sc.add.circle(e.x, e.y, 8, 0xffffff, 0).setStrokeStyle(4, 0xfde047).setDepth(602);
-    sc.tweens.add({ targets: ring, radius: 46, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
+    if (!vfx(sc, "vfx_crit", e.x, e.y, { scale: 1.1, depth: 602, tint: 0xfde047 })) {
+      w.burst(e.x, e.y, 0xfde047, 12);
+      const ring = sc.add.circle(e.x, e.y, 8, 0xffffff, 0).setStrokeStyle(4, 0xfde047).setDepth(602);
+      sc.tweens.add({ targets: ring, radius: 46, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
+    }
   }
   if (hits) {
     w.hitStop(hits > 2 ? 90 : 60);

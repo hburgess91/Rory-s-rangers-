@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../gfx/Vfx";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -533,7 +534,9 @@ export class KreddleScene extends Phaser.Scene {
       const desc = this.add.text(480, 345, text.replace(`${p.name}: `, "").replace(/^\(level[^)]*\): /, ""), { fontFamily: FONT, fontSize: "14px", color: "#ffffff", align: "center", wordWrap: { width: 500 } }).setOrigin(0.5);
       const hint = this.add.text(480, 405, "SPACE / tap to collect", { fontFamily: FONT, fontSize: "12px", color: "#c4b5fd" }).setOrigin(0.5);
       root.add([head, icon, name, desc, hint]);
-      for (let i = 0; i < 40; i++) {
+      // drawn confetti (PixelLab VFX), the rectangles are the fallback
+      const conf = [0, 1, 2].map((i) => vfx(this, "vfx_confetti", 300 + i * 180, 300, { scale: 2.4, fixed: true, depth: 7000, delay: i * 160 })).filter((c): c is Phaser.GameObjects.Sprite => !!c);
+      for (let i = 0; i < (conf.length ? 0 : 40); i++) {
         const c = this.add.rectangle(480, 270, 6, 10, NEON[i % NEON.length]);
         root.add(c);
         this.tweens.add({ targets: c, x: 480 + (Math.random() - 0.5) * 900, y: 270 + (Math.random() - 0.7) * 600, angle: Math.random() * 720, alpha: 0, duration: 1400 + Math.random() * 800 });
@@ -607,6 +610,7 @@ export class KreddleScene extends Phaser.Scene {
             if (a === b && b === c) {
               info.setText(a === 3 ? "THREE 7s! JACKPOT!" : "THREE OF A KIND!").setColor("#4ade80");
               synth.play("jackpot");
+              vfx(this, "vfx_coins", 480, 260, { scale: 2.2, fixed: true, depth: 7000 });
               this.kroken(5);
               await this.showPrize(rollPrize(G.s).id);
               if (a === 3) await this.showPrize(rollPrize(G.s).id);

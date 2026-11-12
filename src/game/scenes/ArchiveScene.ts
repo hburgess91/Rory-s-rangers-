@@ -5,7 +5,7 @@ import type { ArchiveEntry } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
 import { button, FONT, title } from "../ui/theme";
-import { switchTo } from "../Flow";
+import { switchTo, fadeThen } from "../Flow";
 import { synth } from "../audio/Synth";
 import { CANON } from "../../content/archive/canonQuotes";
 import { CHARACTERS } from "../../data/characters";
@@ -131,7 +131,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private leave() {
-    if (this.fromTitle) switchTo(this, "Title");
-    else switchTo(this, "Hub", { at: this.returnAt });
+    if (this.fromTitle) fadeThen(this, 200, () => switchTo(this, "Title"));
+    else fadeThen(this, 200, () => switchTo(this, "Hub", { at: this.returnAt }));
   }
 }

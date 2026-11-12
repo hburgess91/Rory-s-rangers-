@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../gfx/Vfx";
 import { squeeze } from "../systems/squeeze";
 import { addWrist, wristLook, type Wrist } from "../gfx/Wrist";
 import { randomZone, flap, fall, OVER, type WonkZone } from "../combat/Wonk";
@@ -381,10 +382,7 @@ export class ClubScene extends Phaser.Scene {
     spr.setTintFill(0xffffff);
     this.time.delayedCall(80, () => spr.active && spr.clearTint());
     this.pow(spr.x + (Math.random() - 0.5) * 30, spr.y - 56, ["POW!", "WHAM!", "BIFF!", "SMACK!", "BOSH!"][Math.floor(Math.random() * 5)]);
-    for (let i = 0; i < 6; i++) {
-      const c = this.add.circle(spr.x, spr.y - 10, 3, i % 2 ? 0xffffff : 0xffd23f).setDepth(1500);
-      this.tweens.add({ targets: c, x: c.x + (Math.random() - 0.5) * 70, y: c.y + (Math.random() - 0.5) * 50, alpha: 0, duration: 300, onComplete: () => c.destroy() });
-    }
+    vfx(this, "vfx_hit", spr.x + (Math.random() - 0.5) * 14, spr.y - 14, { scale: 1.4, depth: 1500 });
     if (t.kind === "derek") return this.hitDerek(a);
     const x0 = spr.x;
     const y0 = spr.y;

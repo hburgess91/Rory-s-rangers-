@@ -327,6 +327,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             const bx = Phaser.Math.Clamp(p.x + Math.cos(a) * 90, this.world.bounds.left + 30, this.world.bounds.right - 30);
             const by = Phaser.Math.Clamp(p.y + Math.sin(a) * 90, this.world.bounds.top + 30, this.world.bounds.bottom - 30);
             this.world.burst(this.x, this.y, this.def.accent, 6);
+            synth.play("zap");
             this.setPosition(bx, by);
             this.state = "windup";
             this.stateUntil = now + tele * 0.8;

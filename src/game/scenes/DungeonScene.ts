@@ -1020,6 +1020,15 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   private spawnPortal(x: number, y: number, then: () => void) {
+    if (hasVfx(this, "vfx_smoke")) {
+      this.pendingSpawns++;
+      vfx(this, "vfx_smoke", x, y + 10, { scale: 0.9, depth: 3, tint: 0xd8b4fe });
+      this.time.delayedCall(320, () => {
+        this.pendingSpawns = Math.max(0, this.pendingSpawns - 1);
+        then();
+      });
+      return;
+    }
     const c = this.add.circle(x, y, 4, 0xc084fc, 0.7).setDepth(3);
     this.pendingSpawns++;
     this.tweens.add({ targets: c, radius: 22, alpha: 0.2, duration: 520, onComplete: () => {
@@ -1520,6 +1529,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   /** Where the boss died and what they looked like (for the KRELTALITY stand-in). */
   private krelTarget: KrelTarget | null = null;
   private lastHitFx = 0;
+  private lastKillPop = 0;
 
   /** The boss's drawn "defeated" animation (bossdie_<id>): staggering to their knees, then collapsing. */
   private downSpr: Phaser.GameObjects.Sprite | null = null;
@@ -2302,7 +2312,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       return;
     }
     if (extraViolence(s) && !e.isBoss) this.dismember(e);
-    else this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
+    else if (e.isBoss || !hasVfx(this, "vfx_pixeldeath")) this.burst(e.x, e.y, e.def.color, e.isBoss ? 30 : 8);
+    // a kill has its own little pop (not every one in a swarm)
+    if (!e.isBoss && this.now() - this.lastKillPop > 90) {
+      this.lastKillPop = this.now();
+      synth.play(extraViolence(s) ? "splat" : "pop");
+    }
     if (e instanceof Boss) {
       this.boss = null;
       this.onBossDefeated(e);
@@ -2392,7 +2407,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   aoe(x: number, y: number, r: number, dmg: number, opts: HitOpts & { color?: number } = {}): number {
-    if (opts.color !== undefined) {
+    if (opts.color !== undefined && !vfx(this, "vfx_shock", x, y + 4, { scale: (r * 2) / 100, depth: 6, tint: opts.color })) {
       const c = this.add.image(x, y, "fx_circle").setTint(opts.color).setAlpha(0.45).setDepth(5).setScale((r * 2) / 64);
       this.tweens.add({ targets: c, alpha: 0, scale: c.scale * 1.15, duration: 280, onComplete: () => c.destroy() });
     }
@@ -2418,8 +2433,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       ring.destroy();
       fill.destroy();
       if (!this.player || this.player.dead) return;
-      const fx = this.add.image(x, y, "fx_circle").setTint(color).setAlpha(0.6).setDepth(5).setScale((r * 2) / 64);
-      this.tweens.add({ targets: fx, alpha: 0, duration: 250, onComplete: () => fx.destroy() });
+      // the attack lands: green ones are gas, the rest a shockwave
+      const green = ((color >> 8) & 255) > ((color >> 16) & 255) + 40;
+      if (!vfx(this, green ? "vfx_fart" : "vfx_shock", x, y + 4, { scale: (r * 2) / (green ? 80 : 100), depth: 6, tint: green ? undefined : color })) {
+        const fx = this.add.image(x, y, "fx_circle").setTint(color).setAlpha(0.6).setDepth(5).setScale((r * 2) / 64);
+        this.tweens.add({ targets: fx, alpha: 0, duration: 250, onComplete: () => fx.destroy() });
+      }
       if (dmg > 0 && Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < r + 6) this.damagePlayer(dmg, { x, y });
     });
   }
@@ -2495,6 +2514,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   }
 
   burst(x: number, y: number, color: number, n = 8) {
+    if (vfx(this, "vfx_sparks", x, y, { scale: Math.min(1.4, 0.4 + n / 20), depth: 700, tint: color === 0xffffff ? undefined : color })) return;
     for (let i = 0; i < n; i++) {
       const d = this.add.image(x, y, "fx_dot").setTint(color).setDepth(700).setScale(1 + Math.random());
       const a = Math.random() * Math.PI * 2;
@@ -2918,6 +2938,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private collect(pk: Pickup) {
     const s = G.s;
+    // a little pop where it was: coins jingle out, everything else sparkles
+    if (pk.kind === "coin") vfx(this, "vfx_coins", pk.spr.x, pk.spr.y, { scale: 0.45, depth: 960 });
+    else if (pk.kind !== "heal" && pk.kind !== "quest") vfx(this, "vfx_sparks", pk.spr.x, pk.spr.y, { scale: 0.5, depth: 960, tint: pk.kind === "krezz" ? 0xc084fc : pk.kind === "ammo" ? 0x67e8f9 : 0xfde047 });
     pk.spr.destroy();
     this.pickups = this.pickups.filter((x) => x !== pk);
     switch (pk.kind) {
@@ -2946,6 +2969,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         s.bongos += 1;
         this.floatText(this.player.x, this.player.y - 30, "+1 FIZZY BONGO", "#e0a35a", 13);
         synth.play("bongo");
+        vfx(this, "vfx_heal", this.player.x, this.player.y + 20, { scale: 0.8, depth: this.player.spr.depth + 1, tint: 0xfde68a });
         break;
       case "ammo": {
         const a = giveAmmo(s, pk.value);

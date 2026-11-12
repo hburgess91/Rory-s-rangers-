@@ -233,6 +233,10 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
+  /** The pale "damage taken" part of the HP bar, and when it last caught up. */
+  private hpGhost = 1;
+  private hpGhostAt = 0;
+
   update(time: number) {
     const s = G.s;
     const g = this.g;
@@ -242,14 +246,28 @@ export class UIScene extends Phaser.Scene {
     const labels = confl ? ["WONK", "HP", "KREZZ"] : this.labels;
     // bars
     const bar = (y: number, frac: number, col: number, label: string, text: string) => {
-      g.fillStyle(0x000000, 0.65);
-      g.fillRect(66, y, 190, 12);
+      if (!(y === 22 && this.hpGhost > Phaser.Math.Clamp(frac, 0, 1))) {
+        g.fillStyle(0x000000, 0.65);
+        g.fillRect(66, y, 190, 12);
+      }
       g.fillStyle(col, 1);
       g.fillRect(67, y + 1, 188 * Phaser.Math.Clamp(frac, 0, 1), 10);
       g.lineStyle(1, 0xffffff, 0.3);
       g.strokeRect(66, y, 190, 12);
       return `${label} ${text}`;
     };
+    // the damage you just took shows as a pale chunk that drains away after a beat
+    const hpFrac = Phaser.Math.Clamp(s.hp / mh, 0, 1);
+    if (hpFrac >= this.hpGhost) {
+      this.hpGhost = hpFrac;
+      this.hpGhostAt = time;
+    } else if (time - this.hpGhostAt > 450) this.hpGhost = Math.max(hpFrac, this.hpGhost - 0.0012 * 16);
+    if (this.hpGhost > hpFrac) {
+      g.fillStyle(0x000000, 0.65);
+      g.fillRect(66, 22, 190, 12);
+      g.fillStyle(0xfff1f2, 0.85);
+      g.fillRect(67, 23, 188 * this.hpGhost, 10);
+    }
     const hpS = bar(22, s.hp / mh, UI.hp, labels[0], `${Math.ceil(s.hp)}/${mh}`);
     const kzS = bar(37, s.krezz / maxKrezz(s), UI.krezz, labels[1], `${Math.floor(s.krezz)}`);
     let wonk = 0;

@@ -3,7 +3,7 @@ import { backdrop } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import type { PlayableId } from "../../data/types";
 import { button, FONT, hexStr, label, title, UI } from "../ui/theme";
-import { startNewRun, switchTo } from "../Flow";
+import { startNewRun, switchTo, fadeThen } from "../Flow";
 import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
 import { G } from "../G";
@@ -71,8 +71,8 @@ export class CharSelectScene extends Phaser.Scene {
     kb.on("keydown-W", () => this.select((this.sel + 6) % 9));
     kb.on("keydown-S", () => this.select((this.sel + 3) % 9));
     kb.on("keydown-ENTER", () => this.confirm());
-    kb.on("keydown-ESC", () => switchTo(this, "Title"));
-    button(this, 120, H - 26, "◀ BACK", () => switchTo(this, "Title"), { w: 140, h: 32, size: 14 });
+    kb.on("keydown-ESC", () => fadeThen(this, 200, () => switchTo(this, "Title")));
+    button(this, 120, H - 26, "◀ BACK", () => fadeThen(this, 200, () => switchTo(this, "Title")), { w: 140, h: 32, size: 14 });
   }
 
   private select(i: number) {
@@ -122,7 +122,7 @@ export class CharSelectScene extends Phaser.Scene {
       s.flags.krebon_gone = true;
       s.hp = maxHp(s);
       G.save();
-      switchTo(this, "Hub", { at: "PORTAL", from: "swap" });
+      fadeThen(this, 200, () => switchTo(this, "Hub", { at: "PORTAL", from: "swap" }));
       return;
     }
     startNewRun(this, PLAYABLE_ORDER[this.sel] as PlayableId, this.ngPlus);

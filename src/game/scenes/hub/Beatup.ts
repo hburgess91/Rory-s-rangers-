@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../../gfx/Vfx";
 import { G } from "../../G";
 import { FONT } from "../../ui/theme";
 import { CHARACTERS } from "../../../data/characters";
@@ -522,6 +523,8 @@ export class Beatup {
 
   private sparks(x: number, y: number, color: number, n: number) {
     const h = this.h;
+    // drawn hit sparks (PixelLab VFX): a crit for the big ones
+    if (vfx(h, n >= 10 ? "vfx_crit" : "vfx_hit", x, y, { scale: n >= 10 ? 1.3 : 1.2, depth: 6000 })) return;
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const d = 20 + Math.random() * 40;

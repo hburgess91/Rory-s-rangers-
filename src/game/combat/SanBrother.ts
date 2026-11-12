@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { vfx } from "../gfx/Vfx";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
 import { animateWalker } from "../gfx/HD";
@@ -165,8 +166,10 @@ export class SanBrother {
     sc.time.delayedCall(500, () => synth.shout("yee", 1));
     for (let i = 0; i < 3; i++) {
       sc.time.delayedCall(i * 220, () => {
-        const blob = sc.add.circle(x + (i - 1) * 50, y, 20, i % 2 ? 0xd9f99d : 0xa3e635, 0.75).setDepth(460);
-        sc.tweens.add({ targets: blob, radius: 110, alpha: 0, duration: 700, onComplete: () => blob.destroy() });
+        if (!vfx(sc, "vfx_fart", x + (i - 1) * 50, y, { scale: 2.2, depth: 460 })) {
+          const blob = sc.add.circle(x + (i - 1) * 50, y, 20, i % 2 ? 0xd9f99d : 0xa3e635, 0.75).setDepth(460);
+          sc.tweens.add({ targets: blob, radius: 110, alpha: 0, duration: 700, onComplete: () => blob.destroy() });
+        }
         this.world.aoe(x + (i - 1) * 50, y, 110, (30 + G.s.chapter * 6) * (1 + 0.08 * (G.s.upgrades.pk_dmg ?? 0)), { knock: 260, slow: 0.4, noWonk: true, label: i === 1 ? "SLOPPY" : "" });
       });
     }
@@ -188,8 +191,12 @@ export class SanBrother {
       ease: "Quad.out",
       onComplete: () => {
         this.world.shake(300, 0.016);
-        const ring = sc.add.ellipse(this.spr.x, this.spr.y + 20, 40, 14, 0xffe08a, 0.6).setDepth(460);
-        sc.tweens.add({ targets: ring, scaleX: 9, alpha: 0, duration: 500, onComplete: () => ring.destroy() });
+        synth.play("smash");
+        if (vfx(sc, "vfx_shock", this.spr.x, this.spr.y + 20, { scale: 3, depth: 460 })) vfx(sc, "vfx_dust", this.spr.x, this.spr.y + 20, { scale: 2.4, depth: 461 });
+        else {
+          const ring = sc.add.ellipse(this.spr.x, this.spr.y + 20, 40, 14, 0xffe08a, 0.6).setDepth(460);
+          sc.tweens.add({ targets: ring, scaleX: 9, alpha: 0, duration: 500, onComplete: () => ring.destroy() });
+        }
         this.world.aoe(this.spr.x, this.spr.y, 170, (26 + G.s.chapter * 5) * (1 + 0.08 * (G.s.upgrades.pk_dmg ?? 0)), { knock: 320, stun: 900, noWonk: true, label: "BULK" });
       },
     });

@@ -3,7 +3,7 @@ import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { offerFacts, adoptFact, type KrazyFact } from "../../data/historicalRevisions";
 import { FONT, title } from "../ui/theme";
-import { advanceChapter, switchTo } from "../Flow";
+import { advanceChapter, switchTo, fadeThen } from "../Flow";
 import { synth } from "../audio/Synth";
 import { DialogueBox } from "../ui/DialogueBox";
 import { say, dir } from "../../content/dsl";
@@ -67,6 +67,6 @@ export class KrazyFactScene extends Phaser.Scene {
       G.drongus("krazy_fact");
     }
     advanceChapter();
-    switchTo(this, "Hub", { at: "TOWN_HALL" });
+    fadeThen(this, 200, () => switchTo(this, "Hub", { at: "TOWN_HALL" }));
   }
 }

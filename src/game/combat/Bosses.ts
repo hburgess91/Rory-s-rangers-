@@ -539,6 +539,7 @@ export class Spectre extends Boss {
       // teleport
       const b = this.world.bounds;
       this.world.burst(this.x, this.y, 0x94a3b8, 12);
+      synth.play("zap");
       this.setPosition(b.left + 120 + Math.random() * (b.width - 240), b.top + 120 + Math.random() * (b.height / 2));
       this.fan(this.phase ? 9 : 6, 0.18, 210, 12, 0xcbd5e1);
       this.nextPattern = now + 1400;

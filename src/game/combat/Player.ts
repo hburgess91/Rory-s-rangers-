@@ -14,7 +14,7 @@ import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { currentGun, cycleGun, fitTo, nextLoadedGun, GUNS, FART_BLASTER } from "./Guns";
 import { kd } from "../systems/kreddle";
 import { releaseFart } from "./Farts";
-import { vfx } from "../gfx/Vfx";
+import { hasVfx, vfx } from "../gfx/Vfx";
 import { startWonk } from "./Wonk";
 
 export interface Turret {
@@ -388,8 +388,11 @@ export class Player {
     this.gunKick = g.id === "rocket" || g.id === "shotgun" ? 10 : 5;
     const mx = this.x + Math.cos(this.aim) * 26;
     const my = this.y + 4 + Math.sin(this.aim) * 26;
-    const flash = this.world.sc.add.circle(mx, my, 5, g.color === 0xffffff ? 0xffd23f : g.color, 0.9).setDepth(602);
-    this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    // (the drawn muzzle flash is added further down; this circle is only for when the art isn't loaded)
+    if (!hasVfx(this.world.sc, "vfx_muzzle")) {
+      const flash = this.world.sc.add.circle(mx, my, 5, g.color === 0xffffff ? 0xffd23f : g.color, 0.9).setDepth(602);
+      this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    }
     // Kreddle prizes: gold, tracers, jackpots
     const gold = kd(s, "kd_gold") > 0;
     const tracer = kd(s, "kd_tracer") > 0;
@@ -603,8 +606,11 @@ export class Player {
         } : undefined,
       });
     }
-    const flash = this.world.sc.add.circle(mx, my, 6, 0xb5e655, 0.85).setDepth(602);
-    this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    // a little drawn puff of gas at the "muzzle"
+    if (!vfx(this.world.sc, "vfx_fart", mx, my, { scale: 0.32, depth: 602, flipX: Math.cos(this.aim) < 0 })) {
+      const flash = this.world.sc.add.circle(mx, my, 6, 0xb5e655, 0.85).setDepth(602);
+      this.world.sc.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 90, onComplete: () => flash.destroy() });
+    }
     synth.play("pfft");
   }
 
