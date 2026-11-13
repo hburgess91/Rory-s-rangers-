@@ -61,3 +61,12 @@ export const AFTER_CRYSTAL: Line[] = [
   { s: "YOU", t: "Da Drongus Dungeon. Let's go.", tag: "new" },
   dir("CUM CRYSTALS: 6/6. DA DRONGUS DUNGEON IS OPEN."),
 ];
+
+/** At the gates of Da Drongus Dungeon: the lads go in first. */
+export const CITADEL_ENTRY: Line[] = [
+  dir("The gates of Da Drongus Dungeon. Up close it's bigger. And it's humming."),
+  say("KREZMAR", "Right. Everyone in. Stop the leak. Nobody touch anything."),
+  say("MIKEY", "FGM ULTRA. Final op. Go go go."),
+  say("SCROMBUS", "We'll scout ahead. Catch us up."),
+  dir("And with that, they're gone. You're last. You're always last."),
+];

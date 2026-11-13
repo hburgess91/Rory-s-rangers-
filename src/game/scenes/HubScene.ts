@@ -29,6 +29,7 @@ import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
 import { KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
 import * as AFTER from "../../content/chapters/ch7aftermath";
+import { CITADEL_ENTRY } from "../../content/chapters/ch7aftermath";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
@@ -2274,6 +2275,11 @@ You are required by law to sign the Sex Offenders Register.`, {
         G.emit("toast", { title: "LOCKED", text: o.why ?? "Not yet." });
         return;
       }
+      // Da Drongus Dungeon: the lads go in first. You're last.
+      if (b.id === "CITADEL" && s.chapter >= 7 && !s.flags.citadel_lads_in) {
+        await this.ladsGoIn(b);
+        return;
+      }
       this.go("Dungeon", { dungeon: ch.dungeon, room: 0 });
       return;
     }
@@ -3070,6 +3076,33 @@ You are required by law to sign the Sex Offenders Register.`, {
       if (this.nearBuilding(x, y, 40) || GATES.some((g) => Math.hypot(g.x - x, g.y - y) < 80)) continue;
       this.ruinProp(scatter[i % scatter.length], x, y, 1.3 + rnd.frac() * 0.6);
     }
+  }
+
+  /** Chapter 7: the Krew file into Da Drongus Dungeon one by one ahead of you. */
+  private async ladsGoIn(b: Building) {
+    const s = G.s;
+    const cam = this.cameras.main;
+    this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    const door = b.door!;
+    cam.stopFollow();
+    cam.pan(door.x, door.y - 60, 700, Phaser.Math.Easing.Sine.InOut);
+    const ids = PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`));
+    const lads = ids.map((id, i) => this.add.sprite(door.x - 160 + (i % 4) * 40, door.y + 150 + Math.floor(i / 4) * 34, `spr_${id}`, 0).setScale(2).setDepth(door.y + 150));
+    await new Promise((r) => this.time.delayedCall(750, r));
+    await this.talk(CITADEL_ENTRY.slice(0, 3));
+    for (const l of lads) {
+      synth.play("door");
+      await this.walkSpr(l, door.x, door.y + 10, 700);
+      this.tweens.add({ targets: l, alpha: 0, y: door.y - 8, duration: 220, onComplete: () => l.destroy() });
+      await new Promise((r) => this.time.delayedCall(180, r));
+    }
+    await this.talk(CITADEL_ENTRY.slice(3));
+    s.flags.citadel_lads_in = true;
+    G.save();
+    this.go("Dungeon", { dungeon: "citadel", room: 0 });
   }
 
   /** The lads crawl out of the Town Hall rubble with the worst hangover in history. */
