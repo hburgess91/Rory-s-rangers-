@@ -219,9 +219,16 @@ export class HubScene extends Phaser.Scene {
     }
     this.chainMeetings = !!(data?.advance || data?.chain);
     s.phase = "hub";
-    G.rt.timerEnd = 0;
-    G.emit("timer", null);
+    // the Chapter 6 nuke keeps ticking in town; any other timer stops here
+    if (!(s.chapter === 6 && s.flags.nuke_planted && !s.flags.krunch_started)) {
+      G.rt.timerEnd = 0;
+      G.emit("timer", null);
+    }
     this.npcs = [];
+    // the scene object is reused between visits: drop anything left over from last time
+    this.raidKrew = [];
+    this.trail = [];
+    this.brawl = null;
     this.interactables = [];
     this.busy = false;
     this.anchorsSpr = {};
