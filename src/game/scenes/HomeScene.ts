@@ -1,3 +1,4 @@
+import { KR_HOME } from "../../content/krunchers";
 import Phaser from "phaser";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
@@ -115,6 +116,17 @@ export class HomeScene extends Phaser.Scene {
 
   private async arrive() {
     const s = G.s;
+    // the Kreddle Krunchers have just battered Mikey: the group chat finds out (Klerble's music until you're back in control)
+    if (s.flags.kr_home_pending) {
+      delete s.flags.kr_home_pending;
+      this.busy = true;
+      synth.music("klerble", true);
+      await this.talk(KR_HOME);
+      synth.music("home", true);
+      this.busy = false;
+      G.save();
+      return;
+    }
     const q = canTurnIn(s, "HOME");
     if (q) {
       await this.talk(q.turnIn.lines);

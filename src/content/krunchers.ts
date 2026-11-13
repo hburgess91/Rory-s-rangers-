@@ -2,7 +2,9 @@ import type { Line } from "../data/types";
 import { dir, ping, say } from "./dsl";
 import { KRUNCHERS } from "./kreddle";
 
-// THE KREDDLE KRUNCHERS INVADE (after Chapter 2). Sets up the Kreddle chapter later on.
+// THE KREDDLE KRUNCHERS INVADE (start of Chapter 3). Sets up the Kreddle chapter later on.
+// The arrival and the Tap happen in town (HubScene); Mikey's beating is a side-on cutscene (VignetteScene);
+// the group chat finds out at home (HomeScene); then the shoving match in town.
 // "YOU" lines are said by whoever you're playing as; `variants.MIKEY` covers playing as Mikey (who got battered).
 
 export { KRUNCHERS };
@@ -10,8 +12,10 @@ export { KRUNCHERS };
 /** Over the Kreddle Bridge they come. */
 export const KR_ARRIVE: Line[] = [
   dir("The Kreddle Bridge. Something is coming over it. Something in matching neon varsity jackets."),
+  say("KLENKY", "We're the Kreddle Krunchers and NO ONE messes with us!!"),
+  say("SKROMBUS", "We are BAD to the BONE!!"),
+  say("GRENNY", "We HATE the Krelworld Krew! They STINK!!"),
   say("KLENKY", "Well well WELL. If it isn't KRELWORLD. More like SMELL-world!"),
-  say("SKROMBUS", "We hate Krelworld! The Krelworld Krew are LAME!"),
   say("KREDBLIS", "Breaking news… Krelworld SUCKS 👍"),
   say("GRENNY", "Waa waa wee waa! That's Kreddle for 'eat my shorts', NERDS!"),
   say("LIL' KRUNGUS", "Get a load of this dump! It's got a TAP! What a bunch of DWEEBS!"),
@@ -21,14 +25,16 @@ export const KR_ARRIVE: Line[] = [
   say("KLENKY", "KRUNCHERS RULE! KRELWORLD DROOLS!"),
 ];
 
-/** At the Kreltower. */
-export const KR_TOWER: Line[] = [
-  dir("The Kreltower. Built. Destroyed. Rebuilt. Lovingly maintained by the Krelfund."),
-  say("KREDMAR", "So this is the famous Kreltower. Looks smaller in person."),
+/** At the Great Pussy Juice Tap. */
+export const KR_TAP: Line[] = [
+  dir("The Great Pussy Juice Tap. The beating heart of Krelworld. It gurgles, contentedly."),
+  say("KREDMAR", "So this is their famous Tap. PUSSY JUICE. Disgusting. It's against our religion."),
+  say("KREDWONK", "The Krozlen scriptures are very clear on pussy juice."),
   say("KREDBON", "Hold my sequins."),
 ];
 export const KR_PISS: Line[] = [
-  dir("Kredbon unzips and pisses on the Kreltower. It goes on for a very long time. The plaque now says 'pls react' in a whole new way."),
+  say("KREDBON", "HOW ABOUT SOME NICE DICK JUICE!!"),
+  dir("Kredbon unzips and pisses straight into the Great Pussy Juice Tap. It goes on for a very, very long time."),
   say("KREDBON", "Seven Krez Years I've been saving that."),
   say("SKROMBUS", "LEGEND! That's going on the Kreddle group chat. OUR group chat has REACTIONS."),
   say("KLENKY", "Right. Who's next? Let's find one of 'em."),
@@ -66,7 +72,7 @@ export const KR_HOME: Line[] = [
   ping("KREBLIS", "Breaking news… Mikey got battered 👍"),
   ping("DRONGUS", "Should have reacted to the song"),
   ping("SCROMBUS", "Who the fuck are the Kreddle Krunchers"),
-  ping("KREZMAR", "Kreddle's version of us apparently. They're over by the bridge now. Pissed on the tower on the way in."),
+  ping("KREZMAR", "Kreddle's version of us apparently. They're over by the bridge now. Pissed in the Tap on the way in."),
   {
     s: "YOU",
     t: "NO ONE gets to beat up Mikey but US!!!",
@@ -89,8 +95,8 @@ export const KR_BRAWL_INTRO: Line[] = [
   dir("The whole Krelworld Krew, at the Kreddle Bridge, face to face with the whole Kreddle Krunchers. Nobody has a plan."),
   say("KLENKY", "Ooooh, look. The Krelworld KREW. We're SO scared."),
   { s: "YOU", t: "Our universe RULES and your universe DROOLS!!", tag: "new" },
-  say("SKROMBUS", "Oh yeah? Well your universe is LAME and your tower smells like PISS."),
-  say("SCROMBUS", "That's because one of you PISSED on it!"),
+  say("SKROMBUS", "Oh yeah? Well your universe is LAME and your Tap tastes like PISS."),
+  say("SCROMBUS", "That's because one of you PISSED in it!"),
   say("KREDBON", "And I'd do it again."),
   say("MIKEY", "You took my BONGO!"),
   say("MIKKY K", "And it was DELICIOUS, nerd."),
@@ -113,7 +119,7 @@ export const KR_SHOUTS = [
   "Your mum's a Krelworlder!",
 ];
 /** Shouted during the shoving (your krew). */
-export const KREW_SHOUTS = ["SCRAM!", "Our universe RULES!", "Get OFF!", "Give Mikey his bongo back!", "Kreddle DROOLS!", "Oi!", "You pissed on our TOWER!", "Have some of THAT!"];
+export const KREW_SHOUTS = ["SCRAM!", "Our universe RULES!", "Get OFF!", "Give Mikey his bongo back!", "Kreddle DROOLS!", "Oi!", "You pissed in our TAP!", "Have some of THAT!"];
 
 /** They leg it. With your wallets. */
 export const KR_LEAVE: Line[] = [

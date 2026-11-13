@@ -28,10 +28,11 @@ export class DialogueScene extends Phaser.Scene {
 }
 
 /** Convenience: run a script over `scene`, resolve when finished. */
-export function runDialogue(scene: Phaser.Scene, lines: Line[], historical = false): Promise<void> {
+/** `live`: the scene underneath keeps running (animations carry on behind the dialogue). */
+export function runDialogue(scene: Phaser.Scene, lines: Line[], historical = false, live = false): Promise<void> {
   return new Promise((res) => {
     const mgr = scene.game.scene;
     if (mgr.isActive("Dialogue")) mgr.stop("Dialogue");
-    scene.scene.launch("Dialogue", { lines, historical, caller: scene.scene.key, onDone: res });
+    scene.scene.launch("Dialogue", { lines, historical, caller: live ? undefined : scene.scene.key, onDone: res });
   });
 }

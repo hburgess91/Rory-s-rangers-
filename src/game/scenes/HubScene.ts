@@ -22,7 +22,7 @@ import { narrativeActor } from "../systems/narrative";
 import { arcDue, arcStepAt, completeStep, currentArcSteps, maybeFinishArc, spotFlag } from "../systems/arcs";
 import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
-import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
+import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
 import * as KR from "../../content/krunchers";
 import type { Arc, ArcStep } from "../../content/arcs";
@@ -428,6 +428,12 @@ export class HubScene extends Phaser.Scene {
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: s.chapter === 1 && !s.flags.wildern_destroyed ? "Wildern has to go. Plant the bombs (4) around the school." : "Report to the Town Hall." });
+    // the Kreddle Krunchers come over the bridge (start of Chapter 3)
+    const inv = !this.chainMeetings && currentArcSteps(s).find((c) => c.step.step.kind === "auto" && c.step.step.id === "kruncher_invasion");
+    if (inv) {
+      await this.krunchersInvade(inv.arc, inv.step);
+      return;
+    }
     // announce side quests that have just opened up
     for (const c of currentArcSteps(s)) {
       const k = `arc_announced_${c.arc.id}`;
@@ -2634,11 +2640,11 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, key, data));
   }
 
-  private async talk(lines: Line[]) {
+  private async talk(lines: Line[], live = false) {
     if (!lines.length) return;
     this.busy = true;
     (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
-    await runDialogue(this, lines);
+    await runDialogue(this, lines, false, live);
     this.controls.swallow();
     this.busy = false;
   }
@@ -2722,6 +2728,102 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.arrow.setVisible(true).setPosition(this.av.x + Math.cos(a) * 60, this.av.y + Math.sin(a) * 60).setRotation(a);
       } else this.arrow.setVisible(false);
     } else this.arrow.setVisible(false);
+  }
+
+  /** Walk a sprite somewhere over `ms`, with its walk cycle. */
+  private walkSpr(spr: Phaser.GameObjects.Sprite, x: number, y: number, ms: number) {
+    return new Promise<void>((res) => {
+      let px = spr.x;
+      let py = spr.y;
+      this.tweens.add({
+        targets: spr,
+        x,
+        y,
+        duration: ms,
+        onUpdate: () => {
+          animateWalker(spr, spr.x - px, spr.y - py, true, this.time.now);
+          px = spr.x;
+          py = spr.y;
+          spr.setDepth(spr.y);
+        },
+        onComplete: () => {
+          animateWalker(spr, 0, 0, false, this.time.now);
+          res();
+        },
+      });
+    });
+  }
+
+  /** The Kreddle Krunchers march over the bridge, insult everyone, and piss in the Great Tap. Then off to find Mikey. */
+  private async krunchersInvade(arc: Arc, step: ArcStep) {
+    const s = G.s;
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    synth.music("klerble", true);
+    cam.stopFollow();
+    cam.pan(330, 825, 1400, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(1450, r));
+    const ks = KR.KRUNCHERS.filter((kr) => this.textures.exists(`spr_${kr.of}`)).map((kr, i) => {
+      const sp = this.add.sprite(-30 - i * 40, 800 + (i % 3) * 22, `spr_${kr.of}`, 0).setScale(2).setTint(i % 2 ? 0xff9de6 : 0x9be7ff);
+      sp.setDepth(sp.y);
+      return sp;
+    });
+    const name = (of: string) => ks[KR.KRUNCHERS.findIndex((k) => k.of === of)];
+    synth.play("crowd_boo");
+    await Promise.all(ks.map((sp, i) => this.walkSpr(sp, 200 + (i % 5) * 52, 790 + Math.floor(i / 5) * 52 + (i % 2) * 8, 2200 + i * 60)));
+    const tag = this.add.text(300, 700, "THE KREDDLE KRUNCHERS", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ff4fd8", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(6000);
+    await this.talk(KR.KR_ARRIVE);
+    tag.destroy();
+    ks.forEach((sp, i) => this.time.delayedCall(i * 90, () => this.floatShout(sp, ["LAME!", "STINKERS!", "NERDS!", "KRUNCH!"][i % 4], "#ffd1f3")));
+    await new Promise((r) => this.time.delayedCall(900, r));
+    // through town to the Great Tap
+    const T = HubScene.TAP;
+    cam.pan(T.x, T.y + 40, 3600, Phaser.Math.Easing.Sine.InOut);
+    await Promise.all(ks.map((sp, i) => this.walkSpr(sp, T.x - 150 + (i % 5) * 60, T.y + 95 + Math.floor(i / 5) * 45, 3600 + i * 50)));
+    await this.talk(KR.KR_TAP);
+    const bon = name("KREBON") ?? ks[0];
+    await this.walkSpr(bon, T.x + 70, T.y + 40, 900);
+    bon.setFrame(charMeta(this, bon.texture.key)?.idle.west ?? 0);
+    // the stream: a wobbling yellow arc from Kredbon into the basin, with splashes where it lands
+    const sx = bon.x - 8;
+    const sy = bon.y + 4;
+    const tx = T.x + 14;
+    const ty = T.basinY - 2;
+    const arcG = this.add.graphics().setDepth(7000);
+    const pee = this.time.addEvent({
+      delay: 30,
+      loop: true,
+      callback: () => {
+        const w = Math.sin(this.time.now / 70) * 3;
+        const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(sx, sy), new Phaser.Math.Vector2((sx + tx) / 2, Math.min(sy, ty) - 30 + w), new Phaser.Math.Vector2(tx + w * 0.5, ty));
+        arcG.clear();
+        arcG.lineStyle(5, 0xc9a800, 0.9);
+        curve.draw(arcG, 24);
+        arcG.lineStyle(3, 0xffe14a, 1);
+        curve.draw(arcG, 24);
+        if (Math.random() < 0.5) {
+          const d = this.add.circle(tx + (Math.random() - 0.5) * 10, ty, 2.5, 0xffe14a, 1).setDepth(7001);
+          this.tweens.add({ targets: d, x: d.x + (Math.random() - 0.5) * 24, y: ty - 8 - Math.random() * 10, alpha: 0, duration: 350, onComplete: () => d.destroy() });
+        }
+      },
+    });
+    const tint = this.add.ellipse(T.x, T.basinY, 30, 10, 0xf7e04a, 0.0).setDepth(6999);
+    this.tweens.add({ targets: tint, alpha: 0.45, scaleX: 3.4, scaleY: 2.2, duration: 5000 });
+    synth.play("slurp");
+    // a live dialogue, so the stream keeps flowing while he talks
+    await this.talk(KR.KR_PISS, true);
+    this.busy = true;
+    pee.remove();
+    arcG.destroy();
+    // off to find a Krelworlder
+    ks.forEach((sp, i) => void this.walkSpr(sp, T.x + 700 + i * 30, T.y + 140 + (i % 3) * 20, 3000).then(() => sp.destroy()));
+    await new Promise((r) => this.time.delayedCall(1500, r));
+    completeStep(s, arc, step);
+    s.flags.krunchers_invaded = true;
+    s.flags.kr_home_pending = true;
+    G.save();
+    this.go("Vignette", { id: "kruncher_mikey" });
   }
 
   // ---------------------------------------------------------------- THE KREDDLE KRUNCHERS: the shoving match

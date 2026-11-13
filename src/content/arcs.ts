@@ -14,6 +14,8 @@ export type ArcStepKind =
   | { kind: "pay"; intro: Line[]; cost: number; success: Line[] }
   /** Pick up glowing items around Krelford. Not tied to a building (use at: "FIELD"). */
   | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[]; guard?: "playground" }
+  /** A scripted scene that plays by itself when you arrive in town (at: "FIELD"). */
+  | { kind: "auto"; id: string }
   /** A free-for-all shoving match in town (at: "FIELD"): the Krunchers and the krew at `spot`. */
   | { kind: "shove"; spot: { x: number; y: number }; intro: Line[]; leave: Line[]; after: Line[]; seconds: number };
 
@@ -52,13 +54,9 @@ export const ARCS: Arc[] = [
     steps: [
       {
         id: "invasion",
-        text: "KRELMERGENCY: the group chat's going mental about something at the Kreddle Bridge. Get home and check your phone.",
-        at: "HOME",
-        step: {
-          kind: "vignette",
-          id: "kruncher_invasion",
-          intro: [ping("KREBLIS", "Breaking news… something's coming over the Kreddle Bridge 👀"), ping("MIKEY", "lads??"), dir("You get in. You look at your phone. Then you look at it again.")],
-        },
+        text: "Something's coming over the Kreddle Bridge…",
+        at: "FIELD",
+        step: { kind: "auto", id: "kruncher_invasion" },
       },
       {
         id: "shove",

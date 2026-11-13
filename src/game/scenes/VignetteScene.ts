@@ -57,7 +57,7 @@ export class VignetteScene extends Phaser.Scene {
       crobley_presser: () => this.crobleyPresser(),
       crobley_boom: () => this.crobleyBoom(),
       wahooga: () => this.wahooga(),
-      kruncher_invasion: () => this.krunchers(),
+      kruncher_mikey: () => this.krunchers(),
     };
     await (run[data.id] ?? (async () => undefined))();
     G.s.flags[`vig_${data.id}`] = true;
@@ -65,6 +65,8 @@ export class VignetteScene extends Phaser.Scene {
     const next =
       data.id === "wahooga"
         ? () => switchTo(this, "CharSelect", { swap: true })
+        : data.id === "kruncher_mikey"
+          ? () => switchTo(this, "Home", {})
         : data.id === "sanmik_lampe"
           ? () => switchTo(this, "Dungeon", { dungeon: "arena_sanmik", room: 0 })
           : () => switchTo(this, "Hub", { at: this.returnAt, from: "vignette" });
@@ -87,61 +89,11 @@ export class VignetteScene extends Phaser.Scene {
     this.tweens.add({ targets: t, y: t.y - 16, alpha: 0, delay: 900, duration: 500, onComplete: () => t.destroy() });
   }
 
+  /** The Krunchers find Mikey outside Krelburger (the bridge and the Tap happen in town, in HubScene). */
   private async krunchers() {
     const s = G.s;
-    // 1. over the bridge
-    if (!backdrop(this, "bg_kreddle_sky", { depth: -10 })) this.sky(0x2a0845, 0xff4fd8);
-    const deck = this.add.rectangle(480, 420, 960, 240, 0x2a1a3a).setDepth(-5);
-    for (let i = 0; i < 12; i++) this.add.rectangle(40 + i * 80, 300, 6, 30, i % 2 ? 0xff4fd8 : 0x9be7ff).setDepth(-4);
-    void deck;
-    synth.music("ominous");
-    const ks = this.kruncherSprites(-700, 340, 72);
-    await this.tween({ targets: ks, x: "+=900", duration: 2600, ease: "Sine.out" });
-    this.caption("THE KREDDLE KRUNCHERS", "#ff4fd8", 36);
-    synth.play("crowd_boo");
-    await this.wait(900);
-    this.lastCaption?.destroy();
-    await this.talk(KR.KR_ARRIVE);
-    ks.forEach((k, i) => this.time.delayedCall(i * 90, () => this.shout(k, ["LAME!", "DROOLS!", "NERDS!", "KRUNCH!"][i % 4])));
-    await this.wait(900);
-
-    // 2. the Kreltower
-    this.clearStage();
-    if (!backdrop(this, "bg_city", { depth: -10 })) this.sky(0x8fc3ea, 0xf3d9b1);
-    this.add.rectangle(480, 450, 960, 200, 0x3d6a2a).setDepth(-5);
-    const tower = this.textures.exists("p_kreltower") ? this.add.image(640, 360, "p_kreltower").setOrigin(0.5, 1).setScale(1.5).setDepth(10) : null;
-    void tower;
-    const ks2 = this.kruncherSprites(60, 345, 52, 2.4);
-    await this.talk(KR.KR_TOWER);
-    const bon = ks2[KR.KRUNCHERS.findIndex((k) => k.of === "KREBON")] ?? ks2[0];
-    await this.tween({ targets: bon, x: 560, y: 350, duration: 1200 });
-    bon.setFrame(charMeta(this, bon.texture.key)?.idle.east ?? 0);
-    // the stream
-    synth.play("slurp");
-    const drops: Phaser.GameObjects.Arc[] = [];
-    const pee = this.time.addEvent({
-      delay: 45,
-      loop: true,
-      callback: () => {
-        const d = this.add.circle(bon.x + 14, bon.y - 40, 3, 0xf7e04a, 0.95).setDepth(60);
-        drops.push(d);
-        this.tweens.add({ targets: d, x: bon.x + 50 + Math.random() * 6, y: bon.y - 10 + Math.random() * 10, duration: 260, ease: "Quad.in", onComplete: () => {
-          d.setRadius(4).setAlpha(0.6);
-          this.tweens.add({ targets: d, alpha: 0, duration: 900, onComplete: () => d.destroy() });
-        } });
-      },
-    });
-    const puddle = this.add.ellipse(bon.x + 56, bon.y + 4, 10, 4, 0xf7e04a, 0.7).setDepth(9);
-    this.tweens.add({ targets: puddle, scaleX: 9, scaleY: 5, duration: 4200 });
-    this.caption("*PSSSSSSSSSSHHHH*", "#f7e04a", 30);
-    await this.wait(2600);
-    ks2.forEach((k, i) => i % 2 === 0 && this.time.delayedCall(i * 80, () => this.shout(k, "LEGEND!")));
-    await this.talk(KR.KR_PISS);
-    pee.remove();
-    this.lastCaption?.destroy();
-
-    // 3. Mikey
-    this.clearStage();
+    synth.music("klerble");
+    // Mikey
     if (!backdrop(this, "bg_city", { depth: -10 })) this.sky(0x8fc3ea, 0xf3d9b1);
     this.add.rectangle(480, 450, 960, 200, 0x5b5b66).setDepth(-5);
     this.add.text(480, 200, "KRELBURGER", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffd23f", stroke: "#7f1d1d", strokeThickness: 6 }).setOrigin(0.5).setDepth(-4);
@@ -153,7 +105,6 @@ export class VignetteScene extends Phaser.Scene {
     // they close in round him
     await this.tween({ targets: gang, x: (_t: unknown, _k: string, _v: number, i: number) => 330 + (i % 5) * 70 + (i > 4 ? 30 : 0), y: (_t: unknown, _k: string, _v: number, i: number) => (i > 4 ? 365 : 325), duration: 700 });
     await this.talk(KR.KR_MIKEY_BEG);
-    synth.stopMusic();
     const hits = ["WHAM!", "KRUNCH!", "BOSH!", "THWACK!", "SPLAT!", "KAPOW!", "OOF!", "NOT THE FACE!", "WALLOP!", "KRUNCH!!"];
     for (let i = 0; i < hits.length; i++) {
       const k = gang[i % gang.length];
@@ -179,17 +130,6 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk(KR.KR_MIKEY_AFTER);
     await this.tween({ targets: gang, x: "+=900", duration: 2000 });
 
-    // 4. home
-    this.clearStage();
-    if (!backdrop(this, "bg_home", { depth: -10 })) this.sky(0x3b2a20, 0x6b4a30);
-    const me = this.add.sprite(480, 350, `spr_${s.player}`, 0).setScale(3.2).setDepth(50);
-    if (s.player === "MIKEY") me.setTint(0xffd0d0);
-    synth.music("home");
-    await this.talk(KR.KR_HOME);
-    this.tweens.add({ targets: me, y: me.y - 18, yoyo: true, repeat: 3, duration: 140 });
-    this.caption("KRELMERGENCY", "#ff4d4d", 40);
-    synth.play("alarm");
-    await this.wait(1400);
     s.flags.krunchers_invaded = true;
   }
 

@@ -28,7 +28,14 @@ def h(s):
     return int(hashlib.md5(s.encode()).hexdigest(), 16)
 
 def cast(sp):
-    """(voice id, model) for a speaker, or None if held back."""
+    """(voice id, model) for a speaker, or None if held back. Doubles get their counterpart's voice + an accent tag."""
+    d = CAST.get("doubles", {})
+    if sp in d and sp != "_doc":
+        base = d[sp]
+        vid = CAST["clones"].get(base) or CAST["stock"].get(base)
+        if not vid:
+            return None
+        return vid + "|us", CAST["models"]["double"]
     if sp in CAST["clones"]:
         return CAST["clones"][sp], CAST["models"]["clone"]
     if sp in CAST["hold"] and not held_ok:
@@ -72,7 +79,7 @@ for l in lines:
         keep[l["k"]] = (l, c[0], d)
         continue
     todo.append((l, c))
-    cost += len(l["t"]) * (1.0 if c[1] == CAST["models"]["clone"] else 0.5)
+    cost += len(l["t"]) * (0.5 if c[1] == CAST["models"]["stock"] else 1.0)
 if limit:
     todo = todo[:limit]
 print(f"{len(keep)} cached, {len(todo)} to generate, ~{int(cost)} credits", flush=True)
@@ -81,12 +88,15 @@ if dry:
 
 def gen(item):
     l, (vid, model) = item
-    body = json.dumps({
-        "text": l["t"], "model_id": model,
-        "voice_settings": {"stability": 0.4, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True, "speed": 1.06},
-    }).encode()
+    text, voice = l["t"], vid
+    settings = {"stability": 0.4, "similarity_boost": 0.8, "style": 0.0, "use_speaker_boost": True, "speed": 1.06}
+    if vid.endswith("|us"):
+        voice = vid[:-3]
+        text = "[strong American accent] " + text
+        settings = {"stability": 0.5, "similarity_boost": 0.8}
+    body = json.dumps({"text": text, "model_id": model, "voice_settings": settings}).encode()
     for attempt in range(6):
-        req = urllib.request.Request(API.format(vid), data=body, method="POST",
+        req = urllib.request.Request(API.format(voice), data=body, method="POST",
                                      headers={"xi-api-key": "proxy-injected", "Content-Type": "application/json", "Accept": "audio/mpeg"})
         try:
             with urllib.request.urlopen(req, timeout=120) as r:

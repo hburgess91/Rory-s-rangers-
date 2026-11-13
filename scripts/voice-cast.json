@@ -2,7 +2,8 @@
   "_doc": "Who voices whom (ElevenLabs voice ids). 'clone' voices are real people who gave permission; everyone else is a stock/library voice. 'hold' = not generated yet (waiting on a possible clone). Speakers not listed get a voice from the pools, picked by a stable hash of their name. Library (non-premade) voices count toward the account's custom-voice slots (Creator: 30), so pools are mostly premade voices.",
   "models": {
     "clone": "eleven_multilingual_v2",
-    "stock": "eleven_flash_v2_5"
+    "stock": "eleven_flash_v2_5",
+    "double": "eleven_v3"
   },
   "clones": {
     "MIKEY": "WsgNALUzdTM8230kgCyy",
@@ -44,16 +45,7 @@
     "BOGGOR CRANSTIL": "NYC9WEgkq1u4jiqBseQ9",
     "THE CUDDLE CRONSTER": "N2lVS1w4EtoT3dr4eOWO",
     "KREDDLER": "2mltbVQP21Fq8XgIfRQJ",
-    "ANNOUNCER": "fLQ4kCrWQGVDIt5kYfSi",
-    "KLENKY": "IKne3meq5aSn9XLyUdCD",
-    "SKROMBUS": "TX3LPaxmHKxFdv7VOQHJ",
-    "KREDMAR": "cjVigY5qzO86Huf0OWal",
-    "KREDBLIS": "bIHbv24MWmeRgasZH58o",
-    "KREDWONK": "N2lVS1w4EtoT3dr4eOWO",
-    "KREDBON": "SOYHLrjzK2X1ezoPC6cr",
-    "LIL' KRUNGUS": "iP95p4xoKVk53GoZ742B",
-    "GRENNY": "pNInz6obpgDQGcFmaJgB",
-    "MIKKY K": "CwhRBWXzGAHq8TQ4Fs17"
+    "ANNOUNCER": "fLQ4kCrWQGVDIt5kYfSi"
   },
   "female": [
     "EDEN",
@@ -121,5 +113,17 @@
       "XrExE9yKIg1WjnnlVkGX",
       "hpp4J3VqNfWAUOO0d1Us"
     ]
+  },
+  "doubles": {
+    "_doc": "Kreddle doppelgangers: same voice as their Krelworld counterpart, American accent (eleven_v3 audio tag).",
+    "KLENKY": "FLENKY",
+    "SKROMBUS": "SCROMBUS",
+    "KREDMAR": "KREZMAR",
+    "KREDBLIS": "KREBLIS",
+    "KREDWONK": "KREZWONK",
+    "KREDBON": "KREBON",
+    "LIL' KRUNGUS": "CRONGUS",
+    "GRENNY": "GRONNY",
+    "MIKKY K": "MIKEY"
   }
 }
