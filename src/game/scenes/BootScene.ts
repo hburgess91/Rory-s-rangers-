@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { generateAll } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
+import { textureHeightFactor } from "../../data/heights";
 import { installHdScale, type ArtManifest } from "../gfx/HD";
 import { loadVfx, makeVfxAnims, type VfxDef } from "../gfx/Vfx";
 
@@ -48,7 +49,10 @@ export class BootScene extends Phaser.Scene {
       if (!this.textures.exists(key)) continue;
       const tex = this.textures.get(key);
       // old character code uses setScale(2) for 16x24 sprites; draw the new sheets at native size there
-      tex.customData = { ...tex.customData, hd: 0.5, char: c };
+      // `tall` is the lad's height (data/heights.ts): folded into hd so every setScale draws him at his height,
+      // and HD.ts moves the origin so he grows from his feet
+      const tall = textureHeightFactor(key);
+      tex.customData = { ...tex.customData, hd: 0.5 * tall, tall, char: c };
     }
     for (const [key, im] of Object.entries({ ...(m?.images ?? {}), ...(m?.sheets ?? {}) })) {
       if (im.hd && this.textures.exists(key)) {

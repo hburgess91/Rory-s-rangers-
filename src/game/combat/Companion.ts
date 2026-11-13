@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { G } from "../G";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
-import { animateWalker } from "../gfx/HD";
+import { animateWalker, tallOf } from "../gfx/HD";
 import type { Player } from "./Player";
 
 /** A lad hired at the Central Bank. Follows you through one dungeon trip and shoots whatever's nearest. Can't be hurt. */
@@ -14,7 +14,7 @@ export class Companion {
 
   constructor(private world: any, private player: Player, public id: string) {
     const key = world.textures.exists(`spr_${id}`) ? `spr_${id}` : `spr_${player.id}`;
-    this.spr = world.add.sprite(player.x - 50, player.y + 20, key, 0).setScale(player.spr.scaleX * 0.95).setDepth(player.y);
+    this.spr = world.add.sprite(player.x - 50, player.y + 20, key, 0).setScale((player.spr.scaleX / tallOf(player.spr)) * 0.95).setDepth(player.y);
     this.label = world.add.text(this.spr.x, this.spr.y - 40, CHARACTERS[id]?.name ?? id, { fontFamily: "sans-serif", fontSize: "10px", color: "#86efac", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(900);
     this.nextBark = world.now() + 2500;
   }

@@ -4,7 +4,7 @@ import { G } from "../../G";
 import { synth } from "../../audio/Synth";
 import { FONT } from "../../ui/theme";
 import { hasVfx, vfx } from "../../gfx/Vfx";
-import { animateWalker } from "../../gfx/HD";
+import { animateWalker, tallOf } from "../../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../../data/characters";
 import { ConceptBoss } from "../../combat/ConceptBoss";
 import type { Enemy } from "../../combat/Enemy";
@@ -301,7 +301,7 @@ export class KrelfordFinale {
       const r = 480 + (i % 2) * 90;
       const x = h.room.w / 2 + Math.cos(ang) * r * 1.3;
       const y = 470 + Math.sin(ang) * r;
-      const spr = h.add.sprite(x, y, `spr_${id}`, 0).setScale(h.player.spr.scaleX * 0.95).setDepth(y);
+      const spr = h.add.sprite(x, y, `spr_${id}`, 0).setScale((h.player.spr.scaleX / tallOf(h.player.spr)) * 0.95).setDepth(y);
       const label = h.add.text(x, y - 40, CHARACTERS[id]?.name ?? id, { fontFamily: "sans-serif", fontSize: "10px", color: "#86efac", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(900);
       return { id, spr, label, ang, r, drift: (Math.random() < 0.5 ? 1 : -1) * (0.04 + Math.random() * 0.05), nextShot: h.now() + 800 + i * 150, injected: false, ssj: false, px: x, py: y };
     });

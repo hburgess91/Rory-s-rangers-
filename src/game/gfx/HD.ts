@@ -37,10 +37,28 @@ export interface ArtManifest {
 /** `big` on an object (side-scrolling rooms draw everyone larger) multiplies on top of the art factor. */
 const hdOf = (o: { texture?: Phaser.Textures.Texture; big?: number }) => ((o.texture?.customData as { hd?: number } | undefined)?.hd ?? 1) * (o.big ?? 1);
 
+/** A lad's height factor (data/heights.ts), carried on his sheet's texture as `customData.tall`; 1 for everything else. */
+export function tallOf(o: { texture?: Phaser.Textures.Texture }) {
+  return (o.texture?.customData as { tall?: number } | undefined)?.tall ?? 1;
+}
+
 let installed = false;
 export function installHdScale() {
   if (installed) return;
   installed = true;
+  // Height: a lad's sheet carries `tall` (folded into its hd, so he is drawn bigger or smaller). Shift his
+  // display origin so he scales about the bottom of the frame: wherever the code puts him, his feet (and so
+  // his shadow, hitbox and depth sort) land exactly where they did before, and only his head moves.
+  // For origin oy: (H - oy*H) * s == (H - oy'*H) * s * tall  =>  oy'*H = H - (1 - oy) * H / tall.
+  for (const C of [Phaser.GameObjects.Sprite, Phaser.GameObjects.Image] as unknown as { prototype: { updateDisplayOrigin: () => unknown } }[]) {
+    const orig = C.prototype.updateDisplayOrigin;
+    C.prototype.updateDisplayOrigin = function (this: { texture?: Phaser.Textures.Texture; originY: number; height: number; _displayOriginY: number }) {
+      const r = orig.call(this);
+      const t = tallOf(this);
+      if (t !== 1) this._displayOriginY = this.height - ((1 - this.originY) * this.height) / t;
+      return r;
+    };
+  }
   for (const C of [Phaser.GameObjects.Sprite, Phaser.GameObjects.Image, Phaser.GameObjects.TileSprite] as unknown as { prototype: object }[]) {
     for (const prop of ["scaleX", "scaleY"]) {
       let proto: object | null = C.prototype;
