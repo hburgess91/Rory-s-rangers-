@@ -6795,6 +6795,11 @@
    "file": "talk/talk_SWIG.png",
    "frameWidth": 64,
    "frameHeight": 64
+  },
+  "talk_MIKEY_HURT": {
+   "file": "talk/talk_MIKEY_HURT.png",
+   "frameWidth": 64,
+   "frameHeight": 64
   }
  },
  "vfx": {

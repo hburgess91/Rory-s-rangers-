@@ -24,6 +24,7 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
+import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
@@ -266,24 +267,30 @@ export class HubScene extends Phaser.Scene {
    * it rains (or in December, snows). Drawn PixelLab weather loops tiled over the screen.
    */
   private weather() {
-    const now = new Date();
-    const h = now.getHours();
-    const day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
-    const roll = ((day * 9301 + 49297) % 233280) / 233280;
-    const kind = now.getMonth() === 11 ? (roll < 0.6 ? "snow" : null) : roll < 0.12 ? "storm" : roll < 0.32 ? "rain" : null;
+    const c0 = clock();
+    const kind = weatherFor(c0.day);
     (this as any).weatherKind = kind;
-    const night = h >= 20 || h < 6;
-    const dusk = h === 19 || h === 6;
-    if (night || dusk) {
-      this.add.rectangle(480, 270, 960, 540, 0x0b1440, night ? 0.42 : 0.22).setScrollFactor(0).setDepth(4900).setBlendMode(Phaser.BlendModes.MULTIPLY);
-      this.add.rectangle(480, 270, 960, 540, 0x1e2a6b, night ? 0.18 : 0.08).setScrollFactor(0).setDepth(4901);
-      // warm light pooling round every door
-      for (const b of BUILDINGS) {
-        if (!b.door) continue;
-        const glow = this.add.ellipse(b.door.x, b.door.y + 6, 120, 60, 0xffc46b, night ? 0.22 : 0.12).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD);
-        this.tweens.add({ targets: glow, alpha: { from: glow.alpha, to: glow.alpha * 0.7 }, yoyo: true, repeat: -1, duration: 1800 + Math.random() * 1200 });
-      }
+    // the sky follows Krelford's clock: night darkens, dusk and dawn glow orange, doors light up after dark
+    const nightA = this.add.rectangle(480, 270, 960, 540, 0x0b1440, 1).setAlpha(0).setScrollFactor(0).setDepth(4900).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    const blueA = this.add.rectangle(480, 270, 960, 540, 0x1e2a6b, 1).setAlpha(0).setScrollFactor(0).setDepth(4901);
+    const dusk = this.add.rectangle(480, 270, 960, 540, 0xff7a3a, 1).setAlpha(0).setScrollFactor(0).setDepth(4901).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    const duskGlow = this.add.rectangle(480, 270, 960, 540, 0xff9a5a, 1).setAlpha(0).setScrollFactor(0).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD);
+    const glows: Phaser.GameObjects.Ellipse[] = [];
+    for (const b of BUILDINGS) {
+      if (!b.door) continue;
+      glows.push(this.add.ellipse(b.door.x, b.door.y + 6, 120, 60, 0xffc46b, 1).setAlpha(0).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD));
     }
+    const apply = () => {
+      const c = clock();
+      nightA.setAlpha(c.dark * 0.42);
+      blueA.setAlpha(c.dark * 0.18);
+      dusk.setAlpha(c.twilight * 0.4);
+      duskGlow.setAlpha(c.twilight * 0.1);
+      const flick = 0.85 + Math.sin(this.time.now / 900) * 0.15;
+      for (const g of glows) g.setAlpha(c.dark * 0.22 * flick);
+    };
+    apply();
+    this.time.addEvent({ delay: 250, loop: true, callback: apply });
     if (!kind) return;
     synth.weatherSound(kind);
     const wet = kind !== "snow";
@@ -2820,7 +2827,6 @@ You are required by law to sign the Sex Offenders Register.`, {
     ks.forEach((sp, i) => void this.walkSpr(sp, T.x + 700 + i * 30, T.y + 140 + (i % 3) * 20, 3000).then(() => sp.destroy()));
     await new Promise((r) => this.time.delayedCall(1500, r));
     completeStep(s, arc, step);
-    s.flags.krunchers_invaded = true;
     s.flags.kr_home_pending = true;
     G.save();
     this.go("Vignette", { id: "kruncher_mikey" });

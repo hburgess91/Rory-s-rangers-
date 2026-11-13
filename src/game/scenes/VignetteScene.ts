@@ -127,10 +127,11 @@ export class VignetteScene extends Phaser.Scene {
     vfx(this, "vfx_dust", mikey.x, mikey.y, { scale: 2, depth: 45 });
     this.lastCaption?.destroy();
     if (this.textures.exists("p_bongo")) this.add.image(mikey.x - 10, mikey.y - 30, "p_bongo").setScale(1.4).setAngle(20).setDepth(60);
+    // from here on (for the rest of Chapter 3) Mikey's portrait has the black eye and fat lip
+    s.flags.krunchers_invaded = true;
     await this.talk(KR.KR_MIKEY_AFTER);
     await this.tween({ targets: gang, x: "+=900", duration: 2000 });
 
-    s.flags.krunchers_invaded = true;
   }
 
   /** A drawn explosion (PixelLab VFX) plus smoke; false if the art isn't loaded. Pass a container to put it inside one. */

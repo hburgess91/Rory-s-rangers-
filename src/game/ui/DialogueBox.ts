@@ -186,7 +186,9 @@ export class DialogueBox {
       return;
     }
     // a talking portrait (PixelLab mouth shapes, talk_<SPEAKER>) if this speaker has one
-    const tk = `talk_${speaker.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
+    let tk = `talk_${speaker.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
+    // Mikey's face after the Kreddle Krunchers got him: black eye, fat lip, for the rest of Chapter 3
+    if (tk === "talk_MIKEY" && G.s.flags.krunchers_invaded && G.s.chapter === 3 && this.scene.textures.exists("talk_MIKEY_HURT")) tk = "talk_MIKEY_HURT";
     this.talkKey = this.scene.textures.exists(tk) ? tk : null;
     if (this.talkKey) this.portrait.setTexture(this.talkKey, 0).setDisplaySize(112, 112).setVisible(true);
     else this.portrait.setTexture(key).setDisplaySize(112, 112).setVisible(true);
