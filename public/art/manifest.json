@@ -7537,6 +7537,11 @@
    "file": "finale/fb_horror.png",
    "frameWidth": 48,
    "frameHeight": 48
+  },
+  "c6_klerble_crawl_anim": {
+   "file": "props/c6_klerble_crawl_anim.png",
+   "frameWidth": 64,
+   "frameHeight": 32
   }
  },
  "vfx": {

@@ -590,8 +590,18 @@ export class KreddleRaid {
     // (off the world bounds for a moment, so the street sits above the dialogue box)
     cam.removeBounds();
     const ky = ks.length ? ks.reduce((a, n) => a + n.spr.y, 0) / ks.length : 520;
-    cam.pan(kx - 40, ky + 50, 1100, "Sine.easeInOut", true);
+    cam.pan(kx - 40, ky - 5, 1100, "Sine.easeInOut", true);
     cam.zoomTo(1.6, 1100, "Sine.easeInOut", true);
+    // clear the HUD away for the shot, and light them up like a boy band
+    const hud = Juice.layer(sc, D_HUD);
+    sc.tweens.add({ targets: hud, alpha: 0, duration: 400 });
+    const spots = ks.map((n, i) => {
+      const w = Math.max(24, n.spr.displayWidth * 0.9);
+      const h = Math.max(40, n.spr.displayHeight * 1.15);
+      const g = sc.add.ellipse(n.spr.x, n.spr.y - n.spr.displayHeight * 0.05, w, h, i % 2 ? 0xff4fd8 : 0x22d3ee, 0).setDepth(n.spr.depth - 1).setBlendMode(Phaser.BlendModes.ADD);
+      sc.tweens.add({ targets: g, fillAlpha: 0.45, duration: 300, delay: 700 + i * 140 });
+      return g;
+    });
     await this.wait(700);
     // they step forward one at a time, each one landing with a thud
     for (const [i, n] of ks.entries()) {
@@ -608,6 +618,8 @@ export class KreddleRaid {
     await Juice.bossCard(sc, "THE KREDDLE KRUNCHERS", "Kreddle's Evil Doppelgangers · Pissed In The Great Tap · Still Got Mikey's Bongo", "#ff4fd8", D_HUD + 3);
     await this.talk(KRUNCHER_STANDOFF);
     close(400);
+    sc.tweens.add({ targets: hud, alpha: 1, duration: 400 });
+    spots.forEach((g) => sc.tweens.add({ targets: g, alpha: 0, duration: 500, onComplete: () => g.destroy() }));
     cam.zoomTo(1, 500, "Sine.easeInOut", true);
     cam.pan(this.me.x, Math.min(this.me.y, H - 270), 500, "Sine.easeInOut");
     sc.time.delayedCall(520, () => {
