@@ -13,6 +13,7 @@ export const MOOD_TAGS = new Set([
   "gulps", "coughs", "clears throat", "yawns", "tired", "drunk", "slurring", "robotic", "monotone", "booming",
   "breathless", "desperate", "calm", "serious", "warmly", "softly", "quietly", "loudly", "singing", "sings",
   "wheezing", "burps", "disgusted", "pleading", "triumphant", "awe", "sassy", "manic", "deranged", "reverent",
+  "condescending", "smarmy", "shrill",
 ]);
 const BRACKET = /\[([^\]\n]{1,40})\]/g;
 const isTag = (inner: string) => {
