@@ -204,6 +204,8 @@ export interface Settings {
 
 export interface MetaState {
   version: number;
+  /** The first-dungeon controls pop-up has been shown. */
+  tutDungeon?: boolean;
   archiveUnlocked: string[];
   tvWatched: string[];
   completedWith: PlayableId[];

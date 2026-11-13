@@ -1160,6 +1160,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       enter.push(say("DRONGUS", rule?.decree ?? "NEW RULE.", { notify: true, sfx: "decree" }));
     }
     if (enter.length) await this.talk(enter);
+    if (!G.meta.tutDungeon && this.roomIdx === 0) await this.showTutorial();
     if (r.pa?.length && !G.s.flags[clearKey(this.dungeon.id, this.roomIdx)] && !(r.miniBoss && G.s.flags[this.miniBossKey()])) {
       if (this.citadel) await this.citadel.pa(r.pa);
       else await this.talk(r.pa);
@@ -2443,6 +2444,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     s.hp = Math.min(maxHp(s), s.hp + heal);
     synth.play("gulp");
     this.floatText(x, y - 30, `+${heal} (vintage)`, "#ffb6c1", 14);
+  }
+
+  /** First dungeon ever: pause and explain the controls, specials and Kreddle. */
+  private showTutorial(): Promise<void> {
+    return new Promise((res) => {
+      this.paused = true;
+      this.events.once("ui-resume", () => res());
+      this.scene.launch("Tutorial", { caller: "Dungeon" });
+      this.scene.pause();
+    });
   }
 
   private openTV() {

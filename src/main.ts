@@ -1,3 +1,4 @@
+import { TutorialScene } from "./game/scenes/TutorialScene";
 import Phaser from "phaser";
 import { BootScene } from "./game/scenes/BootScene";
 import { TitleScene } from "./game/scenes/TitleScene";
@@ -74,6 +75,7 @@ const game = new Phaser.Game({
     FinaleScene,
     RoofCutscene,
     MenuScene,
+    TutorialScene,
     EndingScene,
   ],
 });
