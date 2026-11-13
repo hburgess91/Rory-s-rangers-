@@ -260,3 +260,97 @@ export function debris(sc: Phaser.Scene, x: number, y: number, n = 14, opts: { c
     });
   }
 }
+
+// ------------------------------------------------------------------ sound design (layered on top of the recorded sfx)
+
+type SynthBits = { ctx: AudioContext | null; sfxGain?: GainNode; musicGain?: GainNode };
+const audio = () => {
+  const s = synth as unknown as SynthBits;
+  return s.ctx && s.sfxGain ? { ctx: s.ctx, out: s.sfxGain, music: s.musicGain } : null;
+};
+
+/** One low sine thump with a falling pitch (the body of a heartbeat or an impact). */
+function thump(a: NonNullable<ReturnType<typeof audio>>, at: number, f0: number, f1: number, dur: number, vol: number) {
+  const o = a.ctx.createOscillator();
+  const g = a.ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(f0, at);
+  o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(vol, at + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(a.out);
+  o.start(at);
+  o.stop(at + dur + 0.05);
+}
+
+/** A heartbeat: lub-dub. */
+export function heartbeat(vol = 0.9) {
+  const a = audio();
+  if (!a) return;
+  const t = a.ctx.currentTime;
+  thump(a, t, 70, 40, 0.18, vol);
+  thump(a, t + 0.2, 62, 36, 0.22, vol * 0.75);
+}
+
+/** A sub-bass drop under a big impact: the bit you feel. */
+export function subDrop(vol = 1, dur = 1.6) {
+  const a = audio();
+  if (!a) return;
+  thump(a, a.ctx.currentTime, 110, 28, dur, vol);
+}
+
+/** A rising noise sweep: tension before a hit. */
+export function riser(ms = 1500, vol = 0.35) {
+  const a = audio();
+  if (!a) return;
+  const t = a.ctx.currentTime;
+  const len = Math.ceil(a.ctx.sampleRate * (ms / 1000 + 0.1));
+  const buf = a.ctx.createBuffer(1, len, a.ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = a.ctx.createBufferSource();
+  src.buffer = buf;
+  const bp = a.ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 6;
+  bp.frequency.setValueAtTime(300, t);
+  bp.frequency.exponentialRampToValueAtTime(5000, t + ms / 1000);
+  const g = a.ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + ms / 1000);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000 + 0.06);
+  src.connect(bp).connect(g).connect(a.out);
+  src.start(t);
+  src.stop(t + ms / 1000 + 0.1);
+}
+
+/** A high ringing tone (ears ringing after a blast), fading out. */
+export function earRing(ms = 3000, vol = 0.12) {
+  const a = audio();
+  if (!a) return;
+  const t = a.ctx.currentTime;
+  const o = a.ctx.createOscillator();
+  const g = a.ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(3200, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+  o.connect(g).connect(a.out);
+  o.start(t);
+  o.stop(t + ms / 1000 + 0.05);
+}
+
+/** Duck the music to near-silence for `ms` (a held breath before a huge moment), then bring it back over `back` ms. */
+export function duckMusic(ms: number, back = 600, to = 0.05) {
+  const a = audio();
+  if (!a?.music) return;
+  const g = a.music.gain;
+  const t = a.ctx.currentTime;
+  const v = g.value;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(v, t);
+  g.linearRampToValueAtTime(v * to, t + 0.15);
+  g.setValueAtTime(v * to, t + ms / 1000);
+  g.linearRampToValueAtTime(v, t + (ms + back) / 1000);
+}

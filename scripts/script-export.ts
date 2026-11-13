@@ -1505,7 +1505,7 @@ function docx() {
   }
   const ref = path.join(OUT, ".reference.docx");
   try {
-    writeFileSync(ref, execFileSync("pandoc", ["-o", "-", "--print-default-data-file", "reference.docx"]));
+    execFileSync("pandoc", ["-o", ref, "--print-default-data-file", "reference.docx"]);
     const py = `
 import sys
 from docx import Document
