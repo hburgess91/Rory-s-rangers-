@@ -196,6 +196,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.dying = false;
     this.picking = false;
     this.slowmo = 1;
+    // (a slow-mo moment cut short by a scene change mustn't leave the next room in slow motion)
+    this.time.timeScale = 1;
+    this.tweens.timeScale = 1;
     this.vClock = this.time.now;
     this.rule = null;
     this.machineUses = {};
@@ -1794,7 +1797,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const dy = Math.abs(y0 - p.y) + 200;
     const z = Phaser.Math.Clamp(Math.min(960 / dx, 440 / dy), 1, 1.18);
     cam.stopFollow();
-    cam.pan((b.x + p.x) / 2, (y0 + p.y) / 2 - 20, 600, "Sine.easeInOut", true);
+    // weighted towards the boss (the HUD sits over the top of the screen)
+    cam.pan(b.x * 0.7 + p.x * 0.3, Math.min((y0 + p.y) / 2, y0 + 90), 600, "Sine.easeInOut", true);
     cam.zoomTo(z, 700, "Sine.easeInOut", true);
     Juice.duckMusic(900, 500, 0.15);
     Juice.riser(520, 0.3);
@@ -1841,6 +1845,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     };
   }
 
+  private epicSlowToken = 0;
+
   /** Chapter 6/7 bosses: crossing half health is a moment (flash, slow-mo beat, a shockwave off them, a shout). */
   private epicPhasePulse(b: Boss) {
     const col = EPIC_BOSSES[b.bossId];
@@ -1854,8 +1860,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.subDrop(0.8, 0.9);
     Juice.slamText(this, "HALF DEAD. FULLY FURIOUS.", col, 36, 150, 900);
     this.setSlowmo(0.35);
+    const token = ++this.epicSlowToken;
     window.setTimeout(() => {
-      if (this.sys.settings.active && !this.picking && this.slowmo !== 1) this.setSlowmo(1);
+      if (token === this.epicSlowToken && this.sys.settings.active && !this.picking && this.slowmo !== 1) this.setSlowmo(1);
     }, 520);
   }
 
@@ -1870,6 +1877,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.subDrop(1, 2.2);
     Juice.duckMusic(1300, 900, 0.1);
     const close = Juice.letterbox(this, 46, 260);
+    const token = ++this.epicSlowToken;
     this.setSlowmo(0.22);
     cam.stopFollow();
     cam.pan(b.x, b.y, 400, "Cubic.easeOut", true);
@@ -1878,7 +1886,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (let i = 0; i < 4; i++) this.time.delayedCall(i * 60, () => this.boomFx(b.x + (Math.random() - 0.5) * 90, b.y + (Math.random() - 0.5) * 90, 0.8));
     await Juice.realWait(1100);
     if (!this.sys.settings.active) return;
-    if (!this.picking) this.setSlowmo(1);
+    if (!this.picking && token === this.epicSlowToken) this.setSlowmo(1);
     b.active && b.clearTint();
     cam.zoomTo(1, 700, "Cubic.easeInOut", true);
     cam.startFollow(this.player.spr, true, 0.12, 0.12);

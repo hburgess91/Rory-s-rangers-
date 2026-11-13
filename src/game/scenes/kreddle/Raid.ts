@@ -590,8 +590,8 @@ export class KreddleRaid {
     // (off the world bounds for a moment, so the street sits above the dialogue box)
     cam.removeBounds();
     const ky = ks.length ? ks.reduce((a, n) => a + n.spr.y, 0) / ks.length : 520;
-    cam.pan(kx - 40, ky + 50, 1100, "Sine.easeInOut");
-    cam.zoomTo(1.6, 1100, "Sine.easeInOut");
+    cam.pan(kx - 40, ky + 50, 1100, "Sine.easeInOut", true);
+    cam.zoomTo(1.6, 1100, "Sine.easeInOut", true);
     await this.wait(700);
     // they step forward one at a time, each one landing with a thud
     for (const [i, n] of ks.entries()) {
@@ -608,7 +608,7 @@ export class KreddleRaid {
     await Juice.bossCard(sc, "THE KREDDLE KRUNCHERS", "Kreddle's Evil Doppelgangers · Pissed In The Great Tap · Still Got Mikey's Bongo", "#ff4fd8", D_HUD + 3);
     await this.talk(KRUNCHER_STANDOFF);
     close(400);
-    cam.zoomTo(1, 500, "Sine.easeInOut");
+    cam.zoomTo(1, 500, "Sine.easeInOut", true);
     cam.pan(this.me.x, Math.min(this.me.y, H - 270), 500, "Sine.easeInOut");
     sc.time.delayedCall(520, () => {
       cam.setBounds(0, 0, RW, H);
@@ -641,16 +641,16 @@ export class KreddleRaid {
       const close = Juice.letterbox(sc, 48, 250, D_HUD + 2);
       const cam = sc.cameras.main;
       cam.stopFollow();
-      cam.pan(x, y - 30, 300, "Quad.easeOut");
-      cam.zoomTo(1.4, 300, "Quad.easeOut");
+      cam.pan(x, y - 30, 300, "Quad.easeOut", true);
+      cam.zoomTo(1.4, 300, "Quad.easeOut", true);
       Juice.slowMo(sc, 0.15, 1300);
       Juice.shake(sc, 900, 0.02);
       Juice.realWait(1300).then(() => {
         if (!sc.sys.settings.active) return;
         Juice.slamText(sc, "KRUNCHERS: KRUNCHED", "#b6ff5a", 60, 220, 1300, D_HUD + 4);
         Juice.earRing(2200, 0.06);
-        cam.zoomTo(1, 700, "Cubic.easeInOut");
-        cam.pan(this.me.x, this.me.y, 700, "Cubic.easeInOut");
+        cam.zoomTo(1, 700, "Cubic.easeInOut", true);
+        cam.pan(this.me.x, this.me.y, 700, "Cubic.easeInOut", true);
         sc.time.delayedCall(720, () => cam.startFollow(this.me, true, 0.1, 0.1));
         close(500);
       });
@@ -706,14 +706,14 @@ export class KreddleRaid {
     const py = 488;
     const cam = sc.cameras.main;
     cam.stopFollow();
-    cam.pan(PALACE_X - 180, 430, 1200, "Sine.easeInOut");
+    cam.pan(PALACE_X - 180, 430, 1200, "Sine.easeInOut", true);
     await new Promise<void>((r) => {
       const t0 = sc.time.now;
       const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => animateWalker(planter, px - planter.x, py - planter.y, true, sc.time.now - t0) });
       sc.tweens.add({ targets: planter, x: px - 40, y: py, duration: 1300, onComplete: () => { ev.remove(); r(); } });
     });
     const close = Juice.letterbox(sc, 50, 500, D_HUD + 2);
-    cam.zoomTo(1.15, 1400, "Sine.easeInOut");
+    cam.zoomTo(1.15, 1400, "Sine.easeInOut", true);
     await this.talk(NUKE_PLANT.slice(0, 2));
     synth.play("lob");
     this.nuke = sc.textures.exists("kd_nuke") ? sc.add.image(px, py + 20, "kd_nuke").setOrigin(0.5, 1).setScale(1.5).setDepth(py + 20) : null;
@@ -729,8 +729,8 @@ export class KreddleRaid {
       synth.play("telegraph");
       Juice.heartbeat();
       cam.removeBounds();
-      cam.zoomTo(1.8, 900, "Cubic.easeOut");
-      cam.pan(px, py + 40, 900, "Cubic.easeOut");
+      cam.zoomTo(1.8, 900, "Cubic.easeOut", true);
+      cam.pan(px, py + 40, 900, "Cubic.easeOut", true);
     });
     sc.time.delayedCall(1300, () => Juice.heartbeat());
     const glow = sc.add.circle(px + 18, py, 28, 0xff0000, 0.35).setDepth(D_LIGHT + 3).setBlendMode(Phaser.BlendModes.ADD);
@@ -739,7 +739,7 @@ export class KreddleRaid {
     await this.talk(NUKE_PLANT.slice(2));
     close(300);
     Juice.riser(600, 0.4);
-    cam.zoomTo(1, 500, "Cubic.easeIn");
+    cam.zoomTo(1, 500, "Cubic.easeIn", true);
     Juice.flash(sc, 0xff0000, 450, 0.55, D_HUD + 1);
     Juice.shake(sc, 500, 0.02);
     cam.pan(this.me.x, Math.min(this.me.y, H - 270), 500, "Sine.easeInOut");

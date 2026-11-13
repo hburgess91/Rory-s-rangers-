@@ -2578,8 +2578,8 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk([say(lad(["KREBLIS", "GRONNY"]), "Is that… is that the plane?")]);
     // the approach: bars in, the camera eases in on the tower, everything holds its breath
     const peBars = Juice.letterbox(this, 46, 900, 985);
-    this.cameras.main.pan(640, hitY + 40, 2600, "Sine.easeInOut");
-    this.cameras.main.zoomTo(1.18, 2600, "Sine.easeIn");
+    this.cameras.main.pan(640, hitY + 40, 2600, "Sine.easeInOut", true);
+    this.cameras.main.zoomTo(1.18, 2600, "Sine.easeIn", true);
     this.time.delayedCall(1700, () => Juice.riser(900, 0.35));
     await this.tween({ targets: plane2, x: 620 + plane2.displayWidth * 0.32, y: hitY, angle: -3, duration: 2600, ease: "Sine.in" });
     plane2.destroy();
@@ -2590,8 +2590,8 @@ export class VignetteScene extends Phaser.Scene {
     this.cameras.main.shake(1400, 0.03);
     // the punch, then a long pull back out to take it in
     this.cameras.main.setZoom(1.32);
-    this.cameras.main.zoomTo(1, 2200, "Cubic.easeOut");
-    this.cameras.main.pan(480, 270, 2200, "Cubic.easeOut");
+    this.cameras.main.zoomTo(1, 2200, "Cubic.easeOut", true);
+    this.cameras.main.pan(480, 270, 2200, "Cubic.easeOut", true);
     Juice.shockRing(this, 620, hitY, { color: 0xffe0a0, to: 520, rings: 3, depth: 17 });
     Juice.debris(this, 620, hitY, 18, { depth: 17, speed: 380, size: 7, floor: 440 });
     this.time.delayedCall(2300, () => peBars(500));
@@ -3479,16 +3479,16 @@ export class VignetteScene extends Phaser.Scene {
     // a slow, ugly push in on the lot of them
     const ktBars = Juice.letterbox(this, 46, 800, 985);
     const kcx = ks.length ? ks.reduce((a, sp) => a + sp.x, 0) / ks.length : 600;
-    this.cameras.main.pan(kcx, 300, 2600, "Sine.easeInOut");
-    this.cameras.main.zoomTo(1.3, 2600, "Sine.easeInOut");
+    this.cameras.main.pan(kcx, 300, 2600, "Sine.easeInOut", true);
+    this.cameras.main.zoomTo(1.3, 2600, "Sine.easeInOut", true);
     Juice.heartbeat(0.7);
     this.time.delayedCall(1100, () => Juice.heartbeat(0.7));
     this.caption("REMEMBER THEIR FACES.", "#ff4d4d", 30).setScrollFactor(0);
     await this.talk(KT_AFTER);
     this.dropCaption();
     ktBars(400);
-    this.cameras.main.zoomTo(1, 500);
-    this.cameras.main.pan(480, 270, 500);
+    this.cameras.main.zoomTo(1, 500, "Sine.easeInOut", true);
+    this.cameras.main.pan(480, 270, 500, "Sine.easeInOut", true);
     synth.stopMusic();
   }
 
@@ -3854,12 +3854,12 @@ export class VignetteScene extends Phaser.Scene {
     // the room goes very still: a hard push in on it, a heartbeat
     Juice.subDrop(0.8, 1.2);
     Juice.heartbeat();
-    this.cameras.main.pan(nuke.x - 120, nuke.y - 110, 260, "Quad.easeOut");
-    this.cameras.main.zoomTo(1.35, 260, "Quad.easeOut");
+    this.cameras.main.pan(nuke.x - 120, nuke.y - 110, 260, "Quad.easeOut", true);
+    this.cameras.main.zoomTo(1.35, 260, "Quad.easeOut", true);
     this.caption("☢ A NUCLEAR BOMB ☢", "#facc15", 34).setScrollFactor(0);
     await this.wait(1100);
-    this.cameras.main.pan(480, 270, 700, "Sine.easeInOut");
-    this.cameras.main.zoomTo(1, 700, "Sine.easeInOut");
+    this.cameras.main.pan(480, 270, 700, "Sine.easeInOut", true);
+    this.cameras.main.zoomTo(1, 700, "Sine.easeInOut", true);
     await this.talk(RM_NUKE.slice(1, 4));
     this.dropCaption();
     // he sits on it
@@ -3891,8 +3891,8 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(1100);
     synth.play("bongo");
     // in close on the hands while it builds
-    this.cameras.main.pan(480, 250, 900, "Sine.easeInOut");
-    this.cameras.main.zoomTo(1.3, 900, "Sine.easeInOut");
+    this.cameras.main.pan(480, 250, 900, "Sine.easeInOut", true);
+    this.cameras.main.zoomTo(1.3, 900, "Sine.easeInOut", true);
     await this.talk(RM_END.slice(0, 1));
     Juice.riser(700, 0.35);
     await this.wait(700);
@@ -3900,8 +3900,8 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("cheer");
     Juice.subDrop(0.9, 1.4);
     this.cameras.main.flash(300, 255, 255, 255);
-    this.cameras.main.zoomTo(1, 900, "Cubic.easeOut");
-    this.cameras.main.pan(480, 270, 900, "Cubic.easeOut");
+    this.cameras.main.zoomTo(1, 900, "Cubic.easeOut", true);
+    this.cameras.main.pan(480, 270, 900, "Cubic.easeOut", true);
     Juice.shockRing(this, 480, 150, { color: 0xffd23f, to: 700, rings: 3, depth: 560 });
     // light pours down on them
     const rays = [0, 1, 2, 3, 4].map((i) => {
@@ -4032,7 +4032,7 @@ export class VignetteScene extends Phaser.Scene {
     const kpBars = Juice.letterbox(this, 50, 600, 985);
     Juice.vignette(this, 0x000000, 0.65, 984);
     // a slow, creeping push-in for the whole crawl
-    this.cameras.main.zoomTo(1.12, 9000, "Sine.easeInOut");
+    this.cameras.main.zoomTo(1.12, 9000, "Sine.easeInOut", true);
     // the trail
     const trail = this.add.graphics().setDepth(290);
     const smear = () => {
@@ -4075,8 +4075,8 @@ export class VignetteScene extends Phaser.Scene {
     this.tween({ targets: scr, alpha: 0, scale: 0.8, y: 120, duration: 500 });
     const cam = this.cameras.main;
     // (framed so he sits above the dialogue box)
-    cam.pan(kl.x - 30, kl.y - 8, 900, "Sine.easeInOut");
-    cam.zoomTo(1.7, 900, "Sine.easeInOut");
+    cam.pan(kl.x - 30, kl.y - 8, 900, "Sine.easeInOut", true);
+    cam.zoomTo(1.7, 900, "Sine.easeInOut", true);
     let beatN = 0;
     const beat = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
       Juice.heartbeat(Math.max(0.3, 0.9 - beatN * 0.12));
@@ -4086,8 +4086,8 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk(KP_LAST);
     beat.remove();
     // back out to the screen: one keystroke
-    cam.pan(480, 270, 400, "Cubic.easeOut");
-    cam.zoomTo(1, 400, "Cubic.easeOut");
+    cam.pan(480, 270, 400, "Cubic.easeOut", true);
+    cam.zoomTo(1, 400, "Cubic.easeOut", true);
     await this.tween({ targets: scr, alpha: 1, scale: 1, y: 175, duration: 400, ease: "Cubic.out" });
     prompt.setText("> Y").setColor("#ef4444");
     synth.play("select");
@@ -4127,7 +4127,7 @@ export class VignetteScene extends Phaser.Scene {
     this.cameras.main.shake(5500, 0.04);
     // the punch: in hard on the flash, then a long slow pull back to take in the size of it
     this.cameras.main.setZoom(1.35);
-    this.cameras.main.zoomTo(1, 4200, "Cubic.easeOut");
+    this.cameras.main.zoomTo(1, 4200, "Cubic.easeOut", true);
     // chunks of the palace thrown at the camera
     for (let i = 0; i < 16; i++) {
       this.time.delayedCall(150 + i * 70, () => {
@@ -4231,7 +4231,7 @@ export class VignetteScene extends Phaser.Scene {
     Juice.subDrop(0.9, 1.4);
     Juice.flash(this, 0xff3b3b, 400, 0.4, 960);
     this.cameras.main.setZoom(1.15);
-    this.cameras.main.zoomTo(1, 6000, "Sine.easeOut");
+    this.cameras.main.zoomTo(1, 6000, "Sine.easeOut", true);
     let fired = 0;
     const launch = this.time.addEvent({ delay: 170, repeat: 34, callback: () => {
       const l = launchers[fired % launchers.length];
@@ -4330,7 +4330,7 @@ export class VignetteScene extends Phaser.Scene {
     lads.forEach((sp) => this.face(sp, "north"));
     // the room goes quiet; the camera creeps in on everyone looking up
     const bars = Juice.letterbox(this, 48, 700, 985);
-    this.cameras.main.zoomTo(1.15, 3000, "Sine.easeInOut");
+    this.cameras.main.zoomTo(1.15, 3000, "Sine.easeInOut", true);
     await this.talk(TP_DOOM);
     const m = this.textures.exists("c6_missile") ? this.add.image(480, -80, "c6_missile").setScale(2).setAngle(90).setDepth(700) : this.add.rectangle(480, -80, 10, 40, 0x9ca3af).setDepth(700);
     synth.play("whistle");
@@ -4348,7 +4348,7 @@ export class VignetteScene extends Phaser.Scene {
     await Juice.realWait(160);
     white.setAlpha(0.85);
     Juice.slowMo(this, 0.25, 900);
-    this.cameras.main.zoomTo(1, 1400, "Cubic.easeOut");
+    this.cameras.main.zoomTo(1, 1400, "Cubic.easeOut", true);
     this.cameras.main.shake(3500, 0.05);
     // the floor tips as the building goes
     this.tweens.add({ targets: this.cameras.main, rotation: -0.035, duration: 2600, ease: "Quad.in" });

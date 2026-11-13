@@ -593,7 +593,7 @@ export class LairScene extends Phaser.Scene {
     synth.play("zap");
     Juice.riser(560, 0.3);
     // the room leans in on the gun while it charges
-    this.cameras.main.zoomTo(this.cameras.main.zoom + 0.06, 520, "Quad.easeIn");
+    this.cameras.main.zoomTo(this.cameras.main.zoom + 0.06, 520, "Quad.easeIn", true);
     await new Promise<void>((res) => this.tweens.add({ targets: charge, scale: 1.4, duration: 520, ease: "Quad.in", onComplete: () => res() }));
     if (this.dead) return never();
     charge.destroy();
@@ -627,7 +627,7 @@ export class LairScene extends Phaser.Scene {
     this.cameras.main.flash(220, 120, 255, 140);
     await Juice.realWait(90);
     this.tweens.timeScale = 1;
-    this.cameras.main.zoomTo(1, 500, "Cubic.easeOut");
+    this.cameras.main.zoomTo(1, 500, "Cubic.easeOut", true);
     this.cameras.main.shake(600, 0.022);
     synth.play("explode_1");
     synth.play("boom");
@@ -739,8 +739,8 @@ export class LairScene extends Phaser.Scene {
     if (this.dead) return never();
     const d = this.drongus;
     this.setRage(0.55);
-    this.cameras.main.zoomTo(1.12, 2200, "Sine.easeInOut");
-    this.cameras.main.pan(d.x + 60, d.y - 90, 2200, "Sine.easeInOut");
+    this.cameras.main.zoomTo(1.12, 2200, "Sine.easeInOut", true);
+    this.cameras.main.pan(d.x + 60, d.y - 90, 2200, "Sine.easeInOut", true);
     this.tweens.add({ targets: d, y: d.y - 8, duration: 90, yoyo: true, repeat: 20 });
     const has = ["MWAHAHAHA", "HAHAHAHA", "HA HA HA", "AHAHAHA", "HAHA"];
     for (let i = 0; i < 9; i++) {
@@ -762,7 +762,7 @@ export class LairScene extends Phaser.Scene {
     sil.forEach((o) => o.setTintFill(0x000000).setDepth(501));
     this.flashRect?.setFillStyle(0xffffff, 1).setDepth(500);
     this.cameras.main.shake(500, 0.012);
-    this.cameras.main.zoomTo(1.22, 300, "Quad.easeOut");
+    this.cameras.main.zoomTo(1.22, 300, "Quad.easeOut", true);
     await this.wait(90);
     this.flashRect?.setAlpha(0);
     sil.forEach((o, k) => o.clearTint().setDepth(dd[k]));
