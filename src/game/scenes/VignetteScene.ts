@@ -2509,7 +2509,6 @@ export class VignetteScene extends Phaser.Scene {
     ]);
     synth.stopMusic();
     Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true });
-    if (G.s.chapter === 6) G.s.flags.ch6_clear = true;
   }
 
   /**
