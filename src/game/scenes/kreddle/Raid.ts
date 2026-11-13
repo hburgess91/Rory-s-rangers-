@@ -5,6 +5,7 @@ import { DialogueBox } from "../../ui/DialogueBox";
 import { switchTo } from "../../Flow";
 import { synth } from "../../audio/Synth";
 import { FONT } from "../../ui/theme";
+import { TOUCH } from "../../ui/TouchControls";
 import { hasVfx, vfx, type VfxOpts } from "../../gfx/Vfx";
 import { animateWalker, playPerf } from "../../gfx/HD";
 import { PLAYABLE_IDS, type Line } from "../../../data/types";
@@ -207,6 +208,10 @@ export class KreddleRaid {
   private screen: { frame: Phaser.GameObjects.Rectangle; face: Phaser.GameObjects.Sprite | null; text: Phaser.GameObjects.Text } | null = null;
   private nuke: Phaser.GameObjects.Image | null = null;
   private pausedAt = 0;
+  /** Phones: the hub-mode touch pad has no attack button, so the raid adds its own FIRE button. */
+  private touchFire = false;
+  private fireBtn: Phaser.GameObjects.Arc | null = null;
+  private statics: (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible & { x: number; displayWidth?: number })[] = [];
   private flameAt = 0;
 
   constructor(scene: Phaser.Scene) {
@@ -226,8 +231,14 @@ export class KreddleRaid {
     sc.cameras.main.setBounds(0, 0, RW, H);
     sc.cameras.main.setBackgroundColor(0x05030c);
     this.makeTextures();
+    const before = sc.children.list.length;
     this.drawWorld();
     this.drawStrip();
+    // everything static along the Strip: hidden while it's far from the camera (see cull())
+    this.statics = sc.children.list.slice(before).filter((o) => {
+      const t = o as unknown as { scrollFactorX?: number; x?: number; visible?: boolean };
+      return t.scrollFactorX === 1 && typeof t.x === "number" && t.visible !== false && o !== this.screen?.face && o !== this.screen?.text && !(o instanceof Phaser.GameObjects.Graphics);
+    }) as unknown as (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible & { x: number; displayWidth?: number })[];
     this.spawnPeople(planted);
     this.spawnLads();
     const startX = planted ? 9300 : 130;
@@ -286,7 +297,7 @@ export class KreddleRaid {
       sky.setScale(Math.max(1300 / sky.width, 420 / sky.height));
     } else sc.add.rectangle(480, 200, 1300, 420, 0x1a0b2a).setScrollFactor(0).setDepth(-30);
     // the whole sky glows red from the fires
-    const glow = sc.add.rectangle(480, 330, 1400, 200, 0xff3b1f, 0.28).setScrollFactor(0, 1).setDepth(-26).setBlendMode(Phaser.BlendModes.ADD);
+    const glow = sc.add.rectangle(480, 330, 960, 200, 0xff3b1f, 0.28).setScrollFactor(0, 1).setDepth(-26).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: glow, alpha: 0.12, yoyo: true, repeat: -1, duration: 1400, ease: "Sine.inOut" });
     // air-raid searchlights
     for (let i = 0; i < 5; i++) {
@@ -300,7 +311,7 @@ export class KreddleRaid {
     for (let x = 0; x < RW; x += 46) g.lineStyle(1, 0x2f1850, 1).strokeRect(x, 400, 46, 46);
     g.lineStyle(3, 0xff4fd8, 0.4).lineBetween(0, 446, RW, 446);
     for (let x = 40; x < RW; x += 160) g.fillStyle(0xfacc15, 0.4).fillRect(x, 590, 70, 6);
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 36; i++) {
       const p = sc.add.ellipse(80 + Math.random() * (RW - 160), 470 + Math.random() * 200, 50 + Math.random() * 80, 8 + Math.random() * 8, i % 3 ? 0xff6a2a : GREEN, 0.14).setDepth(2).setBlendMode(Phaser.BlendModes.ADD);
       sc.tweens.add({ targets: p, alpha: 0.04, yoyo: true, repeat: -1, duration: 500 + Math.random() * 900 });
     }
@@ -414,7 +425,7 @@ export class KreddleRaid {
     const bl = sc.add.ellipse(x, 430, 60, 30, 0xff0000, 0.6).setDepth(D_LIGHT - 2).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: bl, alpha: 0.1, yoyo: true, repeat: -1, duration: 300 });
     deco.push(bl);
-    this.bars.push({ x, name, heat: 0, need: k === 4 ? 5 : 6, down: false, locked: k === 4, parts, deco, line: RAID_BARRICADES[k]?.line, warned: false });
+    this.bars.push({ x, name, heat: 0, need: k === 4 ? 4 : 4.5, down: false, locked: k === 4, parts, deco, line: RAID_BARRICADES[k]?.line, warned: false });
   }
 
   private spawnPeople(planted: boolean) {
@@ -467,9 +478,9 @@ export class KreddleRaid {
     const sc = this.sc;
     // night: a dark blue multiply over the street (fire and neon draw above it)
     sc.add.rectangle(480, 270, 1400, 900, 0x27306e, 1).setScrollFactor(0).setDepth(D_NIGHT).setBlendMode(Phaser.BlendModes.MULTIPLY).setAlpha(0.55);
-    sc.add.rectangle(480, 270, 1400, 900, 0x0a1030, 0.18).setScrollFactor(0).setDepth(D_NIGHT + 1);
     if (hasVfx(sc, "vfx_rain")) {
-      for (let l = 0; l < 2; l++)
+      // one layer (the rain tiles are full-screen fill: two layers halve the frame rate on phones)
+      for (let l = 0; l < 1; l++)
         for (let gx = 0; gx < 3; gx++)
           for (let gy = 0; gy < 3; gy++) {
             const sp = vfx(sc, "vfx_rain", 160 + gx * 320 + l * 90, 100 + gy * 200 + l * 60, { fixed: true, scale: 2 + l * 0.4, depth: D_RAIN + l, alpha: 0.7, speed: 1.5, angle: 12 });
@@ -604,6 +615,9 @@ export class KreddleRaid {
     const planter = lad?.spr ?? this.me;
     const px = PALACE_X;
     const py = 488;
+    const cam = sc.cameras.main;
+    cam.stopFollow();
+    cam.pan(PALACE_X - 180, 430, 1200, "Sine.easeInOut");
     await new Promise<void>((r) => {
       const t0 = sc.time.now;
       const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => animateWalker(planter, px - planter.x, py - planter.y, true, sc.time.now - t0) });
@@ -616,6 +630,8 @@ export class KreddleRaid {
     const blink = sc.add.circle(px + 18, py, 5, 0xff0000).setDepth(D_LIGHT + 4).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: blink, alpha: 0.1, yoyo: true, repeat: -1, duration: 250 });
     await this.talk(NUKE_PLANT.slice(2));
+    cam.pan(this.me.x, this.me.y, 500, "Sine.easeInOut");
+    sc.time.delayedCall(520, () => cam.startFollow(this.me, true, 0.1, 0.1));
     s.flags.nuke_planted = true;
     G.rt.timerEnd = Date.now() + 240000;
     G.save();
@@ -722,7 +738,8 @@ export class KreddleRaid {
     this.me.y = Phaser.Math.Clamp(this.me.y + mv.y * sp, TOP, BOTTOM);
     this.me.setDepth(this.me.y);
     // the flamethrower
-    const firing = this.controls.attackHeld();
+    if (TOUCH.enabled && !this.fireBtn) this.makeFireButton();
+    const firing = this.controls.attackHeld() || this.touchFire;
     this.controls.autoAim = this.nearestTargetAngle();
     const a = this.controls.aim(this.me.x, this.me.y - 22);
     this.aimDeg = Phaser.Math.RadToDeg(a);
@@ -733,7 +750,10 @@ export class KreddleRaid {
     // story triggers
     if (!escape) {
       this.checkDistrict();
-      if (!this.broadcastDone && this.me.x > 4420) void this.broadcast();
+      if (!this.broadcastDone && this.me.x > 4420) {
+        if (this.me.x < 5300) void this.broadcast();
+        else this.broadcastDone = true;
+      }
       else if (!this.standoffDone && this.me.x > KRUNCH_X) void this.standoff();
       else if (this.phase === "krunchers" && !this.krunchersDone && this.npcs.every((n) => n.kind !== "kruncher" || n.state === "dead")) void this.krunchersDead();
       else if (!this.palaceDone && this.krunchersDone && this.bars[4]?.down && this.me.x > 9260) void this.plantNuke();
@@ -753,6 +773,24 @@ export class KreddleRaid {
         }
       }
     } else if (this.me.x < 80) this.leave();
+  }
+
+  private makeFireButton() {
+    const sc = this.sc;
+    const c = sc.add.circle(735, 445, 52, 0x22c55e, 0.25).setStrokeStyle(3, GREEN, 0.8).setScrollFactor(0).setDepth(D_HUD + 5).setInteractive();
+    sc.add.text(735, 445, "🔥\nFIRE", { fontFamily: FONT, fontSize: "14px", color: "#eaff9a", fontStyle: "bold", align: "center" }).setOrigin(0.5).setScrollFactor(0).setDepth(D_HUD + 6);
+    const on = () => {
+      this.touchFire = true;
+      c.setFillStyle(0x22c55e, 0.55);
+    };
+    const off = () => {
+      this.touchFire = false;
+      c.setFillStyle(0x22c55e, 0.25);
+    };
+    c.on("pointerdown", on);
+    c.on("pointerup", off);
+    c.on("pointerout", off);
+    this.fireBtn = c;
   }
 
   private updateHud() {
@@ -806,9 +844,11 @@ export class KreddleRaid {
       this.nextFlameSfx = time + 170;
       synth.play("gun_flamer");
     }
-    if (time > this.nextPuff) {
-      this.nextPuff = time + 38;
-      this.emitPuff(ox, oy, a);
+    // a steady stream whatever the frame rate: catch up on the puffs a slow frame missed (pre-aged along the jet)
+    if (this.nextPuff < time - 120) this.nextPuff = time - 120;
+    while (this.nextPuff <= time) {
+      this.emitPuff(ox, oy, a, time - this.nextPuff);
+      this.nextPuff += 26;
     }
     if (!this.sparks) {
       this.sparks = sc.add.particles(0, 0, "raid_dot", {
@@ -870,11 +910,11 @@ export class KreddleRaid {
     }
   }
 
-  private emitPuff(x: number, y: number, a: number) {
+  private emitPuff(x: number, y: number, a: number, age = 0) {
     const sc = this.sc;
     let p = this.puffs.find((q) => !q.live);
     if (!p) {
-      if (this.puffs.length >= 30) p = this.puffs.reduce((o, q) => (q.age / q.life > o.age / o.life ? q : o));
+      if (this.puffs.length >= 36) p = this.puffs.reduce((o, q) => (q.age / q.life > o.age / o.life ? q : o));
       else {
         const spr = hasVfx(sc, "vfx_fire") ? vfx(sc, "vfx_fire", x, y, { add: true, depth: D_LIGHT + 10 }) : null;
         const obj = spr ?? sc.add.image(x, y, "raid_dot").setBlendMode(Phaser.BlendModes.ADD).setDepth(D_LIGHT + 10);
@@ -887,10 +927,10 @@ export class KreddleRaid {
     const aa = a + (Math.random() - 0.5) * 0.3;
     p.vx = Math.cos(aa) * sp;
     p.vy = Math.sin(aa) * sp;
-    p.age = 0;
+    p.age = age;
     p.life = 430 + Math.random() * 120;
     p.live = true;
-    p.spr.setPosition(x, y).setVisible(true).setAlpha(1).setAngle(Phaser.Math.RadToDeg(aa) + 90);
+    p.spr.setPosition(x + p.vx * (age / 1000), y + p.vy * (age / 1000)).setVisible(true).setAlpha(1).setAngle(Phaser.Math.RadToDeg(aa) + 90).setScale(0.4);
     (p.spr as Phaser.GameObjects.Sprite).setTint(Math.random() < 0.5 ? GREEN : GREEN2);
   }
 
@@ -908,7 +948,7 @@ export class KreddleRaid {
       p.spr.y += p.vy * (dt / 1000) - 30 * (dt / 1000) * k;
       p.vx *= 0.985;
       p.vy *= 0.985;
-      p.spr.setScale(0.6 + k * 1.9).setAlpha(1 - k * k);
+      p.spr.setScale(0.4 + k * 1.8).setAlpha(1 - k * k);
     }
   }
 
@@ -957,7 +997,7 @@ export class KreddleRaid {
         }
       }
       // anyone nearby goes up
-      for (const n of this.npcs) if (n.state !== "dead" && Math.abs(n.spr.x - x) < 90 * scale && Math.abs(n.spr.y - y) < 70 * scale) this.igniteNpc(n);
+      for (const n of this.npcs) if (n.state !== "dead" && (n.kind !== "kruncher" || this.phase === "krunchers") && Math.abs(n.spr.x - x) < 90 * scale && Math.abs(n.spr.y - y) < 70 * scale) this.igniteNpc(n);
     };
     if (delay) sc.time.delayedCall(delay, go);
     else go();
@@ -1443,8 +1483,8 @@ export class KreddleRaid {
     const spr = tex ? sc.add.image(x, y, tex) : sc.add.image(x, y, "raid_dot").setScale(5).setTint(0xff4fd8);
     if (tex) spr.setScale(kind === "blimp" ? 2.6 : kind === "bomber" ? 2 : 1.6);
     spr.setDepth(D_LIGHT - 8);
-    // which way the art faces: jets and bombers point left, the helicopter and the blimp right
-    const facesRight = kind === "heli" || kind === "blimp";
+    // which way the art faces: everything points right except the blimp (its fins are on the right)
+    const facesRight = kind !== "blimp";
     spr.setFlipX(fromLeft ? !facesRight : facesRight);
     let light: Phaser.GameObjects.Triangle | undefined;
     if (kind === "heli") light = sc.add.triangle(x, y + 16, 0, 0, -50, 230, 50, 230, 0xffffcc, 0.12).setOrigin(0, 0).setDepth(D_LIGHT - 9).setBlendMode(Phaser.BlendModes.ADD);
@@ -1556,6 +1596,7 @@ export class KreddleRaid {
     }
     for (const n of this.npcs) if (n.state !== "dead" && n.spr.active) n.spr.setVisible(near(n.spr.x, 800));
     for (const a of this.ash) a.setVisible(near(a.x));
+    for (const o of this.statics) if (o.active) o.setVisible(near(o.x, 760 + (o.displayWidth ?? 0) / 2));
   }
 
   // ------------------------------------------------------------------ bubbles and text

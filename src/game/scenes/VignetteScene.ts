@@ -3170,7 +3170,7 @@ export class VignetteScene extends Phaser.Scene {
       } });
     }
     if (kind !== "storm") return;
-    const flash = this.add.rectangle(480, 270, 960, 540, 0xeef2ff, 0).setDepth(depth + 1).setBlendMode(Phaser.BlendModes.ADD);
+    const flash = this.add.rectangle(480, 270, 960, 540, 0xeef2ff).setAlpha(0).setDepth(depth + 1).setBlendMode(Phaser.BlendModes.ADD);
     const strike = () => {
       if (!flash.active) return;
       this.tweens.chain({ targets: flash, tweens: [{ alpha: 0.6, duration: 40 }, { alpha: 0.05, duration: 90 }, { alpha: 0.45, duration: 40 }, { alpha: 0, duration: 450 }] });
@@ -3219,9 +3219,9 @@ export class VignetteScene extends Phaser.Scene {
     }
     // the platform the crowd stands on (the painted one sits a bit low for the camera)
     const plat = this.add.graphics().setDepth(-5);
-    plat.fillStyle(0x2a1640, 0.75).fillRect(0, 300, 960, 60);
-    plat.lineStyle(3, 0xffd23f, 0.9).lineBetween(0, 300, 960, 300);
-    for (let x = 0; x < 960; x += 40) plat.fillStyle(0xffd23f, 0.35).fillRect(x, 302, 20, 4);
+    plat.fillStyle(0x2a1640, 0.75).fillRect(0, 280, 960, 82);
+    plat.lineStyle(3, 0xffd23f, 0.9).lineBetween(0, 280, 960, 280);
+    for (let x = 0; x < 960; x += 40) plat.fillStyle(0xffd23f, 0.35).fillRect(x, 282, 20, 4);
     const sign = this.add.text(480, 26, "★ KREDDLE CENTRAL ★", { fontFamily: "Impact, sans-serif", fontSize: "30px", color: "#ff4fd8", stroke: "#12001f", strokeThickness: 6 }).setOrigin(0.5).setDepth(5);
     sign.setShadow(0, 0, "#ff4fd8", 16, true, true);
     this.time.addEvent({ delay: 1700, loop: true, callback: () => {
@@ -3239,7 +3239,7 @@ export class VignetteScene extends Phaser.Scene {
     for (let i = 0; i < 11; i++) {
       const key = ["spr_KD_MAN", "spr_KD_WOMAN"][i % 2];
       const x = 70 + i * 52 + (i % 3) * 6;
-      const y = 318 + (i % 3) * 10;
+      const y = 290 + (i % 3) * 9;
       const sp = this.add.sprite(x, y, this.textures.exists(key) ? key : "spr_FOLK1", 0).setScale(2.3).setDepth(100 + y);
       if (!this.textures.exists(key)) sp.setTint(0xff9de6);
       crowd.push(sp);
@@ -3255,17 +3255,17 @@ export class VignetteScene extends Phaser.Scene {
     };
     await this.talk(KT_OPEN);
     // the Kreddle Express pulls in on the far line
-    const train = this.add.image(-560, 292, "p_train").setOrigin(0, 1).setScale(2.4).setDepth(20).setTint(0xffc4f0);
+    const train = this.add.image(-560, 276, "p_train").setOrigin(0, 1).setScale(2.4).setDepth(20).setTint(0xffc4f0);
     const livery = this.add.text(0, 0, "THE KREDDLE EXPRESS", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ff4fd8", stroke: "#12001f", strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
     const follow = () => livery.setPosition(train.x + train.displayWidth * 0.42, train.y - train.displayHeight * 0.45);
     follow();
     synth.play("jet");
     this.cameras.main.shake(1600, 0.004);
-    const sparks = this.time.addEvent({ delay: 140, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + train.displayWidth - 40 - Math.random() * 300, 290, { scale: 0.8, depth: 22 }) });
+    const sparks = this.time.addEvent({ delay: 140, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + train.displayWidth - 40 - Math.random() * 300, 274, { scale: 0.8, depth: 22 }) });
     await this.tween({ targets: train, x: 120, duration: 2600, ease: "Cubic.out", onUpdate: follow });
     sparks.remove();
     // the President, in a shower of confetti
-    const k = this.actor("TV_PRESIDENT_KLERBLE", -60, 330, 2.7, "PRESIDENT KLERBLE");
+    const k = this.actor("TV_PRESIDENT_KLERBLE", -60, 322, 3, "PRESIDENT KLERBLE").setDepth(560);
     for (let i = 0; i < 6; i++) vfx(this, "vfx_confetti", 100 + i * 150, 120, { scale: 2, depth: 600, delay: i * 200 });
     cheer(["KLERBLE!!", "YES! YES!", "I LOVE YOU!!", "MARRY ME!", "KLERBLE!!!", "THE PRESIDENT!!"], 8);
     crowd.forEach((p) => this.tweens.add({ targets: p, y: p.y - 6, yoyo: true, repeat: 5, duration: 160, delay: Math.random() * 200 }));
@@ -3275,8 +3275,8 @@ export class VignetteScene extends Phaser.Scene {
     cheer(["BRAVEST MAN ALIVE", "YESSS!", "KLERBLE!!", "DRIVE IT!!"], 6);
     await this.talk(KT_ARRIVE.slice(3));
     // the driver gets posted into a slot machine
-    const driver = this.actor("KD_PITBOSS", 680, 312, 2.4, "TRAIN DRIVER");
-    const slot = this.prop("kd_m_slots", 900, 345, 1.1, 340, 0xa855f7, 50, 80);
+    const driver = this.actor("KD_PITBOSS", 680, 318, 2.6, "TRAIN DRIVER");
+    const slot = this.prop("kd_m_slots", 900, 335, 1.1, 340, 0xa855f7, 50, 80);
     await this.tween({ targets: k, x: 600, duration: 900 });
     this.faceTo(k, driver.x);
     this.faceTo(driver, k.x);
@@ -3296,7 +3296,7 @@ export class VignetteScene extends Phaser.Scene {
     cheer(["HAHAHA", "JACKPOT!", "YES!!"], 4);
     await this.talk(KT_DRIVER.slice(2));
     // into the cab
-    await this.tween({ targets: k, x: train.x + train.displayWidth - 80, y: 305, duration: 700 });
+    await this.tween({ targets: k, x: train.x + train.displayWidth - 80, y: 296, duration: 700 });
     synth.play("door");
     k.setVisible(false);
     const cab = this.add.sprite(0, 0, k.texture.key, 4).setScale(1.5).setDepth(22);
@@ -3311,7 +3311,7 @@ export class VignetteScene extends Phaser.Scene {
     KR.KRUNCHERS.forEach((kr, i) => {
       if (!this.textures.exists(`spr_${kr.of}`)) return;
       const sp = this.add.sprite(1000 + i * 40, 0, `spr_${kr.of}`, 0).setScale(2.4).setTint(i % 2 ? 0xff9de6 : 0x9be7ff);
-      sp.setData("home", { x: 420 + (i % 5) * 92 + (i > 4 ? 46 : 0), y: i > 4 ? 342 : 318 });
+      sp.setData("home", { x: 420 + (i % 5) * 92 + (i > 4 ? 46 : 0), y: i > 4 ? 330 : 306 });
       sp.setY((sp.getData("home") as { y: number }).y).setDepth(100 + sp.y);
       this.cast.set(kr.name, sp);
       ks.push(sp);
@@ -3362,8 +3362,8 @@ export class VignetteScene extends Phaser.Scene {
     this.cast.delete("PRESIDENT KLERBLE");
     synth.play("jet");
     this.cameras.main.shake(2500, 0.008);
-    const sp2 = this.time.addEvent({ delay: 90, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + 40 + Math.random() * train.displayWidth, 290, { scale: 0.9, depth: 22 }) });
-    vfx(this, "vfx_dust", train.x + 40, 285, { scale: 2.4, depth: 23 });
+    const sp2 = this.time.addEvent({ delay: 90, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + 40 + Math.random() * train.displayWidth, 274, { scale: 0.9, depth: 22 }) });
+    vfx(this, "vfx_dust", train.x + 40, 270, { scale: 2.4, depth: 23 });
     for (let i = 0; i < 8; i++) vfx(this, "vfx_confetti", 80 + i * 120, 140, { scale: 2, depth: 600, delay: i * 120 });
     cheer(["GO ON!!", "YES! YES!", "KILL 'EM ALL!", "KLERBLE!!!", "BYE TAP-LICKERS!"], 8);
     ks.forEach((sp, i) => this.tweens.add({ targets: sp, y: sp.y - 10, yoyo: true, repeat: 6, duration: 140, delay: i * 30 }));
@@ -3375,7 +3375,7 @@ export class VignetteScene extends Phaser.Scene {
       this.face(sp, "south");
       sp.setTint(i % 2 ? 0xff7ad0 : 0x7fd6ff);
     });
-    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 0).setDepth(700);
+    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d).setAlpha(0).setDepth(700);
     this.tween({ targets: red, alpha: 0.35, duration: 1200 });
     synth.play("crowd_boo");
     ks.forEach((sp, i) => this.time.delayedCall(i * 140, () => this.bubble(sp, ["👎", "🖕", "🖕🖕"][i % 3], "#ffffff", "#111", 14)));
@@ -3390,16 +3390,16 @@ export class VignetteScene extends Phaser.Scene {
   /** The lads in the Town Hall: you front and centre, everyone else in two rows. */
   private meetingCast() {
     const me = G.s.player;
-    const order = ["FLENKY", "KREZMAR", "CRONGUS", "SCROMBUS", "MIKEY", "GRONNY", "KREZWONK", "KREBLIS", "PROCTUS", "KREBON"].filter((id) => id !== me);
-    const slots: [number, number][] = [[250, 332], [370, 336], [600, 336], [720, 332], [150, 276], [280, 270], [410, 266], [550, 266], [680, 270], [810, 276]];
+    const order = ["FLENKY", "KREZMAR", "CRONGUS", "SCROMBUS", "MIKEY", "GRONNY", "KREZWONK", "KREBLIS", "KREBON"].filter((id) => id !== me);
+    const slots: [number, number][] = [[200, 298], [330, 304], [630, 304], [760, 298], [110, 236], [245, 228], [380, 222], [580, 222], [715, 228], [850, 236]];
     const lads: Record<string, Phaser.GameObjects.Sprite> = {};
     order.forEach((id, i) => {
       const [x, y] = slots[i];
-      lads[id] = this.actor(id, x, y, 2.6);
+      lads[id] = this.actor(id, x, y, 3.4);
       lads[id].setData("home", { x, y });
     });
-    lads[me] = this.actor(me, 480, 340, 2.8);
-    lads[me].setData("home", { x: 480, y: 340 });
+    lads[me] = this.actor(me, 480, 310, 3.6);
+    lads[me].setData("home", { x: 480, y: 310 });
     return lads;
   }
 
@@ -3417,9 +3417,9 @@ export class VignetteScene extends Phaser.Scene {
     await ensureCh6Art(this);
     const me = G.s.player;
     if (!backdrop(this, "bg_townhall", { dim: 0.35, depth: -10 })) this.sky(0x2a2238, 0x4a3a2a);
-    this.rainOver("rain", 960);
+    synth.weatherSound("rain");
     // it's raining outside: the hall's windows flicker with lightning now and then
-    const win = this.add.rectangle(480, 270, 960, 540, 0xdbeafe, 0).setDepth(-8).setBlendMode(Phaser.BlendModes.ADD);
+    const win = this.add.rectangle(480, 270, 960, 540, 0xdbeafe).setAlpha(0).setDepth(-8).setBlendMode(Phaser.BlendModes.ADD);
     this.time.addEvent({ delay: 6000, loop: true, callback: () => {
       this.tweens.chain({ targets: win, tweens: [{ alpha: 0.35, duration: 50 }, { alpha: 0, duration: 400 }] });
       this.time.delayedCall(400, () => synth.play("thunder"));
@@ -3435,7 +3435,7 @@ export class VignetteScene extends Phaser.Scene {
 
     // ---- Jenko
     const jen = S("FLENKY");
-    await this.tween({ targets: jen, x: 480, y: 250, duration: 800 });
+    await this.tween({ targets: jen, x: 480, y: 240, duration: 800 });
     jen.setDepth(400);
     this.face(jen, "south");
     const photo = this.add.container(jen.x + 34, jen.y - 10).setDepth(401);
@@ -3507,13 +3507,16 @@ export class VignetteScene extends Phaser.Scene {
     all.forEach((sp, i) => this.tweens.add({ targets: sp, y: sp.y + 5, yoyo: true, repeat: 2, duration: 160, delay: i * 50 }));
     await this.talk(RM_ACTUALLY.slice(7, 9));
     for (const sp of all) if (sp !== bon) this.faceTo(sp, bon.x);
-    this.tweens.add({ targets: bon, scaleX: bon.scaleX * 0.7, scaleY: bon.scaleY * 0.7, yoyo: true, hold: 900, duration: 200 });
+    // he cowers
+    this.tweens.add({ targets: bon, angle: { from: -6, to: 6 }, yoyo: true, repeat: 5, duration: 60, onComplete: () => bon.setAngle(0) });
+    bon.setTint(0xbfdbfe);
+    this.time.delayedCall(1600, () => bon.clearTint());
     await this.talk(RM_ACTUALLY.slice(9));
     all.forEach((sp) => this.face(sp, "south"));
 
     // ---- chemical weapons
     const mik = S("MIKEY");
-    await this.tween({ targets: mik, x: 480, y: 250, duration: 700 });
+    await this.tween({ targets: mik, x: 480, y: 240, duration: 700 });
     mik.setDepth(400);
     this.face(mik, "south");
     await this.talk(RM_CHEM.slice(0, 2));
@@ -3533,12 +3536,12 @@ export class VignetteScene extends Phaser.Scene {
     const luke = S("CRONGUS");
     const kz = S("KREZMAR");
     luke.setData("busy", true);
-    await this.tween({ targets: luke, x: 380, y: 300, duration: 600 });
+    await this.tween({ targets: luke, x: 370, y: 270, duration: 600 });
     luke.setDepth(400);
     luke.setData("busy", false);
     this.face(luke, "east");
     await this.talk(RM_LUKE.slice(0, 3));
-    await this.tween({ targets: kz, x: 520, y: 300, duration: 900 });
+    await this.tween({ targets: kz, x: 540, y: 270, duration: 900 });
     kz.setDepth(401);
     this.face(kz, "west");
     await this.talk(RM_LUKE.slice(3, 4));
@@ -3549,11 +3552,11 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk(RM_LUKE.slice(4));
     this.caption("THE KRELNEVA CONVENTION", "#fde68a", 26);
     // it goes on the floor; Krezmar does what Krezmar does
-    await this.tween({ targets: doc, x: 452, y: 336, angle: -8, duration: 400, ease: "Quad.in" });
+    await this.tween({ targets: doc, x: 455, y: 318, angle: -8, duration: 400, ease: "Quad.in" });
     synth.play("splat");
     this.dropCaption();
-    const bar = this.add.rectangle(kz.x - 10, kz.y + 10, 20, 8, 0x000000).setDepth(420);
-    const stop = this.peeStream(kz.x - 12, kz.y + 10, 452, 320, 421);
+    const bar = this.add.rectangle(kz.x - 12, kz.y + 14, 24, 9, 0x000000).setDepth(420);
+    const stop = this.peeStream(kz.x - 16, kz.y + 14, 455, 302, 421);
     if (doc instanceof Phaser.GameObjects.Image) {
       let k = 0;
       this.time.addEvent({ delay: 150, repeat: 20, callback: () => {
@@ -3562,7 +3565,7 @@ export class VignetteScene extends Phaser.Scene {
         if (doc.active) doc.setTint(Phaser.Display.Color.GetColor(c.r, c.g, c.b));
       } });
     }
-    const puddle = this.add.ellipse(452, 340, 10, 5, 0xf7e04a, 0.6).setDepth(405);
+    const puddle = this.add.ellipse(455, 320, 10, 5, 0xf7e04a, 0.6).setDepth(405);
     this.tweens.add({ targets: puddle, displayWidth: 120, displayHeight: 18, duration: 5000 });
     synth.play("slurp");
     all.forEach((sp, i) => {
@@ -3605,10 +3608,10 @@ export class VignetteScene extends Phaser.Scene {
       if (a === b || a.getData("hop")) return;
       const dir = b.x >= a.x ? 1 : -1;
       this.tweens.killTweensOf(a);
-      this.tweens.add({ targets: a, x: Phaser.Math.Clamp(b.x - dir * 34, 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 16, 240, 340), duration: 140, onComplete: () => {
+      this.tweens.add({ targets: a, x: Phaser.Math.Clamp(b.x - dir * 34, 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 16, 220, 305), duration: 140, onComplete: () => {
         this.faceTo(a, b.x);
         this.tweens.killTweensOf(b);
-        this.tweens.add({ targets: b, x: Phaser.Math.Clamp(b.x + dir * (40 + Math.random() * 50), 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 30, 240, 340), angle: dir * (8 + Math.random() * 12), duration: 220, ease: "Quad.out", onComplete: () => b.setAngle(0) });
+        this.tweens.add({ targets: b, x: Phaser.Math.Clamp(b.x + dir * (40 + Math.random() * 50), 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 30, 220, 305), angle: dir * (8 + Math.random() * 12), duration: 220, ease: "Quad.out", onComplete: () => b.setAngle(0) });
         a.setDepth(100 + a.y);
         b.setDepth(100 + b.y);
         synth.play(Math.random() < 0.3 ? "punch_big" : "punch");
@@ -3635,7 +3638,7 @@ export class VignetteScene extends Phaser.Scene {
       this.faceTo(sp, scr.x);
     });
     await this.goHome(all, 800);
-    luke.setPosition(380, 300);
+    luke.setPosition(370, 270);
     this.tweens.add({ targets: scr, y: scr.y - 40, duration: 300, ease: "Quad.out" });
     await this.talk(RM_UNITE.slice(1, 3));
     this.tweens.add({ targets: scr, y: (scr.getData("home") as { y: number }).y, duration: 300, ease: "Bounce.out" });
@@ -3664,9 +3667,9 @@ export class VignetteScene extends Phaser.Scene {
 
     // ---- the prizes
     const giver = me === "KREBON" ? S("KREZMAR") : S("KREBON");
-    const crate = this.prop("p_gun_crate", 480, 300, 1.6, 300, 0x8b5a2b, 70, 40);
+    const crate = this.prop("p_gun_crate", 480, 312, 1.8, 300, 0x8b5a2b, 70, 40);
     crate.setX(-60);
-    await Promise.all([this.tween({ targets: giver, x: 420, y: 270, duration: 1000 }), this.tween({ targets: crate, x: 480, duration: 1000 })]);
+    await Promise.all([this.tween({ targets: giver, x: 400, y: 260, duration: 1000 }), this.tween({ targets: crate, x: 480, duration: 1000 })]);
     synth.play("door");
     await this.talk(RM_ARMS);
     // the lid flies off and out it floats
@@ -3687,7 +3690,9 @@ export class VignetteScene extends Phaser.Scene {
     // a test burst at the ceiling
     for (let i = 0; i < 10; i++) {
       this.time.delayedCall(i * 70, () => {
-        const f = vfx(this, "vfx_fire", pl.x + 40 + i * 6, pl.y - 30 - i * 18, { scale: 1 + i * 0.12, depth: 610, tint: 0x7cff3a, add: true });
+        const f = vfx(this, "vfx_fire", pl.x + 40 + i * 6, pl.y - 30 - i * 18, { scale: 0.8 + i * 0.1, depth: 610, tint: 0x5bff2a });
+        // the fire sheet loops: these are just a burst
+        if (f) this.tween({ targets: f, alpha: 0, delay: 500, duration: 400 }).then(() => f.destroy());
         if (!f) {
           const c = this.add.circle(pl.x + 40 + i * 6, pl.y - 30 - i * 18, 10 + i * 2, 0x7cff3a, 0.8).setDepth(610);
           this.tween({ targets: c, alpha: 0, scale: 2, duration: 500 }).then(() => c.destroy());
@@ -3703,9 +3708,9 @@ export class VignetteScene extends Phaser.Scene {
     // everyone else's toys
     const toy = (id: string, key: string, fb: number) => {
       const sp = S(id);
-      const img = this.prop(key, sp.x + 34, sp.y + 34, 0.9, sp.depth + 1, fb, 26, 30);
+      const img = this.prop(key, sp.x + 40, sp.y + 46, 1.1, sp.depth + 1, fb, 26, 30);
       img.setScale(0.1);
-      this.tween({ targets: img, scale: this.textures.exists(key) ? 0.9 : 1, duration: 300, ease: "Back.out" });
+      this.tween({ targets: img, scale: this.textures.exists(key) ? 1.1 : 1, duration: 300, ease: "Back.out" });
       return img;
     };
     const toys: Phaser.GameObjects.Image[] = [];
@@ -3723,9 +3728,9 @@ export class VignetteScene extends Phaser.Scene {
     await this.talk(showLines.slice(5));
     // the nuke, under a tarp in the corner
     const wonk = S("KREZWONK");
-    const nuke = this.prop("c6_nuke", 860, 330, 1.7, 330, 0x14532d, 90, 50);
+    const nuke = this.prop("c6_nuke", 870, 335, 1.9, 330, 0x14532d, 90, 50);
     const tarp = this.add.rectangle(860, 300, 130, 70, 0x475569).setStrokeStyle(2, 0x1e293b).setDepth(331);
-    await this.tween({ targets: wonk, x: 780, y: 300, duration: 900 });
+    await this.tween({ targets: wonk, x: 770, y: 290, duration: 900 });
     this.face(wonk, "east");
     await this.talk(RM_NUKE.slice(0, 1));
     synth.play("pop");
@@ -3756,8 +3761,8 @@ export class VignetteScene extends Phaser.Scene {
     const n = all.length;
     await Promise.all(all.map((sp, i) => {
       const a = Math.PI + (i / (n - 1)) * Math.PI;
-      const x = 480 + Math.cos(a) * 190;
-      const y = 315 + Math.sin(a) * 50 + (i % 2) * 6;
+      const x = 480 + Math.cos(a) * 230;
+      const y = 300 + Math.sin(a) * 56 + (i % 2) * 6;
       return this.tween({ targets: sp, x, y, duration: 1100 }).then(() => {
         sp.setDepth(100 + sp.y);
         this.faceTo(sp, 480);
@@ -3765,7 +3770,7 @@ export class VignetteScene extends Phaser.Scene {
     }));
     const hands = all.map((sp, i) => {
       const h = this.add.circle(sp.x, sp.y - 6, 7, [0xf1c27d, 0xe0ac69, 0xffdbac, 0xc68642][i % 4]).setStrokeStyle(2, 0x3b2a1a).setDepth(500);
-      this.tween({ targets: h, x: 480 + (Math.random() - 0.5) * 18, y: 250 + (Math.random() - 0.5) * 10, duration: 600, delay: i * 70, ease: "Sine.out" });
+      this.tween({ targets: h, x: 480 + (Math.random() - 0.5) * 18, y: 236 + (Math.random() - 0.5) * 10, duration: 600, delay: i * 70, ease: "Sine.out" });
       return h;
     });
     await this.wait(1100);
@@ -3804,7 +3809,7 @@ export class VignetteScene extends Phaser.Scene {
     return ids.map((id, i) => {
       const x = 90 + i * (780 / (ids.length - 1));
       const y = y0 + (i % 2) * 34;
-      const sp = this.actor(id, x, y, 2.6);
+      const sp = this.actor(id, x, y, 3.1);
       sp.setData("home", { x, y });
       return sp;
     });
@@ -3849,10 +3854,14 @@ export class VignetteScene extends Phaser.Scene {
     synth.weatherSound(null);
     this.cameras.main.flash(250, 0, 0, 0);
     this.clearStage();
-    if (!backdrop(this, "tv_bunker", { dim: 0.45, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1a1020).setDepth(-10);
+    this.add.rectangle(480, 270, 960, 540, 0x0c0810).setDepth(-12);
+    const bunker = backdrop(this, "tv_bunker", { dim: 0.45, depth: -10 });
+    // (lift the room so its floor sits above the dialogue box)
+    if (bunker) bunker.setY(150);
+    else this.add.rectangle(480, 270, 960, 540, 0x1a1020).setDepth(-10);
     this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 0.25).setDepth(-8).setBlendMode(Phaser.BlendModes.MULTIPLY);
     // the lights are going
-    const dark = this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setDepth(600);
+    const dark = this.add.rectangle(480, 270, 960, 540, 0x000000).setAlpha(0).setDepth(600);
     this.time.addEvent({ delay: 700, loop: true, callback: () => {
       if (Math.random() < 0.5) return;
       dark.setAlpha(0.6);
@@ -3860,26 +3869,26 @@ export class VignetteScene extends Phaser.Scene {
       this.time.delayedCall(120, () => dark.setAlpha(0.5));
       this.time.delayedCall(200, () => dark.setAlpha(0));
     } });
-    for (let i = 0; i < 3; i++) this.fireBlob(80 + i * 380 + (i === 1 ? 300 : 0), 330, 40, 50);
+    for (const fx of [60, 250, 560]) this.fireBlob(fx, 345, 34, 50);
     this.time.addEvent({ delay: 400, loop: true, callback: () => vfx(this, "vfx_sparks", 100 + Math.random() * 760, 60 + Math.random() * 80, { scale: 1, depth: 80 }) });
-    const term = this.prop("c6_kd_terminal", 790, 345, 2.4, 200, 0x334155, 120, 90);
+    const term = this.prop("c6_kd_terminal", 810, 360, 2.4, 200, 0x334155, 120, 90);
     void term;
-    const screenGlow = this.add.ellipse(780, 250, 90, 60, 0xef4444, 0.25).setDepth(201).setBlendMode(Phaser.BlendModes.ADD);
+    const screenGlow = this.add.ellipse(800, 265, 90, 60, 0xef4444, 0.25).setDepth(201).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: screenGlow, alpha: 0.05, yoyo: true, repeat: -1, duration: 500 });
     const hasCrawl = this.textures.exists("c6_klerble_crawl");
-    const kl = hasCrawl ? this.add.image(-60, 330, "c6_klerble_crawl").setOrigin(0.5, 1).setScale(2.6).setDepth(300) : this.add.sprite(-60, 320, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(2.4).setAngle(80).setDepth(300);
+    const kl = hasCrawl ? this.add.image(-60, 352, "c6_klerble_crawl").setOrigin(0.5, 1).setScale(2.6).setDepth(300) : this.add.sprite(-60, 340, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(2.4).setAngle(80).setDepth(300);
     this.cast.set("PRESIDENT KLERBLE", kl as Phaser.GameObjects.Sprite);
     // the trail
     const trail = this.add.graphics().setDepth(290);
     const smear = () => {
-      trail.fillStyle(0x7f1d1d, 0.85).fillRect(-80, 322, kl.x + 10, 8);
-      trail.fillStyle(0xb91c1c, 0.7).fillRect(-80, 324, kl.x + 6, 3);
+      trail.fillStyle(0x7f1d1d, 0.85).fillRect(-80, 344, kl.x + 10, 8);
+      trail.fillStyle(0xb91c1c, 0.7).fillRect(-80, 346, kl.x + 6, 3);
     };
     synth.play("roar");
     for (let i = 0; i < 4; i++) {
       await this.tween({ targets: kl, x: kl.x + 70, duration: 520, ease: "Quad.out", onUpdate: smear });
       this.tweens.add({ targets: kl, scaleY: kl.scaleY * 0.9, yoyo: true, duration: 150 });
-      if (G.meta.settings.gore !== false && i % 2) vfx(this, "vfx_blood", kl.x, 320, { scale: 1, depth: 295 });
+      if (G.meta.settings.gore !== false && i % 2) vfx(this, "vfx_blood", kl.x, 342, { scale: 1, depth: 295 });
       await this.wait(260);
     }
     await this.talk(KP_KLERBLE.slice(0, 3));
@@ -3888,7 +3897,7 @@ export class VignetteScene extends Phaser.Scene {
       await this.wait(i === 4 ? 0 : 300);
     }
     // up the cable
-    await this.tween({ targets: kl, x: 700, angle: -35, y: 318, duration: 800, ease: "Sine.out", onUpdate: smear });
+    await this.tween({ targets: kl, x: 720, angle: -35, y: 340, duration: 800, ease: "Sine.out", onUpdate: smear });
     await this.talk(KP_KLERBLE.slice(3));
     // the screen
     const scr = this.add.container(480, 175).setDepth(700).setScale(0.2).setAlpha(0);
@@ -3911,11 +3920,11 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("select");
     await this.wait(400);
     scr.add(this.add.text(0, 120, "KRUNCH PROTOCOL: ARMED", { fontFamily: "Courier New, monospace", fontSize: "14px", color: "#ef4444" }).setOrigin(0.5));
-    await this.tween({ targets: kl, angle: 0, y: 330, duration: 600, ease: "Bounce.out" });
+    await this.tween({ targets: kl, angle: 0, y: 352, duration: 600, ease: "Bounce.out" });
     await this.wait(1200);
 
     // (c) white
-    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff, 0).setDepth(990);
+    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff).setAlpha(0).setDepth(990);
     await this.tween({ targets: white, alpha: 1, duration: 120 });
     this.clearStage();
     this.cast.clear();
@@ -3933,7 +3942,13 @@ export class VignetteScene extends Phaser.Scene {
     this.time.delayedCall(80, () => synth.play("explode"));
     this.time.delayedCall(300, () => synth.play("roar"));
     this.cameras.main.shake(5500, 0.04);
-    const cloud = vfx(this, "vfx_mushroom", 480, 300, { scale: 3.2, depth: 400, hold: true });
+    // a fireball swallows the palace, then the cloud climbs out of it
+    const ball = this.add.circle(480, 300, 20, 0xffe08a, 1).setDepth(395).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: ball, radius: 330, alpha: 0.15, duration: 2600, ease: "Cubic.out" });
+    const core = this.add.circle(480, 300, 10, 0xffffff, 1).setDepth(396);
+    this.tweens.add({ targets: core, radius: 140, alpha: 0, duration: 1600, ease: "Cubic.out" });
+    vfx(this, "vfx_mushroom", 480, 440, { scale: 3.4, depth: 398, hold: true, alpha: 0.55, speed: 0.8 });
+    const cloud = vfx(this, "vfx_mushroom", 480, 425, { scale: 2.6, depth: 400, hold: true });
     if (!cloud) {
       const stem = this.add.rectangle(480, 300, 60, 10, 0xf97316).setOrigin(0.5, 1).setDepth(400);
       const cap = this.add.ellipse(480, 280, 40, 30, 0xfbbf24).setDepth(401);
@@ -3948,11 +3963,11 @@ export class VignetteScene extends Phaser.Scene {
     vfx(this, "vfx_shock", 480, 300, { scale: 9, depth: 405 });
     for (let i = 0; i < 10; i++) vfx(this, "vfx_dust", 480 + (i - 4.5) * 100, 330, { scale: 3, depth: 420, delay: 300 + Math.abs(i - 4.5) * 120 });
     for (let i = 0; i < 8; i++) this.time.delayedCall(i * 220, () => this.boomAt(100 + Math.random() * 760, 120 + Math.random() * 220, 1.4 + Math.random(), 380));
-    const heat = this.add.rectangle(480, 270, 960, 540, 0xff7a00, 0).setDepth(430).setBlendMode(Phaser.BlendModes.ADD);
+    const heat = this.add.rectangle(480, 270, 960, 540, 0xff7a00).setAlpha(0).setDepth(430).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: heat, alpha: 0.55, duration: 900 });
     await this.wait(1800);
     // it takes out all of Kreddle: everything goes white for a long, long moment
-    const wall = this.add.rectangle(480, 270, 960, 540, 0xfff7ed, 0).setDepth(990);
+    const wall = this.add.rectangle(480, 270, 960, 540, 0xfff7ed).setAlpha(0).setDepth(990);
     await this.tween({ targets: wall, alpha: 1, duration: 1400 });
     synth.play("boom");
     await this.wait(3200);
@@ -3984,11 +3999,11 @@ export class VignetteScene extends Phaser.Scene {
 
     // (e) the Krunch Protocol
     synth.play("alarm");
-    const pads: [string, number, number][] = [["c6_launcher", 120, 345], ["c6_launcher4", 300, 350], ["c6_launcher", 500, 345], ["c6_launcher4", 690, 350], ["c6_launcher", 860, 345]];
+    const pads: [string, number, number][] = [["c6_launcher", 110, 336], ["c6_launcher4", 290, 352], ["c6_launcher", 480, 336], ["c6_launcher4", 670, 352], ["c6_launcher", 860, 336]];
     const launchers = pads.map(([k, x, y], i) => {
       const hatch = this.add.rectangle(x, y, 120, 10, 0x0a0a0a).setDepth(89);
       void hatch;
-      const l = this.prop(k, x, y + 90, 2.2, 90, 0x3f6212, 110, 60).setFlipX(true);
+      const l = this.prop(k, x, y + 90, 1.8, 90 + (y > 340 ? 2 : 0), 0x3f6212, 110, 60).setFlipX(true);
       this.tween({ targets: l, y, duration: 1600, delay: i * 350, ease: "Sine.out" });
       this.time.delayedCall(i * 350, () => vfx(this, "vfx_dust", x, y, { scale: 2, depth: 95 }));
       return l;
@@ -4178,7 +4193,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(2200);
     falling.remove();
     // fade to black
-    const black = this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setDepth(980);
+    const black = this.add.rectangle(480, 270, 960, 540, 0x000000).setAlpha(0).setDepth(980);
     await this.tween({ targets: black, alpha: 1, duration: 2200 });
     synth.weatherSound(null);
     await this.wait(1200);

@@ -170,7 +170,11 @@ export class UIScene extends Phaser.Scene {
         if (d == null) this.timerT.setVisible(false);
         else {
           const sec = Math.max(0, Math.ceil(d));
-          this.timerT.setVisible(true).setText(`✈ KR-069 IMPACT IN ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
+          // the Kreddle raid draws its own nuke countdown; everywhere else this one shows
+          const nuke = !!G.s.flags.nuke_planted;
+          this.timerT
+            .setVisible(!(nuke && this.scene.isActive("Kreddle")))
+            .setText(`${nuke ? "☢ DETONATION IN" : "✈ KR-069 IMPACT IN"} ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
           this.timerT.setColor(sec <= 30 && sec % 2 ? "#ffffff" : "#ff4d4d");
         }
         break;

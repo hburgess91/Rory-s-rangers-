@@ -6263,6 +6263,57 @@
   "p_pipe": {
    "file": "props/p_pipe.png",
    "hd": 0.5
+  },
+  "kd_palace": {
+   "file": "props/kd_palace.png"
+  },
+  "kd_jet": {
+   "file": "props/kd_jet.png"
+  },
+  "kd_heli": {
+   "file": "props/kd_heli.png"
+  },
+  "kd_blimp": {
+   "file": "props/kd_blimp.png"
+  },
+  "kd_bomber": {
+   "file": "props/kd_bomber.png"
+  },
+  "kd_nuke": {
+   "file": "props/kd_nuke.png"
+  },
+  "kd_napalm": {
+   "file": "props/kd_napalm.png"
+  },
+  "kd_gascan": {
+   "file": "props/kd_gascan.png"
+  },
+  "kd_nailbomb": {
+   "file": "props/kd_nailbomb.png"
+  },
+  "kd_ash": {
+   "file": "props/kd_ash.png"
+  },
+  "kd_rubble": {
+   "file": "props/kd_rubble.png"
+  },
+  "kd_evac": {
+   "file": "props/kd_evac.png"
+  },
+  "kd_wreck": {
+   "file": "props/kd_wreck.png"
+  },
+  "kd_bazooka": {
+   "file": "props/kd_bazooka.png"
+  },
+  "kd_charred": {
+   "file": "props/kd_charred.png"
+  },
+  "kd_siren": {
+   "file": "props/kd_siren.png"
+  },
+  "kd_slots_burnt": {
+   "file": "props/kd_slots_burnt.png"
   }
  },
  "sheets": {
