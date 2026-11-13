@@ -19,6 +19,8 @@ export interface EnemyDef {
   spawns?: string;
   /** Things it shouts now and then. */
   shout?: string[];
+  /** Roughly how often (ms) it shouts. Default about every 4s. */
+  shoutEvery?: number;
 }
 
 export const ENEMIES: Record<string, EnemyDef> = {
@@ -104,4 +106,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
   speaker_turret: { id: "speaker_turret", name: "Bass Bin", behavior: "turret", hp: 70, speed: 0, damage: 8, size: 18, color: 0x111827, accent: 0xe879f9, shape: "box", label: "◉", projectile: { speed: 250, damage: 10, color: 0xe879f9, rate: 1700, count: 3, spread: 0.1 }, coins: 8, krezz: 6 },
   tax_goblin: { id: "tax_goblin", name: "Krezzcoin Tax Dodger", behavior: "chaser", hp: 90, speed: 175, damage: 0, size: 14, color: 0xfacc15, accent: 0x14532d, shape: "humanoid", label: "£", coins: 30, krezz: 10 },
   invoice: { id: "invoice", name: "Unpaid Bill", behavior: "swarm", hp: 16, speed: 140, damage: 7, size: 11, color: 0xffffff, accent: 0xdc2626, shape: "page", label: "£", coins: 2, krezz: 2 },
+  // Inside Lulon's mind: the bread and butter pudding demons. They only know one word.
+  mind_imp: { id: "mind_imp", name: "Mind Demon", behavior: "swarm", hp: 20, speed: 150, damage: 7, size: 12, color: 0xff4fa3, accent: 0xfde68a, shape: "mite", label: "K", coins: 2, krezz: 2, shout: ["KIDS! KIDS!", "KIDS!", "KIDS! KIDS! KIDS!", "KIIIIDS!"], shoutEvery: 1500 },
+  custard_demon: { id: "custard_demon", name: "Custard Demon", behavior: "lobber", hp: 44, speed: 75, damage: 9, size: 16, color: 0xfacc15, accent: 0xdc2626, shape: "blob", label: "!", projectile: { speed: 0, damage: 13, color: 0xfde68a, rate: 2100 }, coins: 5, krezz: 4, shout: ["KIDS! KIDS!", "KIDS!!", "KIIIDS!", "KIDS! KIDS!"], shoutEvery: 1800 },
+  pudding_fiend: { id: "pudding_fiend", name: "Bread And Butter Fiend", behavior: "charger", hp: 70, speed: 90, damage: 14, size: 19, color: 0xd97706, accent: 0xfef3c7, shape: "brute", coins: 7, krezz: 5, shout: ["KIDS! KIDS!", "KIIIDS!", "KIDS!!", "KIDS! KIDS! KIDS!"], shoutEvery: 1700 },
 };

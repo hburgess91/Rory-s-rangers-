@@ -6,9 +6,11 @@ import { KR_AFTER, KR_BRAWL_INTRO, KR_LEAVE } from "./krunchers";
 // Steps happen at hub locations, in order. Every antagonist here is fictional.
 
 export type ArcStepKind =
-  | { kind: "dialogue"; lines: Line[] }
+  /** pay: a bonus handed over when the conversation ends (Krezzcoin, with a toast). */
+  | { kind: "dialogue"; lines: Line[]; pay?: { coins: number; title: string; text: string } }
   | { kind: "quiz"; intro: Line[]; questions: { q: string; options: string[]; correct: number; wrong: string }[]; need: number; success: Line[]; fail: Line[] }
-  | { kind: "arena"; intro: Line[]; dungeon: string }
+  /** drugs: after the intro, "Press D to take drugs", and a trip into the arena. */
+  | { kind: "arena"; intro: Line[]; dungeon: string; drugs?: boolean }
   | { kind: "minigame"; intro: Line[]; mode: string; success: Line[]; fail: Line[] }
   | { kind: "vignette"; intro: Line[]; id: string }
   | { kind: "pay"; intro: Line[]; cost: number; success: Line[] }
@@ -24,6 +26,8 @@ export interface ArcStep {
   text: string;
   at: string;
   step: ArcStepKind;
+  /** Plays straight away when you come back from the step before it (a cutscene or an arena) at the same place. */
+  auto?: boolean;
 }
 
 export interface Arc {
@@ -42,6 +46,104 @@ export interface Arc {
   /** gun: a weapon handed over at the end (a full refill if you already have it). */
   reward: { coins: number; desc: string; gun?: string };
 }
+
+// ---- After the pudding raid: the demons inside Lulon's mind (a short arena, then the thanks)
+
+/** Playing as Lulon: he goes in on his own. With drugs. */
+const LUKEMIND_SELF: ArcStep[] = [
+  {
+    id: "demons",
+    text: "The pudding house is gone. The craving isn't. Kill the demons in your head (Krelford Constabulary).",
+    at: "POLICE",
+    auto: true,
+    step: {
+      kind: "arena",
+      dungeon: "arena_lukemind",
+      drugs: true,
+      intro: [
+        dir("The rubble's still smoking. Your phone buzzes. Unknown number: 'CARAVAN. TONIGHT. BRING YOUR OWN SPOON.'"),
+        say("CRONGUS", "No."),
+        say("CRONGUS", "No no no. I can feel it. In there. Behind my eyes. Something with horns, made of custard, shouting."),
+        say("CRONGUS", "It's not the pudding. It was never the pudding. It's the demons."),
+        say("CRONGUS", "I need to kill the demons in my head."),
+        dir("You pat your pockets. Ministerial pills. Strictly for emergencies. This is an emergency."),
+      ],
+    },
+  },
+  {
+    id: "promotion",
+    text: "Back from your own head. Have a word with yourself.",
+    at: "POLICE",
+    auto: true,
+    step: {
+      kind: "dialogue",
+      pay: { coins: 200, title: "PROMOTION", text: "Senior Children's Minister. Pay rise: +200 Krezzcoin." },
+      lines: [
+        dir("You come round on the pavement outside the Constabulary, face down, holding a spoon you don't remember picking up. Your head is quiet. Properly quiet. For the first time in weeks."),
+        say("CRONGUS", "They're gone. The demons. All of them."),
+        say("CRONGUS", "I killed the demons in my head."),
+        say("CRONGUS", "Thank you, Lulon."),
+        say("CRONGUS", "No. Thank YOU, Lulon."),
+        say("CRONGUS", "I will never again be tempted to have any more bread and butter pudding. Not a bowl. Not a spoonful. Not in a caravan. Never."),
+        say("CRONGUS", "And as Children's Minister, I'd like to recognise the outstanding service of the Children's Minister."),
+        say("CRONGUS", "Lulon, I'm giving you a promotion. And a pay rise."),
+        say("CRONGUS", "…I don't know what to say. I won't let me down."),
+        dir("You sign the paperwork. You countersign the paperwork. You shake your own hand. It's a very firm handshake."),
+        ping("DRONGUS", "did Lulon just promote himself ??"),
+        ping("DRONGUS", "is that allowed ?? who signs off Lulon ??"),
+        ping("KREBLIS", "Filed under… fine 👍"),
+      ],
+    },
+  },
+];
+
+/** Everyone else: the lads send you in after him. */
+const LUKEMIND_LADS: ArcStep[] = [
+  {
+    id: "demons",
+    text: "Lulon isn't right. The lads say there's only one fix: get inside his head (Krelford Constabulary).",
+    at: "POLICE",
+    auto: true,
+    step: {
+      kind: "arena",
+      dungeon: "arena_lukemind",
+      intro: [
+        dir("Outside the Constabulary, in the dust. Lil' Crongus is sat on the kerb, staring at nothing, holding a spoon. He hasn't blinked in a while."),
+        say("CRONGUS", "…the caravan's open till midnight."),
+        say("MIKEY", "Look at him. The house is gone and he's still not here.", { cond: { notPlayer: "MIKEY" } }),
+        say("KREZWONK", "I foresaw this. The pudding was never in the house. The pudding is in HIM.", { cond: { notPlayer: "KREZWONK" } }),
+        say("KREBLIS", "Ministry assessment…", { cond: { notPlayer: "KREBLIS" } }),
+        say("KREBLIS", "There are demons in Lulon 👍", { cond: { notPlayer: "KREBLIS" } }),
+        say("SCROMBUS", "You've got to kill the demons inside Luke's mind!!", { cond: { notPlayer: "SCROMBUS" } }),
+        say("GRONNY", "You've got to kill the demons inside Luke's mind!!", { cond: { player: "SCROMBUS" } }),
+        say("MIKEY", "KILL THE DEMONS INSIDE LUKE'S MIND!!", { cond: { notPlayer: "MIKEY" } }),
+        say("YOU", "How am I meant to get in there?"),
+        dir("Lil' Crongus looks up. His pupils are the size of pudding dishes. Somewhere behind them, something is shouting."),
+        say("CRONGUS", "…come in. Mind the custard."),
+      ],
+    },
+  },
+  {
+    id: "thanks",
+    text: "Back out of Lulon's head.",
+    at: "POLICE",
+    auto: true,
+    step: {
+      kind: "dialogue",
+      lines: [
+        dir("You come out of Lulon's head the way you went in: suddenly, and sticky. Lil' Crongus blinks. Then blinks again. Then puts the spoon down."),
+        say("CRONGUS", "…it's quiet. It's so quiet in there."),
+        say("CRONGUS", "You did that. You went into my mind and you killed the demons in me."),
+        say("CRONGUS", "Thank you. Genuinely. From the bottom of my mind."),
+        say("CRONGUS", "I will never again be tempted to have any more bread and butter pudding. Never. Not a bowl. Not a spoonful. Not even in a caravan."),
+        say("MIKEY", "Sick. Can we stop saying 'pudding' in the group chat now?", { cond: { notPlayer: "MIKEY" } }),
+        say("CRONGUS", "Please. I'm begging."),
+        ping("DRONGUS", "so is Lulon fixed or what"),
+        ping("DRONGUS", "I'm going to need someone to explain this one to me in the group chat as well"),
+      ],
+    },
+  },
+];
 
 export const ARCS: Arc[] = [
   {
@@ -320,6 +422,7 @@ export const ARCS: Arc[] = [
         at: "POLICE",
         step: { kind: "vignette", id: "pudding_raid", intro: [dir("Your phone has 214 notifications. The top one is a link to the Krelford Gazette. You do not click it. You don't need to.")] },
       },
+      ...LUKEMIND_SELF,
     ],
   },
   {
@@ -1069,6 +1172,7 @@ export const ARCS: Arc[] = [
         at: "POLICE",
         step: { kind: "vignette", id: "pudding_raid", intro: [dir("Outside the Constabulary: satellite vans, a crowd, and three tanks idling on double yellow lines.")] },
       },
+      ...LUKEMIND_LADS,
     ],
   },
   {

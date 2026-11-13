@@ -261,6 +261,24 @@ export const BOSS_TEXT: Record<string, BossText> = {
     ],
     taunts: ["TWELVE-BAR BLUES!", "FEEL THE SUSTAIN!", "WOKE UP THIS MORNIN'!", "GUITAR SOLO!", "UGLY RIFF!"],
   },
+  pudding_demon: {
+    id: "pudding_demon",
+    name: "THE PUDDING DEMON",
+    title: "The Bit Of Lulon That Wants Another Bowl",
+    intro: [
+      dir("The bottom of Lulon's mind. A pudding dish the size of a football pitch. In the middle of it, something rises out of the custard: a demon made entirely of bread and butter pudding. Raisins for eyes. Then real eyes, behind the raisins."),
+      say("THE PUDDING DEMON", "KIDS."),
+      say("THE PUDDING DEMON", "KIDS! KIDS!"),
+      say("CRONGUS", "(from everywhere at once) That's the one. That's the big one. Kill it. KILL IT.", { cond: { notPlayer: "CRONGUS" } }),
+      say("CRONGUS", "That's the big one. That's the demon. I've been feeding it for weeks.", { cond: { player: "CRONGUS" } }),
+      dir("TIP: It sprays custard, rains raisins, rolls at you and calls up more little demons. Keep moving."),
+    ],
+    outro: [
+      say("THE PUDDING DEMON", "KIDS… kids… k…"),
+      dir("The Pudding Demon collapses back into the dish with a long, wet, custardy sigh. The dish cracks down the middle. Light pours in. It smells, for the first time in weeks, of nothing at all."),
+    ],
+    taunts: ["KIDS! KIDS!", "KIIIIIDS!", "KIDS! KIDS! KIDS!", "KIDS!!"],
+  },
   flatmate: {
     id: "flatmate",
     name: "ROBBO",

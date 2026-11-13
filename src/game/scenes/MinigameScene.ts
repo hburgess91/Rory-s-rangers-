@@ -11,7 +11,8 @@ import { VIRAL_CHART } from "../../content/charts/viral";
 import { addWrist, type Wrist } from "../gfx/Wrist";
 import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
-import { bump } from "../systems/stats";
+import { bump, maxBottles, maxHp } from "../systems/stats";
+import { GUNS, gunMax } from "../combat/Guns";
 import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
@@ -1931,26 +1932,74 @@ export class MinigameScene extends Phaser.Scene {
 
   // ---------------------------------------------------------------- THE CANNON (boarding Flight KR-069)
 
+  /** Hit the plane early and the cabin crew are impressed. Try 4+ just gets you on board. */
+  private static readonly CANNON_PERKS = [
+    { hp: 0.5, ammo: 1, bottles: 99, title: "FIRST-TRY BOARDING", what: (hp: number) => `+${hp} HP, FULL AMMO & BOTTLES` },
+    { hp: 0.25, ammo: 0.5, bottles: 1, title: "PRIORITY BOARDING", what: (hp: number) => `+${hp} HP, HALF AMMO & +1 BOTTLE` },
+    { hp: 0.1, ammo: 0.25, bottles: 0, title: "SPEEDY BOARDING", what: (hp: number) => `+${hp} HP & A BIT OF AMMO` },
+  ];
+
+  /** Describe the perk for try n (1-based), or null when there's nothing left. */
+  private cannonPerk(n: number): { title: string; text: string; apply: () => void } | null {
+    const p = MinigameScene.CANNON_PERKS[n - 1];
+    if (!p) return null;
+    const s = G.s;
+    const mx = maxHp(s);
+    const hp = Math.round(mx * p.hp);
+    return {
+      title: p.title,
+      text: p.what(hp),
+      apply: () => {
+        s.hp = Math.min(mx, s.hp + hp);
+        for (const id of Object.keys(s.guns ?? {})) {
+          const g = GUNS[id];
+          if (!g) continue;
+          const m = gunMax(g, s);
+          s.guns![id] = Math.min(m, (s.guns![id] ?? 0) + Math.ceil(m * p.ammo));
+        }
+        if (p.bottles) s.bottles = Math.min(maxBottles(s), s.bottles + p.bottles);
+      },
+    };
+  }
+
   private cannon() {
     this.add.rectangle(480, 270, 960, 540, 0x8fc3ea);
     this.add.rectangle(480, 470, 960, 140, 0x4b5563);
     for (let i = 0; i < 12; i++) this.add.rectangle(40 + i * 80, 470, 40, 6, 0xfacc15);
     title(this, 480, 24, "BOARD FLIGHT KR-069", 26, "#ffd23f").setDepth(200);
     this.add.text(480, 52, "Gate 6 is closed. The plane is taxiing. Get in the cannon. Tap / SPACE once for ANGLE, again for POWER.", { fontFamily: FONT, fontSize: "12px", color: "#111", align: "center" }).setOrigin(0.5).setDepth(200);
-    const plane = this.add.image(-200, 360, "p_plane").setScale(2).setDepth(10);
+    // the on-screen offer: which try this is and what hitting it now is worth
+    const offer = this.add
+      .text(480, 84, "", { fontFamily: FONT, fontSize: "18px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 4, align: "center" })
+      .setOrigin(0.5)
+      .setDepth(200);
+    const hd = this.textures.exists("p_plane_hd");
+    const plane = this.add.image(-200, 360, hd ? "p_plane_hd" : "p_plane").setDepth(10);
+    if (hd) {
+      plane.displayWidth = 260;
+      plane.displayHeight = (260 * plane.height) / plane.width;
+    } else plane.setScale(2);
     const barrel = this.add.rectangle(110, 440, 90, 26, 0x1f2937).setOrigin(0.1, 0.5).setStrokeStyle(3, 0x000000).setDepth(20);
     this.add.circle(110, 450, 26, 0x374151).setStrokeStyle(3, 0x000000).setDepth(21);
     const hero = this.add.sprite(110, 420, `spr_${G.s.player}`, 0).setScale(2).setDepth(19).setVisible(false);
     const powBg = this.add.rectangle(110, 300, 20, 120, 0x000000, 0.6).setStrokeStyle(2, 0xffffff).setDepth(30).setVisible(false);
     const pow = this.add.rectangle(110, 360, 16, 0, 0xef4444).setOrigin(0.5, 1).setDepth(31).setVisible(false);
-    let phase: "angle" | "power" | "flying" | "done" = "angle";
+    let phase: "angle" | "power" | "flying" | "landed" | "done" = "angle";
     let ang = -0.3;
     let power = 0;
+    // tries so far; there is no limit any more, the early ones just pay better
     let tries = 0;
     let px = 0;
     let py = 0;
     let vx = 0;
     let vy = 0;
+    const showOffer = () => {
+      const n = tries + 1;
+      const perk = this.fromConsole ? null : this.cannonPerk(n);
+      offer.setText(perk ? `TRY ${n} — bonus: ${perk.text}` : `TRY ${n} — no bonus left. Just get on the plane.`);
+      offer.setColor(perk ? (n === 1 ? "#ffd23f" : n === 2 ? "#a7f3d0" : "#bfdbfe") : "#e5e7eb");
+    };
+    showOffer();
     const fire = () => {
       if (this.ended || this.box.active) return;
       if (phase === "angle") {
@@ -1974,24 +2023,53 @@ export class MinigameScene extends Phaser.Scene {
     };
     this.input.keyboard?.on("keydown-SPACE", fire);
     this.input.on("pointerdown", fire);
+    // a miss: back in the cannon, as many times as it takes
     const reset = (msg: string) => {
-      phase = "done";
+      phase = "landed";
       this.pop(480, 240, msg, "#ff6b6b", 22);
       this.time.delayedCall(900, () => {
+        if (this.ended) return;
         hero.setVisible(false).setAngle(0);
-        phase = tries >= 3 ? "done" : "angle";
-        if (tries >= 3) void win(true);
+        phase = "angle";
+        const next = this.fromConsole ? null : this.cannonPerk(tries + 1);
+        if (!this.fromConsole && !next && tries === 3) this.pop(480, 150, "BONUSES GONE. STILL GOT TO GET ON.", "#e5e7eb", 18);
+        showOffer();
       });
     };
-    const win = async (thrown: boolean) => {
+    /** A big card in the middle of the screen (the HUD's toasts aren't up during minigames). */
+    const banner = (head: string, body: string) => {
+      const c = this.add.container(480, 190).setDepth(260);
+      const t1 = this.add.text(0, -16, head, { fontFamily: FONT, fontSize: "24px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
+      const t2 = this.add.text(0, 16, body, { fontFamily: FONT, fontSize: "16px", color: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5);
+      const w = Math.max(t1.width, t2.width) + 40;
+      c.add([this.add.rectangle(0, 0, w, 78, 0x1e1033, 0.92).setStrokeStyle(3, 0xec4899), t1, t2]);
+      c.setScale(0.6).setAlpha(0);
+      this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 180, ease: "Back.out" });
+    };
+    const win = async () => {
       if (this.ended) return;
+      // played on the telly: just a win, no dungeon and no perks
+      if (this.fromConsole) return void this.finish(true, [dir(`On board, try ${tries}.`)]);
       this.ended = true;
       this.time.removeAllEvents();
-      await this.box.play(
-        thrown
-          ? [dir("A baggage handler sighs, picks you up, and throws you through the cargo door. You are on board. Technically as luggage.")]
-          : [dir("You hit the fuselage, bounce off a wing, and fall through an open window into seat 23B. The man in 23A doesn't look up from his book."), say(G.s.player, "Is this seat taken?")],
-      );
+      this.input.keyboard?.removeAllListeners();
+      const perk = this.cannonPerk(tries);
+      const lines: Line[] = [
+        dir("You hit the fuselage, bounce off a wing, and fall through an open window into seat 23B. The man in 23A doesn't look up from his book."),
+        say(G.s.player, "Is this seat taken?"),
+      ];
+      if (perk) {
+        perk.apply();
+        G.save();
+        synth.play("coin");
+        banner(`TRY ${tries}: ${perk.title}`, perk.text);
+        G.emit("toast", { title: `CANNON BONUS — TRY ${tries}`, text: perk.text });
+        lines.push(dir(`${perk.title}: the cabin crew were so impressed they brought you a trolley. ${perk.text}.`));
+      } else lines.push(dir(`Try ${tries}. No trolley for you. The cabin crew saw all the other attempts.`));
+      G.s.flags.mg_cannon_won = true;
+      G.s.flags.mg_cannon_played = true;
+      await new Promise((r) => this.time.delayedCall(perk ? 1400 : 300, r));
+      await this.box.play(lines);
       switchTo(this, "Dungeon", { dungeon: "airport", room: 0 });
     };
     this.time.addEvent({
@@ -2002,7 +2080,7 @@ export class MinigameScene extends Phaser.Scene {
         const now = this.time.now;
         // the plane taxis past, again and again
         plane.x += 2.6;
-        if (plane.x > 1200) plane.x = -220;
+        if (plane.x > 960 + plane.displayWidth * 0.6) plane.x = -plane.displayWidth * 0.6;
         if (phase === "angle") {
           ang = -0.25 - (0.5 + 0.5 * Math.sin(now / 380)) * 1.0;
           barrel.setRotation(ang);
@@ -2015,15 +2093,17 @@ export class MinigameScene extends Phaser.Scene {
           px += vx * dt;
           py += vy * dt;
           hero.setPosition(px, py).setAngle(hero.angle + 14);
-          if (Math.abs(px - plane.x) < plane.displayWidth * 0.42 && Math.abs(py - plane.y) < plane.displayHeight * 0.32) {
+          // the fuselage (not the empty sky around the tail); a little more forgiving after a few goes
+          const slack = 1 + Math.min(0.4, Math.max(0, tries - 3) * 0.05);
+          if (Math.abs(px - plane.x) < plane.displayWidth * 0.42 * slack && Math.abs(py - plane.y) < plane.displayHeight * (hd ? 0.28 : 0.32) * slack) {
             phase = "done";
             synth.play("punch_big");
             this.pop(px, py - 40, "ON BOARD", "#22c55e", 26);
             hero.setVisible(false);
-            this.time.delayedCall(600, () => void win(false));
+            this.time.delayedCall(600, () => void win());
           } else if (py > 520 || px > 1000) reset(["MISSED. TRY AGAIN.", "THAT WAS THE TERMINAL.", "SO CLOSE."][tries % 3]);
         }
-        this.hud.setText(`ATTEMPTS ${tries}/3   ${phase === "angle" ? "set the ANGLE" : phase === "power" ? "set the POWER" : ""}`);
+        this.hud.setText(`TRY ${Math.max(1, phase === "angle" || phase === "power" ? tries + 1 : tries)}   ${phase === "angle" ? "set the ANGLE" : phase === "power" ? "set the POWER" : ""}`);
       },
     });
   }

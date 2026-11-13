@@ -30,6 +30,17 @@ const Polson = {
   },
 };
 
+/** A full-size Krel Tower in a cutscene (see bigTower()). `at(f)` is the screen y a fraction f of the way up it. */
+interface BigTower {
+  img: Phaser.GameObjects.Image;
+  shadow: Phaser.GameObjects.Ellipse;
+  x: number;
+  ground: number;
+  h: number;
+  w: number;
+  at: (f: number) => number;
+}
+
 export class VignetteScene extends Phaser.Scene {
   private box!: DialogueBox;
   private returnAt = "";
@@ -192,11 +203,52 @@ export class VignetteScene extends Phaser.Scene {
     return c;
   }
 
-  /** A tower coming down: rolling booms up its height, a big smoke column at the base, dust rolling out. */
-  private collapseFx(x: number) {
-    for (let i = 0; i < 6; i++) this.time.delayedCall(i * 380, () => this.boomAt(x + (Math.random() - 0.5) * 120, 150 + i * 45, 1.2 + Math.random() * 0.6, 41));
-    vfx(this, "vfx_blastsmoke", x, 430, { scale: 2.2, depth: 42, delay: 600 });
-    for (let i = 0; i < 4; i++) vfx(this, "vfx_dust", x + (i - 1.5) * 120, 425, { scale: 2.4, depth: 43, delay: 900 + i * 150 });
+  /**
+   * The Krel Tower at full cutscene size: base on the ground line, spire up at the top of the
+   * screen (a touch past it, so it reads as huge and you're looking up at it). Sizes are set in
+   * screen pixels, so it doesn't matter which art is loaded.
+   */
+  private bigTower(x: number, ground: number, depth = 10, top = -30): BigTower {
+    const img = this.add.image(x, ground, "p_kreltower").setOrigin(0.5, 1).setDepth(depth);
+    const h = ground - top;
+    img.displayHeight = h;
+    img.displayWidth = (h * img.width) / img.height;
+    // the base sits in a little shadow so it feels planted, not pasted on
+    const shadow = this.add.ellipse(x, ground - 2, img.displayWidth * 1.5, 22, 0x000000, 0.35).setDepth(depth - 1);
+    return { img, shadow, x, ground, h, w: img.displayWidth, at: (f: number) => ground - h * f };
+  }
+
+  /**
+   * Flight KR-069, `width` screen pixels nose to tail (the HD art when it's loaded). `flip` points it
+   * left: that uses the left-facing copy so "KREL AIR" still reads the right way round.
+   */
+  private airliner(x: number, y: number, width = 250, flip = false) {
+    const key = flip && this.textures.exists("p_plane_hd_l") ? "p_plane_hd_l" : this.textures.exists("p_plane_hd") ? "p_plane_hd" : "p_plane";
+    const p = this.add.image(x, y, key).setDepth(20).setFlipX(flip && key !== "p_plane_hd_l");
+    p.displayWidth = width;
+    p.displayHeight = (width * p.height) / p.width;
+    return p;
+  }
+
+  /**
+   * A tower coming down: it sinks into its own footprint (masked at the ground line), leaning a
+   * little, with booms rolling down the falling top, a smoke column and dust rolling out at the base.
+   */
+  private collapseFx(t: BigTower, dur = 2600) {
+    const mask = this.make.graphics({}, false).fillRect(0, -600, 960, t.ground + 600);
+    t.img.setMask(mask.createGeometryMask());
+    this.tweens.add({ targets: t.img, y: t.ground + t.h * 0.97, duration: dur, ease: "Quad.in" });
+    this.tweens.add({ targets: t.img, angle: { from: 0, to: 4 }, duration: dur, ease: "Sine.in" });
+    this.tweens.add({ targets: t.shadow, alpha: 0, duration: dur });
+    // booms chase the top of the tower down
+    const top0 = t.ground - t.h;
+    for (let i = 0; i < 8; i++) {
+      const ms = i * (dur / 8);
+      const p = (ms / dur) ** 2;
+      this.time.delayedCall(ms, () => this.boomAt(t.x + (Math.random() - 0.5) * t.w * 0.8, top0 + t.h * (p + 0.12 + Math.random() * 0.15) + 60, 1.4 + Math.random() * 0.7, 41));
+    }
+    vfx(this, "vfx_blastsmoke", t.x, t.ground - 10, { scale: 3.2, depth: 42, delay: 600 });
+    for (let i = 0; i < 5; i++) vfx(this, "vfx_dust", t.x + (i - 2) * t.w * 0.7, t.ground - 5, { scale: 2.8, depth: 43, delay: 900 + i * 150 });
   }
 
   /** Wipe the set for the next shot, but keep the dialogue box (depth 1000+) alive. */
@@ -292,18 +344,23 @@ export class VignetteScene extends Phaser.Scene {
       skyG.setVisible(false);
       g.setVisible(false);
     }
-    const tower = this.add.image(560, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
-    this.add.text(560, 440, "KRELTOWER", { fontFamily: FONT, fontSize: "11px", color: "#ffffff" }).setOrigin(0.5, 0).setDepth(11);
+    const tower = this.bigTower(560, 440);
+    this.add.text(560, 446, "KRELTOWER", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(11);
     const people = this.crowd(470);
     synth.music("airport");
     await this.talk([dir(saved ? "Krelford. Everyone is outside. Everyone is looking up." : "Krelford. Everyone is outside. Everyone is looking up. Somebody drops a fizzy bongo.")]);
-    const plane = this.add.image(1020, 120, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
+    // it comes in from the right, heading for two-thirds of the way up
+    const hitY = tower.at(0.66);
+    const plane = this.airliner(1120, hitY - 70, 240, true);
     if (saved) {
-      await this.tween({ targets: plane, x: 640, y: 170, angle: -6, duration: 2200, ease: "Sine.inOut" });
+      await this.tween({ targets: plane, x: 800, y: hitY, angle: -4, duration: 2200, ease: "Sine.inOut" });
       this.people(people, "!");
-      await this.tween({ targets: plane, x: 520, y: 60, angle: -22, duration: 900, ease: "Quad.out" });
       this.caption("PULL UP!!!", "#ffd23f");
-      await this.tween({ targets: plane, x: 200, y: 330, angle: 14, duration: 1800, ease: "Sine.in" });
+      // up and over the spire, off the top of the screen…
+      await this.tween({ targets: plane, x: 640, y: -90, angle: 30, duration: 1100, ease: "Quad.in" });
+      // …and back down the other side, nose first, into the Tap
+      plane.setPosition(420, -80).setAngle(-28);
+      await this.tween({ targets: plane, x: 200, y: 330, angle: -14, duration: 1800, ease: "Sine.in" });
       synth.play("explode");
       const splash = this.add.circle(200, 400, 10, 0xffb6c1, 0.9).setDepth(30);
       this.tween({ targets: splash, radius: 120, alpha: 0, duration: 900 });
@@ -329,29 +386,31 @@ export class VignetteScene extends Phaser.Scene {
       return;
     }
     // The bad ending: it happens, everyone sees it, it collapses, everyone panics.
-    await this.tween({ targets: plane, x: 610, y: 260, angle: 6, duration: 2600, ease: "Sine.in" });
+    // nose into the tower two-thirds of the way up
+    await this.tween({ targets: plane, x: 560 + plane.displayWidth * 0.32, y: hitY, angle: -3, duration: 2600, ease: "Sine.in" });
     plane.destroy();
     synth.play("boom");
     this.cameras.main.flash(500, 255, 240, 200);
     this.cameras.main.shake(1200, 0.025);
-    this.boomAt(560, 270, 2.2, 16);
-    const fire = this.fireBlob(560, 275, 70, 15);
+    this.boomAt(560, hitY, 2.8, 16);
+    this.time.delayedCall(220, () => this.boomAt(560 + tower.w * 0.4, hitY + 30, 1.6, 16));
+    this.time.delayedCall(380, () => this.boomAt(560 - tower.w * 0.35, hitY - 20, 1.4, 16));
+    const fire = this.fireBlob(560, hitY + 6, 90, 15);
     this.people(people, "!!");
     synth.play("gasp");
     await this.talk([say("KREBLIS", "This is a Krelmergency message… Kreltower has been hit. I repeat. Kreltower has been hit"), say("KREBLIS", "Thinking about it…"), say("KREBLIS", "Again")]);
     for (let i = 0; i < (hasVfx(this, "vfx_smokecol") ? 0 : 16); i++) {
-      const smoke = this.add.circle(560 + (Math.random() - 0.5) * 80, 260 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
+      const smoke = this.add.circle(560 + (Math.random() - 0.5) * 80, hitY - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 160, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
     }
     await this.wait(1200);
     synth.play("boom");
     this.cameras.main.shake(2600, 0.03);
     fire.destroy();
-    this.tween({ targets: tower, scaleY: 0.05, duration: 2600, ease: "Quad.in" });
-    this.collapseFx(560);
+    this.collapseFx(tower);
     for (let i = 0; i < (hasVfx(this, "vfx_dust") ? 10 : 30); i++) {
-      const dust = this.add.circle(560 + (Math.random() - 0.5) * 200, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
-      this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 600, y: 380 - Math.random() * 120, scale: 3, alpha: 0, duration: 3500 });
+      const dust = this.add.circle(560 + (Math.random() - 0.5) * 200, 430, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
+      this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 700, y: 400 - Math.random() * 160, scale: 3, alpha: 0, duration: 3500, delay: 400 + Math.random() * 1400 });
     }
     this.caption("KRELTOWER HAS FALLEN", "#ff4d4d");
     // panic
@@ -2445,18 +2504,23 @@ export class VignetteScene extends Phaser.Scene {
     for (let i = 0; i < 20; i++) g.fillRect(i * 50, 330 - ((i * 37) % 90), 44, 300);
     g.fillStyle(0x3d6a2a, 1).fillRect(0, 440, 960, 100);
     const haze = this.add.rectangle(480, 270, 960, 540, 0xff4fd8, 0.28).setDepth(80).setBlendMode(Phaser.BlendModes.ADD);
-    const carton = this.add.image(640, 440, "p_juice").setOrigin(0.5, 1).setScale(3.4, 8.6).setDepth(10);
-    const label = this.add.text(640, 250, "PUSSY\nJUICE", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffffff", align: "center", stroke: "#b0247a", strokeThickness: 5 }).setOrigin(0.5).setDepth(11);
-    const plane = this.add.image(140, 150, "p_plane").setScale(2.2).setDepth(20);
+    // the giant pussy juice takes up exactly the space the Krel Tower is about to
+    const tower = this.bigTower(640, 440, 9);
+    tower.img.setAlpha(0);
+    const carton = this.add.image(640, 440, "p_juice").setOrigin(0.5, 1).setDepth(10);
+    carton.displayHeight = tower.h * 0.96;
+    carton.displayWidth = tower.w * 1.25;
+    const label = this.add.text(640, tower.at(0.5), "PUSSY\nJUICE", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffffff", align: "center", stroke: "#b0247a", strokeThickness: 6 }).setOrigin(0.5).setDepth(11);
+    const plane = this.airliner(150, 215, 220);
     const chute = this.chute(me, 120, 60);
-    this.tweens.add({ targets: plane, x: 330, y: 200, duration: 2600, ease: "Sine.inOut" });
+    this.tweens.add({ targets: plane, x: 300, y: tower.at(0.66), duration: 2600, ease: "Sine.inOut" });
     await this.talk([dir("You shoot out of the roof of KR-069 on a rocket-powered seat. A little pink parachute pops open. Below you, the plane carries on, straight and true, towards the giant pussy juice.")]);
     // the drugs wear off
     this.tween({ targets: haze, alpha: 0, duration: 1800 });
     this.tween({ targets: label, alpha: 0, duration: 1400 });
-    const tower = this.add.image(640, 440, "p_kreltower").setOrigin(0.5, 1).setScale(1.7).setDepth(9).setAlpha(0);
-    this.tween({ targets: carton, alpha: 0, scaleX: tower.scaleX * 0.5, duration: 1800, ease: "Sine.inOut" });
-    await this.tween({ targets: tower, alpha: 1, duration: 1800, ease: "Sine.inOut" });
+    // the carton narrows into the tower's silhouette as the tower shimmers in
+    this.tween({ targets: carton, alpha: 0, displayWidth: tower.w * 0.6, duration: 1800, ease: "Sine.inOut" });
+    await this.tween({ targets: tower.img, alpha: 1, duration: 1800, ease: "Sine.inOut" });
     carton.destroy();
     this.add.text(640, 448, "THE KREL TOWER", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(12);
     synth.play("gasp");
@@ -2487,23 +2551,26 @@ export class VignetteScene extends Phaser.Scene {
       this.add.rectangle(480, 270, 960, 540, 0x0f172a, 0.35).setDepth(-9);
     }
     this.rainOver("storm", 960);
-    const tw = this.add.image(620, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
+    const tw = this.bigTower(620, 440);
+    const hitY = tw.at(0.66);
     const people = this.crowd(470).filter((p) => p.texture.key !== `spr_${me}`);
     synth.music("airport");
     const chute2 = this.chute(me, 150, -60);
     this.tween({ targets: chute2, y: 300, x: 110, duration: 9000, ease: "Sine.out" });
     await this.talk([dir("Back in Krelford, everyone is outside. Everyone is looking up. You are drifting down over them under a pink parachute, waving."), ...PE_RAIN]);
-    const plane2 = this.add.image(1020, 110, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
+    const plane2 = this.airliner(1120, hitY - 80, 240, true);
     await this.talk([say(lad(["KREBLIS", "GRONNY"]), "Is that… is that the plane?")]);
-    await this.tween({ targets: plane2, x: 670, y: 250, angle: 8, duration: 2600, ease: "Sine.in" });
+    await this.tween({ targets: plane2, x: 620 + plane2.displayWidth * 0.32, y: hitY, angle: -3, duration: 2600, ease: "Sine.in" });
     plane2.destroy();
     synth.play("boom");
     this.cameras.main.flash(500, 255, 240, 200);
     this.cameras.main.shake(1400, 0.03);
-    this.boomAt(620, 260, 2.4, 16);
-    const fire = this.fireBlob(620, 265, 80, 15);
+    this.boomAt(620, hitY, 3, 16);
+    this.time.delayedCall(220, () => this.boomAt(620 + tw.w * 0.4, hitY + 30, 1.6, 16));
+    this.time.delayedCall(380, () => this.boomAt(620 - tw.w * 0.35, hitY - 20, 1.4, 16));
+    const fire = this.fireBlob(620, hitY + 6, 95, 15);
     for (let i = 0; i < (hasVfx(this, "vfx_smokecol") ? 0 : 18); i++) {
-      const smoke = this.add.circle(620 + (Math.random() - 0.5) * 90, 250 - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
+      const smoke = this.add.circle(620 + (Math.random() - 0.5) * 90, hitY - Math.random() * 40, 16 + Math.random() * 20, 0x333333, 0.7).setDepth(14);
       this.tween({ targets: smoke, y: smoke.y - 170, alpha: 0, scale: 2.5, duration: 3000 + Math.random() * 1500 });
     }
     this.people(people, "NOOOO!");
@@ -2520,11 +2587,10 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("boom");
     this.cameras.main.shake(2800, 0.035);
     fire.destroy();
-    this.tween({ targets: tw, scaleY: 0.05, duration: 2600, ease: "Quad.in" });
-    this.collapseFx(620);
+    this.collapseFx(tw);
     for (let i = 0; i < (hasVfx(this, "vfx_dust") ? 10 : 34); i++) {
-      const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 420, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
-      this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 640, y: 380 - Math.random() * 130, scale: 3, alpha: 0, duration: 3500 });
+      const dust = this.add.circle(620 + (Math.random() - 0.5) * 220, 430, 20 + Math.random() * 30, 0xb8a888, 0.85).setDepth(40);
+      this.tween({ targets: dust, x: dust.x + (Math.random() - 0.5) * 740, y: 400 - Math.random() * 170, scale: 3, alpha: 0, duration: 3500, delay: 400 + Math.random() * 1400 });
     }
     await this.wait(700);
     // Jenko, as it comes down

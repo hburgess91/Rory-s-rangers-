@@ -1,7 +1,7 @@
 import type { Cond } from "./types";
 import { goat } from "../content/dsl";
 
-export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki" | "colon";
+export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki" | "colon" | "mind";
 
 export interface PropDef {
   kind: "bomb_spot" | "crystal_wall" | "talker" | "mollor" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
@@ -509,6 +509,36 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     arenaFlag: "arc_kz_troll",
     returnAt: "PUB",
     rooms: [{ name: "Blues Night", w: 1100, h: 720, theme: "mansion", boss: "troll" }],
+  },
+  arena_lukemind: {
+    id: "arena_lukemind",
+    chapter: 0,
+    name: "INSIDE LULON'S MIND",
+    music: "mdmazing",
+    arenaFlag: "lukemind_cleansed",
+    returnAt: "POLICE",
+    rooms: [
+      {
+        name: "The Frontal Lobe (Sticky)",
+        w: 1100,
+        h: 720,
+        theme: "mind",
+        waves: [[["mind_imp", 5]], [["mind_imp", 4], ["custard_demon", 2]]],
+        enterLines: [
+          { s: "NARRATOR", t: "Inside Lulon's mind. The floor is warm custard. The sky is the inside of a pudding dish. Somewhere, far off, a caravan creaks.", dir: true },
+          { s: "NARRATOR", t: "Little pink demons crawl out of the crust. They have one word, and they are going to use it.", dir: true },
+        ],
+      },
+      {
+        name: "The Temptation Lobe",
+        w: 1100,
+        h: 720,
+        theme: "mind",
+        waves: [[["custard_demon", 2], ["mind_imp", 4]], [["pudding_fiend", 2], ["mind_imp", 3]], [["pudding_fiend", 1], ["custard_demon", 2], ["mind_imp", 4]]],
+        enterLines: [{ s: "NARRATOR", t: "Deeper in. The walls are lined with memories of the abandoned building, every one of them in a little dish, every one of them still warm. You keep your eyes on the floor.", dir: true }],
+      },
+      { name: "The Pudding Dish (Bottom Of The Mind)", w: 1100, h: 720, theme: "mind", boss: "pudding_demon" },
+    ],
   },
   arena_flatmate: {
     id: "arena_flatmate",

@@ -10,6 +10,7 @@ import { Enemy } from "../combat/Enemy";
 import { Controls } from "../combat/Controls";
 import type { CombatWorld, HitOpts, ShotOpts } from "../combat/types";
 import { Boss, createBoss, DrongusBoss, OverWonkedMachine } from "../combat/Bosses";
+import { PuddingDemonBoss } from "../combat/MindBoss";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
 import { BOSS_TEXT } from "../../content/bosses";
@@ -467,8 +468,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const r = this.room;
     if (this.side) return this.buildSideRoom();
     const themeTile = `tile_${r.theme}`;
+    if (r.theme === "mind") this.mindTile();
     this.add.tileSprite(0, 0, r.w, r.h, themeTile).setOrigin(0).setDepth(0);
-    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a }[r.theme];
+    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a, mind: 0xb0246b }[r.theme];
     const g = this.add.graphics().setDepth(1);
     g.fillStyle(wallCol, 1);
     g.fillRect(0, 0, r.w, 24);
@@ -493,6 +495,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     this.obstacles = this.physics.add.staticGroup();
     this.decorate(r);
+    if (r.theme === "mind") this.mindscape(r);
     // door
     // the door sits in the back wall, its foot on the floor line (the PixelLab door is a full doorway)
     this.door = this.add.image(r.w / 2, 60, "p_door_locked").setOrigin(0.5, 1).setScale(2).setDepth(2);
@@ -540,7 +543,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         this.obstacles.add(this.add.rectangle(x, y + 10, 44, 24, 0, 0));
       });
     }
-    const n = r.boss || r.theme === "colon" ? 0 : 3;
+    const n = r.boss || r.theme === "colon" || r.theme === "mind" ? 0 : 3;
     for (let i = 0; i < n; i++) {
       const x = rnd.between(140, r.w - 140);
       const y = rnd.between(160, r.h - 200);
@@ -563,12 +566,85 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       prison: ["6 KREZ YEARS", "Ok, makes sense", "VERSION B"],
       wiki: ["[citation needed]", "This page does not exist", "Talk", "Edit source"],
       colon: ["HAUSTRA", "MUCOSA (WET)", "1x SWEETCORN (2019)", "DO NOT TOUCH THE WALLS"],
+      mind: ["NEVER AGAIN (DRAFT 41)", "CUSTARD LEVEL: CRITICAL", "THOUGHTS: 1 (PUDDING)", "MINISTERIAL CONSCIENCE (OUT OF ORDER)"],
     };
     const list = flav[r.theme] ?? [];
     list.forEach((txt, i) => {
       this.add.text(60 + i * (r.w / Math.max(1, list.length)), r.h - 46, txt, { fontFamily: FONT, fontSize: "10px", color: "#ffffff" }).setAlpha(0.35).setDepth(2);
     });
     if (r.theme === "industrial") for (let x = 40; x < r.w - 40; x += 64) this.add.image(x, 34, "p_pipe").setScale(2).setDepth(1).setAlpha(0.8);
+  }
+
+  /** Lulon's mind: a warm custard floor with pink swirls (drawn here; no art needed). */
+  private mindTile() {
+    if (this.textures.exists("tile_mind")) return;
+    const t = this.textures.createCanvas("tile_mind", 64, 64)!;
+    const ctx = t.getContext();
+    ctx.fillStyle = "#f3cf86";
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = "#ecbf6a";
+    for (let i = 0; i < 9; i++) ctx.fillRect((i * 23) % 60, (i * 37) % 60, 6, 3);
+    ctx.strokeStyle = "#f472b6";
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.arc(32, 32, 10, 0, Math.PI * 1.5);
+    ctx.arc(32, 32, 18, Math.PI * 1.5, Math.PI * 2.8);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#7c2d12"; // the odd raisin
+    ctx.fillRect(8, 50, 3, 3);
+    ctx.fillRect(52, 10, 3, 3);
+    t.refresh();
+  }
+
+  /** Inside Lulon's mind: the room breathes, the colours drift, pudding dishes and brain-folds float past. */
+  private mindscape(r: RoomDef) {
+    const haze = this.add.rectangle(0, 0, r.w, r.h, 0xff4fd8, 0.12).setOrigin(0).setDepth(2).setBlendMode(Phaser.BlendModes.ADD);
+    const cols = [0xff4fd8, 0xfacc15, 0xa78bfa, 0xfb7185, 0x22d3ee];
+    let k = 0;
+    this.time.addEvent({ delay: 900, loop: true, callback: () => this.tweens.add({ targets: haze, fillColor: cols[++k % cols.length], duration: 850 }) });
+    this.tweens.add({ targets: haze, alpha: { from: 0.6, to: 1 }, yoyo: true, repeat: -1, duration: 1300, ease: "Sine.inOut" });
+    // floating stuff: pudding dishes, brain folds and the word KIDS, faint, drifting in the custard
+    const rnd = new Phaser.Math.RandomDataGenerator([`mind${this.roomIdx}`]);
+    for (let i = 0; i < 14; i++) {
+      const x = rnd.between(60, r.w - 60);
+      const y = rnd.between(90, r.h - 60);
+      let o: Phaser.GameObjects.GameObject & { x: number; y: number };
+      if (i % 3 === 0) {
+        const g = this.add.graphics();
+        g.fillStyle(0xffffff, 0.25).fillEllipse(0, 0, 70, 30);
+        g.fillStyle(0xd97706, 0.35).fillEllipse(0, -3, 56, 18);
+        g.fillStyle(0xfde68a, 0.4).fillEllipse(0, -5, 44, 10);
+        g.setPosition(x, y);
+        o = g;
+      } else if (i % 3 === 1) {
+        const g = this.add.graphics();
+        g.lineStyle(4, 0xf472b6, 0.3);
+        for (let j = 0; j < 3; j++) g.strokeCircle(j * 14 - 14, Math.sin(j) * 6, 12);
+        g.setPosition(x, y);
+        o = g;
+      } else o = this.add.text(x, y, "KIDS", { fontFamily: "Impact, sans-serif", fontSize: `${rnd.between(16, 34)}px`, color: "#b0246b" }).setOrigin(0.5).setAlpha(0.18);
+      (o as unknown as Phaser.GameObjects.Components.Depth).setDepth(1);
+      this.tweens.add({ targets: o, x: x + rnd.between(-40, 40), y: y + rnd.between(-30, 30), angle: rnd.between(-25, 25), yoyo: true, repeat: -1, duration: rnd.between(2600, 4800), ease: "Sine.inOut" });
+    }
+    // the whole mind gently breathes (only while you're fighting, so cutscene cameras aren't fought over)
+    const start = this.time.now + (this.roomIdx === 0 ? 1500 : 0);
+    const breathe = () => {
+      if (this.busy || this.time.now < start || this.transitioning) return;
+      const t = (this.time.now - start) / 1700;
+      this.cameras.main.setZoom(1 + 0.035 * (0.5 - 0.5 * Math.cos(t * Math.PI)));
+    };
+    this.events.on("update", breathe);
+    this.events.once("shutdown", () => this.events.off("update", breathe));
+    // first room: you arrive spinning out of the trip
+    if (this.roomIdx === 0) {
+      const cam = this.cameras.main;
+      cam.setZoom(2.6).setRotation(0.9);
+      this.tweens.add({ targets: cam, rotation: 0, duration: 1400, ease: "Cubic.out" });
+      this.tweens.addCounter({ from: 2.6, to: 1, duration: 1400, ease: "Cubic.out", onUpdate: (tw) => cam.setZoom(tw.getValue() ?? 1) });
+      cam.flash(700, 255, 120, 220);
+    }
   }
 
   private addProp(p: PropDef) {
@@ -1499,7 +1575,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const r = this.room;
     const txt = BOSS_TEXT[id];
     this.busy = true;
-    const b = createBoss(id, this, r.w / 2, r.h / 2 - 100);
+    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, r.w / 2, r.h / 2 - 100) : createBoss(id, this, r.w / 2, r.h / 2 - 100);
     // bosses toughen up as the story goes on (the bank is how you keep up)
     const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
     if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
@@ -2469,6 +2545,42 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     });
   }
 
+  /** An enemy shouts one of its lines. The ones that never shut up (shoutEvery) get a proper speech bubble that follows them. */
+  private enemyShout(e: Enemy) {
+    const lines = e.def.shout ?? [];
+    const line = lines[Math.floor(Math.random() * lines.length)];
+    if (!line) return;
+    if (!e.def.shoutEvery) {
+      this.floatText(e.x, e.y - 30, line, e.def.id === "tumor" ? "#e9d5ff" : "#ffffff", e.def.id === "tumor" ? 14 : 11);
+      return;
+    }
+    const bubbles = ((this as any).shoutBubbles ??= new Map<Enemy, Phaser.GameObjects.Container>()) as Map<Enemy, Phaser.GameObjects.Container>;
+    bubbles.get(e)?.destroy();
+    const big = e.isBoss;
+    const t = this.add.text(0, 0, line, { fontFamily: "Impact, sans-serif", fontSize: big ? "22px" : "14px", color: "#b0003a" }).setOrigin(0.5);
+    const w = t.width + 14;
+    const h = t.height + 8;
+    const g = this.add.graphics();
+    g.fillStyle(0xffffff, 0.95).fillRoundedRect(-w / 2, -h / 2, w, h, 7);
+    g.fillTriangle(-6, h / 2 - 1, 6, h / 2 - 1, -2, h / 2 + 9);
+    g.lineStyle(2, 0x111111, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 7);
+    const off = () => e.displayHeight / 2 + h / 2 + 8;
+    const c = this.add.container(e.x, e.y - off(), [g, t]).setDepth(1490).setScale(0.3);
+    bubbles.set(e, c);
+    this.tweens.add({ targets: c, scale: 1, duration: 140, ease: "Back.out" });
+    const follow = () => {
+      if (!c.active) return;
+      if (e.dead || !e.active) return c.destroy();
+      c.setPosition(e.x, e.y - off());
+    };
+    this.events.on("postupdate", follow);
+    c.once("destroy", () => {
+      this.events.off("postupdate", follow);
+      if (bubbles.get(e) === c) bubbles.delete(e);
+    });
+    this.time.delayedCall(big ? 1300 : 950, () => c.active && this.tweens.add({ targets: c, alpha: 0, duration: 180, onComplete: () => c.destroy() }));
+  }
+
   floatText(x: number, y: number, text: string, color = "#ffffff", size = 13) {
     if (!text.trim()) return;
     let t = text;
@@ -2820,9 +2932,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const edt = dt * this.enemyTimeScale;
     for (const e of [...this.enemies]) {
       if (e.dead) continue;
-      if (!this.busy) e.tick(edt, now);
-      if (e.def.shout && !this.busy && Math.random() < edt / (e.def.id === "tumor" ? 2600 : 4200)) this.floatText(e.x, e.y - 30, e.def.shout[Math.floor(Math.random() * e.def.shout.length)], e.def.id === "tumor" ? "#e9d5ff" : "#ffffff", e.def.id === "tumor" ? 14 : 11);
-      else (e.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+      if (!this.busy) {
+        e.tick(edt, now);
+        if (e.def.shout && Math.random() < edt / (e.def.shoutEvery ?? (e.def.id === "tumor" ? 2600 : 4200))) this.enemyShout(e);
+      } else (e.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
       if (this.enemyTimeScale < 1) {
         const b = e.body as Phaser.Physics.Arcade.Body;
         if (b.velocity.length() > e.def.speed * 0.4) b.velocity.scale(0.5);
