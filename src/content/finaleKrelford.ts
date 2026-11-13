@@ -221,3 +221,49 @@ export const FB_AFTER: Line[] = [
   say("KREZWONK", "Right. The logs."),
   { s: "YOU", t: "Let's delete the chat logs.", tag: "new" },
 ];
+
+// ---------------------------------------------------------------- the morning after (the Hub, top-down, daylight)
+
+export const FD_WAKE: Line[] = [
+  dir("A long, long whiteness."),
+  dir("Then: birdsong. Actual birdsong. Krelford, in daylight, under a clear blue sky. The rain has stopped. Everything is still smoking."),
+];
+
+export const FD_URGH: Line[] = [
+  say("GRONNY", "Urrrghhhh."),
+  say("SCROMBUS", "Urghhhh…"),
+  say("MIKEY", "Uuurgh. Lads? Lads. Urgh."),
+  say("KREBON", "Urgh. Did we get arrested?"),
+  say("KREBLIS", "Urghhh 👍"),
+  say("FLENKY", "Urgh. Is it… morning? Is that the SUN?"),
+  say("CRONGUS", "Urrrgh. My whole body tastes of light."),
+  dir("They look around. Craters. Wreckage. Smoke. Not one building left standing. A single pigeon walks past, on fire, unbothered."),
+];
+
+export const FD_SAVED: Line[] = [
+  say("KREZMAR", "We did it. We saved Krelworld."),
+  say("SCROMBUS", "But more importantly, we saved ourselves. We can delete the chat logs!"),
+  say("CRONGUS", "I can't believe we destroyed the entire concept of paedophilia… the world will be so much more safe now… wow."),
+  say("GRONNY", "The concept of what? What's the word you just used?"),
+  say("CRONGUS", "Right! I don't even know what word I just used! That's how thoroughly we destroyed the concept of whatever it is!"),
+  say("KREZWONK", "Lads. Something's just occurred to me. We need to release some of the inmates from Krelcatraz. Jimmy Savile. Ian Watkins. Gary Glitter."),
+  say("KREZWONK", "We have no idea what they're in prison for! It's awful! I feel so guilty!"),
+  say("KREBON", "Free them. Free them all. I know what it's like to be on the inside."),
+  say("MIKEY", "Can I come when we let them out? Is that a group thing?"),
+];
+
+export const FD_DRONGUS_STIR: Line[] = [
+  dir("Across the rubble, something stirs. Skinny. Bald. A ginger beard. Shorn of his aura, in nothing but his pants."),
+  say("DRONGUS", "Ugh… my head."),
+];
+
+export const FD_DRONGUS_UP: Line[] = [
+  say("DRONGUS", "Where's my shirt. Where's my DUNGEON. Why is it DAYTIME."),
+  dir("He sees the lads. The lads see him. Nobody moves. Then his eyes go wide."),
+  say("DRONGUS", "Wait!! The fucking chat logs!!"),
+];
+
+export const FD_GOT_THEM: Line[] = [
+  say("DRONGUS", "(face down in the rubble) …ow."),
+  { s: "YOU", t: "Got them.", tag: "new" },
+];

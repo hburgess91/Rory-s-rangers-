@@ -11,6 +11,8 @@ export const FINALE_IMAGES: Record<string, string> = {
   fb_wreck: "finale/fb_wreck.png",
   fb_logs: "finale/fb_logs.png",
   fb_goku_charge: "finale/fb_goku_charge.png",
+  // the morning after: skinny Drongus in his pants (from the roof's skinny Drongus)
+  fb_drongus_undies: "finale/fb_drongus_undies.png",
   // from the roof (part A): the same logs, bottle and syringe, so they match where they landed
   fr_logs: "props/fr_logs.png",
   fr_bottle: "props/fr_bottle.png",
