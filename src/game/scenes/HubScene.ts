@@ -508,17 +508,23 @@ export class HubScene extends Phaser.Scene {
   // ------------------------------------------------------------- world
 
   private drawWorld() {
-    this.add.tileSprite(0, 0, WORLD_W, WORLD_H, "tile_grass").setOrigin(0).setDepth(0);
+    // Chapter 7: what's left of Krelford after the Krunch Protocol
+    this.ruined = G.s.chapter >= 7 && !!G.s.flags.krelworld_bombed;
+    const scorched = (t: Phaser.GameObjects.TileSprite, tint: number) => (this.ruined ? t.setTint(tint) : t);
+    scorched(this.add.tileSprite(0, 0, WORLD_W, WORLD_H, "tile_grass").setOrigin(0).setDepth(0), 0x3b2f27);
     this.drawSky();
     // roads
-    this.add.tileSprite(80, 780, WORLD_W - 80, 90, "tile_road").setOrigin(0).setDepth(0);
-    this.add.tileSprite(1235, 200, 90, 1500, "tile_road").setOrigin(0).setDepth(0);
-    this.add.tileSprite(300, 1500, 2000, 70, "tile_road").setOrigin(0).setDepth(0);
-    this.add.tileSprite(500, 560, 1700, 60, "tile_road").setOrigin(0).setDepth(0);
-    this.add.tileSprite(200, 1000, 70, 700, "tile_road").setOrigin(0).setDepth(0);
-    this.add.tileSprite(2400, 860, 160, 290, "tile_road").setOrigin(0).setDepth(0);
+    for (const [x, y, w, h] of [
+      [80, 780, WORLD_W - 80, 90],
+      [1235, 200, 90, 1500],
+      [300, 1500, 2000, 70],
+      [500, 560, 1700, 60],
+      [200, 1000, 70, 700],
+      [2400, 860, 160, 290],
+    ]) scorched(this.add.tileSprite(x, y, w, h, "tile_road").setOrigin(0).setDepth(0), 0x5a4c48);
     // plaza
-    this.add.tileSprite(1060, 650, 440, 340, "tile_cobble").setOrigin(0).setDepth(0);
+    scorched(this.add.tileSprite(1060, 650, 440, 340, "tile_cobble").setOrigin(0).setDepth(0), 0x5a4c48);
+    if (this.ruined) this.scorchGround();
     // sea (docks)
     if (this.hd && this.textures.exists("tile_sea")) {
       this.add.tileSprite(0, 1700, 560, 92, "tile_sea").setOrigin(0).setDepth(0);
@@ -529,12 +535,16 @@ export class HubScene extends Phaser.Scene {
     }
     this.colliders = this.physics.add.staticGroup();
     for (const b of BUILDINGS) this.drawBuilding(b);
-    // The Great Tap
-    if (this.hd && this.textures.exists("hd_tap")) {
+    // The Great Tap (in Chapter 7, a crater with a dry pipe in it)
+    if (this.ruined) {
+      this.ruinProp("r_crater", 1280, 830, 2.4);
+      this.ruinProp("r_pipe", 1280, 815, 1.6);
+      this.add.text(1280, 860, "WHERE THE GREAT TAP WAS", { fontFamily: FONT, fontSize: "11px", color: "#ff9a9a", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(861);
+    } else if (this.hd && this.textures.exists("hd_tap")) {
       this.add.image(1280, 790, "hd_tap").setDepth(850);
       this.neonGlow(1280, 790, 110, 0xff6bb0);
     } else this.add.image(1280, 800, "p_tap").setScale(3).setDepth(800);
-    this.add.text(1280, 690, "THE GREAT PUSSY JUICE TAP", { fontFamily: FONT, fontSize: "11px", color: "#ffb6c1", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(801);
+    if (!this.ruined) this.add.text(1280, 690, "THE GREAT PUSSY JUICE TAP", { fontFamily: FONT, fontSize: "11px", color: "#ffb6c1", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(801);
     this.colliders.add(this.add.rectangle(1280, 840, 120, 60, 0, 0));
     // The Kreltower
     if (G.s.flags.kreltower_fell) {
@@ -551,9 +561,10 @@ export class HubScene extends Phaser.Scene {
     this.colliders.add(this.add.rectangle(1650, 1085, 70, 30, 0, 0));
     this.interactables.push({ x: 1650, y: 1135, r: 55, label: () => (G.s.flags.kreltower_fell ? "Look at the rubble" : "Read the Kreltower plaque"), use: () => this.kreltowerPlaque() });
     // public TV
-    if (this.hd && this.textures.exists("hd_tv")) this.add.image(1450, 730, "hd_tv").setDepth(770);
+    if (this.ruined) this.ruinProp("r_girders", 1450, 760, 1.4);
+    else if (this.hd && this.textures.exists("hd_tv")) this.add.image(1450, 730, "hd_tv").setDepth(770);
     else this.add.image(1450, 740, "p_tv").setScale(3).setDepth(740);
-    this.add.text(1450, 700, "KrelTV", { fontFamily: FONT, fontSize: "10px", color: "#88aaff" }).setOrigin(0.5).setDepth(741);
+    if (!this.ruined) this.add.text(1450, 700, "KrelTV", { fontFamily: FONT, fontSize: "10px", color: "#88aaff" }).setOrigin(0.5).setDepth(741);
     // vending machines
     for (const [x, y] of [
       [1100, 720],
@@ -561,6 +572,10 @@ export class HubScene extends Phaser.Scene {
       [700, 1080],
       [1500, 1450],
     ]) {
+      if (this.ruined) {
+        this.ruinProp("r_debris", x, y + 20, 1.2);
+        continue;
+      }
       if (this.hd && this.textures.exists("hd_vending")) this.add.image(x, y, "hd_vending").setDepth(y + 20);
       else this.add.image(x, y, "p_vending").setScale(2).setDepth(y);
       this.colliders.add(this.add.rectangle(x, y + 10, 36, 30, 0, 0));
@@ -587,7 +602,9 @@ export class HubScene extends Phaser.Scene {
       const x = rnd.between(40, WORLD_W - 40);
       const y = rnd.between(40, WORLD_H - 120);
       if (this.nearBuilding(x, y, 70) || (Math.abs(x - 1280) < 90) || (y > 760 && y < 900) || (y > 1480 && y < 1590)) continue;
-      if (this.hd && this.textures.exists("hd_tree")) {
+      if (this.ruined) {
+        if (!this.ruinProp(i % 3 === 0 ? "r_stump" : "r_deadtree", x, y + 14, 1.5)) this.add.rectangle(x, y, 8, 26, 0x1a1210).setDepth(y);
+      } else if (this.hd && this.textures.exists("hd_tree")) {
         this.add.image(x, y - 24, i % 3 === 0 && this.textures.exists("hd_tree2") ? "hd_tree2" : "hd_tree").setDepth(y + 16);
         this.add.ellipse(x, y + 14, 40, 12, 0x1a1033, 0.3).setDepth(1);
       } else {
@@ -596,7 +613,8 @@ export class HubScene extends Phaser.Scene {
       }
       this.colliders.add(this.add.rectangle(x, y + 8, 16, 12, 0, 0));
     }
-    if (this.hd) this.dressStreets();
+    if (this.ruined) this.ruinStreets();
+    else if (this.hd) this.dressStreets();
     // world edge text
     this.add.text(1280, WORLD_H - 30, "KRELFORD · Krelworld · its own fucking universe/dimension", { fontFamily: FONT, fontSize: "12px", color: "#ffffff" }).setOrigin(0.5).setAlpha(0.4);
   }
@@ -871,6 +889,8 @@ export class HubScene extends Phaser.Scene {
   // ------------------------------------------------------------- blowing up Wildern
 
   private bImg: Record<string, Phaser.GameObjects.Image> = {};
+  /** Chapter 7: Krelford is rubble. */
+  private ruined = false;
 
   /** Where the four bombs go round Wildern. */
   private bombSpots(b: Building) {
@@ -1346,6 +1366,7 @@ export class HubScene extends Phaser.Scene {
 
   private drawBuilding(b: Building) {
     if (b.id === "CITADEL" && !this.towerUp()) return;
+    if (this.ruined && b.id !== "CITADEL") return this.drawRuinedBuilding(b);
     const key = this.buildingKey(b);
     if (this.hd && this.textures.exists(key)) {
       const img = this.add.image(b.x, b.y, key).setDepth(b.y + b.h / 2 - 1);
@@ -1754,6 +1775,13 @@ export class HubScene extends Phaser.Scene {
 
   private drawPlayground() {
     const P = PLAYGROUND;
+    // Chapter 7: a scorched patch with the climbing frame in bits (and, thankfully, nobody on it)
+    if (this.ruined) {
+      if (this.textures.exists("tile_rubber")) this.add.tileSprite(P.x, P.y, P.w, P.h, "tile_rubber").setOrigin(0).setDepth(1).setTint(0x3a302a);
+      for (const [, x, y] of PLAY_EQUIP) this.ruinProp("r_girders", x, y + 10, 1.4);
+      this.pgSign = this.add.text(P.cx, P.y - 34, "", { fontFamily: FONT, fontSize: "15px", color: "#ffffff" }).setOrigin(0.5, 1).setDepth(6000).setVisible(false);
+      return;
+    }
     if (this.textures.exists("tile_rubber")) {
       this.add.tileSprite(P.x, P.y, P.w, P.h, "tile_rubber").setOrigin(0).setDepth(1);
       // a picket fence around it, with a gap at the front
@@ -2899,13 +2927,29 @@ You are required by law to sign the Sex Offenders Register.`, {
 
   /** Every building scorched, fires still burning, smoke, embers on the wind. */
   private ruinTown() {
-    for (const b of BUILDINGS) {
-      const img = this.bImg[b.id];
-      if (img) img.setTint(0x6b5a5a);
-      if (b.id === "CITADEL") continue;
-      for (let i = 0; i < 2; i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 0.7, b.y + (Math.random() - 0.2) * b.h * 0.4, { scale: 1.4 + Math.random(), depth: b.y + b.h / 2 + 2, delay: Math.random() * 600 });
-      if (Math.random() < 0.6) vfx(this, "vfx_smokecol", b.x + (Math.random() - 0.5) * b.w * 0.4, b.y - b.h * 0.2, { scale: 1.8, depth: b.y + b.h / 2 + 1, alpha: 0.8 });
+    // fires everywhere, smoke columns over the worst of it
+    const rnd = new Phaser.Math.RandomDataGenerator(["krunch"]);
+    for (let i = 0; i < 70; i++) {
+      const x = rnd.between(60, WORLD_W - 60);
+      const y = rnd.between(120, WORLD_H - 140);
+      vfx(this, "vfx_fire", x, y, { scale: 1 + rnd.frac() * 1.6, depth: y + 10, delay: rnd.between(0, 900) });
+      if (i % 5 === 0) vfx(this, "vfx_smokecol", x, y - 30, { scale: 1.6 + rnd.frac(), depth: y + 9, alpha: 0.75 });
     }
+    for (const b of BUILDINGS) {
+      if (b.id === "CITADEL") continue;
+      for (let i = 0; i < 3; i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.1) * b.h * 0.5, { scale: 1.6 + Math.random() * 1.2, depth: b.y + b.h / 2 + 6, delay: Math.random() * 600 });
+      vfx(this, "vfx_smokecol", b.x, b.y - b.h * 0.1, { scale: 2.2, depth: b.y + b.h / 2 + 5, alpha: 0.8 });
+    }
+    // ash falling
+    this.time.addEvent({
+      delay: 90,
+      loop: true,
+      callback: () => {
+        const cam = this.cameras.main.worldView;
+        const a = this.add.rectangle(cam.x + Math.random() * cam.width, cam.y - 10, 2, 2, 0xb8b2aa, 0.8).setDepth(4979);
+        this.tweens.add({ targets: a, x: a.x + 60 + Math.random() * 80, y: a.y + cam.height + 20, angle: 360, duration: 5000 + Math.random() * 3000, onComplete: () => a.destroy() });
+      },
+    });
     // embers drifting across the screen
     this.time.addEvent({
       delay: 120,
@@ -2918,6 +2962,69 @@ You are required by law to sign the Sex Offenders Register.`, {
     });
     // the glow of the fires over everything
     this.add.rectangle(480, 270, 960, 540, 0xff6a2a, 1).setAlpha(0.07).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
+  }
+
+  /** A debris prop from the ruins sheet; false if the art isn't there. */
+  private ruinProp(key: string, x: number, y: number, scale = 1, tint?: number) {
+    if (!this.textures.exists(key)) return false;
+    const img = this.add.image(x, y, key).setOrigin(0.5, 0.85).setScale(scale).setDepth(y);
+    if (tint !== undefined) img.setTint(tint);
+    return true;
+  }
+
+  /** Singed ground: scorch marks, ash drifts and craters all over the grass. */
+  private scorchGround() {
+    const rnd = new Phaser.Math.RandomDataGenerator(["scorch"]);
+    const g = this.add.graphics().setDepth(1);
+    for (let i = 0; i < 260; i++) {
+      const x = rnd.between(0, WORLD_W);
+      const y = rnd.between(0, WORLD_H);
+      const w = rnd.between(40, 180);
+      g.fillStyle(rnd.frac() < 0.6 ? 0x14100d : 0x8f8a84, rnd.frac() < 0.6 ? 0.55 : 0.28);
+      g.fillEllipse(x, y, w, w * (0.4 + rnd.frac() * 0.3));
+    }
+    for (let i = 0; i < 40; i++) {
+      const x = rnd.between(80, WORLD_W - 80);
+      const y = rnd.between(120, WORLD_H - 120);
+      if (this.nearBuilding(x, y, 30)) continue;
+      if (!this.ruinProp(rnd.frac() < 0.5 ? "r_scorch" : "r_crater", x, y, 1.6 + rnd.frac())) g.fillStyle(0x0b0806, 0.7).fillEllipse(x, y, 70, 30);
+    }
+  }
+
+  /** A building, reduced to a heap: rubble, timbers, girders and a bit of wall, still burning. */
+  private drawRuinedBuilding(b: Building) {
+    const rnd = new Phaser.Math.RandomDataGenerator([b.id]);
+    const keys = ["r_rubble", "r_ruin", "r_girders", "r_wall", "r_fireheap", "r_rubble", "r_debris"];
+    const n = Math.max(3, Math.round(b.w / 70));
+    for (let i = 0; i < n; i++) {
+      const x = b.x - b.w / 2 + (b.w * (i + 0.5)) / n + rnd.between(-14, 14);
+      const y = b.y + b.h * 0.18 + rnd.between(-26, 26);
+      if (!this.ruinProp(keys[(i + rnd.between(0, 6)) % keys.length], x, y, 1.6 + rnd.frac() * 0.8)) this.add.ellipse(x, y, 70, 36, 0x3a2f2a).setDepth(y);
+    }
+    this.add.ellipse(b.x, b.y + b.h * 0.2, b.w * 1.05, b.h * 0.6, 0x0d0a08, 0.45).setDepth(1);
+    let name = b.id === "HOME" ? `${CHARACTERS[G.s.player].name}'S HOUSE` : b.name;
+    name = `${name} (RUBBLE)`;
+    this.add
+      .text(b.x, b.y + b.h / 2 + 6, name, { fontFamily: FONT, fontSize: "11px", color: "#ffb4a0", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 }, align: "center", wordWrap: { width: Math.max(160, b.w) } })
+      .setOrigin(0.5, 0)
+      .setDepth(b.y + b.h / 2 + 1);
+    this.colliders.add(this.add.rectangle(b.x, b.y + b.h * 0.12, b.w * 0.8, b.h * 0.6, 0, 0));
+  }
+
+  /** No lawns, no plants, no parked cars: wrecks, debris and ash. */
+  private ruinStreets() {
+    const rnd = new Phaser.Math.RandomDataGenerator(["wreck"]);
+    for (let x = 260; x < WORLD_W - 200; x += 300) {
+      if (Math.abs(x - 1280) < 200) continue;
+      this.ruinProp("r_carwreck", x + rnd.between(-40, 40), rnd.frac() < 0.5 ? 810 : 870, 1.7);
+    }
+    const scatter = ["r_debris", "r_ash", "r_bench", "r_busstop", "r_lamp", "r_debris", "r_ash", "r_fireheap", "r_wall"];
+    for (let i = 0; i < 90; i++) {
+      const x = rnd.between(80, WORLD_W - 80);
+      const y = rnd.between(140, WORLD_H - 140);
+      if (this.nearBuilding(x, y, 40) || GATES.some((g) => Math.hypot(g.x - x, g.y - y) < 80)) continue;
+      this.ruinProp(scatter[i % scatter.length], x, y, 1.3 + rnd.frac() * 0.6);
+    }
   }
 
   /** The lads crawl out of the Town Hall rubble with the worst hangover in history. */
