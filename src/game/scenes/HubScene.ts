@@ -231,6 +231,7 @@ export class HubScene extends Phaser.Scene {
     this.raidKrew = [];
     this.trail = [];
     this.brawl = null;
+    this.cutscene = false;
     this.interactables = [];
     this.busy = false;
     this.anchorsSpr = {};
@@ -293,7 +294,8 @@ export class HubScene extends Phaser.Scene {
       glows.push(this.add.ellipse(b.door.x, b.door.y + 6, 120, 60, 0xffc46b, 1).setAlpha(0).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD));
     }
     const apply = () => {
-      const c = raidNight ? { dark: 1, twilight: 0 } : clock();
+      // the ruined town is lit by its own fires: dark, but you can still see who's crawling out of what
+      const c = raidNight ? { dark: G.s.chapter >= 7 ? 0.55 : 1, twilight: 0 } : clock();
       nightA.setAlpha(c.dark * 0.42);
       blueA.setAlpha(c.dark * 0.18);
       dusk.setAlpha(c.twilight * 0.4);
@@ -2774,7 +2776,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         best = it;
       }
     }
-    if (best && !this.busy) {
+    if (best && !this.busy && !this.cutscene) {
       this.prompt.setText(`E: ${best.label()}`).setPosition(this.av.x, this.av.y - 50).setVisible(true);
       if (this.controls.interact()) {
         this.prompt.setVisible(false);
@@ -2825,6 +2827,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const s = G.s;
     const cam = this.cameras.main;
     this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
     (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     synth.music("klerble", true);
     cam.stopFollow();
@@ -2912,8 +2916,8 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.tweens.add({ targets: e, x: e.x + 80 + Math.random() * 120, y: e.y - 300 - Math.random() * 200, alpha: 0, duration: 3000 + Math.random() * 2000, onComplete: () => e.destroy() });
       },
     });
-    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 1).setAlpha(0.18).setScrollFactor(0).setDepth(4903).setBlendMode(Phaser.BlendModes.MULTIPLY);
-    void red;
+    // the glow of the fires over everything
+    this.add.rectangle(480, 270, 960, 540, 0xff6a2a, 1).setAlpha(0.07).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
   }
 
   /** The lads crawl out of the Town Hall rubble with the worst hangover in history. */
@@ -2921,6 +2925,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const s = G.s;
     const cam = this.cameras.main;
     this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
     (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     const th = BUILDINGS.find((b) => b.id === "TOWN_HALL")!;
     const cx = th.door!.x;
@@ -3001,6 +3007,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setPosition(lads[0].spr.x, lads[0].spr.y).setVisible(true);
     lads[0].spr.destroy();
     Object.assign(s.flags, { ch7_aftermath: true, ch7_intro: true, final_reading: true });
+    this.cutscene = false;
     G.save();
     cam.startFollow(this.av, true, 0.12, 0.12);
     synth.music("hub");
@@ -3052,6 +3059,8 @@ You are required by law to sign the Sex Offenders Register.`, {
   }
 
   private raidKrew: { spr: Phaser.GameObjects.Sprite; lag: number }[] = [];
+  /** A scripted sequence is running in town: no interact prompts between its lines. */
+  private cutscene = false;
   private trail: { x: number; y: number }[] = [];
 
   /** The Krew follow you through town (to Kreddle, and back with the bomb ticking). */
@@ -3094,6 +3103,8 @@ You are required by law to sign the Sex Offenders Register.`, {
   private async krunchBombing() {
     const cam = this.cameras.main;
     this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
     (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
     this.av.setVisible(false);
     synth.stopMusic();
