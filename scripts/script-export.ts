@@ -134,7 +134,7 @@ function esc(t: string): string {
     .replace(/\r?\n/g, " / ")
     .replace(/\\/g, "\\\\")
     .replace(/([*_`[\]<>|])/g, "\\$1")
-    .replace(/^(#|\+|-|=|\d+\.)/, "\\$1");
+    ;
 }
 const code = (t: string) => "`" + t.replace(/`/g, "'") + "`";
 function condTxt(c: any): string {
@@ -192,7 +192,7 @@ class Doc {
     this.out.push(md, "");
   }
   h(level: number, text: string) {
-    this.para(`${"#".repeat(level)} ${text.replace(/\n/g, " ")}`);
+    this.para(`${"#".repeat(Math.min(6, level))} ${text.replace(/\n/g, " ")}`);
   }
   when(text: string) {
     this.para(`**When:** ${esc(text)}`);
@@ -261,10 +261,20 @@ class Doc {
   }
   /** Content lines (runtime objects): tags from the registry. */
   lines(ls: any[] | undefined, fallbackTag = "", q = 0) {
+    let dup = 0;
+    let first = "";
     for (const [i, l] of (ls ?? []).entries()) {
       if (Array.isArray(l)) this.lines(l, `${fallbackTag}[${i}]`, q);
-      else if (isLine(l)) this.line(l, this.tagOf(l, `${fallbackTag}#${i}`), q);
+      else if (isLine(l)) {
+        // the same Line object reused somewhere later: list it once
+        if (this.emitted.has(l)) {
+          if (!dup++) first = this.tagOf(l, `${fallbackTag}#${i}`);
+          continue;
+        }
+        this.line(l, this.tagOf(l, `${fallbackTag}#${i}`), q);
+      }
     }
+    if (dup) this.para(`${"> ".repeat(q)}*(…plus ${dup} line${dup > 1 ? "s" : ""} already listed earlier, from ${code(first)})*`);
   }
   /** A content export by name (Line, Line[], Line[][], string[], Record of those). */
   exp(file: string, name: string, label?: string) {
@@ -273,6 +283,7 @@ class Doc {
     const key = `${abs}::${name}`;
     if (v === undefined) return this.note(`missing export ${base(abs)} ${name} (renamed?)`);
     EMITTED_EXPORTS.add(key);
+    if (!EXPORT_DOC.has(key)) EXPORT_DOC.set(key, this.name);
     this.value(v, `${base(abs)} ${name}`, key, label);
   }
   value(v: any, tag: string, key: string, label?: string) {
@@ -324,8 +335,11 @@ class Doc {
     this.para(`${pre}*(end of broadcast)*`);
   }
   /** Lines read out of scene code. */
-  items(items: Item[], q = 0) {
+  items(items0: Item[], q = 0) {
     let ctx = "";
+    // scene lines already placed elsewhere are listed once; so are content exports a scene refers to
+    const items = items0.filter((it) => !((it.kind === "line" || it.kind === "screen") && PLACED_BEFORE.has(it.tag)));
+    for (const it of items) if (it.kind === "line" || it.kind === "screen") SCENE_PLACED.add(it.tag);
     for (const it of items) {
       if (it.ctx !== ctx) {
         if (it.ctx) this.para(`${"> ".repeat(q)}**[code branch: ${esc(it.ctx)}]**`);
@@ -335,7 +349,13 @@ class Doc {
       if (it.kind === "line") this.line(it.line, it.tag, q);
       else if (it.kind === "screen") this.para(`${"> ".repeat(q)}*[on screen: ${esc(it.text)}]* ${code(it.tag)}`);
       else if (it.kind === "ref") {
+        const [a0, e0] = it.key.split("::");
+        if (EXPORT_DOC.has(it.key) && !containsUnplaced(it.value)) {
+          this.para(`${"> ".repeat(q)}*(${esc(`${base(a0)} ${e0}`)} plays here: already listed in ${EXPORT_DOC.get(it.key) === this.name ? "this document" : EXPORT_DOC.get(it.key)}.)*`);
+          continue;
+        }
         EMITTED_EXPORTS.add(it.key);
+        if (!EXPORT_DOC.has(it.key)) EXPORT_DOC.set(it.key, this.name);
         const [abs, ex] = it.key.split("::");
         this.value(it.value, `${base(abs)} ${ex}`, it.key);
       } else if (it.kind === "note") this.note(it.text);
@@ -346,6 +366,10 @@ class Doc {
   }
 }
 const EMITTED = new Set<object>();
+const EXPORT_DOC = new Map<string, string>();
+/** scene-line tags placed before the current extraction was rendered */
+const PLACED_BEFORE = { has: (t: string) => SCENE_PLACED.has(t) };
+const containsUnplaced = (v: any) => unplacedLines(v).length > 0;
 const EMITTED_EXPORTS = new Set<string>();
 
 // ------------------------------------------------------------------ reading scene code
@@ -404,7 +428,7 @@ function scene(name: string): SceneFile {
 
 const DSL = new Set(["say", "dir", "ping", "canon", "adapt", "gabor"]);
 const SCREEN = new Set(["caption", "bigText", "shout", "bubble", "people", "floatShout", "kidBubble", "tweet", "subtitle", "screenSay", "bigTitle", "hit", "cue2", "say2", "floatText"]);
-const NOEXPAND = new Set(["talk", "play", "wait", "tween", "caption", "bigText", "shout", "bubble", "people", "floatShout", "kidBubble", "tweet", "subtitle", "screenSay", "bigTitle", "toast", "floatText"]);
+const NOEXPAND = new Set(["enterBuilding", "onArrive", "update", "runArcStep", "talkTo", "useTap", "home", "turnIn", "registerBribe", "go", "openMenu", "openTV", "discover", "leave", "showMenu", "talk", "play", "wait", "tween", "caption", "bigText", "shout", "bubble", "people", "floatShout", "kidBubble", "tweet", "subtitle", "screenSay", "bigTitle", "toast", "floatText"]);
 /** Big registries that are rendered structurally, never as an inline reference. */
 const NOREF = new Set(["BOSS_TEXT", "MEETINGS", "ARCS", "CHAPTERS", "DUNGEONS", "CANON", "ALL_EPISODES", "PUB_CONVERSATIONS", "PUB_SNIPPETS", "NPC_TALK", "BARKS", "CHATTER", "PLAYER_BARKS", "DRONGUS_STATUSES", "DRONGUS_SEQUENCES", "PRIZES", "PRIZE", "DECOR", "DECOR_BY_ID", "KRUNCHERS", "CONSOLE_GAMES", "PERSONAL_QUESTS", "MINISTRY_QUESTS", "ARCHIVE", "ARCHIVE_BY_ID", "CHEESE_WITNESSES", "CHEESE_ACCUSATIONS", "DOMESTICS", "MORK_ROUNDS", "SONG_REPLIES", "CHAT_AFTER", "DREAMS", "KREL_TROPHIES", "GOLD_TOILET", "CHANNELS", "VIRAL_CHART", "BAN_RULES", "LOCAL_CHAT", "SHOVES", "INSULT", "CREDITS", "EPILOGUES", "ENDINGS", "RAID_ART"]);
 
@@ -429,7 +453,7 @@ const clean = (t: string, max = 90) => {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 };
 
-function extract(sfName: string, what: { method?: string; constName?: string; match?: string; quiet?: boolean }, seenMethods = new Set<string>()): Item[] {
+function extract(sfName: string, what: { method?: string; constName?: string; match?: string; quiet?: boolean; strings?: boolean }, seenMethods = new Set<string>()): Item[] {
   const f = scene(sfName);
   const items: Item[] = [];
   const refs = new Set<string>();
@@ -508,11 +532,18 @@ function extract(sfName: string, what: { method?: string; constName?: string; ma
     if (s !== undefined) return s;
     return `{${clean(n.getText(), 40)}}`;
   };
+  // locals that hold the player's id (const me = G.s.player, spy = …player)
+  const youVars = new Set(["me", "you", "spy"]);
+  const findYou = (x: ts.Node) => {
+    if (ts.isVariableDeclaration(x) && ts.isIdentifier(x.name) && x.initializer && /(^|\.)player$/.test(x.initializer.getText())) youVars.add(x.name.text);
+    ts.forEachChild(x, findYou);
+  };
+  findYou(root);
   const spk = (n: ts.Node | undefined): string => {
     if (!n) return "";
     if (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) return n.text;
     const t = n.getText();
-    if (/(^|\.)player$|^me$|^this\.me$|^p$|^you$/.test(t)) return "YOU";
+    if (/(^|\.)player$|^this\.me$/.test(t) || youVars.has(t)) return "YOU";
     const s = strOf(n);
     if (s !== undefined) return s;
     return `{${clean(t, 30)}}`;
@@ -585,16 +616,20 @@ function extract(sfName: string, what: { method?: string; constName?: string; ma
       const callee = n.expression;
       const name = ts.isPropertyAccessExpression(callee) ? callee.name.text : ts.isIdentifier(callee) ? callee.text : "";
       if (SCREEN.has(name)) {
+        let got = false;
         for (const a of n.arguments) {
-          if (ts.isArrowFunction(a) || ts.isFunctionExpression(a)) continue;
-          const s = ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a) || ts.isTemplateExpression(a) || ts.isBinaryExpression(a) || ts.isConditionalExpression(a) || (ts.isElementAccessExpression(a) && ts.isArrayLiteralExpression(a.expression)) ? txt(a) : strOf(a);
-          if (s && /[A-Za-z]{2}/.test(s) && !/^#[0-9a-f]{3,8}$/i.test(s) && !/^[a-z0-9_]+$/.test(s)) {
-            items.push({ kind: "screen", text: s, tag: tag(n), ctx: ctxOf(n) });
-            break;
+          // a screen-text helper may be handed a callback with lines in it, or a random pick from a content list
+          if (ts.isArrowFunction(a) || ts.isFunctionExpression(a)) {
+            visit(a);
+            continue;
           }
+          const stringy = ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a) || ts.isTemplateExpression(a) || (ts.isBinaryExpression(a) && a.operatorToken.kind === ts.SyntaxKind.PlusToken) || ts.isConditionalExpression(a) || (ts.isElementAccessExpression(a) && ts.isArrayLiteralExpression(a.expression));
+          const s = stringy ? txt(a) : strOf(a);
+          if (!got && s && /[A-Za-z]{2}/.test(s) && !/^#[0-9a-f]{3,8}$/i.test(s) && !/^[a-z0-9_]+$/.test(s)) {
+            items.push({ kind: "screen", text: s, tag: tag(n), ctx: ctxOf(n) });
+            got = true;
+          } else if (!stringy && s === undefined) visit(a);
         }
-        // a screen-text helper may still be handed a callback with lines in it
-        for (const a of n.arguments) if (ts.isArrowFunction(a) || ts.isFunctionExpression(a)) visit(a);
         return;
       }
       ts.forEachChild(n, visit);
@@ -607,6 +642,11 @@ function extract(sfName: string, what: { method?: string; constName?: string; ma
       }
       return;
     }
+    if (what.strings && (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n) || ts.isTemplateExpression(n))) {
+      const t = txt(n);
+      if (/[a-z]{2}.* /i.test(t) && t.length >= 8 && !/sans-serif|monospace|^#|^\d+px$|^[a-z_]+$/i.test(t)) items.push({ kind: "screen", text: t, tag: tag(n), ctx: "" });
+      return;
+    }
     if (ts.isObjectLiteralExpression(n)) {
       const l = objLine(n);
       if (l) {
@@ -617,7 +657,7 @@ function extract(sfName: string, what: { method?: string; constName?: string; ma
     if (ts.isIdentifier(n) || ts.isPropertyAccessExpression(n)) {
       const r = resolveRef(n);
       if (r) {
-        if (!NOREF.has(r.name) && !refs.has(r.key) && typeof r.value !== "string" && lineish(r.value)) {
+        if (!NOREF.has(r.name) && !refs.has(r.key) && (typeof r.value === "string" || lineish(r.value))) {
           refs.add(r.key);
           items.push({ kind: "ref", key: r.key, value: r.value, ctx: ctxOf(n) });
         }
@@ -634,7 +674,6 @@ function extract(sfName: string, what: { method?: string; constName?: string; ma
     ts.forEachChild(n, visit);
   };
   visit(root);
-  if (!what.quiet) for (const it of items) if (it.kind === "line" || it.kind === "screen") SCENE_PLACED.add(it.tag);
   return items;
 }
 const SCENE_PLACED = new Set<string>();
@@ -683,8 +722,8 @@ const VIG_PLACED = new Set<string>();
 
 function minigame(d: Doc, mode: string) {
   for (const m of MINIGAME[mode] ?? [mode]) {
-    if (mode === "drive") d.items(extract("DriveScene.ts", { method: "create" }), 0), d.items(extract("DriveScene.ts", { method: "crash" })), d.items(extract("DriveScene.ts", { method: "drawbridge" }));
-    else if (mode === "beepbeep") d.items(extract("BeepBeepScene.ts", { method: "create" })), d.items(extract("BeepBeepScene.ts", { method: "finish" }));
+    if (mode === "drive") for (const x of scene("DriveScene.ts").methods.keys()) d.items(extract("DriveScene.ts", { method: x }));
+    else if (mode === "beepbeep") for (const x of scene("BeepBeepScene.ts").methods.keys()) d.items(extract("BeepBeepScene.ts", { method: x }));
     else if (scene("MinigameScene.ts").methods.has(m)) d.items(extract("MinigameScene.ts", { method: m }));
   }
 }
@@ -697,18 +736,28 @@ function boss(d: Doc, id: string, level: number) {
   EMITTED_EXPORTS.add(`${modByName("bosses.ts")[0]}::BOSS_TEXT`);
   d.lines(b.intro, `bosses.ts BOSS_TEXT/${id}/intro`);
   if (b.taunts?.length) d.para(`*In-fight taunts (shown as the boss changes phase):* ${b.taunts.map((x: string) => `“${esc(x)}”`).join(" · ")} ${code(`bosses.ts BOSS_TEXT/${id}/taunts`)}`);
+  if (BOSS_COMBAT[id]) combatLines(d, BOSS_COMBAT[id]);
   if (b.outro?.length) {
     d.para("*After the fight:*");
     d.lines(b.outro, `bosses.ts BOSS_TEXT/${id}/outro`);
   }
 }
 const BOSS_PLACED = new Set<string>();
+/** Bosses whose fight code has its own lines (src/game/combat). */
+const BOSS_COMBAT: Record<string, string> = { krex: "KrexBoss.ts", elon: "ElonBoss.ts", drongus1: "DrongusPhaseOne.ts", drongus2: "DerangedDrongus.ts" };
+function combatLines(d: Doc, file: string, label = "In-fight lines") {
+  const f = scene(file);
+  const its = [...f.methods.keys()].flatMap((m) => extract(file, { method: m }));
+  if (!its.length) return;
+  d.para(`*${esc(label)} (${esc(file)}):*`);
+  d.items(its);
+}
 
 /** Room events that hand over to scene code. */
 const ROOM_EVENT: Record<string, [string, string][]> = {
-  anthem: [["Citadel.ts", "anthem"]],
+  anthem: [["Citadel.ts", "anthem"], ["Citadel.ts", "openDoor"]],
   drongus1: [["Citadel.ts", "drongusMeet"]],
-  stairs: [["Citadel.ts", "stairs"]],
+  stairs: [["Citadel.ts", "stairs"], ["Citadel.ts", "updateStairs"]],
   drongus2: [["Citadel.ts", "office"]],
   colon: [["DungeonScene.ts", "colonFinale"]],
 };
@@ -746,12 +795,14 @@ function dungeon(d: Doc, id: string, level: number, opts: { title?: string } = {
         d.para(`*${esc(p.label ?? p.kind)}:*`);
         d.items(extract(sf, { method: m }));
       }
-      if (p.action && !ACTION_DONE.has(p.action)) {
-        ACTION_DONE.add(p.action);
-        if (p.action === "donut") d.items(extract("DungeonScene.ts", { method: "donutScene" }));
+      if (p.action && !ACTION_DONE.has("talker")) {
+        ACTION_DONE.add("talker");
+        d.para("*Talker actions (hot tub, jukebox, Pepsi, Gabor, Begour, donut):*");
+        d.items(extract("DungeonScene.ts", { method: "useTalker" }));
       }
     }
     for (const [sf, m] of ROOM_EVENT[r.event] ?? []) d.items(extract(sf, { method: m }));
+    if (r.event === "anthem") d.exp("citadel.ts", "ANTHEM_SCOLDS", "The honour guard, if you move during the anthem");
     if (r.miniBoss) {
       if (r.miniBoss.pa?.length) {
         d.para("*Part way through, over the tannoy:*");
@@ -761,7 +812,12 @@ function dungeon(d: Doc, id: string, level: number, opts: { title?: string } = {
     }
     if (r.boss) boss(d, r.boss, level + 2);
     for (const br of r.bossRush ?? []) boss(d, br.boss, level + 2);
-    if (r.event === "drongus2") d.items(extract("Citadel.ts", { method: "officeAfter" }));
+    if (r.event === "drongus2") {
+      d.items(extract("Citadel.ts", { method: "officeAfter" }));
+      d.para("*Then, climbing into the cauldron:*");
+      d.exp("citadel.ts", "CAULDRON_JUMP");
+      d.exp("citadel.ts", "DRONGUS2_BREAK", "Deranged Drongus breaking apart");
+    }
     if (r.event === "roof") roof(d, level + 1);
     if (r.boss === "rik") d.items(extract("DungeonScene.ts", { method: "shrinkRay" }));
     if (r.boss === "reinhardt") d.items(extract("DungeonScene.ts", { method: "reinhardtDeath" })), d.items(extract("DungeonScene.ts", { method: "fuelTankFinale" }));
@@ -784,12 +840,16 @@ function roof(d: Doc, level: number) {
   d.items(extract("RoofArena.ts", { method: "free" }));
   d.items(extract("RoofArena.ts", { method: "allFree" }));
   d.items(extract("RoofArena.ts", { method: "update" }));
+  combatLines(d, "DarkDrongus.ts", "Dark Drongus, in the fight");
+  d.exp("finaleRoof.ts", "DD_TAUNTS", "Dark Drongus taunts");
+  d.exp("finaleRoof.ts", "MINI_SHOUTS", "The mini Drongi");
+  combatLines(d, "GroupWonk.ts", "The group wonk");
   d.h(level + 1, "Cutscene: the group krezz (RoofCutscene)");
   d.items(extract("RoofCutscene.ts", { method: "krezz" }));
 }
 
-function meeting(d: Doc, id: string, level: number, when?: string) {
-  const m = MEETINGS[id];
+function meeting(d: Doc, id: string, level: number, when?: string, obj?: any) {
+  const m = obj ?? MEETINGS[id];
   if (!m) return d.note(`meeting ${id} not found`);
   MEETING_PLACED.add(id);
   d.h(level, `Meeting: ${m.title}${m.subtitle ? ` — ${m.subtitle}` : ""}`);
@@ -882,6 +942,8 @@ function arc(d: Doc, id: string, level: number, opts: { skipSteps?: string[]; no
       case "shove":
         d.lines(k.intro, tg);
         d.items(extract("HubScene.ts", { method: "runBrawl" }));
+        d.items(extract("HubScene.ts", { method: "spawnBrawl" }));
+        d.items(extract("HubScene.ts", { method: "playerShove" }));
         d.para("*When they leave:*");
         d.lines(k.leave, tg);
         d.lines(k.after, tg);
@@ -912,7 +974,8 @@ function doc1(): Doc {
   d.h(2, "Opening: A New Game");
   d.h(3, "Title screen");
   d.when("The very first screen, then the title menu and character select.");
-  d.items(extract("EnterScene.ts", { method: "create" }));
+  d.items(extract("EnterScene.ts", { method: "create", strings: true }));
+  d.items(extract("TitleScene.ts", { method: "create", strings: true }));
   d.h(3, "Home: Welcome to Krelworld");
   d.when("New game. You start at home.");
   d.items(extract("HomeScene.ts", { method: "welcome" }));
@@ -923,7 +986,7 @@ function doc1(): Doc {
   d.items(extract("HomeScene.ts", { method: "create", match: "That was relaxing" }));
   d.h(3, "Out of the door: Krelford from the air");
   d.when("First time out of the house: the camera tours the town.");
-  d.items(extract("HubScene.ts", { method: "flyover" }));
+  d.items(extract("HubScene.ts", { method: "flyover", strings: true }));
   meeting(d, "lore_appreciation_inquiry", 3, "Town Hall, first visit.");
 
   // ---------- chapter 1
@@ -1100,6 +1163,9 @@ function doc1(): Doc {
   d.items(extract("FinaleScene.ts", { method: "transform" }));
   d.items(extract("KrelfordFinale.ts", { method: "phase2" }));
   d.items(extract("KrelfordFinale.ts", { method: "finalHeal" }));
+  combatLines(d, "ConceptBoss.ts", "The Concept, in the fight");
+  d.exp("finaleKrelford.ts", "CONCEPT_HEAL", "The Concept heals (on screen)");
+  d.exp("finaleKrelford.ts", "FB_NO", "Everyone, at the last heal");
   d.h(3, "The spirit bomb");
   d.items(extract("FinaleScene.ts", { method: "spirit" }));
   d.h(3, "Dawn");
@@ -1145,6 +1211,8 @@ function autofill(d: Doc) {
       // after the nearest earlier export that made it into the document
       let at = -1;
       for (let j = i - 1; j >= 0 && at < 0; j--) at = d.pos.get(`${abs}::${names[j]}`)?.[1] ?? -1;
+      // …at the end of that paragraph
+      if (at >= 0) while (at < d.out.length - 1 && d.out[at] !== "") at++;
       if (at < 0) for (let j = i + 1; j < names.length && at < 0; j++) at = (d.pos.get(`${abs}::${names[j]}`)?.[0] ?? 0) - 1;
       const t = new Doc(d.name, EMITTED);
       t.para(`*(Not yet in the exporter's play-order map: placed by its position in ${base(abs)}, after the export before it.)*`);
@@ -1181,7 +1249,7 @@ function doc2(): Doc {
   d.h(1, "KRELWORLD — Side Quests Script");
   d.para("*Optional side quests and the character stories (each playable character has their own, which they must finish before their Chapter 2 dungeon). Grouped by quest. Shared required quests are in document 1, in the chapter they're due.*");
 
-  d.h(2, "Character stories");
+  d.para("*Character stories first (one section per playable character), then the optional shared quests and everything else.*");
   for (const p of PLAYABLE) {
     const own = ARCS.filter((a) => a.player === p);
     if (!own.length) continue;
@@ -1197,7 +1265,12 @@ function doc2(): Doc {
       d.lines(q.turnIn.lines, `quests.ts PERSONAL_QUESTS/${q.id}/turnIn`);
       d.para(`*Reward: +${q.reward.coins} Krezzcoin. ${esc(q.reward.desc)}*`);
     }
+    if (p === "KREBON") d.items(extract("HubScene.ts", { method: "onArrive", match: "edge of town" }));
+    if (p === "KREBON") d.items(extract("TownMeetingScene.ts", { method: "create" }));
   }
+  d.h(3, "Picking up personal-quest items");
+  d.items(extract("DungeonScene.ts", { method: "collect" }));
+  d.items(extract("DungeonScene.ts", { method: "sideQuestPickups" }));
   EMITTED_EXPORTS.add(`${modByName("quests.ts")[0]}::PERSONAL_QUESTS`);
 
   d.h(2, "Optional shared side quests");
@@ -1211,7 +1284,7 @@ function doc2(): Doc {
   d.h(2, "Around the house");
   d.when("Things you can look at and do at home.");
   d.h(3, "Dreams (sleeping in your bed)");
-  d.items(extract("HomeScene.ts", { method: "dream" }));
+  d.para("*(A third of the time you dream a hint from Krezwonk, a third of the time Drongus reading out an old status — both in document 3 — and otherwise one of these.)*");
   d.exp("home.ts", "DREAMS", "Dream");
   d.h(3, "The group chat on your laptop (what everyone's saying after each chapter)");
   for (const [k, v] of Object.entries(exp("home.ts", "CHAT_AFTER") as Record<string, any[]>)) {
@@ -1226,6 +1299,26 @@ function doc2(): Doc {
   d.exp("home.ts", "KREL_TROPHIES", "Trophy cabinet");
   for (const m of ["openFridge", "homeSlot", "drawDecor", "create", "kreddleTip"]) d.items(extract("HomeScene.ts", { method: m }));
   d.items(extract("HomeScene.ts", { method: "arrive" }));
+
+  d.h(2, "Around Krelford (optional interactions)");
+  d.h(3, "The Great Pussy Juice Tap");
+  d.items(extract("HubScene.ts", { method: "useTap" }));
+  d.h(3, "Strange occurrences (Kreblis's spots)");
+  d.items(extract("HubScene.ts", { method: "setupInteractables" }));
+  d.h(3, "The playground and the Register");
+  for (const m of ["registerScene", "registerBribe", "throwCandy", "raiseAlarm", "endChase"]) d.items(extract("HubScene.ts", { method: m }));
+  d.h(3, "Squeezes (golden juice)");
+  d.items(extract("HubScene.ts", { method: "setupSqueezers" }));
+  d.items(extract("squeeze.ts", { method: "squeeze" }));
+  d.h(3, "Beat-ups (one of the lads: 'let's beat up X')");
+  for (const m of scene("Beatup.ts").methods.keys()) d.items(extract("Beatup.ts", { method: m }));
+  d.h(3, "Talking to the cabinet in town (Dr Proctus, ministerial quest hand-ins)");
+  d.items(extract("HubScene.ts", { method: "talkTo" }));
+
+  d.h(2, "Building doors (flavour text when nothing's on there)");
+  d.when("Walking up to a building in Krelford when no story beat or side quest is waiting there.");
+  d.items(extract("HubScene.ts", { method: "enterBuilding" }));
+  d.items(extract("HubScene.ts", { method: "home" }));
 
   d.h(2, "Kreddle (optional visits over the bridge)");
   d.when("Kreddle, over the Kreddle Bridge (far west). The first time you talk to a local:");
@@ -1269,7 +1362,6 @@ function doc3(): Doc {
     d.para(`${s.top ? "★ " : ""}**${esc(who("DRONGUS"))}** ${esc(s.t)} ${code(`drongusStatuses.ts #${i}`)}`);
   });
   d.h(3, "How they're framed");
-  d.items(extract("UIScene.ts", { method: "create" }));
   d.items(extract("HomeScene.ts", { method: "dream" }));
   d.items(extract("HomeScene.ts", { method: "laptopPanel" }));
 
@@ -1322,7 +1414,7 @@ function doc4(): Doc {
   d.h(1, "KRELWORLD — The Krezz Arms");
   d.when("Everything that can happen in the pub. Sit at a table to overhear one of the table conversations (picked at random from the ones whose conditions hold; the people at the table have to be in town). Lines marked 'drunk 25+/50+/75+' only play when you've had enough Fizzy Bongos to hear them.");
   d.h(2, "Walking in");
-  d.items(extract("HubScene.ts", { method: "enterBuilding", match: "SanMik's magic lamp is on the bar" }));
+  d.para("*(Chapter 5 only: SanMik's magic lamp is on the bar — see document 1, \"The magic lamp\".)*");
   d.items(extract("PubScene.ts", { method: "barred" }));
   d.h(2, "Table conversations");
   for (const c of exp("pub.ts", "PUB_CONVERSATIONS") as any[]) {
@@ -1334,7 +1426,8 @@ function doc4(): Doc {
   EMITTED_EXPORTS.add(`${modByName("pub.ts")[0]}::PUB_CONVERSATIONS`);
   d.h(2, "Short snippets (Kreblis at the bar)");
   for (const c of exp("pub.ts", "PUB_SNIPPETS") as any[]) {
-    d.h(3, c.title ?? c.id);
+    d.h(3, c.title && c.title !== c.id ? c.title : c.id.replace(/_/g, " ").replace(/^./, (x: string) => x.toUpperCase()));
+    d.para(`*At the bar: ${c.seats.map((x: string) => esc(who(x))).join(", ")}.*`);
     d.lines(c.lines, `pub.ts ${c.id}`);
   }
   EMITTED_EXPORTS.add(`${modByName("pub.ts")[0]}::PUB_SNIPPETS`);
@@ -1348,9 +1441,10 @@ function doc4(): Doc {
   d.h(2, "Back room: SanMik & SanChz live");
   for (const m of [...scene("VenueScene.ts").methods.keys()]) d.items(extract("VenueScene.ts", { method: m }));
   d.h(2, "Through the curtain: The Wonky Pole");
-  d.items(extract("ClubScene.ts", { constName: undefined, method: "create" }));
-  for (const m of ["hitDerek", "thrownOut", "privateDance", "wonkOff", "climax"]) d.items(extract("ClubScene.ts", { method: m }));
+  for (const m of scene("ClubScene.ts").methods.keys()) d.items(extract("ClubScene.ts", { method: m }));
   for (const [k, v] of scene("ClubScene.ts").consts) if (/Line|say\(|dir\(/.test(v.getText())) d.items(extract("ClubScene.ts", { constName: k }));
+  d.h(2, "Back to the SanMikverse (rub the lamp again, after Chapter 5)");
+  dungeon(d, "sanmik_hangout", 3, { title: "" });
   d.h(2, "Drongus, when you walk in");
   const seq = (exp("drongusMessages.ts", "DRONGUS_SEQUENCES") as any[]).find((s) => s.id === "d_pub");
   seq?.messages.forEach((m: string, i: number) => d.para(`[group chat] **${esc(who("DRONGUS"))}:** ${esc(m)} ${code(`drongusMessages.ts d_pub#${i}`)}`));
@@ -1371,6 +1465,9 @@ function unreachable(d: Doc) {
   if (!MEETING_PLACED.has("final_reading")) {
     /* covered above */
   }
+  for (const [n, v] of Object.entries(modByName("laterMeetings.ts")[1])) if (v && typeof v === "object" && (v as any).beats && !MEETING_PLACED.has((v as any).id)) meeting(d, (v as any).id, 3, "Written, but not in the MEETINGS list (meetings/index.ts).", v);
+  d.h(3, "Chapter 6 outro (skipped: the Town Hall party ends Chapter 6 and moves straight on)");
+  d.lines(CHAPTERS[5].outro, "chapters.ts CHAPTERS/6/outro");
   d.h(3, "Chapter 7 intro (skipped: the aftermath scene sets the flag that would play it)");
   d.lines(CHAPTERS[6].intro, "chapters.ts CHAPTERS/7/intro");
   for (const p of PLAYABLE) {
@@ -1392,7 +1489,11 @@ function unreachable(d: Doc) {
     dungeon(d, id, 4, { title: "" });
   }
   d.h(3, "Polson & Eden: Cheesegate and the Mork Voice (no dungeon room uses these events)");
-  d.exp("polsonEden.ts", "DOMESTICS");
+  for (const dm of exp("polsonEden.ts", "DOMESTICS") as any[]) {
+    d.h(4, `Domestic: ${dm.title}`);
+    d.lines(dm.lines, `polsonEden.ts DOMESTICS/${dm.id}`);
+  }
+  EMITTED_EXPORTS.add(`${modByName("polsonEden.ts")[0]}::DOMESTICS`);
   for (const w of exp("polsonEden.ts", "CHEESE_WITNESSES") as any[]) {
     d.h(4, `Witness: ${w.name ?? w.id}`);
     for (const [k, ls] of Object.entries(w.testimony ?? {})) {
@@ -1419,10 +1520,11 @@ function unreachable(d: Doc) {
 
 // ------------------------------------------------------------------ build
 
+// build order decides where a shared scene line lands (each is listed once): the catch-all side-quest doc goes last
 const d1 = doc1();
-const d2 = doc2();
 const d3 = doc3();
 const d4 = doc4();
+const d2 = doc2();
 unreachable(d1);
 autofill(d1);
 
