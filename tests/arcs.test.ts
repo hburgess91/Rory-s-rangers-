@@ -65,6 +65,29 @@ describe("character side stories", () => {
   });
 });
 
+describe("the demons inside Lulon's mind", () => {
+  it("both pudding stories end in his head, then a thank-you", () => {
+    for (const id of ["arc_crongus", "arc_pudding_spy"]) {
+      const a = ARCS.find((x) => x.id === id)!;
+      const ids = a.steps.map((s) => s.id);
+      const raid = ids.indexOf("raid");
+      const arena = a.steps[raid + 1].step;
+      expect(arena.kind === "arena" && arena.dungeon).toBe("arena_lukemind");
+      expect(a.steps[raid + 1].auto && a.steps[raid + 2].auto).toBe(true);
+      expect(a.steps[raid + 2].step.kind).toBe("dialogue");
+      expect(a.steps.length).toBe(raid + 3);
+    }
+    const own = ARCS.find((x) => x.id === "arc_crongus")!;
+    const k = own.steps.find((s) => s.id === "demons")!.step;
+    expect(k.kind === "arena" && k.drugs).toBe(true);
+    const pay = own.steps[own.steps.length - 1].step;
+    expect(pay.kind === "dialogue" && pay.pay?.coins).toBe(200);
+    const d = DUNGEONS.arena_lukemind;
+    expect(d.rooms[d.rooms.length - 1].boss).toBe("pudding_demon");
+    expect(d.returnAt).toBe("POLICE");
+  });
+});
+
 describe("Kreltower plot", () => {
   it("the Kreddle Express quest: Flight KR-069 ends with Krozno and is Chapter 6, the last before Da Drongus Dungeon", () => {
     const d = DUNGEONS.airport;

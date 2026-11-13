@@ -629,22 +629,24 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.tweens.add({ targets: o, x: x + rnd.between(-40, 40), y: y + rnd.between(-30, 30), angle: rnd.between(-25, 25), yoyo: true, repeat: -1, duration: rnd.between(2600, 4800), ease: "Sine.inOut" });
     }
     // the whole mind gently breathes (only while you're fighting, so cutscene cameras aren't fought over)
-    const start = this.time.now + (this.roomIdx === 0 ? 1500 : 0);
     const breathe = () => {
-      if (this.busy || this.time.now < start || this.transitioning) return;
-      const t = (this.time.now - start) / 1700;
-      this.cameras.main.setZoom(1 + 0.035 * (0.5 - 0.5 * Math.cos(t * Math.PI)));
+      if (this.busy || this.transitioning || this.time.now < this.mindSpinUntil) return;
+      this.cameras.main.setZoom(1 + 0.035 * (0.5 - 0.5 * Math.cos((this.time.now / 1700) * Math.PI)));
     };
     this.events.on("update", breathe);
     this.events.once("shutdown", () => this.events.off("update", breathe));
-    // first room: you arrive spinning out of the trip
-    if (this.roomIdx === 0) {
-      const cam = this.cameras.main;
-      cam.setZoom(2.6).setRotation(0.9);
-      this.tweens.add({ targets: cam, rotation: 0, duration: 1400, ease: "Cubic.out" });
-      this.tweens.addCounter({ from: 2.6, to: 1, duration: 1400, ease: "Cubic.out", onUpdate: (tw) => cam.setZoom(tw.getValue() ?? 1) });
-      cam.flash(700, 255, 120, 220);
-    }
+  }
+
+  private mindSpinUntil = 0;
+
+  /** Arriving in Lulon's mind (after the opening lines): you spin out of the trip into the custard. */
+  private mindArrive() {
+    const cam = this.cameras.main;
+    this.mindSpinUntil = this.time.now + 1500;
+    cam.setZoom(2.6).setRotation(0.9);
+    this.tweens.add({ targets: cam, rotation: 0, duration: 1400, ease: "Cubic.out" });
+    this.tweens.addCounter({ from: 2.6, to: 1, duration: 1400, ease: "Cubic.out", onUpdate: (tw) => cam.setZoom(tw.getValue() ?? 1) });
+    cam.flash(700, 255, 120, 220);
   }
 
   private addProp(p: PropDef) {
@@ -1036,6 +1038,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       enter.push(say("DRONGUS", rule?.decree ?? "NEW RULE.", { notify: true, sfx: "decree" }));
     }
     if (enter.length) await this.talk(enter);
+    if (r.theme === "mind" && this.roomIdx === 0) this.mindArrive();
     if (r.event === "anthem") await this.anthemEvent();
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
     if (this.roomIdx === 0) G.drongus("enter_dungeon");

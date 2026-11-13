@@ -7087,6 +7087,30 @@
    "file": "talk/talk_MIKEY_HURT.png",
    "frameWidth": 64,
    "frameHeight": 64
+  },
+  "en_mind_imp": {
+   "file": "combat/en_mind_imp.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.4
+  },
+  "en_custard_demon": {
+   "file": "combat/en_custard_demon.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.5
+  },
+  "en_pudding_fiend": {
+   "file": "combat/en_pudding_fiend.png",
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "hd": 0.75
+  },
+  "boss_pudding_demon": {
+   "file": "combat/boss_pudding_demon.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.5
   }
  },
  "vfx": {

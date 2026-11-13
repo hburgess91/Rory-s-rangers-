@@ -26,6 +26,7 @@ import { EnterScene } from "./game/scenes/EnterScene";
 import { HomeScene } from "./game/scenes/HomeScene";
 import { DriveScene } from "./game/scenes/DriveScene";
 import { BeepBeepScene } from "./game/scenes/BeepBeepScene";
+import { LairScene } from "./game/scenes/LairScene";
 import { installDebug } from "./game/debug";
 import { installCrashGuard } from "./game/crashGuard";
 
@@ -67,6 +68,7 @@ const game = new Phaser.Game({
     HomeScene,
     DriveScene,
     BeepBeepScene,
+    LairScene,
     MenuScene,
     EndingScene,
   ],

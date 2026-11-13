@@ -116,7 +116,9 @@ export class Spice {
     // top-down
     const b = sc.bounds as Phaser.Geom.Rectangle;
     const combat = !!(sc.waves?.length) && !r.boss && !r.event && !r.exitFlag;
-    if (combat && (sc.roomIdx > 0 || G.s.chapter > 1)) {
+    // no random twists inside Luke's head: it's weird enough in there
+    const noTwists = (sc as unknown as { dungeon?: { id: string } }).dungeon?.id === "arena_lukemind";
+    if (combat && !noTwists && (sc.roomIdx > 0 || G.s.chapter > 1)) {
       const pool: (Twist | null)[] = [null, null, "BARRELS", "ELITES", "TAX DODGER", "SURVIVE", "SLURRY FLOOR"];
       this.twist = pool[Math.floor(Math.random() * pool.length)];
     }
