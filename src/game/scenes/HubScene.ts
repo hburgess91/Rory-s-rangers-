@@ -24,9 +24,11 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
+import { takeDrugs, tripInto } from "./hub/drugs";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
-import { CRYSTAL_SIX, KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
+import { KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
+import * as AFTER from "../../content/chapters/ch7aftermath";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
@@ -266,7 +268,7 @@ export class HubScene extends Phaser.Scene {
     synth.ambience("town");
     this.weather();
     G.save();
-    this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover));
+    this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover, data?.at));
   }
 
   /** First time out of the front door: a slow look round Krelford. */
@@ -277,7 +279,7 @@ export class HubScene extends Phaser.Scene {
   private weather() {
     const c0 = clock();
     // Chapter 6, from the revenge meeting to the end: a black, rainy night
-    const raidNight = G.s.chapter === 6 && !!G.s.flags.raid_march && !G.s.flags.ch6_clear;
+    const raidNight = (G.s.chapter === 6 && !!G.s.flags.raid_march && !G.s.flags.ch6_clear) || (G.s.chapter >= 7 && !!G.s.flags.krelworld_bombed);
     const kind = raidNight ? "storm" : weatherFor(c0.day);
     (this as any).weatherKind = kind;
     // the sky follows Krelford's clock: night darkens, dusk and dawn glow orange, doors light up after dark
@@ -415,7 +417,7 @@ export class HubScene extends Phaser.Scene {
     G.emit("toast", { title: "OBJECTIVE", text: "Go to Krelford Town Hall. Follow the yellow arrow." });
   }
 
-  private async onArrive(from?: string, flyover?: boolean) {
+  private async onArrive(from?: string, flyover?: boolean, at?: string) {
     const s = G.s;
     if (flyover && !s.flags.flyover_seen && !s.flags.prologue_done) await this.flyover();
     // Chapter 6 is the point of no return: it only starts when you say so, at the Town Hall
@@ -427,14 +429,14 @@ export class HubScene extends Phaser.Scene {
       } else G.emit("toast", { title: "⚠ LAST CHANCE", text: "Stock up on weapons, ammo, upgrades, Krezzcoin and Krokens. Go to the Town Hall when you're ready to begin Chapter 6." });
       return;
     }
-    // After Chapter 6 fades to black: the sixth cum crystal, out of nowhere
-    if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.crystal_krunch_seen) {
-      s.flags.crystal_krunch_seen = true;
-      s.flags.crystal_krunch = true;
-      G.save();
-      await this.talk(CRYSTAL_SIX);
-      synth.play("ding");
-      G.emit("toast", { title: "CUM CRYSTAL 6/6", text: "Nobody knows where it came from. Nobody's asking." });
+    // Chapter 7 opens at the top of Da Drongus Dungeon, then Krelford wakes up in the rubble
+    if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.ch7_lair_seen) {
+      this.go("Lair", {});
+      return;
+    }
+    if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.ch7_aftermath) {
+      await this.aftermath();
+      return;
     }
     // Chapter 6 finale: home in time (or not): Kreddle's Krunch Protocol comes for every building in town
     if (from === "krunch") {
@@ -466,6 +468,9 @@ export class HubScene extends Phaser.Scene {
       await this.talk([dir("You wake up at the edge of town, next to a faded symbol and a pile of underwear. You don't remember how you got here. You feel inexplicably like a rockstar.")]);
     }
     if (from === "arena" || from === "vignette" || from === "minigame" || from === "dungeon") this.arcPayout();
+    // a side-quest step marked auto follows straight on from the cutscene or fight you've just come back from
+    const auto = (from === "arena" || from === "vignette") && at ? arcStepAt(s, at) : null;
+    if (auto?.step.auto && (await this.runArcStep(at!)) && this.busy) return;
     G.drongus("hub");
     if (from === "dungeon") G.emit("toast", { title: "BACK IN KRELFORD", text: s.chapter === 1 && !s.flags.wildern_destroyed ? "Wildern has to go. Plant the bombs (4) around the school." : "Report to the Town Hall." });
     // the Kreddle Krunchers come over the bridge (start of Chapter 3)
@@ -1704,6 +1709,7 @@ export class HubScene extends Phaser.Scene {
     this.interactables.push({ x: 1450, y: 780, r: 60, label: () => "Watch KrelTV", use: () => this.openTV() });
     this.spawnCollectibles();
     this.spawnBrawl();
+    if (G.s.chapter >= 7 && G.s.flags.krelworld_bombed) this.ruinTown();
     // Kreblis quest: strange occurrences
     for (const { quest, spot, anchor } of pickupsInHub(G.s)) {
       const a = ANCHORS[anchor];
@@ -2423,6 +2429,11 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "dialogue":
         await this.talk(k.lines);
         completeStep(s, arc, step);
+        if (k.pay) {
+          s.coins += k.pay.coins;
+          synth.play("coin");
+          G.emit("toast", { title: k.pay.title, text: k.pay.text });
+        }
         break;
       case "pay": {
         await this.talk(k.intro);
@@ -2466,6 +2477,12 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "arena":
         await this.talk(k.intro);
         G.emit("toast", { title: "ARENA", text: DUNGEONS[k.dungeon]?.name ?? "Fight!" });
+        if (k.drugs) {
+          this.busy = true;
+          await takeDrugs(this);
+          tripInto(this, () => switchTo(this, "Dungeon", { dungeon: k.dungeon, room: 0 }));
+          return true;
+        }
         this.go("Dungeon", { dungeon: k.dungeon, room: 0 });
         return true;
       case "minigame":
@@ -2872,6 +2889,123 @@ You are required by law to sign the Sex Offenders Register.`, {
     s.flags.kr_home_pending = true;
     G.save();
     this.go("Vignette", { id: "kruncher_mikey" });
+  }
+
+  // ---------------------------------------------------------------- CHAPTER 7: Krelford after the Krunch Protocol
+
+  /** Every building scorched, fires still burning, smoke, embers on the wind. */
+  private ruinTown() {
+    for (const b of BUILDINGS) {
+      const img = this.bImg[b.id];
+      if (img) img.setTint(0x6b5a5a);
+      if (b.id === "CITADEL") continue;
+      for (let i = 0; i < 2; i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 0.7, b.y + (Math.random() - 0.2) * b.h * 0.4, { scale: 1.4 + Math.random(), depth: b.y + b.h / 2 + 2, delay: Math.random() * 600 });
+      if (Math.random() < 0.6) vfx(this, "vfx_smokecol", b.x + (Math.random() - 0.5) * b.w * 0.4, b.y - b.h * 0.2, { scale: 1.8, depth: b.y + b.h / 2 + 1, alpha: 0.8 });
+    }
+    // embers drifting across the screen
+    this.time.addEvent({
+      delay: 120,
+      loop: true,
+      callback: () => {
+        const cam = this.cameras.main.worldView;
+        const e = this.add.circle(cam.x + Math.random() * cam.width, cam.y + cam.height + 10, 1.5 + Math.random() * 2, Math.random() < 0.5 ? 0xff9a3a : 0xffd27a, 0.9).setDepth(4980).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: e, x: e.x + 80 + Math.random() * 120, y: e.y - 300 - Math.random() * 200, alpha: 0, duration: 3000 + Math.random() * 2000, onComplete: () => e.destroy() });
+      },
+    });
+    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 1).setAlpha(0.18).setScrollFactor(0).setDepth(4903).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    void red;
+  }
+
+  /** The lads crawl out of the Town Hall rubble with the worst hangover in history. */
+  private async aftermath() {
+    const s = G.s;
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    const th = BUILDINGS.find((b) => b.id === "TOWN_HALL")!;
+    const cx = th.door!.x;
+    const cy = th.door!.y + 70;
+    cam.stopFollow();
+    cam.centerOn(cx, cy - 40);
+    this.av.setVisible(false);
+    synth.stopMusic();
+    // rubble heaps with the Krew under them
+    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
+    const lads = ids.map((id, i) => {
+      const x = cx - 200 + i * 50;
+      const y = cy + (i % 2) * 22;
+      const heap = this.textures.exists("kd_rubble") ? this.add.image(x, y + 8, "kd_rubble").setScale(1.2).setDepth(y + 5) : this.add.ellipse(x, y + 10, 46, 20, 0x4b3f3a).setDepth(y + 5);
+      const meta = charMeta(this, `spr_${id}`);
+      const fall = meta?.death?.east ?? meta?.death?.south;
+      const spr = this.add.sprite(x, y, `spr_${id}`, fall ? fall[fall.length - 1] : 0).setScale(2).setDepth(y);
+      if (!fall) spr.setAngle(90);
+      return { id, spr, heap, fall };
+    });
+    await this.talk(AFTER.AFTER_WAKE);
+    // one by one, they come round
+    for (const l of lads) {
+      vfx(this, "vfx_dust", l.spr.x, l.spr.y + 6, { scale: 1.2, depth: l.spr.y + 6 });
+      if (Math.random() < 0.6) synth.play("groan");
+      this.tweens.add({ targets: l.heap, alpha: 0.5, y: l.heap.y + 6, duration: 300 });
+      if (l.fall) for (const f of [...l.fall].reverse()) {
+        l.spr.setFrame(f);
+        await new Promise((r) => this.time.delayedCall(70, r));
+      }
+      else l.spr.setAngle(0);
+      l.spr.setFrame(charMeta(this, l.spr.texture.key)?.idle.south ?? 0);
+      await new Promise((r) => this.time.delayedCall(140, r));
+    }
+    await this.talk(AFTER.AFTER_HANGOVER);
+    await this.talk(AFTER.AFTER_LEAK);
+    // little-girl shrieks, all round
+    lads.forEach((l, i) =>
+      this.time.delayedCall(i * 140, () => {
+        synth.play("shriek");
+        this.tweens.add({ targets: l.spr, y: l.spr.y - 26, yoyo: true, duration: 160, repeat: 2 });
+        this.floatShout(l.spr, ["EEEEEEEE!", "AAAIIIEEE!", "NOOOO!", "EEEK!"][i % 4], "#fbcfe8");
+      }),
+    );
+    cam.shake(600, 0.006);
+    await new Promise((r) => this.time.delayedCall(1600, r));
+    await this.talk(AFTER.AFTER_SHRIEK);
+    // the sixth crystal, glowing in the rubble
+    const crystal = this.add.image(cx, cy - 30, this.textures.exists("cum_crystal") ? "cum_crystal" : "__WHITE").setScale(0.5).setDepth(cy + 60);
+    const glow = this.add.circle(cx, cy - 30, 34, 0xfbcfe8, 0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(cy + 59);
+    this.tweens.add({ targets: [crystal, glow], y: "-=10", yoyo: true, repeat: -1, duration: 700 });
+    this.tweens.add({ targets: glow, scale: 1.5, alpha: 0.15, yoyo: true, repeat: -1, duration: 700 });
+    synth.play("ding");
+    s.flags.crystal_krunch = true;
+    s.flags.crystal_krunch_seen = true;
+    await this.talk(AFTER.AFTER_CRYSTAL.slice(0, 6));
+    // up at the top of town: the slots light, the gates open
+    const cit = BUILDINGS.find((b) => b.id === "CITADEL")!;
+    cam.pan(cit.x, cit.y + 40, 1400, Phaser.Math.Easing.Sine.InOut);
+    await new Promise((r) => this.time.delayedCall(1500, r));
+    for (let i = 0; i < 6; i++) {
+      const x = cit.x + (i - 2.5) * 22;
+      const y = cit.y + cit.h / 2 - 96;
+      this.add.circle(x, y, 12, 0xfbcfe8, 0.6).setBlendMode(Phaser.BlendModes.ADD).setDepth(cit.y + cit.h / 2 + 4);
+      synth.play("select");
+      await new Promise((r) => this.time.delayedCall(260, r));
+    }
+    synth.play("boom");
+    cam.shake(500, 0.01);
+    cam.flash(300, 251, 207, 232);
+    await this.talk(AFTER.AFTER_CRYSTAL.slice(6));
+    cam.pan(cx, cy, 900);
+    await new Promise((r) => this.time.delayedCall(950, r));
+    // the Krew head off up the hill; you're back in control
+    lads.slice(1).forEach((l) => this.tweens.add({ targets: [l.spr, l.heap], alpha: 0, duration: 900, onComplete: () => l.spr.destroy() }));
+    crystal.destroy();
+    glow.destroy();
+    this.av.setPosition(lads[0].spr.x, lads[0].spr.y).setVisible(true);
+    lads[0].spr.destroy();
+    Object.assign(s.flags, { ch7_aftermath: true, ch7_intro: true, final_reading: true });
+    G.save();
+    cam.startFollow(this.av, true, 0.12, 0.12);
+    synth.music("hub");
+    this.busy = false;
+    G.emit("toast", { title: "CHAPTER 7", text: "DA DRONGUS DUNGEON — the gates are open. Stop the leak." });
   }
 
   // ---------------------------------------------------------------- CHAPTER 6: last chance, revenge, the march, the bomb
