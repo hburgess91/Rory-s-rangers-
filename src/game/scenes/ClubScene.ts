@@ -679,6 +679,8 @@ export class ClubScene extends Phaser.Scene {
         ui.add(spr);
         const wrist = addWrist(this, spr.x - 8, 278, { ...wristLook(id, CHARACTERS as any), scale: 1.6, speed: 90 + Math.random() * 60 });
         ui.add(wrist.obj);
+        // the real art pumps its own arm; the stand-in wrist is only for sprites without it
+        if (spr.getData("pump")) wrist.obj.setVisible(false);
         spr.setData("wrist", wrist);
         ui.add(this.add.text(spr.x, 150, id === s.player ? "YOU" : CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: id === s.player ? "14px" : "11px", color: id === s.player ? "#ffd23f" : "#ffd1e8", fontStyle: "bold" }).setOrigin(0.5));
         // gauge under each

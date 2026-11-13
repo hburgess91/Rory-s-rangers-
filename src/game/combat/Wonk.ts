@@ -85,6 +85,7 @@ export function startWonk(p: Player, now: number) {
   // the real thing, when the art has it: an arm pumping away (the business end stays behind the bar)
   const pump = perfCycle(hero, "wonk");
   let pumpPhase = 0;
+  if (pump) wrist.obj.setVisible(false);
   // keep it decent: a big censor bar over the business end
   const bar = sc.add.rectangle(320, 352, 170, 54, 0x000000);
   const barT = sc.add.text(320, 352, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
