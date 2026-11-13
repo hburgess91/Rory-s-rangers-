@@ -1,3 +1,5 @@
+import { ENEMIES_CH7 } from "./enemiesCh7";
+
 export type Behavior = "chaser" | "charger" | "shooter" | "bomber" | "spawner" | "blinker" | "orbiter" | "swarm" | "lobber" | "leaper" | "turret" | "pod";
 
 export interface EnemyDef {
@@ -21,6 +23,9 @@ export interface EnemyDef {
   shout?: string[];
   /** Roughly how often (ms) it shouts. Default about every 4s. */
   shoutEvery?: number;
+  /** A name plate drawn over its head (chapter 7). */
+  plate?: string;
+  plateColor?: string;
 }
 
 export const ENEMIES: Record<string, EnemyDef> = {
@@ -111,3 +116,6 @@ export const ENEMIES: Record<string, EnemyDef> = {
   custard_demon: { id: "custard_demon", name: "Custard Demon", behavior: "lobber", hp: 44, speed: 75, damage: 9, size: 16, color: 0xfacc15, accent: 0xdc2626, shape: "blob", label: "!", projectile: { speed: 0, damage: 13, color: 0xfde68a, rate: 2100 }, coins: 5, krezz: 4, shout: ["KIDS! KIDS!", "KIDS!!", "KIIIDS!", "KIDS! KIDS!"], shoutEvery: 1800 },
   pudding_fiend: { id: "pudding_fiend", name: "Bread And Butter Fiend", behavior: "charger", hp: 70, speed: 90, damage: 14, size: 19, color: 0xd97706, accent: 0xfef3c7, shape: "brute", coins: 7, krezz: 5, shout: ["KIDS! KIDS!", "KIIIDS!", "KIDS!!", "KIDS! KIDS! KIDS!"], shoutEvery: 1700 },
 };
+
+// Chapter 7: Da Drongus Dungeon (src/data/enemiesCh7.ts)
+Object.assign(ENEMIES, ENEMIES_CH7);

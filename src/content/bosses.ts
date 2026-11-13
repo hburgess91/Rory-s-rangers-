@@ -492,6 +492,67 @@ export const BOSS_TEXT: Record<string, BossText> = {
     ],
     taunts: ["SWEET HUGS!", "SWEETER SQUEEZES!", "Have a token!", "Juices, please!", "COME HERE!", "SO COSY!", "LONGER! LONGER!", "NOBODY CUDDLES THE CRONSTER!"],
   },
+  // ---- Chapter 7: Da Drongus Dungeon mini-bosses (generated live by Drongus's AI)
+  krex: {
+    id: "krex",
+    name: "METAL GEAR KREX",
+    title: "Bipedal Nuclear Walking Tank · AI-Generated · Extremely Horny",
+    intro: [
+      say("METAL GEAR KREX", "TARGET ACQUIRED. SYSTEMS: ONLINE. NUCLEAR PAYLOAD: ARMED."),
+      say("METAL GEAR KREX", "ALSO: I AM SO HORNY."),
+      say("DRONGUS", "(over the tannoy) …AI, why is the tank horny."),
+      say("DRONGUS AI", "Sorry! It seems to have been trained on a very specific part of the internet."),
+      say("METAL GEAR KREX", "I AM A FORTY-TONNE WALKING BATTLE STATION AND ALL I CAN THINK ABOUT IS PUSSY JUICE."),
+      say("METAL GEAR KREX", "STAND STILL, HUMAN. I MUST CRUSH YOU, AND THEN LOOK FOR PUSSY JUICE."),
+      dir("TIP: Shoot the bits off. The rail gun, the arm, the tail, the legs: every chunk of armour that falls off changes what it can do. Jump the stomp shockwaves. Get out of the red line before the rail gun fires."),
+    ],
+    outro: [
+      say("METAL GEAR KREX", "CRITICAL DAMAGE… REACTOR… FAILING… ONE… LAST… PUSSY… JU—"),
+      dir("METAL GEAR KREX explodes. Then it explodes again. Then a bit more, for luck. The cockpit bounces down the corridor and comes to rest at your feet. Stuck to the glass: a sticky note. 'LIBIDO.EXE: DO NOT RUN.'"),
+      say("YOU", "What a waste of a perfectly good nuclear tank."),
+      say("DRONGUS", "(over the tannoy) That cost me eleven generations. ELEVEN."),
+    ],
+    taunts: [
+      "SO. HORNY.",
+      "PUSSY JUICE DETECTED… NO. FALSE ALARM.",
+      "RAIL GUN CHARGING. AS AM I.",
+      "COOLANT LEVELS: HORNY",
+      "BEEP BOOP. PUSSY JUICE.",
+      "I WOULD WALK FIVE HUNDRED MILES FOR PUSSY JUICE",
+      "SCANNING FOR PUSSY JUICE… 0 RESULTS",
+      "MY REACTOR RUNS ON PUSSY JUICE (IT DOES NOT)",
+      "WHY DID HE GIVE A TANK A LIBIDO",
+      "NUCLEAR AND HORNY. A BAD COMBINATION.",
+    ],
+  },
+  elon: {
+    id: "elon",
+    name: "ELON MUSK (AI-GENERATED)",
+    title: "Not The Real One · Free Speech Absolutist · Rocket Man",
+    intro: [
+      say("ELON MUSK", "Hey. It's me. Well, an AI-generated me. Which is still more real than the Cybertruck delivery date."),
+      say("ELON MUSK", "I just bought this staircase. I've fired half the steps. The rest are now a subscription."),
+      dir("TIP: He flies after you on a rocket. Dodge the falling Cybertrucks, shoot the little X's before they swarm you, and keep climbing between hits."),
+    ],
+    outro: [
+      say("ELON MUSK", "Concerning…"),
+      dir("The AI-generated Elon pops like a cheap balloon. A small X floats gently down the shaft where he was. Somebody has already added a community note to it."),
+    ],
+    taunts: [
+      "FREE SPEECH! (not for you)",
+      "Concerning.",
+      "Looking into it.",
+      "This is going to Mars.",
+      "CYBERTRUCK INCOMING! (delayed)",
+      "X MARKS THE SPOT!",
+      "Rocket go UP!",
+      "Tweeting this.",
+      "!!",
+      "Interesting.",
+      "Blue tick? $8.",
+      "Full self-climbing next year.",
+    ],
+  },
 };
 
 /** Phase banners for the final fight. */

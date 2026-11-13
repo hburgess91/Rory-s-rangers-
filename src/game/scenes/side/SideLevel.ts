@@ -92,8 +92,9 @@ export class SideLevel {
       const y = gy - h;
       const rect = sc.add.rectangle(x, y, w, 14, 0, 0);
       platforms.add(rect);
-      const top = sc.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(0xffd6a5);
-      const edge = sc.add.rectangle(x, y - 7, w, 3, 0x22d3ee, 0.9).setDepth(5);
+      const cit = r.theme === "citadel";
+      const top = sc.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(cit ? 0x9a86b0 : 0xffd6a5);
+      const edge = sc.add.rectangle(x, y - 7, w, 3, cit ? 0xff2d95 : 0x22d3ee, 0.9).setDepth(5);
       const under = sc.add.rectangle(x, y + 9, w * 0.6, 4, 0x000000, 0.5).setDepth(5);
       this.movers.push({ rect, deco: [top, edge, under], bx: x, by: y, dx, dy, period, lastX: x, lastY: y });
     }
@@ -173,6 +174,13 @@ export class SideLevel {
     this.go?.destroy();
     this.go = sc.add.text(880, 250, "GO →", { fontFamily: "Impact, sans-serif", fontSize: "44px", color: "#ffd23f", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(960);
     sc.tweens.add({ targets: this.go, x: 900, yoyo: true, repeat: 3, duration: 220, onComplete: () => { this.go?.destroy(); this.go = null; } });
+  }
+
+  /** Starting part way along (a checkpoint): everything behind you counts as done. */
+  skipTo(x: number, y: number) {
+    for (const t of this.triggers) if (this.room.tower ? y <= t.x : x >= t.x) t.fired = true;
+    this.lastSafeX = x;
+    if (this.chase && x > this.room.w * this.room.chase!.at) this.chase.done = true;
   }
 
   inGap(x: number, pad = 0) {

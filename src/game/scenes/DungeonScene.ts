@@ -11,6 +11,9 @@ import { Controls } from "../combat/Controls";
 import type { CombatWorld, HitOpts, ShotOpts } from "../combat/types";
 import { Boss, createBoss, DrongusBoss, OverWonkedMachine } from "../combat/Bosses";
 import { PuddingDemonBoss } from "../combat/MindBoss";
+import { KrexBoss } from "../combat/KrexBoss";
+import { ElonBoss } from "../combat/ElonBoss";
+import { Citadel, citadelPreload, citadelReady } from "./citadel/Citadel";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
 import { BOSS_TEXT } from "../../content/bosses";
@@ -116,6 +119,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private platforms: Phaser.Physics.Arcade.StaticGroup | null = null;
   private sideBg: Phaser.GameObjects.TileSprite | null = null;
   private sideBgScale = 1;
+  /** Chapter 7 (Da Drongus Dungeon): the gothic-cyber dressing, the tannoy, the anthem. */
+  private citadel: Citadel | null = null;
+  /** A room's mini-boss: not met yet, fighting it, or beaten. */
+  private miniBossState: "none" | "fight" | "done" = "none";
+  /** While a side-on mini-boss is up, the screen is locked from here to the end of the room. */
+  private arenaLeft = 0;
 
   constructor() {
     super("Dungeon");
@@ -187,6 +196,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     (this as any)._bossHpPct = data.bossHpPct;
     // boss rush checkpoint: died on Crobley N? Start again from Crobley N
     this.rushIdx = Math.max(0, Math.min(data.rush ?? 0, this.room?.bossRush?.length ?? 0));
+    this.miniBossState = "none";
+    this.arenaLeft = 0;
+    this.citadel = null;
+  }
+
+  preload() {
+    // Da Drongus Dungeon's art, until it's in the manifest
+    if (this.dungeon.id === "citadel" || this.room.theme === "citadel") citadelPreload(this);
   }
 
   /** The fight's own clock: runs at the slow-motion rate (Phaser's scene clock doesn't). */
@@ -223,9 +240,28 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.physics.world.setBounds(24, 24, r.w - 48, r.h - 48);
       this.bounds.setTo(24, 24, r.w - 48, r.h - 48);
     }
+    if (this.dungeon.id === "citadel" || r.theme === "citadel") citadelReady(this);
+    if (r.theme === "citadel")
+      this.citadel = new Citadel(this as never, r, {
+        talk: (l) => this.talk(l),
+        openExit: () => {
+          this.roomCleared = true;
+          this.markCleared();
+          this.door.setTexture("p_door");
+        },
+        inGap: (x, pad) => !!this.sideLevel?.inGap(x, pad),
+        door: () => this.door,
+      });
     this.buildRoom();
     this.controls = new Controls(this);
-    this.player = new Player(this, this.side ? 90 : r.w / 2, this.side ? this.groundY - 40 : r.h - 90);
+    // died fighting a mini-boss? Back in at the start of its arena, not the start of the room
+    const cp = r.miniBoss ? G.s.flags[this.miniBossKey()] : undefined;
+    const cpx = typeof cp === "string" ? Number(cp.split(",")[0]) : NaN;
+    const cpy = typeof cp === "string" ? Number(cp.split(",")[1]) : NaN;
+    const startX = this.side ? (Number.isFinite(cpx) ? cpx : 90) : r.w / 2;
+    const startY = this.side ? (Number.isFinite(cpy) ? cpy : this.groundY - 40) : r.h - 90;
+    this.player = new Player(this, startX, startY);
+    if (Number.isFinite(cpx)) this.sideLevel?.skipTo(cpx, cpy);
     if (this.side) {
       (this.player.spr.body as Phaser.Physics.Arcade.Body).setGravityY(1500);
       // side-on, everyone's drawn bigger (classic run'n'gun proportions)
@@ -365,14 +401,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     const tile = `tile_${r.theme}`;
     if (!this.sideLevel?.hasGaps) {
-      this.add.tileSprite(0, gy, r.w, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(0x8a8a9a);
+      this.add.tileSprite(0, gy, r.w, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(r.theme === "citadel" ? 0xa898b8 : 0x8a8a9a);
       this.add.rectangle(0, gy, r.w, 4, 0x000000, 0.6).setOrigin(0).setDepth(3);
     }
     this.platforms = this.physics.add.staticGroup();
     for (const [fx, h, w] of r.platforms ?? []) {
       const x = r.w * fx;
       const y = gy - h;
-      if (r.tower) {
+      if (this.citadel) {
+        this.citadel.platform(x, y, w, !!r.tower);
+      } else if (r.tower) {
         // gothic stone ledge: dark stone, gold trim, little corbels underneath
         const g = this.add.graphics().setDepth(4);
         g.fillStyle(0x2a1a33, 1).fillRect(x - w / 2, y - 7, w, 16);
@@ -405,13 +443,16 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.platforms.add(plat);
     }
     this.sideLevel?.build(this.platforms);
+    this.citadel?.side();
     this.obstacles = this.physics.add.staticGroup();
     const dx = r.exitAt ? r.w * r.exitAt[0] : r.w - 70;
     const dy = r.exitAt ? gy - r.exitAt[1] - 7 : gy;
     this.door = this.add.image(dx, dy - 30, "p_door_locked").setScale(2.2).setDepth(6);
     this.doorZone = new Phaser.Geom.Rectangle(dx - 60, dy - 110, 120, 110);
-    this.add.text(dx, dy - 78, r.boss ? "" : r.tower ? "THE SQUEEZING ROOM ↑" : "EXIT →", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
+    const exitLabel = r.boss ? "" : r.exitLabel ?? (r.tower ? "THE SQUEEZING ROOM ↑" : "EXIT →");
+    if (exitLabel) this.add.text(dx, dy - 78, exitLabel, { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
     if (r.tower) this.decorateTower();
+    this.sideQuestPickups();
     const t = this.add.text(480, 200, r.name.toUpperCase(), { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setScrollFactor(0).setDepth(950).setShadow(3, 3, "#000", 0);
     this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
     for (const p of r.props ?? []) if (evalCond(p.cond, G.s)) this.addProp(p);
@@ -420,10 +461,42 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private towerBg: Phaser.GameObjects.TileSprite | null = null;
 
+  /** Personal-quest pickups in side-on rooms: on the floor (or up on a ledge in a tower). */
+  private sideQuestPickups() {
+    const r = this.room;
+    for (const { quest, spot } of pickupsInDungeon(G.s, this.dungeon.id, this.roomIdx)) {
+      let x = r.w * (0.25 + Math.random() * 0.5);
+      let y = this.groundY - 30;
+      if (r.tower && r.platforms?.length) {
+        const [fx, h] = r.platforms[Math.floor(r.platforms.length * (0.2 + Math.random() * 0.5))];
+        x = r.w * fx;
+        y = this.groundY - h - 30;
+      } else if (this.sideLevel?.inGap(x, 40)) x += 260;
+      const spr = this.add.image(x, y, "p_scroll").setScale(2).setDepth(20);
+      this.tweens.add({ targets: spr, y: y - 6, yoyo: true, repeat: -1, duration: 600 });
+      const glow = this.add.circle(x, y, 16, 0xffd23f, 0.25).setDepth(19);
+      this.pickups.push({
+        spr,
+        kind: "quest",
+        value: 0,
+        onCollect: () => {
+          glow.destroy();
+          collectPickup(G.s, quest, spot);
+          synth.play("pickup");
+          this.toast("PERSONAL QUEST", `${quest.title}: ${spot.label}`);
+        },
+      });
+    }
+  }
+
   /** The Cuddle Tower: pink walls going up forever, cuddle drawings, floor numbers, hearts. */
   private decorateTower() {
     const r = this.room;
     const gy = this.groundY;
+    if (this.citadel) {
+      this.towerBg = this.citadel.tower();
+      return;
+    }
     // the gothic wall: crimson stone, pink stained-glass hearts, scrolling a bit slower than you climb
     if (this.textures.exists("tw_gothic")) {
       this.towerBg = this.add.tileSprite(0, 0, 960, 540, "tw_gothic").setOrigin(0).setScrollFactor(0).setDepth(-12).setTileScale(2);
@@ -470,7 +543,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const themeTile = `tile_${r.theme}`;
     if (r.theme === "mind") this.mindTile();
     this.add.tileSprite(0, 0, r.w, r.h, themeTile).setOrigin(0).setDepth(0);
-    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a, mind: 0xb0246b }[r.theme];
+    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a, mind: 0xb0246b, citadel: 0x140c1c }[r.theme];
     const g = this.add.graphics().setDepth(1);
     g.fillStyle(wallCol, 1);
     g.fillRect(0, 0, r.w, 24);
@@ -496,6 +569,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.obstacles = this.physics.add.staticGroup();
     this.decorate(r);
     if (r.theme === "mind") this.mindscape(r);
+    this.citadel?.topDown();
     // door
     // the door sits in the back wall, its foot on the floor line (the PixelLab door is a full doorway)
     this.door = this.add.image(r.w / 2, 60, "p_door_locked").setOrigin(0.5, 1).setScale(2).setDepth(2);
@@ -567,6 +641,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       wiki: ["[citation needed]", "This page does not exist", "Talk", "Edit source"],
       colon: ["HAUSTRA", "MUCOSA (WET)", "1x SWEETCORN (2019)", "DO NOT TOUCH THE WALLS"],
       mind: ["NEVER AGAIN (DRAFT 41)", "CUSTARD LEVEL: CRITICAL", "THOUGHTS: 1 (PUDDING)", "MINISTERIAL CONSCIENCE (OUT OF ORDER)"],
+      citadel: ["SERVER ROOM 6 (OF 600)", "NO REACTS BEYOND THIS POINT", "PROMPTS: 1,412,906", "ALL HAIL THE SUPREME LEADER"],
     };
     const list = flav[r.theme] ?? [];
     list.forEach((txt, i) => {
@@ -1038,6 +1113,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       enter.push(say("DRONGUS", rule?.decree ?? "NEW RULE.", { notify: true, sfx: "decree" }));
     }
     if (enter.length) await this.talk(enter);
+    if (r.pa?.length && !G.s.flags[clearKey(this.dungeon.id, this.roomIdx)] && !(r.miniBoss && G.s.flags[this.miniBossKey()])) {
+      if (this.citadel) await this.citadel.pa(r.pa);
+      else await this.talk(r.pa);
+    }
     if (r.theme === "mind" && this.roomIdx === 0) this.mindArrive();
     if (r.event === "anthem") await this.anthemEvent();
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
@@ -1069,7 +1148,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     } else if (this.waves.length) this.time.delayedCall(500, () => this.nextWave());
     else if (r.triggers?.length) {
       // run and gun: enemies turn up as you push right
-      if (this.roomIdx > 0 || r.triggers.length) this.toast(r.tower ? "CLIMB" : "RUN AND GUN", r.tower ? "Jump from platform to platform. The Squeezing Room is at the very top." : "Push right. They'll come to you.");
+      if (this.roomIdx > 0 || r.triggers.length) this.toast(r.tower ? "CLIMB" : "RUN AND GUN", r.tower ? `Jump from platform to platform. ${r.goal ?? "The Squeezing Room"} is at the very top.` : "Push right. They'll come to you.");
+    } else if (r.event === "anthem") {
+      // no fighting: the red door at the end opens itself when you get there
     } else {
       this.roomCleared = true;
       this.markCleared();
@@ -1181,6 +1262,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private checkExit() {
     const r = this.room;
     if (!this.roomCleared) return;
+    if (r.event === "anthem" && !this.exitOpen()) return;
     if (r.exitFlag && !G.s.flags[r.exitFlag]) {
       this.toast("EXIT LOCKED", r.exitHint ? r.exitHint : r.event === "cheesegate" ? "Solve Cheesegate first." : r.event === "mork" ? "Interpret the Mork Voice first." : r.event === "valves" ? "Open all three valves." : "Restore the Reaction Network first.");
       return;
@@ -1234,6 +1316,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.bros = [];
     this.sideLevel?.destroy();
     this.sideLevel = null;
+    this.citadel?.destroy();
+    this.citadel = null;
     this.spice?.destroy();
     this.spice = null;
     this.player?.destroy();
@@ -1574,11 +1658,13 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   /** Which boss of a boss rush we're on (0 = the room's own boss). */
   private rushIdx = 0;
 
-  private async startBoss(id = this.room.boss!, hpMult = this.room.bossHp ?? 1) {
+  private async startBoss(id = this.room.boss!, hpMult = this.room.bossHp ?? 1, at?: { x: number; y: number }) {
     const r = this.room;
     const txt = BOSS_TEXT[id];
     this.busy = true;
-    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, r.w / 2, r.h / 2 - 100) : createBoss(id, this, r.w / 2, r.h / 2 - 100);
+    const bx = at?.x ?? r.w / 2;
+    const by = at?.y ?? r.h / 2 - 100;
+    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : createBoss(id, this, bx, by);
     // bosses toughen up as the story goes on (the bank is how you keep up)
     const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
     if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
@@ -1599,6 +1685,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       const fh = b.frame.height;
       bb.setSize(fw * 0.6, fh * 0.85).setOffset(fw * 0.2, fh * 0.15);
       if (id === "rik") b.setPosition(r.w / 2, this.groundY - 120);
+      if (id === "krex") bb.setSize(78, 96).setOffset(28, 21);
     }
     b.setAlpha(0);
     this.tweens.add({ targets: b, alpha: 1, duration: 800 });
@@ -1607,6 +1694,37 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = false;
     b.started = true;
     b.nextPattern = this.now() + 1200;
+  }
+
+  private miniBossKey() {
+    return `mbcp_${this.dungeon.id}_${this.roomIdx}`;
+  }
+
+  /** A mini-boss turns up part way through a side room (METAL GEAR KREX, the AI Elon). */
+  private async startMiniBoss() {
+    const r = this.room;
+    const mb = r.miniBoss!;
+    this.miniBossState = "fight";
+    this.busy = true;
+    const again = !!G.s.flags[this.miniBossKey()];
+    // checkpoint: die here and you come back in right here
+    G.s.flags[this.miniBossKey()] = `${Math.round(this.player.x)},${Math.round(this.player.y - 10)}`;
+    G.save();
+    // clear the stage
+    for (const e of [...this.enemies]) if (!e.dead && !e.isBoss) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
+    if (!r.tower) {
+      const l = Math.max(0, Math.min(r.w - 960, this.player.x - 200));
+      this.arenaLeft = l;
+      this.cameras.main.setBounds(l, 0, r.w - l, r.h);
+    }
+    const pct = (this as any)._bossHpPct;
+    if (mb.pa?.length && typeof pct !== "number" && !again) {
+      if (this.citadel) await this.citadel.pa(mb.pa);
+      else await this.talk(mb.pa);
+    }
+    if (mb.music) synth.music(mb.music, true);
+    const at = r.tower ? { x: Phaser.Math.Clamp(this.player.x + (this.player.x < r.w / 2 ? 260 : -260), 120, r.w - 120), y: this.player.y - 240 } : { x: Math.min(r.w - 180, this.player.x + 560), y: this.groundY - 170 };
+    await this.startBoss(mb.id, mb.hp ?? 1, at);
   }
 
   /** Where the boss died and what they looked like (for the KRELTALITY stand-in). */
@@ -1665,7 +1783,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
   private async maybeKreltality(b: Boss) {
-    if (["drongus", "cronster", "reinhardt", "krozno", "rik"].includes(b.bossId) || !this.krelTarget) {
+    if (["drongus", "cronster", "reinhardt", "krozno", "rik", "krex"].includes(b.bossId) || !this.krelTarget) {
       await this.bossFall();
       return;
     }
@@ -1729,15 +1847,28 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.shake(600, 0.025);
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
+      // the ones with a big death of their own (METAL GEAR KREX falls to bits)
+      const seq = (b as unknown as { deathSequence?: () => Promise<void> }).deathSequence;
+      if (seq) await seq.call(b);
       await this.talk(BOSS_TEXT[b.bossId].outro);
       await this.maybeKreltality(b);
       await this.crystalGet(b);
       this.boss = null;
       this.roomCleared = true;
       this.markCleared();
+      if (this.room.miniBoss) {
+        // a mini-boss: the room carries on (the screen unlocks, the room's music comes back)
+        this.miniBossState = "done";
+        delete s.flags[this.miniBossKey()];
+        this.arenaLeft = 0;
+        this.cameras.main.setBounds(0, 0, this.room.w, this.room.h);
+        this.cameras.main.startFollow(this.player.spr, true, 0.12, 0.12);
+        synth.music(this.room.music ?? this.dungeon.music, true);
+        this.dropPickup(this.player.x + 40, this.player.y - 30, "ammo", 2);
+      }
       s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.5);
       this.door.setTexture("p_door");
-      this.toast("EXIT OPEN", this.side ? "The way on is to the far right →." : "The exit is open.");
+      this.toast("EXIT OPEN", this.room.tower ? "Keep climbing: the way on is at the very top." : this.side ? "The way on is to the far right →." : "The exit is open.");
       this.busy = false;
       return;
     }
@@ -1853,76 +1984,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     });
   }
 
-  /** Drongus's army stands to attention for the national anthem. */
+  /** The Anthem Corridor: everyone upstanding for the national anthem (see citadel/Citadel.ts). */
   private async anthemEvent() {
-    const r = this.room;
-    const s = G.s;
-    const army: Phaser.GameObjects.Sprite[] = [];
-    this.add.image(r.w / 2, 70, "spr_DRONGUS", 0).setScale(4).setDepth(5);
-    this.add.rectangle(r.w / 2, 70, 90, 110).setStrokeStyle(6, 0xd4a017).setDepth(6);
-    this.add.text(r.w / 2, 130, "OUR SUPREME LEADER", { fontFamily: FONT, fontSize: "10px", color: "#d4a017" }).setOrigin(0.5).setDepth(6);
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 8; col++) {
-        const x = r.w * 0.18 + col * ((r.w * 0.64) / 7);
-        const y = 220 + row * 80;
-        army.push(this.add.sprite(x, y, "en_soldier", 0).setScale(2.6).setDepth(y));
-      }
-    }
-    const captain = this.add.sprite(r.w / 2, 480, "en_soldier", 1).setScale(3.2).setTint(0xffd23f).setDepth(480);
-    await this.talk([
-      say("GUARDSMAN CAPTAIN", "ATTEN-SHUN!"),
-      dir("Twenty-four purple boots slam together at once. The floor (the Krezzsplosion article) shakes."),
-      say("GUARDSMAN CAPTAIN", "ALL RISE FOR THE NATIONAL ANTHEM OF KRELWORLD."),
-      say("DRONGUS", "(over the tannoy) Stand to attention. I made this. It took me nineteen generations. If you move, you're disrespecting the anthem AND me.", { notify: true }),
-      {
-        s: "NARRATOR",
-        t: "The anthem is about to start. What do you do?",
-        dir: true,
-        choice: [
-          { label: "Stand to attention (respect the anthem)", set: { anthem_pick: "stand" } },
-          { label: "Sing along, loudly, badly", set: { anthem_pick: "sing" } },
-          { label: "Keep walking. It's not your anthem.", set: { anthem_pick: "walk" } },
-        ],
-      },
-    ]);
-    const pick = s.flags.anthem_pick;
-    synth.music("anthem", true);
-    const banner = this.add
-      .text(this.cameras.main.midPoint.x, this.cameras.main.midPoint.y - 200, "🎵 NOW PLAYING: THE STAR-SPANGLED BANNER (KRELWORLD EDITION)", { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", backgroundColor: "#000000cc", padding: { x: 8, y: 4 } })
-      .setOrigin(0.5)
-      .setDepth(2000)
-      .setScrollFactor(0)
-      .setPosition(480, 90);
-    const salute = this.time.addEvent({ delay: 500, loop: true, callback: () => army.forEach((a, i) => a.setFrame((i + Math.floor(this.now() / 500)) % 2)) });
-    this.busy = true;
-    if (pick === "stand") {
-      this.floatText(this.player.x, this.player.y - 40, "*stands to attention*", "#ffffff", 14);
-      await new Promise<void>((res) => this.time.delayedCall(9000, () => res()));
-      this.busy = false;
-      await this.talk([
-        say("GUARDSMAN CAPTAIN", "…at ease. Lovely posture. Half of you lot, dismissed. The rest of you…"),
-        say("GUARDSMAN CAPTAIN", "…hang on. That's not one of ours. GET THEM. RESPECTFULLY."),
-      ]);
-      this.waves = [[["soldier", 4]], [["soldier", 3], ["ai_portrait", 1]]];
-    } else if (pick === "sing") {
-      this.floatText(this.player.x, this.player.y - 40, "♪ OH SAAAAY CAN YOU KREEEEZ ♪", "#ffd23f", 16);
-      await new Promise<void>((res) => this.time.delayedCall(7000, () => res()));
-      this.busy = false;
-      this.player.wonk = 100;
-      await this.talk([
-        dir("Several guardsmen are openly weeping. The captain is moved. Your WONK METER is full."),
-        say("GUARDSMAN CAPTAIN", "That was… that was the most beautiful… GET THEM ANYWAY."),
-      ]);
-    } else {
-      this.busy = false;
-      this.toast("DISRESPECT TO THE ANTHEM", "The entire army is now very, very upset with you.");
-      await this.talk([say("GUARDSMAN CAPTAIN", "DID THEY JUST… WALK. DURING THE ANTHEM."), say("DRONGUS", "Unbelievable. Seen. Not reacted. And now WALKED.", { notify: true }), say("GUARDSMAN CAPTAIN", "ALL UNITS. ALL OF THEM.")]);
-      this.waves = [[["soldier", 8]], [["soldier", 6], ["ai_portrait", 2]]];
-    }
-    salute.remove();
-    this.tweens.add({ targets: banner, alpha: 0, delay: 3000, duration: 800, onComplete: () => banner.destroy() });
-    army.forEach((a) => a.destroy());
-    captain.destroy();
+    await this.citadel?.anthem();
   }
 
   private missionFailed() {
@@ -2297,6 +2361,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         tag.setPosition(e.x, e.y - 34);
       } });
       return e;
+    }
+    if (ENEMIES[type].plate) {
+      // a name plate over its head (chapter 7)
+      const tag = this.add.text(e.x, e.y, ENEMIES[type].plate!, { fontFamily: "Impact, sans-serif", fontSize: "12px", color: ENEMIES[type].plateColor ?? "#ffffff", backgroundColor: "#000000bb", padding: { x: 4, y: 1 }, stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setDepth(1400);
+      const follow = () => {
+        if (!e.active || e.dead) {
+          this.events.off("postupdate", follow);
+          tag.destroy();
+          return;
+        }
+        tag.setPosition(e.x, e.y - e.displayHeight / 2 - 6);
+      };
+      this.events.on("postupdate", follow);
+      this.events.once("shutdown", () => this.events.off("postupdate", follow));
     }
     this.spice?.onSpawn(e, opts);
     return e;
@@ -2888,7 +2966,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (!this.busy) this.spice?.update(now, Math.min(delta, 50));
     if (!this.busy) for (const b of this.bros) b.update(now, Math.min(delta, 50));
     this.sideLevel?.update(Math.min(delta, 50), this.busy);
-    if (this.sideLevel?.triggersDone() && !this.roomCleared && !this.room.boss && !this.busy) this.onRoomCleared();
+    this.citadel?.update(Math.min(delta, 50));
+    const mb = this.room.miniBoss;
+    if (mb && this.miniBossState === "none" && !this.roomCleared && !this.busy && !this.transitioning) {
+      const climb = this.room.exitAt ? this.room.exitAt[1] : this.room.h - 200;
+      if (this.room.tower ? this.player.y < this.groundY - mb.at * climb : this.player.x > this.room.w * mb.at) void this.startMiniBoss();
+    }
+    if (this.miniBossState === "fight" && this.arenaLeft && this.player.x < this.arenaLeft + 24) this.player.spr.x = this.arenaLeft + 24;
+    if (this.sideLevel?.triggersDone() && !this.roomCleared && !this.room.boss && !this.busy && !(mb && this.miniBossState !== "done")) this.onRoomCleared();
     if (now < this.hitStopUntil) {
       this.physics.world.isPaused || this.physics.world.pause();
       return;

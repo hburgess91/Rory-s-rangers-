@@ -887,6 +887,19 @@ export class Synth {
       case "telegraph":
         this.tone(1000, 0.08, "square", 0.1);
         break;
+      case "tannoy":
+        // the PA chime: ding-dong, a little hiss of the mic opening
+        this.tone(659, 0.45, "triangle", 0.28);
+        this.tone(523, 0.7, "triangle", 0.28, 0.42);
+        this.burst(0.5, 0.06, 0.9, 2400);
+        break;
+      case "ai_deny":
+        // the AI says NO: a harsh double buzzer
+        this.tone(130, 0.28, "sawtooth", 0.4);
+        this.tone(138, 0.28, "square", 0.3);
+        this.tone(130, 0.45, "sawtooth", 0.4, 0.34);
+        this.tone(138, 0.45, "square", 0.3, 0.34);
+        break;
       case "decree":
         this.tone(392, 0.15, "square", 0.25);
         this.tone(523, 0.15, "square", 0.25, 0.15);

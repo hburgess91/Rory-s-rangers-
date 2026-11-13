@@ -1,7 +1,8 @@
-import type { Cond } from "./types";
+import type { Cond, Line } from "./types";
 import { goat } from "../content/dsl";
+import * as CD from "../content/citadel";
 
-export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki" | "colon" | "mind";
+export type Theme = "school" | "mansion" | "network" | "industrial" | "temple" | "prison" | "wiki" | "colon" | "mind" | "citadel";
 
 export interface PropDef {
   kind: "bomb_spot" | "crystal_wall" | "talker" | "mollor" | "wonking_machine" | "vending" | "valve" | "terminal" | "npc" | "bertha" | "tv" | "sign" | "evidence_board" | "witness" | "reaction_terminal" | "tap_valve" | "phone";
@@ -72,6 +73,13 @@ export interface RoomDef {
   music?: string;
   /** The magic pill: colours, sea creatures, the room breathes. */
   trip?: boolean;
+  /** Chapter 7: Drongus over the tannoy, after the enter lines (the AI's refusals flash the room red). */
+  pa?: Line[];
+  /** A mini-boss part way through (side rooms): passing `at` (x 0..1, or height 0..1 of a tower climb) brings it in. */
+  miniBoss?: { id: string; at: number; pa?: Line[]; music?: string; hp?: number };
+  /** What the exit is called on the door label and the CLIMB hint (default: the Squeezing Room / EXIT). */
+  exitLabel?: string;
+  goal?: string;
   /** Exit is locked until this flag is set (in addition to clearing all waves). */
   exitFlag?: string;
   cond?: Cond;
@@ -91,6 +99,145 @@ export interface DungeonDef {
   returnAt?: string;
   /** "side": a side-scrolling platformer (gravity, jumping, exit on the right). */
   view?: "side";
+}
+
+/** DA DRONGUS CORRIDOR (Chapter 7): a long gothic-cyber run'n'gun. Pits full of servers, presses, steam, moving
+ *  ledges, and the AI's swarm of grubby men in macs. At the far end, METAL GEAR KREX. */
+function drongusCorridor(): RoomDef {
+  const W = 8000;
+  const f = (px: number) => px / W;
+  const platforms: [number, number, number][] = [];
+  const movers: [number, number, number, number, number, number][] = [];
+  const floorGaps: [number, number][] = [];
+  const hazards: NonNullable<RoomDef["hazards"]> = [];
+  for (let i = 0; i < 8; i++) {
+    const x0 = 520 + i * 720;
+    const kind = i % 3;
+    if (kind === 0) {
+      // a pit of servers, a lift over it, stepping stones up high
+      floorGaps.push([f(x0 + 170), 200]);
+      movers.push([f(x0 + 270), 130, 120, 0, 70, 2200 + i * 100]);
+      platforms.push([f(x0), 120, 180], [f(x0 + 500), 150, 200], [f(x0 + 290), 270, 150]);
+    } else if (kind === 1) {
+      // the presses: under them, or over the top
+      hazards.push({ kind: "crusher", x: f(x0 + 210), w: 120, period: 2300, offset: i * 300 }, { kind: "crusher", x: f(x0 + 490), w: 120, period: 2100, offset: i * 300 + 900 });
+      platforms.push([f(x0 + 60), 140, 160], [f(x0 + 350), 240, 200], [f(x0 + 640), 140, 150]);
+    } else {
+      // a wide pit, two moving ledges, and the high road
+      floorGaps.push([f(x0 + 130), 320]);
+      movers.push([f(x0 + 215), 140, 110, 55, 0, 2600], [f(x0 + 385), 200, 110, 0, 80, 2000]);
+      platforms.push([f(x0 + 40), 220, 140], [f(x0 + 580), 160, 220], [f(x0 + 300), 320, 170]);
+      hazards.push({ kind: "steam", x: f(x0 + 660), period: 2600 });
+    }
+  }
+  // a last few ledges before the arena
+  platforms.push([f(6300), 130, 200], [f(6520), 230, 160]);
+  const N = "nonce";
+  return {
+    name: "Da Drongus Corridor",
+    view: "side",
+    w: W,
+    h: 540,
+    theme: "citadel",
+    backdrop: "c7d_bg_corridor",
+    music: "ominous",
+    platforms,
+    movers,
+    floorGaps,
+    pitColor: 0x2a0a1a,
+    pitName: "THE SERVER PIT",
+    hazards,
+    crusherLabel: "DELETE",
+    triggers: [
+      [0.03, [[N, 4]]],
+      [0.11, [[N, 4], ["nonce_fat", 1]]],
+      [0.2, [["nonce_tall", 2], [N, 3]]],
+      [0.29, [["nonce_fat", 2], [N, 4]]],
+      [0.38, [["nonce_tall", 2], ["nonce_fat", 1], [N, 3]]],
+      [0.47, [[N, 6], ["nonce_tall", 1]]],
+      [0.56, [["nonce_fat", 2], ["nonce_tall", 2], [N, 2]]],
+      [0.65, [[N, 5], ["nonce_fat", 2]]],
+      [0.74, [["nonce_tall", 3], [N, 4]]],
+    ],
+    miniBoss: { id: "krex", at: 0.84, pa: CD.KREX_PA, music: "boss" },
+    enterLines: CD.CORRIDOR_ENTER,
+    pa: CD.CORRIDOR_PA,
+  };
+}
+
+/** THE ASCENT (Chapter 7): straight up the middle of the tower. The news, generated, on every landing.
+ *  Half way up, an AI-generated Elon Musk on a rocket. */
+function theAscent(): RoomDef {
+  const STEPS = 46;
+  const H = 115 + STEPS * 112 + 260;
+  const platforms: [number, number, number][] = [];
+  const movers: [number, number, number, number, number, number][] = [];
+  const xs = [0.22, 0.52, 0.8, 0.5, 0.2, 0.42, 0.74, 0.5];
+  for (let i = 0; i < STEPS; i++) {
+    const h = 115 + i * 112;
+    const fx = xs[i % xs.length];
+    if (i % 4 === 3) movers.push([fx, h, 130, i % 2 ? 150 : 0, i % 2 ? 0 : 50, 2200 + (i % 3) * 400]);
+    else platforms.push([fx, h, i % 3 === 0 ? 160 : 210]);
+    if (i % 5 === 2) platforms.push([fx < 0.5 ? 0.88 : 0.12, h + 40, 120]);
+    // a wide landing half way up, where Elon turns up
+    if (i === 22) platforms.push([0.5, h + 56, 520]);
+  }
+  const top = 115 + STEPS * 112;
+  platforms.push([0.5, top, 760]);
+  const waves: [string, number][][] = [
+    [["idf", 2], ["hamas", 2]],
+    [["kamikaze", 3], ["news_drone", 1]],
+    [["deepfake_anchor", 2], ["crypto_bro", 1]],
+    [["idf", 2], ["hamas", 2], ["kamikaze", 1]],
+    [["news_drone", 2], ["crypto_bro", 2]],
+    [["kamikaze", 4]],
+    [["idf", 2], ["hamas", 2], ["deepfake_anchor", 1]],
+    [["news_drone", 2], ["kamikaze", 2], ["crypto_bro", 1]],
+  ];
+  const triggers: [number, [string, number][]][] = [];
+  for (let i = 0; i < 15; i++) {
+    const at = 0.02 + i * 0.065;
+    if (at > 0.4 && at < 0.52) continue; // Elon's bit
+    triggers.push([at, waves[i % waves.length]]);
+  }
+  return {
+    name: "The Ascent",
+    view: "side",
+    tower: true,
+    w: 960,
+    h: H,
+    theme: "citadel",
+    music: "ominous",
+    platforms,
+    movers,
+    exitAt: [0.5, top],
+    exitLabel: "THE TOP ↑",
+    goal: "The top of the tower",
+    triggers,
+    miniBoss: { id: "elon", at: 0.46, pa: CD.ELON_PA, music: "boss_arena", hp: 0.75 },
+    enterLines: CD.ASCENT_ENTER,
+    pa: CD.ASCENT_PA,
+  };
+}
+
+/** THE ANTHEM CORRIDOR (Chapter 7): no fighting. A very long gallery of every boss you've beaten, the honour guard
+ *  saluting, the national anthem, and at the end a huge red door. */
+function anthemCorridor(): RoomDef {
+  const W = 9600;
+  return {
+    name: "The Anthem Corridor",
+    view: "side",
+    w: W,
+    h: 540,
+    theme: "citadel",
+    backdrop: "c7d_bg_gallery",
+    music: "ominous",
+    event: "anthem",
+    exitAt: [1 - 170 / W, 0],
+    exitLabel: "",
+    gunCrate: true,
+    enterLines: CD.ANTHEM_ENTER,
+  };
 }
 
 /** The Cronster's tower: a tall side-on climb, platform to platform, to the Squeezing Room at the top. */
@@ -414,46 +561,26 @@ export const DUNGEONS: Record<string, DungeonDef> = {
     id: "citadel",
     chapter: 7,
     name: "DA DRONGUS DUNGEON",
-    music: "wiki",
+    music: "ominous",
     rooms: [
       {
-        name: "Main Page",
+        name: "The Foyer",
         w: 1300,
-        h: 780,
-        theme: "wiki",
-        waves: [[["citation", 8]], [["wiki_fragment", 3], ["citation", 4]]],
-        enterLines: [{ s: "NARRATOR", t: "Krelworld Wiki — Main Page. 'Welcome to the Krelworld Wiki, the encyclopedia that anyone can edit (but only one man does).'", dir: true }],
-      },
-      {
-        name: "Krezzsplosion (article)",
-        w: 1400,
-        h: 820,
-        theme: "wiki",
-        waves: [[["deleted_text", 4], ["wiki_fragment", 2], ["edit_leaper", 3]], [["ai_portrait", 2], ["citation", 6]]],
-        enterLines: [{ s: "NARRATOR", t: "You are standing inside the Krezzsplosion article. 'Wow … not as if there's an entire page devoted to your precious Krezzsplosion on the wiki'. There is. You're in it.", dir: true }],
-      },
-      {
-        name: "Talk:Krelworld",
-        w: 1400,
-        h: 820,
-        theme: "wiki",
-        event: "reaction_terminal",
-        exitFlag: "network_restored",
-        waves: [[["ai_portrait", 3], ["deleted_text", 3]], [["unread", 5], ["wiki_fragment", 3], ["edit_leaper", 2]]],
-        props: [{ kind: "reaction_terminal", x: 0.5, y: 0.2, id: "rt" }],
-        enterLines: [{ s: "NARRATOR", t: "The Talk page. Every argument ever had about Krelworld, at once. At the far end: the REACTION NETWORK TERMINAL. Clear the room, then restore the network (E).", dir: true }],
-      },
-      {
-        name: "The Supreme Leader's Office (Parade Ground)",
-        w: 1400,
         h: 860,
-        theme: "wiki",
-        event: "anthem",
-        waves: [[["soldier", 6]], [["soldier", 4], ["ai_portrait", 2], ["edit_leaper", 2]]],
-        enterLines: [
-          { s: "NARRATOR", t: "Drongus's office. A desk the size of a Krelball pitch. Behind it, an oil painting of Drongus painting an oil painting of Drongus. In front of it: his army, in perfect rows, purple uniforms pressed.", dir: true },
+        theme: "citadel",
+        enterLines: CD.FOYER_ENTER,
+        pa: CD.FOYER_PA,
+        waves: [
+          [["ai_pitbull", 4]],
+          [["ai_pitbull", 3], ["ai_pitbull_twin", 2]],
+          [["ai_pitbull_spider", 3], ["ai_pitbull", 2], ["ai_pitbull_twin", 1]],
+          [["ai_pitbull_twin", 2], ["ai_pitbull_spider", 3], ["ai_pitbull", 2]],
         ],
+        gunCrate: true,
       },
+      drongusCorridor(),
+      theAscent(),
+      anthemCorridor(),
       {
         name: "The Summit: Government Chamber",
         w: 1400,
