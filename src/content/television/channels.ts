@@ -289,7 +289,7 @@ NEWSREADER: (long pause) …Right.
 NEWSREADER: The Krel Tower has not been evacuated. The Krelworld cabinet is understood to be "working on something". More as we get it.
 [FADE]
 `,
-  { unlockFlag: "tv_klerble_presser", unlockHint: "Chapter 4: a Krelmergency in the FGM War Room" },
+  { unlockFlag: "tv_klerble_presser", unlockHint: "Chapter 5: a Krelmergency in the FGM War Room" },
 );
 
 export const CABINET_LIVE = ep(

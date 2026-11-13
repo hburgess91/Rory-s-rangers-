@@ -69,8 +69,9 @@ export const ARCS: Arc[] = [
   {
     id: "arc_klerble",
     player: "ALL",
-    minChapter: 4,
-    requires: "ch4_intro",
+    // the last chapter before Da Drongus Dungeon
+    minChapter: 5,
+    requires: "ch5_intro",
     title: "The Kreddle Express",
     blurb: "President Klerble of neighbouring Kreddle has hijacked a train and pointed it at the Krel Tower. For a laugh. The lads have a plan. It is not a good plan.",
     reward: { coins: 500, desc: "A Krelburger gift card, posted from Kreddle. It has been signed 'YES! YES! YESSS! — K'." },

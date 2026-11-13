@@ -66,14 +66,14 @@ describe("character side stories", () => {
 });
 
 describe("Kreltower plot", () => {
-  it("the Kreddle Express quest: Flight KR-069 ends with Krozno and gates Chapter 4's dungeon", () => {
+  it("the Kreddle Express quest: Flight KR-069 ends with Krozno and gates Chapter 5's dungeon (the last before Da Drongus Dungeon)", () => {
     const d = DUNGEONS.airport;
     expect(d.rooms[d.rooms.length - 1].boss).toBe("krozno");
     const a = ARCS.find((x) => x.id === "arc_klerble")!;
     expect(a.steps.map((s) => s.at)).toEqual(["ARCHIVE", "AIRPORT"]);
-    expect(arcDue(a)).toBe(4);
+    expect(arcDue(a)).toBe(5);
     const st = newGameState("FLENKY");
-    st.chapter = 4;
+    st.chapter = 5;
     Object.assign(st.flags, { met_emergency: true, ban_tribunal_open: true, arcstep_arc_klerble_brief: true, arcstep_arc_klerble_hijack: true });
     expect(maybeFinishArc(st)).toContain("The Kreddle Express complete");
   });
