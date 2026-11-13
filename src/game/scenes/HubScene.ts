@@ -26,6 +26,7 @@ import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD"
 import { Beatup } from "./hub/Beatup";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
+import { KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
@@ -268,7 +269,9 @@ export class HubScene extends Phaser.Scene {
    */
   private weather() {
     const c0 = clock();
-    const kind = weatherFor(c0.day);
+    // Chapter 6, from the revenge meeting to the end: a black, rainy night
+    const raidNight = G.s.chapter === 6 && !!G.s.flags.raid_march && !G.s.flags.ch6_clear;
+    const kind = raidNight ? "storm" : weatherFor(c0.day);
     (this as any).weatherKind = kind;
     // the sky follows Krelford's clock: night darkens, dusk and dawn glow orange, doors light up after dark
     const nightA = this.add.rectangle(480, 270, 960, 540, 0x0b1440, 1).setAlpha(0).setScrollFactor(0).setDepth(4900).setBlendMode(Phaser.BlendModes.MULTIPLY);
@@ -281,7 +284,7 @@ export class HubScene extends Phaser.Scene {
       glows.push(this.add.ellipse(b.door.x, b.door.y + 6, 120, 60, 0xffc46b, 1).setAlpha(0).setDepth(4902).setBlendMode(Phaser.BlendModes.ADD));
     }
     const apply = () => {
-      const c = clock();
+      const c = raidNight ? { dark: 1, twilight: 0 } : clock();
       nightA.setAlpha(c.dark * 0.42);
       blueA.setAlpha(c.dark * 0.18);
       dusk.setAlpha(c.twilight * 0.4);
@@ -408,6 +411,20 @@ export class HubScene extends Phaser.Scene {
   private async onArrive(from?: string, flyover?: boolean) {
     const s = G.s;
     if (flyover && !s.flags.flyover_seen && !s.flags.prologue_done) await this.flyover();
+    // Chapter 6 is the point of no return: it only starts when you say so, at the Town Hall
+    if (s.chapter === 6 && !s.flags.ch6_ready) {
+      if (!s.flags.ch6_lastchance_seen) {
+        s.flags.ch6_lastchance_seen = true;
+        G.save();
+        await this.talk(KR6_LAST_CHANCE);
+      } else G.emit("toast", { title: "⚠ LAST CHANCE", text: "Stock up on weapons, ammo, upgrades, Krezzcoin and Krokens. Go to the Town Hall when you're ready to begin Chapter 6." });
+      return;
+    }
+    // Chapter 6 finale: home in time (or not): Kreddle's Krunch Protocol comes for every building in town
+    if (from === "krunch") {
+      await this.krunchBombing();
+      return;
+    }
     if (s.chapter > 1 && !s.flags[`ch${s.chapter}_intro`]) {
       s.flags[`ch${s.chapter}_intro`] = true;
       const ch = chapterDef(s.chapter);
@@ -2123,6 +2140,11 @@ You are required by law to sign the Sex Offenders Register.`, {
   private async enterBuilding(b: Building) {
     const s = G.s;
     if (b.id === "KREDDLE_BRIDGE") {
+      // Chapter 6: the raid (and, if you go back over after planting the bomb, the run home starts at the palace)
+      if (s.chapter === 6 && s.flags.raid_march && !s.flags.krunch_started) {
+        this.go("Kreddle", { raid: true });
+        return;
+      }
       if (!s.flags.met_emergency) {
         await this.talk([dir("The bridge to Kreddle. A neon sign on the far side flashes 'OPEN 24/7/365/FOREVER'. You've got more pressing things to do first.")]);
         return;
@@ -2130,6 +2152,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       this.go("Kreddle", {});
       return;
     }
+    if (b.id === "TOWN_HALL" && s.chapter === 6 && (await this.chapter6TownHall())) return;
     const ch = chapterDef(s.chapter);
     // Chapter 5: the lamp in the Krezz Arms back room is the way into the SanMikverse
     if (b.id === "PUB" && s.chapter === 5 && !s.flags.ch5_clear && dungeonOpen().open && !this.buildingBusy("PUB")) {
@@ -2699,6 +2722,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.updateRegister();
     this.beatup?.update(time, dt);
     if (this.brawl?.running && this.controls.attackHeld()) this.playerShove(time);
+    this.updateRaidMarch(time);
     if (!this.busy && !this.brawl?.running && this.controls.attackHeld()) {
       const m = this.npcs.find((n) => n.follower);
       if (m && Phaser.Math.Distance.Between(m.spr.x, m.spr.y, this.av.x, this.av.y) < 70) this.hitMikey(m, true);
@@ -2830,6 +2854,128 @@ You are required by law to sign the Sex Offenders Register.`, {
     s.flags.kr_home_pending = true;
     G.save();
     this.go("Vignette", { id: "kruncher_mikey" });
+  }
+
+  // ---------------------------------------------------------------- CHAPTER 6: last chance, revenge, the march, the bomb
+
+  /** Town Hall in Chapter 6. Returns true if it took over the visit. */
+  private async chapter6TownHall(): Promise<boolean> {
+    const s = G.s;
+    if (!s.flags.ch6_ready) {
+      delete s.flags.ch6_go;
+      await this.talk([
+        ...KR6_LAST_CHANCE.slice(-2),
+        { s: "NARRATOR", t: "Begin Chapter 6 now? There's no going back.", dir: true, choice: [{ label: "Begin Chapter 6", set: { ch6_go: 1 } }, { label: "Not yet (keep preparing)", set: { ch6_go: 0 } }] },
+      ]);
+      if (s.flags.ch6_go !== 1) return true;
+      delete s.flags.ch6_go;
+      s.flags.ch6_ready = true;
+      G.save();
+      this.go("Hub", { at: "TOWN_HALL" });
+      return true;
+    }
+    if (s.flags.kreltower_resolved && !s.flags.revenge_meeting) {
+      G.save();
+      this.go("Vignette", { id: "revenge_meeting", returnAt: "TOWN_HALL" });
+      return true;
+    }
+    if (s.flags.nuke_planted && !s.flags.krunch_started) {
+      this.startKrunch();
+      return true;
+    }
+    if (s.flags.raid_march && !s.flags.nuke_planted) {
+      await this.talk([say("KREZMAR", "What are you doing back here? Kreddle's THAT way. West. Over the bridge. Go!")]);
+      return true;
+    }
+    return false;
+  }
+
+  private startKrunch() {
+    const s = G.s;
+    s.flags.krunch_started = true;
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
+    G.save();
+    this.go("Vignette", { id: "krunch_protocol", returnAt: "TOWN_HALL" });
+  }
+
+  private raidKrew: { spr: Phaser.GameObjects.Sprite; lag: number }[] = [];
+  private trail: { x: number; y: number }[] = [];
+
+  /** The Krew follow you through town (to Kreddle, and back with the bomb ticking). */
+  private updateRaidMarch(_time: number) {
+    const s = G.s;
+    const marching = s.chapter === 6 && s.flags.raid_march && !s.flags.krunch_started;
+    if (!marching) return;
+    if (!this.raidKrew.length) {
+      PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
+        const spr = this.add.sprite(this.av.x - 30 - i * 10, this.av.y + 20, `spr_${p}`, 0).setScale(2).setDepth(this.av.y);
+        this.raidKrew.push({ spr, lag: 10 + i * 7 });
+      });
+    }
+    const last = this.trail[this.trail.length - 1];
+    if (!last || Math.abs(last.x - this.av.x) + Math.abs(last.y - this.av.y) > 3) this.trail.push({ x: this.av.x, y: this.av.y });
+    if (this.trail.length > 120) this.trail.shift();
+    this.raidKrew.forEach((k, i) => {
+      const p = this.trail[Math.max(0, this.trail.length - 1 - k.lag)] ?? { x: this.av.x, y: this.av.y };
+      const tx = p.x + ((i % 3) - 1) * 14;
+      const ty = p.y + 10;
+      const dx = (tx - k.spr.x) * 0.15;
+      const dy = (ty - k.spr.y) * 0.15;
+      k.spr.x += dx;
+      k.spr.y += dy;
+      animateWalker(k.spr, dx, dy, Math.abs(dx) + Math.abs(dy) > 0.3, this.time.now);
+      k.spr.setDepth(k.spr.y);
+    });
+    // the bomb's ticking
+    if (s.flags.nuke_planted && G.rt.timerEnd) {
+      const left = Math.max(0, G.rt.timerEnd - Date.now());
+      G.emit("timer", left / 1000);
+      if (left <= 0 && !this.busy) {
+        G.emit("toast", { title: "TIME'S UP", text: "You didn't quite make it back. Close enough." });
+        this.startKrunch();
+      }
+    }
+  }
+
+  /** The Krunch Protocol lands: every building in Krelford, one after another. */
+  private async krunchBombing() {
+    const cam = this.cameras.main;
+    this.busy = true;
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    this.av.setVisible(false);
+    synth.stopMusic();
+    cam.stopFollow();
+    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 1).setAlpha(0.25).setScrollFactor(0).setDepth(4950).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    void red;
+    synth.play("alarm");
+    await this.talk([dir("Krelford. The sky is full of little lights. They are getting bigger.")]);
+    const order = BUILDINGS.filter((b) => b.door).sort((a, b) => a.y - b.y || a.x - b.x);
+    for (const b of order) {
+      cam.pan(b.x, b.y, 450, Phaser.Math.Easing.Sine.InOut);
+      await new Promise((r) => this.time.delayedCall(480, r));
+      // the missile comes in
+      const m = this.add.rectangle(b.x + 220, b.y - 420, 6, 26, 0xe5e7eb).setAngle(-28).setDepth(9000);
+      await new Promise<void>((res) => this.tweens.add({ targets: m, x: b.x, y: b.y - 10, duration: 360, ease: "Quad.in", onComplete: () => res() }));
+      m.destroy();
+      synth.play(Math.random() < 0.5 ? "explode_1" : "explode_2");
+      cam.shake(350, 0.012);
+      vfx(this, hasVfx(this, "vfx_bigboom") ? "vfx_bigboom" : "vfx_boom", b.x, b.y, { scale: 2.6, depth: 9001 });
+      for (let i = 0; i < 3; i++) vfx(this, "vfx_boom", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.5) * b.h * 0.6, { scale: 1.6, depth: 9001, delay: 120 + i * 110 });
+      for (let i = 0; i < 2; i++) vfx(this, "vfx_fire", b.x + (i ? 1 : -1) * b.w * 0.22, b.y + b.h * 0.2, { scale: 2.2, depth: b.y + 200, delay: 300 });
+      vfx(this, "vfx_smokecol", b.x, b.y - b.h * 0.2, { scale: 2.4, depth: b.y + 199, delay: 450 });
+      const label = this.add.text(b.x, b.y - b.h / 2 - 30, b.id === "HOME" ? "YOUR HOUSE" : b.name, { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffd23f", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(9100);
+      this.tweens.add({ targets: label, alpha: 0, delay: 500, duration: 400, onComplete: () => label.destroy() });
+      await new Promise((r) => this.time.delayedCall(320, r));
+    }
+    cam.pan(1280, 790, 700);
+    await new Promise((r) => this.time.delayedCall(800, r));
+    vfx(this, "vfx_bigboom", 1280, 790, { scale: 3.2, depth: 9001 });
+    synth.play("explode_1");
+    cam.shake(800, 0.02);
+    await new Promise((r) => this.time.delayedCall(1400, r));
+    await this.talk([dir("Somewhere under all of it, in the Town Hall, the party is still going.")]);
+    this.go("Vignette", { id: "townhall_party", returnAt: "TOWN_HALL" });
   }
 
   // ---------------------------------------------------------------- THE KREDDLE KRUNCHERS: the shoving match

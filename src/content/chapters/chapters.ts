@@ -256,7 +256,9 @@ export const CHAPTERS: ChapterDef[] = [
     steps: [
       { id: "s_brief", text: "KRELMERGENCY: the lads are glued to the telly in the FGM War Room (under the Archive). Something's on GB Krews.", done: { flag: "arcstep_arc_klerble_brief" }, target: "ARCHIVE" },
       { id: "s_dungeon", text: "Get to Krelford International, get on Flight KR-069 and fly it into the Kreddle Express before it reaches the Krel Tower", done: { flag: "kreltower_resolved" }, target: "AIRPORT" },
-      { id: "s_report", text: "Report to the Town Hall", done: { flag: "ch6_fact" }, target: "TOWN_HALL" },
+      { id: "s_meeting", text: "KRELMERGENCY: the Krel Tower is gone. Emergency meeting at the Town Hall", done: { flag: "revenge_meeting" }, target: "TOWN_HALL" },
+      { id: "s_raid", text: "Lead the Krew over the Kreddle Bridge (far west). Revenge. Chemical. Total.", done: { flag: "nuke_planted" }, target: "KREDDLE_BRIDGE" },
+      { id: "s_return", text: "THE NUKE IS ARMED. Get back to the Town Hall before it blows!", done: { flag: "ch6_clear" }, target: "TOWN_HALL" },
     ],
     intro: [
       dir("CHAPTER SIX. You were on your way up to Da Drongus Dungeon. Crystals in your pocket. Thumbs ready. Then every telly in Krelford switched itself on at once."),

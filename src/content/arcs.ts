@@ -81,8 +81,9 @@ export const ARCS: Arc[] = [
         text: "KRELMERGENCY: the lads are glued to the telly in the FGM War Room (under the Archive). Something's on GB Krews.",
         at: "ARCHIVE",
         step: {
-          kind: "dialogue",
-          lines: [
+          kind: "vignette",
+          id: "klerble_train",
+          intro: [
             dir("The FGM War Room. Everyone is crammed round the telly. Mikey has the remote. Mikey has always got the remote."),
             say("MIKEY", "Shh. SHH. Kreddle's doing a press conference."),
             { s: "NARRATOR", t: "", tv: "klerble_presser" },

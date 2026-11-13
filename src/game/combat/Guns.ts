@@ -66,6 +66,11 @@ export const GUNS: Record<string, GunDef> = {
     id: "flamer", name: "Fizzy Bongo Flamethrower", blurb: "It's a bongo. On fire. Pointed at people.",
     tex: "p_wpn_shotgun", dmg: 4, cd: 70, speed: 380, pellets: 4, spread: 0.5, range: 170, color: 0xff7a1a, maxAmmo: 320, pickup: 80, minChapter: 1, shop: 560,
   },
+  // ---- Chapter 6: won in Kreddle, handed to you at the revenge meeting. Absurdly strong on purpose.
+  chem_flamer: {
+    id: "chem_flamer", name: "Chemical Flamethrower", blurb: "Won on the Kreddle slots. Green fire. Banned under the Krelneva Convention, which Krezmar has pissed on.",
+    tex: "p_wpn_shotgun", dmg: 40, cd: 45, speed: 420, pellets: 6, spread: 0.55, range: 260, pierce: 6, color: 0x7cff3a, maxAmmo: 9999, pickup: 999, minChapter: 6, kreddle: true,
+  },
   bfk: {
     id: "bfk", name: "The BFK (Big Fucking Krezzer)", blurb: "Do not fire indoors. Everything in Krelworld is indoors.",
     tex: "p_wpn_rocket", dmg: 95, cd: 1600, speed: 300, pellets: 1, spread: 0, range: 560, blast: 150, knock: 420, color: 0xc084fc, shotTex: "fx_rocket", maxAmmo: 6, pickup: 2, minChapter: 1, shop: 900,
@@ -89,10 +94,10 @@ export const GUNS: Record<string, GunDef> = {
   },
 };
 
-export const GUN_ORDER = ["pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk", "chainsaw", "kreddler", "disco", "flush"];
+export const GUN_ORDER = ["chem_flamer", "pistol", "smg", "shotgun", "rail", "rocket", "gatling", "sniper", "flamer", "bfk", "chainsaw", "kreddler", "disco", "flush"];
 
 /** Strongest first: what you get handed when you walk into a room or run dry. */
-export const GUN_POWER = ["bfk", "disco", "kreddler", "rocket", "gatling", "flush", "chainsaw", "sniper", "rail", "flamer", "shotgun", "smg", "pistol"];
+export const GUN_POWER = ["chem_flamer", "bfk", "disco", "kreddler", "rocket", "gatling", "flush", "chainsaw", "sniper", "rail", "flamer", "shotgun", "smg", "pistol"];
 
 /** The infinite starter every character always has (when no gun is in hand). */
 export const FART_BLASTER = { name: "Fart Blaster", dmg: 10, cd: 240, speed: 540, range: 400 };

@@ -89,6 +89,8 @@ export function continueRun(from: Phaser.Scene) {
 export function currentStep(): { text: string; target?: string } | null {
   const s = G.s;
   if (s.chapter === 1 && !s.flags.prologue_done) return { text: "Go to Krelford Town Hall: the cabinet's Lore Appreciation Inquiry is about to start", target: "TOWN_HALL" };
+  if (s.chapter === 6 && !s.flags.ch6_ready)
+    return { text: "⚠ LAST CHANCE: stock up on weapons, ammo, upgrades, Krezzcoin and Krokens (Kreddle Exchange, slots, bank, armoury). Then go to the Town Hall to begin Chapter 6", target: "TOWN_HALL" };
   const ch = chapterDef(s.chapter);
   for (const st of ch.steps) {
     if (!evalCond(st.done, s)) {

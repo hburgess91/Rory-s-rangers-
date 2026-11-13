@@ -1851,8 +1851,6 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     const s = G.s;
     Object.assign(s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true });
-    // the Kreddle Express is Chapter 6: however it ends, the chapter's done
-    if (s.chapter === 6) s.flags.ch6_clear = true;
     G.rt.timerEnd = 0;
     G.emit("timer", null);
     s.hp = maxHp(s);
