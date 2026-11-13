@@ -19,7 +19,7 @@ function loadRecIndex() {
   return recIndexP;
 }
 function recBundle(b: string) {
-  return (recBundles[b] ??= fetch(`audio/voice/${b}.bin`)
+  return (recBundles[b] ??= fetch(`audio/voice/${b}.mp3`)
     .then((r) => (r.ok ? r.arrayBuffer() : null))
     .catch(() => null));
 }

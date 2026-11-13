@@ -5,7 +5,7 @@
 
 LINES.json comes from `npx vite-node scripts/voice-extract.ts LINES.json`.
 Casting is in scripts/voice-cast.json. The API key is injected by the session proxy (header placeholder only).
-Output: public/audio/voice/b<NN>.bin (concatenated mp3 clips) + public/audio/voice/index.json
+Output: public/audio/voice/b<NN>.mp3 (concatenated mp3 clips) + public/audio/voice/index.json
         { key: [bundle, offset, length, voiceId] }. Existing bundles act as the cache: a line whose voice
         hasn't changed is copied out of the old bundle instead of being generated again.
 """
@@ -49,7 +49,7 @@ def old_clip(k, vid):
         return None
     b = e[0]
     if b not in bundle_cache:
-        p = os.path.join(OUT, f"{b}.bin")
+        p = os.path.join(OUT, f"{b}.mp3")
         if not os.path.exists(p):
             return None
         bundle_cache[b] = open(p, "rb").read()
@@ -114,14 +114,14 @@ with cf.ThreadPoolExecutor(4) as ex:
 # pack: lines grouped by source file, so a scene's lines tend to share a bundle
 os.makedirs(OUT, exist_ok=True)
 for f in os.listdir(OUT):
-    if f.endswith(".bin"):
+    if f.endswith(".mp3"):
         os.remove(os.path.join(OUT, f))
 order = sorted(keep.values(), key=lambda x: (x[0]["file"], x[0]["k"]))
 index, buf, n = {}, bytearray(), 0
 def flush():
     global buf, n
     if buf:
-        open(os.path.join(OUT, f"b{n:02d}.bin"), "wb").write(buf)
+        open(os.path.join(OUT, f"b{n:02d}.mp3"), "wb").write(buf)
         n += 1
         buf = bytearray()
 for l, vid, data in order:
