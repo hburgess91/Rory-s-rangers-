@@ -104,9 +104,10 @@ describe("Kreltower plot", () => {
   it("Drongus's office plays the anthem", () => {
     expect(DUNGEONS.citadel.rooms.some((r) => r.event === "anthem")).toBe(true);
   });
-  it("Da Drongus Dungeon: real enemies and bosses, and it still ends with the Drongus fight", () => {
+  it("Da Drongus Dungeon: real enemies and bosses, and it ends on the roof (the finale)", () => {
     const rooms = DUNGEONS.citadel.rooms;
-    expect(rooms[rooms.length - 1].boss).toBe("drongus");
+    expect(rooms[rooms.length - 1].event).toBe("roof");
+    expect(rooms[rooms.length - 2].event).toBe("drongus2");
     for (const r of rooms) {
       for (const w of r.waves ?? []) for (const [id] of w) expect(ENEMIES[id], `${r.name}: ${id}`).toBeTruthy();
       for (const [, w] of r.triggers ?? []) for (const [id] of w) expect(ENEMIES[id], `${r.name}: ${id}`).toBeTruthy();

@@ -27,7 +27,7 @@ export interface RoomDef {
   waves?: [string, number][][];
   props?: PropDef[];
   /** Special scripted event handled by the dungeon scene. */
-  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon" | "drongus1" | "stairs" | "drongus2";
+  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon" | "drongus1" | "stairs" | "drongus2" | "roof";
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
@@ -642,15 +642,27 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         platforms: [[0.17, 150, 200], [0.83, 150, 200], [0.5, 290, 260]],
         enterLines: CD.OFFICE_ENTER,
       },
-      // PHASE THREE plugs in here (the cauldron in the room above leads to the next room). For now: the old final fight and the ending.
+      // THE FINALE, part one: the cauldron fires you up onto the roof. The lads in frames, DARK DRONGUS, the group wonk,
+      // then the group krezz and the collapse (src/game/scenes/citadel/RoofArena.ts, RoofCutscene.ts). It ends in Krelford.
       {
-        name: "The Summit: Government Chamber",
-        w: 1400,
-        h: 900,
-        theme: "wiki",
-        boss: "drongus",
+        name: "The Roof",
+        w: 1240,
+        h: 1100,
+        theme: "citadel",
+        event: "roof",
+        music: "c7_stairs",
       },
     ],
+  },
+
+  // THE FINALE, part two: back in Krelford. THE CONCEPT OF PAEDOPHILIA (src/game/scenes/finale/KrelfordFinale.ts runs
+  // the whole fight; the side-on cutscenes are FinaleScene). The arena is ruined Krelford itself.
+  krelford_finale: {
+    id: "krelford_finale",
+    chapter: 7,
+    name: "KRELFORD",
+    music: "c7_concept",
+    rooms: [{ name: "What's Left Of Krelford", w: 2400, h: 1680, theme: "industrial", music: "c7_concept" }],
   },
 
   airport: {

@@ -67,7 +67,7 @@ export class DarkDrongusBoss extends Boss {
     this.baseScale = art ? 1.75 : 1.6;
     this.setScale(this.baseScale);
     if (!art) this.setTint(0xffe28a);
-    this.def = { ...this.def, damage: 16, shout: DD_TAUNTS, shoutEvery: 4200 };
+    this.def = { ...this.def, damage: 12, shout: DD_TAUNTS, shoutEvery: 4200 };
     this.aura = w.sc.add.ellipse(x, y, 190, 240, GOLD, 0.16).setBlendMode(Phaser.BlendModes.ADD);
     const body = this.body as Phaser.Physics.Arcade.Body;
     const fw = this.frame.width;
@@ -88,7 +88,7 @@ export class DarkDrongusBoss extends Boss {
     const now = this.world.now();
     if (now - this.lastImmune > 140) {
       this.lastImmune = now;
-      this.setTintFill(0xfff7c2);
+      this.setTint(0xfff3b0);
       this.scene.time.delayedCall(50, () => this.active && !this.dead && (this.art ? this.clearTint() : this.setTint(0xffe28a)));
       if (Math.random() < 0.45) this.world.floatText(this.x + (Math.random() - 0.5) * 60, this.y - 50 - Math.random() * 30, "IMMUNE", "#ffd23f", 14);
       if (Math.random() < 0.5) synth.play("ding");
@@ -187,7 +187,7 @@ export class DarkDrongusBoss extends Boss {
     w.enemyLine(this.x, this.y, a, len, 90, 0, tele);
     const ex = this.x + Math.cos(a) * (len - 40);
     const ey = this.y + Math.sin(a) * (len - 40);
-    w.enemyAoe(ex, ey, 95, Math.round(24 * this.dmgMult), tele + 260, GOLD);
+    w.enemyAoe(ex, ey, 95, Math.round(18 * this.dmgMult), tele + 260, GOLD);
     this.scene.time.delayedCall(tele, () => {
       if (this.dead || !this.active || this.frozen) return;
       this.punchUntil = this.world.now() + 520;
@@ -198,7 +198,7 @@ export class DarkDrongusBoss extends Boss {
         w.shake(260, 0.016);
         synth.play("boom");
         if (hasVfx(this.scene, "vfx_dust")) vfx(this.scene, "vfx_dust", this.x, this.y + 40, { scale: 1.6, depth: this.depth - 1 });
-        if (this.rage > 0.5) this.ring(10, 230, 12, GOLD, Math.random());
+        if (this.rage > 0.5) this.ring(10, 230, 9, GOLD, Math.random());
       });
     });
     this.nextPattern = now + tele + 900 - this.rage * 300;
@@ -217,7 +217,7 @@ export class DarkDrongusBoss extends Boss {
         const p = w.player;
         const base = Math.atan2(p.y - this.y, p.x - this.x) + (v % 2 ? 0.12 : -0.12);
         const n = 5;
-        for (let i = 0; i < n; i++) w.shoot(this.x, this.y - 20, { owner: "enemy", damage: Math.round(12 * this.dmgMult), speed: 250 + this.rage * 80, angle: base + (i - (n - 1) / 2) * 0.24, color: GOLD, scale: 1.8, life: 3600 });
+        for (let i = 0; i < n; i++) w.shoot(this.x, this.y - 20, { owner: "enemy", damage: Math.round(9 * this.dmgMult), speed: 250 + this.rage * 80, angle: base + (i - (n - 1) / 2) * 0.24, color: GOLD, scale: 1.8, life: 3600 });
       });
     this.nextPattern = now + volleys * 420 + 700;
   }
@@ -244,9 +244,9 @@ export class DarkDrongusBoss extends Boss {
         }
         const fuse = 1000 * w.telegraphMult;
         synth.play("lob");
-        w.enemyAoe(tx, ty, 80, Math.round(22 * this.dmgMult), fuse, 0xff6b2b);
+        w.enemyAoe(tx, ty, 80, Math.round(16 * this.dmgMult), fuse, 0xff6b2b);
         const key = sc.textures.exists("fr_grenade") ? "fr_grenade" : null;
-        const g = key ? sc.add.image(this.x, this.y - 40, key).setScale(1.4) : sc.add.circle(this.x, this.y - 40, 7, 0x3f6212).setStrokeStyle(2, 0x111111);
+        const g = key ? sc.add.image(this.x, this.y - 40, key).setScale(0.5) : sc.add.circle(this.x, this.y - 40, 7, 0x3f6212).setStrokeStyle(2, 0x111111);
         g.setDepth(900);
         const sx = this.x;
         const sy = this.y - 40;
@@ -385,7 +385,7 @@ export class DarkDrongusBoss extends Boss {
     const across = Math.abs(-ex * Math.sin(a) + ey * Math.cos(a));
     if (along > 0 && across < 30 && now - b.lastHit > 450) {
       b.lastHit = now;
-      w.damagePlayer(Math.round(20 * this.dmgMult), { x: p.x - Math.cos(a) * 10, y: p.y - Math.sin(a) * 10 }, { label: "-KREZZED" });
+      w.damagePlayer(Math.round(14 * this.dmgMult), { x: p.x - Math.cos(a) * 10, y: p.y - Math.sin(a) * 10 }, { label: "-KREZZED" });
     }
   }
 

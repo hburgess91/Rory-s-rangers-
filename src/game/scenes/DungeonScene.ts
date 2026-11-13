@@ -16,6 +16,8 @@ import { ElonBoss } from "../combat/ElonBoss";
 import { DrongusPhaseOneBoss } from "../combat/DrongusPhaseOne";
 import { DerangedDrongusBoss } from "../combat/DerangedDrongus";
 import { Citadel, citadelPreload, citadelReady } from "./citadel/Citadel";
+import { RoofArena, roofPreload, roofReady } from "./citadel/RoofArena";
+import { DarkDrongusBoss } from "../combat/DarkDrongus";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
 import { BOSS_TEXT } from "../../content/bosses";
@@ -28,6 +30,8 @@ import { equipBest, fitTo, giveAmmo, ownedGuns, rollCrate, GUNS, gunMax } from "
 import { charMeta, leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
+import { KrelfordFinale } from "./finale/KrelfordFinale";
+import { finalePreload } from "./finale/finaleArt";
 import { SanBrother } from "../combat/SanBrother";
 import { SideLevel } from "./side/SideLevel";
 import { runChain, switchTo } from "../Flow";
@@ -123,6 +127,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private sideBgScale = 1;
   /** Chapter 7 (Da Drongus Dungeon): the gothic-cyber dressing, the tannoy, the anthem. */
   private citadel: Citadel | null = null;
+  /** The finale: the roof of Da Drongus Dungeon (see citadel/RoofArena.ts). */
+  private roof: RoofArena | null = null;
   /** A room's mini-boss: not met yet, fighting it, or beaten. */
   private miniBossState: "none" | "fight" | "done" = "none";
   /** While a side-on mini-boss is up, the screen is locked from here to the end of the room. */
@@ -201,11 +207,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.miniBossState = "none";
     this.arenaLeft = 0;
     this.citadel = null;
+    this.roof = null;
   }
 
   preload() {
     // Da Drongus Dungeon's art, until it's in the manifest
     if (this.dungeon.id === "citadel" || this.room.theme === "citadel") citadelPreload(this);
+    if (this.room.event === "roof") roofPreload(this);
+    if (this.dungeon.id === "krelford_finale") finalePreload(this);
   }
 
   /** The fight's own clock: runs at the slow-motion rate (Phaser's scene clock doesn't). */
@@ -270,6 +279,19 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         setBusy: (b) => (this.busy = b),
       });
     this.buildRoom();
+    if (r.event === "roof") {
+      roofReady(this);
+      this.obstacles.clear(true, true);
+      this.roof = new RoofArena(this as never, r, {
+        talk: (l) => this.talk(l),
+        startBoss: (id, x, y) => this.startBoss(id, 1, { x, y }),
+        setBusy: (b) => (this.busy = b),
+        clearHostiles: () => {
+          for (const e of [...this.enemies]) if (!e.dead && !e.isBoss) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
+          for (const sh of [...this.shots]) if (sh.o.owner === "enemy") this.killShot(sh);
+        },
+      });
+    }
     this.controls = new Controls(this);
     // died fighting a mini-boss? Back in at the start of its arena, not the start of the room
     const cp = r.miniBoss ? G.s.flags[this.miniBossKey()] : undefined;
@@ -1142,6 +1164,17 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       G.save();
     }
     if (r.event === "stairs") this.citadel?.stairs();
+    if (r.event === "roof" && this.roof) {
+      this.busy = false;
+      await this.roof.start();
+      return;
+    }
+    // the Krelford finale: THE CONCEPT OF PAEDOPHILIA runs the whole room
+    if (this.dungeon.id === "krelford_finale") {
+      this.busy = false;
+      await new KrelfordFinale(this).start();
+      return;
+    }
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
     if (this.roomIdx === 0) G.drongus("enter_dungeon");
     this.busy = false;
@@ -1341,6 +1374,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.sideLevel = null;
     this.citadel?.destroy();
     this.citadel = null;
+    this.roof?.destroy();
+    this.roof = null;
     this.spice?.destroy();
     this.spice = null;
     this.player?.destroy();
@@ -1687,7 +1722,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     const bx = at?.x ?? r.w / 2;
     const by = at?.y ?? r.h / 2 - 100;
-    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : id === "drongus1" ? new DrongusPhaseOneBoss(this, bx, by) : id === "drongus2" ? new DerangedDrongusBoss(this, bx, by) : createBoss(id, this, bx, by);
+    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : id === "drongus1" ? new DrongusPhaseOneBoss(this, bx, by) : id === "drongus2" ? new DerangedDrongusBoss(this, bx, by) : id === "dark_drongus" ? new DarkDrongusBoss(this, bx, by) : createBoss(id, this, bx, by);
     // bosses toughen up as the story goes on (the bank is how you keep up)
     const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
     if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
@@ -2615,6 +2650,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (this.boss instanceof DrongusBoss) this.boss.hitSong(x, y, r);
     if (dmg > 0) this.spice?.hitAoe(x, y, r, dmg);
+    if (dmg > 0) this.roof?.hitAoe(x, y, r, dmg);
     return n;
   }
 
@@ -2996,6 +3032,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (!this.busy) for (const b of this.bros) b.update(now, Math.min(delta, 50));
     this.sideLevel?.update(Math.min(delta, 50), this.busy);
     this.citadel?.update(Math.min(delta, 50));
+    this.roof?.update(Math.min(delta, 50));
     const mb = this.room.miniBoss;
     if (mb && this.miniBossState === "none" && !this.roomCleared && !this.busy && !this.transitioning) {
       const climb = this.room.exitAt ? this.room.exitAt[1] : this.room.h - 200;
@@ -3092,6 +3129,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         continue;
       }
       if (sh.o.owner === "player") {
+        if (this.roof?.hitShot(sh.spr.x, sh.spr.y, sh.o)) {
+          sh.o.onHit?.(sh.spr.x, sh.spr.y);
+          this.killShot(sh);
+          continue;
+        }
         if (this.spice?.hitShot(sh.spr.x, sh.spr.y, sh.o.damage || 30)) {
           sh.o.onHit?.(sh.spr.x, sh.spr.y);
           this.killShot(sh);

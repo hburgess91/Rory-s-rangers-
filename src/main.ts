@@ -27,6 +27,8 @@ import { HomeScene } from "./game/scenes/HomeScene";
 import { DriveScene } from "./game/scenes/DriveScene";
 import { BeepBeepScene } from "./game/scenes/BeepBeepScene";
 import { LairScene } from "./game/scenes/LairScene";
+import { FinaleScene } from "./game/scenes/FinaleScene";
+import { RoofCutscene } from "./game/scenes/citadel/RoofCutscene";
 import { installDebug } from "./game/debug";
 import { installCrashGuard } from "./game/crashGuard";
 
@@ -69,6 +71,8 @@ const game = new Phaser.Game({
     DriveScene,
     BeepBeepScene,
     LairScene,
+    FinaleScene,
+    RoofCutscene,
     MenuScene,
     EndingScene,
   ],

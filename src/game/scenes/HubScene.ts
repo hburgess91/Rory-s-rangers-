@@ -32,6 +32,8 @@ import * as AFTER from "../../content/chapters/ch7aftermath";
 import { CITADEL_ENTRY } from "../../content/chapters/ch7aftermath";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
+import * as FB from "../../content/finaleKrelford";
+import { finalePreload, finaleReady, logsKey } from "./finale/finaleArt";
 
 const WORLD_W = 2560;
 const WORLD_H = 1792;
@@ -230,6 +232,11 @@ export class HubScene extends Phaser.Scene {
     super("Hub");
   }
 
+  /** The Krelford finale's art (the wreck heap, the chat logs), once Da Drongus Dungeon has come down. */
+  preload() {
+    if (G.s?.chapter >= 7 && G.s.flags.citadel_fallen) finalePreload(this);
+  }
+
   /** Set when arriving straight from a chapter report: run the next chapter's Town Hall meetings in the same visit. */
   private chainMeetings = false;
 
@@ -252,6 +259,9 @@ export class HubScene extends Phaser.Scene {
     this.npcs = [];
     // the scene object is reused between visits: drop anything left over from last time
     this.raidKrew = [];
+    this.finaleKrew = [];
+    this.finaleLogs = null;
+    this.finaleRumbling = false;
     this.trail = [];
     this.brawl = null;
     this.cutscene = false;
@@ -457,6 +467,11 @@ export class HubScene extends Phaser.Scene {
     // Chapter 7 opens at the top of Da Drongus Dungeon, then Krelford wakes up in the rubble
     if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.ch7_lair_seen) {
       this.go("Lair", {});
+      return;
+    }
+    // THE FINALE: Da Drongus Dungeon has come down. The chat logs are somewhere in town. And then...
+    if (s.chapter >= 7 && s.flags.citadel_fallen && !s.flags.concept_destroyed) {
+      await this.finaleKrelford();
       return;
     }
     if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.ch7_aftermath) {
@@ -1388,6 +1403,7 @@ export class HubScene extends Phaser.Scene {
   }
 
   private drawBuilding(b: Building) {
+    if (b.id === "CITADEL" && G.s.flags.citadel_fallen) return this.drawWreckHeap(b);
     if (b.id === "CITADEL" && !this.towerUp()) return;
     if (this.ruined && b.id !== "CITADEL") return this.drawRuinedBuilding(b);
     const key = this.buildingKey(b);
@@ -1758,7 +1774,7 @@ export class HubScene extends Phaser.Scene {
 
   private setupInteractables() {
     for (const b of BUILDINGS) {
-      if (!b.door || (b.id === "CITADEL" && !this.towerUp())) continue;
+      if (!b.door || (b.id === "CITADEL" && (!this.towerUp() || G.s.flags.citadel_fallen))) continue;
       this.interactables.push({ x: b.door.x, y: b.door.y + 10, r: 46, label: () => this.doorLabel(b), use: () => this.enterBuilding(b) });
     }
     this.setupBombs();
@@ -2830,6 +2846,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.beatup?.update(time, dt);
     if (this.brawl?.running && this.controls.attackHeld()) this.playerShove(time);
     this.updateRaidMarch(time);
+    this.updateFinale(time);
     if (!this.busy && !this.brawl?.running && this.controls.attackHeld()) {
       const m = this.npcs.find((n) => n.follower);
       if (m && Phaser.Math.Distance.Between(m.spr.x, m.spr.y, this.av.x, this.av.y) < 70) this.hitMikey(m, true);
@@ -2858,7 +2875,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     // objective arrow
     const st = currentStep();
-    const target = this.beatup?.target() ?? (st?.target ? this.targetPos(st.target) : null) ?? (this.brawl && !this.brawl.running ? this.brawl.spot : null);
+    const target = this.finaleLogs ?? this.beatup?.target() ?? (st?.target ? this.targetPos(st.target) : null) ?? (this.brawl && !this.brawl.running ? this.brawl.spot : null);
     if (target && !this.busy) {
       const d = Phaser.Math.Distance.Between(this.av.x, this.av.y, target.x, target.y);
       if (d > 120) {
@@ -3473,6 +3490,212 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.busy = false;
     G.save();
     this.arcPayout();
+  }
+
+  // ---------------------------------------------------------------- THE FINALE: after Da Drongus Dungeon falls
+
+  private finaleKrew: { spr: Phaser.GameObjects.Sprite; lag: number }[] = [];
+  /** The chat logs, where Drongus threw them (the objective arrow points here). */
+  private finaleLogs: { x: number; y: number } | null = null;
+  private finaleRumbling = false;
+
+  /** Where Da Drongus Dungeon stood: an enormous heap of wreckage, smoking, sparking, on fire. */
+  private drawWreckHeap(b: Building) {
+    finaleReady(this);
+    const bottom = b.y + b.h / 2;
+    const key = this.textures.exists("fb_wreck") ? "fb_wreck" : null;
+    const sc = Math.max(1.6, (b.w * 1.35) / 256);
+    if (key) {
+      this.add.image(b.x, bottom + 30, key).setOrigin(0.5, 1).setScale(sc).setDepth(bottom + 20);
+      // spill either side
+      this.add.image(b.x - b.w * 0.75, bottom + 50, key).setOrigin(0.5, 1).setScale(sc * 0.45).setFlipX(true).setDepth(bottom + 40).setTint(0x9a90a0);
+      this.add.image(b.x + b.w * 0.75, bottom + 46, key).setOrigin(0.5, 1).setScale(sc * 0.5).setDepth(bottom + 36).setTint(0x9a90a0);
+    } else for (let i = 0; i < 9; i++) this.ruinProp(["r_rubble", "r_girders", "r_fireheap"][i % 3], b.x - b.w / 2 + (b.w * (i + 0.5)) / 9, bottom - 20 + (i % 2) * 20, 2.2);
+    this.add.ellipse(b.x, bottom + 10, b.w * 1.6, 90, 0x0d0a08, 0.5).setDepth(1);
+    for (let i = 0; i < 6; i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 1.1, bottom - Math.random() * 160, { scale: 1.4 + Math.random(), depth: bottom + 45, delay: Math.random() * 700 });
+    for (let i = 0; i < 4; i++) vfx(this, "vfx_smokecol", b.x + (i - 1.5) * b.w * 0.35, bottom - 140, { scale: 2.6, depth: bottom + 46, alpha: 0.8, delay: i * 200 });
+    // sparks off the snapped cables
+    this.time.addEvent({ delay: 700, loop: true, callback: () => {
+      if (Math.random() < 0.5) return;
+      const x = b.x + (Math.random() - 0.5) * b.w;
+      const y = bottom - 40 - Math.random() * 160;
+      for (let k = 0; k < 5; k++) {
+        const sp = this.add.rectangle(x, y, 2, 2, 0xc4b5fd).setDepth(bottom + 50).setBlendMode(Phaser.BlendModes.ADD);
+        this.tweens.add({ targets: sp, x: x + (Math.random() - 0.5) * 40, y: y + 20 + Math.random() * 30, alpha: 0, duration: 400, onComplete: () => sp.destroy() });
+      }
+    } });
+    this.add
+      .text(b.x, bottom + 40, "WHERE DA DRONGUS DUNGEON STOOD (WRECKAGE)", { fontFamily: FONT, fontSize: "11px", color: "#ffb4a0", backgroundColor: "#1a1033cc", padding: { x: 5, y: 2 } })
+      .setOrigin(0.5, 0)
+      .setDepth(bottom + 60);
+    this.colliders.add(this.add.rectangle(b.x, bottom - b.h * 0.3, b.w * 1.1, b.h * 0.7, 0, 0));
+  }
+
+  /** "x,y" from the roof (where the logs landed), nudged off any heap so you can reach it. */
+  private finaleSpot(v: unknown, def: { x: number; y: number }) {
+    const [a, b] = String(v ?? "").split(",").map(Number);
+    let x = Phaser.Math.Clamp(Number.isFinite(a) ? a : def.x, 100, WORLD_W - 100);
+    let y = Phaser.Math.Clamp(Number.isFinite(b) ? b : def.y, 300, WORLD_H - 120);
+    for (let i = 0; i < 30 && this.nearBuilding(x, y, 24); i++) y += 30;
+    if (this.nearBuilding(x, y, 24)) ({ x, y } = def);
+    return { x, y };
+  }
+
+  /** The finale in town: land at the bottom of the wreck, celebrate, go for the logs, and then the rumble. */
+  private async finaleKrelford() {
+    const s = G.s;
+    // the lads are with you now, not scattered round town
+    for (const n of [...this.npcs]) {
+      if (!(PLAYABLE_ORDER as readonly string[]).includes(n.id) && n.id !== "MIKEY") continue;
+      n.spr.destroy();
+      n.plate.destroy();
+      n.bubble?.destroy();
+      this.interactables = this.interactables.filter((i) => (i as unknown as { __npc?: Npc }).__npc !== n);
+      this.npcs = this.npcs.filter((x) => x !== n);
+    }
+    const logs = this.finaleSpot(s.flags.finale_logs_at, { x: 900, y: 1440 });
+    if (!s.flags.finale_landed) await this.finaleLanding();
+    // the logs, glowing in a puddle
+    const img = this.add.image(logs.x, logs.y, logsKey(this)).setScale(1.3).setDepth(logs.y);
+    const glow = this.add.circle(logs.x, logs.y, 34, 0x22c55e, 0.3).setDepth(logs.y - 1).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: glow, scale: 1.5, alpha: 0.1, yoyo: true, repeat: -1, duration: 800 });
+    this.tweens.add({ targets: img, y: logs.y - 6, yoyo: true, repeat: -1, duration: 700 });
+    // the Krew follow you
+    PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
+      const spr = this.add.sprite(this.av.x - 40 + (i % 4) * 26, this.av.y + 30 + Math.floor(i / 4) * 20, `spr_${p}`, 0).setScale(2).setDepth(this.av.y);
+      this.finaleKrew.push({ spr, lag: 10 + i * 7 });
+    });
+    this.trail = [];
+    this.finaleLogs = logs;
+    this.busy = false;
+    this.cutscene = false;
+    G.emit("toast", { title: "OBJECTIVE", text: s.flags.finale_emerged ? "Back to the logs. It's waiting for you." : "Get the chat logs. Follow the arrow." });
+  }
+
+  /** They come down the wreck on bits of it, and land at the bottom. Then: the celebration, then the silence. */
+  private async finaleLanding() {
+    const s = G.s;
+    const cam = this.cameras.main;
+    const b = BUILDINGS.find((x) => x.id === "CITADEL")!;
+    const bottom = b.y + b.h / 2;
+    this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    this.av.setVisible(false);
+    cam.stopFollow();
+    cam.centerOn(b.x, bottom + 40);
+    synth.stopMusic();
+    await this.talk(FB.FB_LANDED);
+    this.busy = true;
+    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
+    const lads = ids.map((id, i) => {
+      const fx = b.x - 200 + (i * 400) / Math.max(1, ids.length - 1);
+      const fy = bottom + 110 + (i % 2) * 24;
+      const spr = this.add.sprite(fx + (i % 2 ? 60 : -60), bottom - 150 - (i % 3) * 30, `spr_${id}`, 0).setScale(2).setDepth(fy + 2);
+      const slab = this.add.rectangle(spr.x, spr.y + 20, 46, 12, 0x2a2433).setStrokeStyle(2, 0x0b0612).setDepth(fy + 1);
+      return { id, spr, slab, fx, fy };
+    });
+    // surf down
+    for (const [i, l] of lads.entries()) {
+      this.time.delayedCall(i * 160, () => {
+        synth.play(i % 2 ? "swing" : "dodge");
+        this.tweens.add({ targets: [l.spr, l.slab], x: `+=${l.fx - l.spr.x}`, y: `+=${l.fy - l.spr.y}`, duration: 900, ease: "Quad.in", onComplete: () => {
+          vfx(this, "vfx_dust", l.fx, l.fy + 14, { scale: 1.4, depth: l.fy + 5 });
+          this.cameras.main.shake(90, 0.004);
+          this.tweens.add({ targets: l.slab, alpha: 0, delay: 400, duration: 400, onComplete: () => l.slab.destroy() });
+        } });
+        this.tweens.add({ targets: l.spr, angle: { from: -12, to: 8 }, yoyo: true, duration: 220, repeat: 1 });
+      });
+    }
+    await new Promise((r) => this.time.delayedCall(lads.length * 160 + 1100, r));
+    lads.forEach((l) => l.spr.setAngle(0));
+    synth.play("cheer");
+    lads.forEach((l, i) => this.tweens.add({ targets: l.spr, y: l.spr.y - 22, yoyo: true, repeat: 3, duration: 180, delay: i * 50 }));
+    await this.talk(FB.FB_CELEBRATE.slice(0, 9));
+    this.busy = true;
+    // the cheer, the conga
+    synth.play("cheer");
+    vfx(this, "vfx_confetti", b.x, bottom + 80, { scale: 2.5, depth: 6000 });
+    lads.forEach((l, i) => this.tweens.add({ targets: l.spr, y: l.spr.y - 30, yoyo: true, repeat: 5, duration: 150, delay: i * 40 }));
+    lads.forEach((l, i) => this.floatShout(l.spr, ["WAHEY!", "GET IN!", "YESSSS!", "LADS!!", "DELETE!", "WOOOO!"][i % 6], "#bbf7d0"));
+    await new Promise((r) => this.time.delayedCall(1300, r));
+    await this.talk(FB.FB_CELEBRATE.slice(9));
+    this.busy = true;
+    // silence
+    synth.stopMusic();
+    await new Promise((r) => this.time.delayedCall(1400, r));
+    await this.talk(FB.FB_SILENCE);
+    this.busy = true;
+    // the lads become your followers (made again in finaleKrelford); you take the first one's place
+    this.av.setPosition(lads[0].spr.x, lads[0].spr.y).setVisible(true);
+    lads.forEach((l) => l.spr.destroy());
+    s.flags.finale_landed = true;
+    G.save();
+    cam.startFollow(this.av, true, 0.12, 0.12);
+  }
+
+  /** The Krew trail behind you; near the logs, the ground starts to shake. */
+  private updateFinale(_time: number) {
+    if (!this.finaleKrew.length && !this.finaleLogs) return;
+    const p = { x: this.av.x, y: this.av.y };
+    const last = this.trail[this.trail.length - 1];
+    if (!last || Phaser.Math.Distance.Between(last.x, last.y, p.x, p.y) > 6) {
+      this.trail.push(p);
+      if (this.trail.length > 120) this.trail.shift();
+    }
+    for (const k of this.finaleKrew) {
+      const t = this.trail[Math.max(0, this.trail.length - 1 - k.lag)] ?? p;
+      const dx = t.x - k.spr.x;
+      const dy = t.y - k.spr.y;
+      const moving = Math.hypot(dx, dy) > 4;
+      k.spr.x += dx * 0.18;
+      k.spr.y += dy * 0.18;
+      animateWalker(k.spr, dx, dy, moving, this.time.now);
+      k.spr.setDepth(k.spr.y);
+    }
+    const L = this.finaleLogs;
+    if (L && !this.busy && !this.finaleRumbling && Phaser.Math.Distance.Between(p.x, p.y, L.x, L.y) < 150) void this.finaleRumble();
+  }
+
+  /** "Surely not." The wreck heap moves. */
+  private async finaleRumble() {
+    const s = G.s;
+    const cam = this.cameras.main;
+    this.finaleRumbling = true;
+    this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
+    this.arrow.setVisible(false);
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    if (s.flags.finale_emerged) {
+      // you've seen it come out: straight back into the fight
+      await this.talk([say("KREZMAR", "It's still there. Course it is. Right. Again. EVERYONE OPEN FIRE.")]);
+      this.go("Dungeon", { dungeon: "krelford_finale", room: 0 });
+      return;
+    }
+    await this.talk(FB.FB_FOUND_LOGS);
+    this.busy = true;
+    synth.play("boom");
+    cam.shake(2500, 0.006);
+    await new Promise((r) => this.time.delayedCall(900, r));
+    await this.talk(FB.FB_RUMBLE.slice(1));
+    this.busy = true;
+    // up the hill, the heap heaves
+    const b = BUILDINGS.find((x) => x.id === "CITADEL")!;
+    cam.stopFollow();
+    cam.pan(b.x, b.y + b.h / 2 - 60, 1400, Phaser.Math.Easing.Sine.InOut);
+    cam.shake(4200, 0.014);
+    for (let i = 0; i < 5; i++) this.time.delayedCall(400 + i * 700, () => {
+      this.lightning(b.x + (Math.random() - 0.5) * 300, b.y - 300, b.y + b.h / 2);
+      synth.play(i % 2 ? "roar" : "boom");
+      vfx(this, "vfx_dust", b.x + (Math.random() - 0.5) * b.w, b.y + b.h / 2, { scale: 3, depth: 6000 });
+    });
+    await new Promise((r) => this.time.delayedCall(3800, r));
+    cam.flash(300, 160, 120, 255);
+    s.flags.finale_rumbled = true;
+    G.save();
+    this.go("Finale", { beat: "emerge" });
   }
 
   private targetPos(id: string) {

@@ -12,7 +12,6 @@ import { animateWalker } from "../../gfx/HD";
 import { hasVfx, vfx } from "../../gfx/Vfx";
 import { switchTo } from "../../Flow";
 import { G } from "../../G";
-import { FONT } from "../../ui/theme";
 import * as FR from "../../../content/finaleRoof";
 
 /**
@@ -159,15 +158,11 @@ export class RoofArena {
     }
     sc.tweens.add({ targets: city, alpha: { from: 0.6, to: 1 }, yoyo: true, repeat: -1, duration: 1400 });
     // the roof
-    const D = R * 2 + 56;
+    const D = (R + 46) * 2;
     if (sc.textures.exists("fr_roof_floor")) {
       const img = sc.add.image(cx, cy, "fr_roof_floor").setDepth(0.2);
       const src = sc.textures.get("fr_roof_floor").getSourceImage();
       img.setScale(D / Math.min(src.width, src.height));
-      // round it off: anything outside the rim is the void
-      const mask = sc.make.graphics({ x: 0, y: 0 }, false);
-      mask.fillStyle(0xffffff).fillCircle(cx, cy, R + 26);
-      img.setMask(mask.createGeometryMask());
     } else {
       const g = sc.add.graphics().setDepth(0.2);
       g.fillStyle(0x1b1424, 1).fillCircle(cx, cy, R + 26);
@@ -179,9 +174,10 @@ export class RoofArena {
     }
     // neon rim, railings, puddles
     const rim = sc.add.graphics().setDepth(0.3);
-    rim.lineStyle(10, 0x0b0710, 1).strokeCircle(cx, cy, R + 26);
-    rim.lineStyle(3, 0xff2d55, 0.75).strokeCircle(cx, cy, R + 20);
-    rim.lineStyle(2, 0xa855f7, 0.5).strokeCircle(cx, cy, R + 30);
+    const art = sc.textures.exists("fr_roof_floor");
+    if (!art) rim.lineStyle(10, 0x0b0710, 1).strokeCircle(cx, cy, R + 26);
+    rim.lineStyle(3, 0xff2d55, art ? 0.3 : 0.75).strokeCircle(cx, cy, R + 20);
+    rim.lineStyle(2, 0xa855f7, art ? 0.2 : 0.5).strokeCircle(cx, cy, R + 30);
     sc.tweens.add({ targets: rim, alpha: { from: 0.65, to: 1 }, yoyo: true, repeat: -1, duration: 600 });
     const glow = sc.add.circle(cx, cy, 120, 0xffd23f, 0.05).setDepth(0.25).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: glow, scale: 1.3, alpha: 0.02, yoyo: true, repeat: -1, duration: 1800 });
@@ -230,6 +226,10 @@ export class RoofArena {
   async start() {
     const sc = this.sc;
     const flags = G.s.flags;
+    // on your feet, just inside the rim, facing in; and let the camera's fade-in finish (talk pauses the scene)
+    sc.player.spr.setPosition(this.cx, this.cy + this.R - 110);
+    sc.cameras.main.centerOn(this.cx, this.cy + this.R - 200);
+    await new Promise<void>((r) => sc.time.delayedCall(450, () => r()));
     if (!flags.finale_xf_seen) {
       await this.hooks.talk(FR.ROOF_ENTER);
       flags.finale_xf_seen = true;
@@ -308,7 +308,7 @@ export class RoofArena {
         continue;
       }
       const key = sc.textures.exists("fr_shackle") ? "fr_shackle" : null;
-      const piece = key ? sc.add.image(c.x, c.y, key).setScale(0.6).setDepth(950) : c;
+      const piece = key ? sc.add.image(c.x, c.y, key).setScale(0.4).setDepth(950) : c;
       if (key) c.destroy();
       const a = Math.random() * Math.PI * 2;
       sc.tweens.add({ targets: piece, x: piece.x + Math.cos(a) * 90, y: piece.y + Math.sin(a) * 60 - 30, angle: 540, alpha: 0, duration: 700, ease: "Quad.out", onComplete: () => piece.destroy() });
@@ -387,7 +387,7 @@ export class RoofArena {
       );
     });
     sc.cameras.main.stopFollow();
-    sc.cameras.main.pan(this.cx, this.cy, 900, "Sine.inOut");
+    sc.cameras.main.pan(this.cx, this.cy, 900, "Sine.easeInOut");
     await Promise.all(moves);
     await this.hooks.talk(FR.WONK_READY);
     // round and round until it works
@@ -523,4 +523,3 @@ export class RoofArena {
   }
 }
 
-export const ROOF_FONT = FONT;

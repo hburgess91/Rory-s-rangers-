@@ -6593,6 +6593,63 @@
   },
   "c7_drongus_skinny": {
    "file": "combat/c7_drongus_skinny.png"
+  },
+  "fr_roof_floor": {
+   "file": "tiles/fr_roof_floor.png"
+  },
+  "bg_roof": {
+   "file": "backdrops/bg_roof.png"
+  },
+  "fr_drongus_skinny": {
+   "file": "combat/fr_drongus_skinny.png"
+  },
+  "fr_drongus_point": {
+   "file": "combat/fr_drongus_point.png"
+  },
+  "fr_dd_face": {
+   "file": "combat/fr_dd_face.png"
+  },
+  "fr_binding": {
+   "file": "props/fr_binding.png"
+  },
+  "fr_binding_broken": {
+   "file": "props/fr_binding_broken.png"
+  },
+  "fr_syringe": {
+   "file": "props/fr_syringe.png"
+  },
+  "fr_logs": {
+   "file": "props/fr_logs.png"
+  },
+  "fr_grenade": {
+   "file": "props/fr_grenade.png"
+  },
+  "fr_skull": {
+   "file": "props/fr_skull.png"
+  },
+  "fr_brain": {
+   "file": "props/fr_brain.png"
+  },
+  "fr_eye": {
+   "file": "props/fr_eye.png"
+  },
+  "fr_slab": {
+   "file": "props/fr_slab.png"
+  },
+  "fr_rack": {
+   "file": "props/fr_rack.png"
+  },
+  "fr_bottle": {
+   "file": "props/fr_bottle.png"
+  },
+  "fr_shackle": {
+   "file": "props/fr_shackle.png"
+  },
+  "fr_debris_0": {
+   "file": "props/fr_debris_0.png"
+  },
+  "fr_debris_1": {
+   "file": "props/fr_debris_1.png"
   }
  },
  "sheets": {
@@ -7424,6 +7481,22 @@
   },
   "c7d_door": {
    "file": "props/c7d_door.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "boss_dark_drongus": {
+   "file": "combat/boss_dark_drongus.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "en_mini_drongus": {
+   "file": "combat/en_mini_drongus.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.55
+  },
+  "c7_drongus_xf": {
+   "file": "combat/c7_drongus_xf.png",
    "frameWidth": 128,
    "frameHeight": 128
   }

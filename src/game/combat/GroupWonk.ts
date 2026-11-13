@@ -18,7 +18,7 @@ import { WONK_MOANS, WONK_SHOUTS } from "../../content/finaleRoof";
  */
 
 export const GW_TIME = 75000;
-export const GW_K = 0.085;
+export const GW_K = 0.1;
 export const GW_WINDOW = 150;
 
 export interface GwState {
@@ -35,7 +35,7 @@ export interface GwState {
 /** How long a beat lasts at this much progress (it speeds up as you go). */
 export const beatMs = (p: number) => 640 - 230 * Math.min(1, p);
 /** How much the gauge drains per second. */
-export const drain = (p: number) => 0.022 + 0.035 * p;
+export const drain = (p: number) => 0.02 + 0.026 * p;
 
 /** One step of the gauge (pure, so the maths can be tested). `rate`: presses in the last second. */
 export function gwStep(s: GwState, rate: number, dtMs: number) {
@@ -58,6 +58,9 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
     let nextShout = 1500;
     let milestone = 0;
 
+    const hud = sc.scene.get("UI");
+    const hudWas = hud?.sys.isVisible() ?? false;
+    if (hud) hud.sys.setVisible(false);
     const ui = sc.add.container(0, 0).setScrollFactor(0).setDepth(3500);
     const dim = sc.add.rectangle(480, 270, 960, 540, 0x12001a, 0).setInteractive();
     ui.add(dim);
@@ -66,12 +69,12 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
     const lines = sc.add.graphics();
     ui.add(lines);
     const CX = 480;
-    const CY = 262;
+    const CY = 236;
     const RX = 300;
-    const RY = 150;
+    const RY = 128;
     // Drongus in the middle, glowing, terrified
     const ddKey = sc.textures.exists("boss_dark_drongus") ? "boss_dark_drongus" : "boss_drongus";
-    const dd = sc.add.sprite(CX, CY - 6, ddKey, 0).setScale(1.25);
+    const dd = sc.add.sprite(CX, CY - 6, ddKey, 0).setScale(1.1);
     const ddGlow = sc.add.ellipse(CX, CY, 150, 170, 0xffd23f, 0.15).setBlendMode(Phaser.BlendModes.ADD);
     ui.add([ddGlow, dd]);
     const ddText = sc.add.text(CX, CY - 92, "", { fontFamily: "Impact, sans-serif", fontSize: "18px", color: "#ffd23f", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5);
@@ -81,12 +84,13 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
       const a = -Math.PI / 2 + (i / N) * Math.PI * 2;
       const x = CX + Math.cos(a) * RX;
       const y = CY + 10 + Math.sin(a) * RY;
-      const light = sc.add.ellipse(x, y + 34, 70, 22, 0xff4fa3, 0.12);
+      const light = sc.add.ellipse(x, y + (y < CY ? 40 : 46), 84, 26, 0xff4fa3, 0.12);
       const key = sc.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
-      const spr = sc.add.sprite(x, y, key, 0).setScale(y < CY ? 2.2 : 2.6);
-      const bar = sc.add.rectangle(x, y + (y < CY ? 12 : 16), 46, 16, 0x000000);
-      const barT = sc.add.text(x, bar.y, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "9px", color: "#ffffff" }).setOrigin(0.5);
-      const tag = sc.add.text(x, y - 46, i === 0 ? "YOU" : "", { fontFamily: "Impact, sans-serif", fontSize: "12px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5);
+      const spr = sc.add.sprite(x, y, key, 0).setScale(y < CY ? 4.2 : 4.9);
+      const h = spr.displayHeight;
+      const bar = sc.add.rectangle(x, y + h * 0.13, spr.displayWidth * 0.42, h * 0.16, 0x000000);
+      const barT = sc.add.text(x, bar.y, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: `${Math.round(h * 0.09)}px`, color: "#ffffff" }).setOrigin(0.5);
+      const tag = sc.add.text(x, y - h * 0.5 - 4, i === 0 ? "YOU" : "", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5);
       ui.add([light, spr, bar, barT, tag]);
       return { id, x, y, light, spr, bar, barT, tag, pitch: 0.7 + ((i * 37) % 9) * 0.07 };
     });
@@ -290,6 +294,7 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
           duration: 250,
           onComplete: () => {
             ui.destroy();
+            if (hud && hudWas) hud.sys.setVisible(true);
             resolve(ok);
           },
         });
