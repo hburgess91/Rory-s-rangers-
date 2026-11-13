@@ -304,6 +304,26 @@ export class MenuScene extends Phaser.Scene {
         add(this.add.text(480, 160, "Not dead. Just... thoroughly krezzed. Somewhere, Drongus types 'should've reacted to the song'.", { fontFamily: FONT, fontSize: "14px", color: "#ffffff", align: "center", wordWrap: { width: 560 } }).setOrigin(0.5));
         add(button(this, 480, 260, "TRY THE ROOM AGAIN (lose 10% Krezzcoin)", () => this.retry(), { w: 460 }));
         add(button(this, 480, 320, "RETURN TO KRELFORD", () => this.toHub(), { w: 460 }));
+        // the first time you go down, if you've never been over the bridge: point at Kreddle's shops
+        if (!G.s.flags.first_death_seen) {
+          G.s.flags.first_death_seen = true;
+          if (!G.s.flags.kreddle_seen) {
+            add(this.add.rectangle(480, 410, 600, 84, 0x1a0b2e, 0.95).setStrokeStyle(2, 0xff4fd8));
+            add(
+              this.add
+                .text(480, 410, "💡 TIP: Struggling? Head to KREDDLE, over the bridge at the far WEST of Krelford.\nThe Kreddle Exchange sells new guns, ammo and upgrades, and you can hire a lad to fight with you.", {
+                  fontFamily: FONT,
+                  fontSize: "13px",
+                  color: "#ffd1f3",
+                  align: "center",
+                  wordWrap: { width: 570 },
+                  lineSpacing: 4,
+                })
+                .setOrigin(0.5),
+            );
+          }
+          G.save();
+        }
         break;
       }
     }

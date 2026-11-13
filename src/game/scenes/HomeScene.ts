@@ -135,7 +135,10 @@ export class HomeScene extends Phaser.Scene {
       synth.play("ding");
       G.save();
     }
-    if (s.flags.home_seen || s.flags.prologue_done) return;
+    if (s.flags.home_seen || s.flags.prologue_done) {
+      await this.kreddleTip();
+      return;
+    }
     s.flags.home_seen = true;
     G.save();
     await this.welcome();
@@ -242,6 +245,20 @@ export class HomeScene extends Phaser.Scene {
     await new Promise<void>((r) => this.tweens.add({ targets: night, fillAlpha: 0, duration: 600, onComplete: () => r() }));
     night.destroy();
     G.emit("toast", { title: "SAVED", text: "You slept. Full health, sober, game saved." });
+    await this.kreddleTip();
+  }
+
+  /** Chapter 2: if you still haven't been over the bridge, a nudge towards Kreddle's shops (once). */
+  private async kreddleTip() {
+    const s = G.s;
+    if (s.chapter !== 2 || s.flags.kreddle_seen || s.flags.kreddle_tip_home) return;
+    s.flags.kreddle_tip_home = true;
+    G.save();
+    synth.play("notify");
+    await this.talk([
+      dir("💡 TIP: Why not visit KREDDLE? It's over the Kreddle Bridge, at the far WEST of Krelford."),
+      dir("The Kreddle Exchange sells new guns, ammo and upgrades, there are slot machines and a Prize Counter full of perks, and you can hire a lad to fight with you. They hate us there. Their shops are excellent."),
+    ]);
   }
 
   /** What you dream about: a hint, an old Drongus status, or something stupid. */
