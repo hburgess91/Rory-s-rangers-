@@ -5,6 +5,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { G } from "../G";
 import { addWrist, wristLook } from "../gfx/Wrist";
 import { perfCycle } from "../gfx/HD";
+import { addCensorBar, censorRect } from "../gfx/Censor";
 import { CHARACTERS } from "../../data/characters";
 import type { Player } from "./Player";
 import { kd } from "../systems/kreddle";
@@ -77,19 +78,24 @@ export function startWonk(p: Player, now: number) {
     const a = (i / 18) * Math.PI * 2;
     ui.add(sc.add.rectangle(320 + Math.cos(a) * 230, 300 + Math.sin(a) * 230, 60, 3, 0xff9ad5, 0.35).setRotation(a));
   }
-  const hero = sc.add.sprite(320, 300, p.spr.texture.key, 0).setScale(5.5);
+  // a SUPER_ sheet has no wonk row: wonk in his normal sheet instead (the real arm beats a stand-in wrist)
+  const own = p.spr.texture.key;
+  const base = `spr_${p.id}`;
+  const heroKey = sc.textures.exists(base) && !(sc.textures.get(own).customData as { char?: { wonk?: unknown } })?.char?.wonk ? base : own;
+  const hero = sc.add.sprite(320, 300, heroKey, 0).setScale(5.5);
   ui.add(hero);
-  // the wrist, going like the clappers under the bar
-  const wrist = addWrist(sc, 306, 340, { ...wristLook(p.id, CHARACTERS as any), scale: 2.2 });
-  ui.add(wrist.obj);
-  // the real thing, when the art has it: an arm pumping away (the business end stays behind the bar)
+  // the real thing, when the art has it: his forearm down to the crotch, the hand going up and down under the bar
   const pump = perfCycle(hero, "wonk");
   let pumpPhase = 0;
+  if (pump) hero.setFrame(pump[0]);
+  // no art: a stand-in wrist going like the clappers under the bar
+  const wr = censorRect(hero);
+  const wrist = addWrist(sc, wr.x - wr.w * 0.08, wr.y - wr.h * 0.1, { ...wristLook(p.id, CHARACTERS as any), scale: 2.2 });
+  ui.add(wrist.obj);
   if (pump) wrist.obj.setVisible(false);
-  // keep it decent: a big censor bar over the business end
-  const bar = sc.add.rectangle(320, 352, 170, 54, 0x000000);
-  const barT = sc.add.text(320, 352, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
-  ui.add([bar, barT]);
+  // keep it decent: the censor bar over the business end (and his hand), following him as he jiggles
+  const bar = addCensorBar(sc, hero, { pad: 1 });
+  ui.add(bar.obj);
   const sweat: Phaser.GameObjects.Text[] = [];
   const title = sc.add.text(480, 52, "WONK YOUR THANG", { fontFamily: "Impact, sans-serif", fontSize: "46px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 8 }).setOrigin(0.5).setScale(0.2);
   ui.add(title);
@@ -126,6 +132,7 @@ export function startWonk(p: Player, now: number) {
     presses.push(t);
     synth.wonkTick(gauge);
     hero.setY(300 + (Math.random() - 0.5) * 6);
+    bar.follow();
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.repeat) return;
@@ -179,7 +186,9 @@ export function startWonk(p: Player, now: number) {
         hero.setFrame(pump[Math.floor(pumpPhase) % pump.length]);
       }
       hero.setX(320 + (Math.random() - 0.5) * Math.min(14, rate * 1.6));
-      hero.setAngle((Math.random() - 0.5) * Math.min(8, rate));
+      hero.setAngle((Math.random() - 0.5) * Math.min(6, rate));
+      bar.follow();
+      bar.obj.setAngle(hero.angle);
       status.setText(gauge > ZONE_HI ? "TOO MUCH! EASE OFF!" : zone ? "IN THE ZONE..." : gauge > ZONE_LO - 0.2 ? "MORE!" : "WONK IT!").setColor(gauge > ZONE_HI ? "#f87171" : zone ? "#86efac" : "#ffffff");
       if (rate > 4 && Math.random() < 0.08) {
         const d = sc.add.text(320 + (Math.random() - 0.5) * 120, 200, "💦", { fontSize: "20px" }).setOrigin(0.5);

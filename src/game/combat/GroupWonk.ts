@@ -3,6 +3,7 @@ import type { PlayableId } from "../../data/types";
 import { synth } from "../audio/Synth";
 import { TOUCH } from "../ui/TouchControls";
 import { playPerf } from "../gfx/HD";
+import { addCensorBar } from "../gfx/Censor";
 import { WONK_MOANS, WONK_SHOUTS } from "../../content/finaleRoof";
 
 /**
@@ -88,11 +89,11 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
       const key = sc.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
       const spr = sc.add.sprite(x, y, key, 0).setScale(y < CY ? 4.2 : 4.9);
       const h = spr.displayHeight;
-      const bar = sc.add.rectangle(x, y + h * 0.13, spr.displayWidth * 0.42, h * 0.16, 0x000000);
-      const barT = sc.add.text(x, bar.y, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: `${Math.round(h * 0.09)}px`, color: "#ffffff" }).setOrigin(0.5);
+      // the bar sits on his crotch (per lad), and his hand is under it once he joins in
+      const bar = addCensorBar(sc, spr, { pad: 1 });
       const tag = sc.add.text(x, y - h * 0.5 - 4, i === 0 ? "YOU" : "", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5);
-      ui.add([light, spr, bar, barT, tag]);
-      return { id, x, y, light, spr, bar, barT, tag, pitch: 0.7 + ((i * 37) % 9) * 0.07 };
+      ui.add([light, spr, bar.obj, tag]);
+      return { id, x, y, light, spr, bar, tag, pitch: 0.7 + ((i * 37) % 9) * 0.07 };
     });
     // one long censor bar across the whole ring, for when it gets going
     const title = sc.add.text(480, 34, "THE GROUP WONK", { fontFamily: "Impact, sans-serif", fontSize: "44px", color: "#ff9ad5", stroke: "#2a0030", strokeThickness: 8 }).setOrigin(0.5).setScale(0.2);
@@ -216,6 +217,7 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
             if (!playPerf(l.spr, "wonk", st.t, fps, i * 2)) l.spr.setFrame(Math.floor(st.t / (1000 / fps)) % 2);
             l.spr.setX(l.x + (Math.random() - 0.5) * Math.min(6, rate * 0.6));
           } else l.spr.setFrame(0).setX(l.x);
+          l.bar.follow();
           l.tag.setText(i === 0 ? "YOU" : st.joined[i] ? "" : "…");
         });
         // the whole ring shakes harder as it builds

@@ -11,6 +11,7 @@ import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
+import { censorRect } from "../gfx/Censor";
 import { bump, maxBottles } from "../systems/stats";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
@@ -675,9 +676,12 @@ export class ClubScene extends Phaser.Scene {
       const all: Rival[] = ids.map((id, i) => {
         const spr = this.add.sprite(x0 + i * gap, 250, `spr_${id}`, 0).setScale(3.2);
         spr.setData("x0", spr.x);
-        spr.setData("pump", perfCycle(spr, "wonk"));
+        const pump = perfCycle(spr, "wonk");
+        spr.setData("pump", pump);
+        if (pump) spr.setFrame(pump[0]);
         ui.add(spr);
-        const wrist = addWrist(this, spr.x - 8, 278, { ...wristLook(id, CHARACTERS as any), scale: 1.6, speed: 90 + Math.random() * 60 });
+        const cr = censorRect(spr);
+        const wrist = addWrist(this, cr.x - 8, cr.y - cr.h * 0.1, { ...wristLook(id, CHARACTERS as any), scale: 1.6, speed: 90 + Math.random() * 60 });
         ui.add(wrist.obj);
         // the real art pumps its own arm; the stand-in wrist is only for sprites without it
         if (spr.getData("pump")) wrist.obj.setVisible(false);
@@ -693,9 +697,20 @@ export class ClubScene extends Phaser.Scene {
         const roll = Math.random();
         return { id, spr, gauge: 0, vel: 0, zone, nextFlap: 0, inZone: 0, plan: roll < 0.4 ? "perfect" : roll < 0.75 ? "over" : "under", skill: 0.6 + Math.random() * 0.5, fill };
       });
-      // one long censor bar across every waist
-      ui.add(this.add.rectangle(480, 290, Math.max(260, (n - 1) * gap + 130), 46, 0x000000));
-      ui.add(this.add.text(480, 290, "C E N S O R E D", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5));
+      // one long censor bar across every crotch, stepped to each lad's height so every forearm shows going down under it
+      const crs = all.map((r) => censorRect(r.spr));
+      const barL = Math.min(480 - Math.max(260, (n - 1) * gap + 130) / 2, ...crs.map((r) => r.left));
+      const barR = Math.max(480 + Math.max(260, (n - 1) * gap + 130) / 2, ...crs.map((r) => r.right));
+      const barG = this.add.graphics();
+      crs.forEach((r, i) => {
+        const l = i ? (crs[i - 1].x + r.x) / 2 : barL;
+        const rr = i < crs.length - 1 ? (r.x + crs[i + 1].x) / 2 : barR;
+        barG.fillStyle(0x000000, 1).fillRect(l - 1, r.top, rr - l + 2, r.bottom - r.top);
+      });
+      ui.add(barG);
+      const textTop = Math.max(...crs.map((r) => r.top));
+      const textBot = Math.min(...crs.map((r) => r.bottom));
+      ui.add(this.add.text(480, (textTop + textBot) / 2, "C E N S O R E D", { fontFamily: "Impact, sans-serif", fontSize: `${Math.max(9, Math.min(26, Math.round((textBot - textTop) * 0.85)))}px`, color: "#ffffff" }).setOrigin(0.5));
       const timeBar = this.add.rectangle(220, 520, 520, 8, 0xffd23f).setOrigin(0, 0.5);
       ui.add(this.add.rectangle(480, 520, 524, 12, 0x000000, 0.8));
       ui.add(timeBar);
@@ -727,7 +742,7 @@ export class ClubScene extends Phaser.Scene {
         ui.add(r.label);
         this.tweens.add({ targets: r.label, scale: 1, duration: 200, ease: "Back.out" });
         if (res === "perfect") {
-          this.jet(ui, r.spr.x, 270);
+          this.jet(ui, r.spr.x, censorRect(r.spr).y);
           synth.play("splat");
         } else synth.play("tap_fail");
       };

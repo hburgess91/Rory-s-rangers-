@@ -13,6 +13,7 @@ import { CHARACTERS } from "../../data/characters";
 import { flap, fall, randomZone } from "../combat/Wonk";
 import { maybeFinishArc } from "../systems/arcs";
 import { addWrist, wristLook } from "../gfx/Wrist";
+import { addCensorBar, censorRect } from "../gfx/Censor";
 import * as KR from "../../content/krunchers";
 import { GUNS } from "../combat/Guns";
 import { ensureCh6Art } from "../gfx/ch6Art";
@@ -669,14 +670,21 @@ export class VignetteScene extends Phaser.Scene {
     ui.add(this.add.rectangle(GX, GY + GH * (1 - (z.lo + z.hi) / 2), 50, GH * (z.hi - z.lo), 0x22c55e, 0.4));
     const fillR = this.add.rectangle(GX, GY + GH, 40, 0, 0xff4fa3).setOrigin(0.5, 1);
     ui.add(fillR);
-    const censor = this.add.rectangle(380, 330, 200, 60, 0x000000);
-    const wrist = addWrist(this, 366, 326, { ...wristLook("CRONGUS", CHARACTERS as any), scale: 2 });
-    ui.add([this.add.sprite(380, 290, "spr_CRONGUS", 0).setScale(4), wrist.obj, censor, this.add.text(380, 330, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff" }).setOrigin(0.5)]);
+    // Crongus with his hand down there (his wonk loop), the bar over it; a stand-in wrist only if the art is missing
+    const cr = this.add.sprite(380, 290, "spr_CRONGUS", 0).setScale(4);
+    const pump = perfCycle(cr, "wonk");
+    if (pump) cr.setFrame(pump[0]);
+    const crr = censorRect(cr);
+    const wrist = addWrist(this, crr.x - 6, crr.y - crr.h * 0.1, { ...wristLook("CRONGUS", CHARACTERS as any), scale: 2 });
+    wrist.obj.setVisible(!pump);
+    let pumpPhase = 0;
+    ui.add([cr, wrist.obj, addCensorBar(this, cr, { pad: 1 }).obj]);
     const status = this.add.text(380, 420, "", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffe4ec", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
     ui.add(status);
     const press = () => {
       flap(g0);
       wrist.kick();
+      pumpPhase += 1;
     };
     this.input.keyboard?.on("keydown-SPACE", press);
     this.input.on("pointerdown", press);
@@ -689,6 +697,10 @@ export class VignetteScene extends Phaser.Scene {
         callback: () => {
           t += 16;
           fall(g0, 16);
+          if (pump) {
+            pumpPhase += 0.016 * (6 + g0.gauge * 14);
+            cr.setFrame(pump[Math.floor(pumpPhase) % pump.length]);
+          }
           if (g0.gauge >= z.lo && g0.gauge <= z.hi) inZone += 16;
           fillR.setSize(40, GH * g0.gauge);
           fillR.setFillStyle(g0.gauge > z.hi ? 0xef4444 : g0.gauge >= z.lo ? 0x22c55e : 0xff4fa3);
@@ -1124,7 +1136,7 @@ export class VignetteScene extends Phaser.Scene {
     this.add.text(710, 380, "(empty treadmill)", { fontFamily: FONT, fontSize: "14px", color: "#6b7280" }).setOrigin(0.5);
     this.add.image(250, 380, "p_fridge").setScale(2);
     synth.music("ominous");
-    this.time.addEvent({ delay: 500, loop: true, callback: () => pol.setFrame(String(pol.frame.name) === "3" ? 0 : 3) });
+    this.time.addEvent({ delay: 500, loop: true, callback: () => !pol.getData("wonking") && pol.setFrame(String(pol.frame.name) === "3" ? 0 : 3) });
     await this.talk([
       dir("14:00. Polson's message: 'At the gym 💪'. CAM 1: Polson is on the sofa. CAM 2: Polson is not at the gym."),
       ping("POLSON", "Leg day today!! Brutal 😅"),
@@ -1300,13 +1312,32 @@ export class VignetteScene extends Phaser.Scene {
     const tag = this.add.text(250, 232, "[AUDIO: 'FILTHY VIDEOS ON HIS PHONE' — VOLUME: MAXIMUM]", { fontFamily: "monospace", fontSize: "11px", color: "#facc15", backgroundColor: "#000000cc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(30);
     await this.talk([dir("The War Room cannot hear what he's watching. The War Room can hear that it is LOUD."), say("KREBLIS", "Oh no"), say("KREBLIS", "Oh no no no")]);
     // the wonking: wrist under the bar, faster and faster
-    const wrist = addWrist(this, pol.x - 2, pol.y + 26, { ...wristLook("POLSON", CHARACTERS as any), scale: 1.4, speed: 160 });
-    wrist.obj.setDepth(23);
-    const bar = this.add.rectangle(pol.x, pol.y + 28, 64, 22, 0x000000).setDepth(24);
-    const barTxt = this.add.text(pol.x, pol.y + 28, "CENSORED", { fontFamily: "monospace", fontSize: "9px", color: "#ffffff" }).setOrigin(0.5).setDepth(25);
+    // his own wonk loop (hand down to the crotch) when the art has it, else a stand-in wrist
+    const pump = perfCycle(pol, "wonk");
+    pol.setData("wonking", true);
+    const pr = censorRect(pol);
+    const wrist = addWrist(this, pr.x - 4, pr.y - pr.h * 0.1, { ...wristLook("POLSON", CHARACTERS as any), scale: 1.4, speed: 160 });
+    wrist.obj.setDepth(23).setVisible(!pump);
+    const bar = addCensorBar(this, pol, { pad: 1 });
+    bar.obj.setDepth(24);
+    let pumpMs = 160;
+    let pumpPhase = 0;
+    const pumper = this.time.addEvent({
+      delay: 16,
+      loop: true,
+      callback: () => {
+        if (pump && pol.active) {
+          pumpPhase += 16 / (pumpMs / 4);
+          pol.setFrame(pump[Math.floor(pumpPhase) % pump.length]);
+        }
+        bar.follow();
+      },
+    });
+    const barTxt = { destroy: () => pumper.remove() };
     const grunts = ["mmf", "hrrnnggh", "mmm", "yesss", "oh yeah", "HRRNNGH", "MMMMF"];
     for (let i = 0; i < 14; i++) {
       wrist.setSpeed(Math.max(45, 160 - i * 9));
+      pumpMs = Math.max(45, 160 - i * 9);
       if (i % 2 === 0) synth.voice(i % 4 === 0 ? "grunt" : "mmm", 0.35 + i * 0.02, 1 + i * 0.02);
       const g = this.add.text(pol.x + 50 + Math.random() * 60, pol.y - 30 - Math.random() * 30, grunts[i % grunts.length], { fontFamily: FONT, fontSize: `${11 + (i % 3) * 3}px`, color: "#ffe4ec", fontStyle: "italic", stroke: "#000", strokeThickness: 3 }).setDepth(30);
       this.tweens.add({ targets: g, y: g.y - 20, alpha: 0, duration: 900, onComplete: () => g.destroy() });
@@ -1346,6 +1377,8 @@ export class VignetteScene extends Phaser.Scene {
     wrist.destroy();
     bar.destroy();
     barTxt.destroy();
+    pol.setData("wonking", false);
+    if (pump && pol.active) pol.setFrame(0);
     phone.destroy();
     glow.destroy();
     caption.destroy();

@@ -3,6 +3,7 @@ import { generateAll } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
 import { fitTall, heightId, isHeightKey } from "../../data/heights";
 import { installHdScale, type ArtManifest } from "../gfx/HD";
+import { WONK_ART } from "../gfx/Censor";
 import { loadVfx, makeVfxAnims, type VfxDef } from "../gfx/Vfx";
 
 export class BootScene extends Phaser.Scene {
@@ -89,6 +90,9 @@ export class BootScene extends Phaser.Scene {
       // `tall` is folded into hd so every setScale draws him at his height, and HD.ts moves the origin so he
       // grows from his feet
       const tall = tallFor(key);
+      // a wonk row added to a sheet the manifest doesn't list one for (Polson)
+      const wa = WONK_ART[key];
+      if (wa && !c.wonk && tex.frameTotal - 1 > Math.max(...wa.frames)) c.wonk = { south: wa.frames };
       tex.customData = { ...tex.customData, hd: 0.5 * tall, tall, char: c };
     }
     for (const [key, im] of Object.entries({ ...(m?.images ?? {}), ...(m?.sheets ?? {}) })) {

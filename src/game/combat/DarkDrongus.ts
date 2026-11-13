@@ -4,6 +4,7 @@ import type { CombatWorld } from "./types";
 import { synth } from "../audio/Synth";
 import { G } from "../G";
 import { hasVfx, vfx } from "../gfx/Vfx";
+import { addCensorBar, type CensorBar } from "../gfx/Censor";
 import { BOSS_TEXT } from "../../content/bosses";
 import { ENEMIES } from "../../data/enemies";
 import { DD_BEAM, DD_BLAST, DD_FLIP, DD_GRENADE, DD_KREZZ, DD_PUNCH, DD_SUMMON, DD_TAUNTS, MINI_SHOUTS } from "../../content/finaleRoof";
@@ -32,6 +33,8 @@ ENEMIES.mini_drongus ??= {
 /** Frames in boss_dark_drongus (128x128): an aura-flickering idle, then a punch. */
 export const DD_IDLE = [0, 1, 2, 3, 4, 5, 6, 7];
 export const DD_PUNCH_F = [8, 9, 10, 11, 12, 13, 14, 15];
+/** Second row: his right hand down to the crotch, going up and down (under the censor bar). */
+export const DD_WONK_F = [16, 17, 18, 19, 20, 21, 22, 23];
 
 const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
@@ -54,6 +57,7 @@ export class DarkDrongusBoss extends Boss {
   private lastImmune = 0;
   private aura: Phaser.GameObjects.Ellipse;
   private censor: Phaser.GameObjects.Container | null = null;
+  private censorBar: CensorBar | null = null;
   private beam: { g: Phaser.GameObjects.Graphics; a: number; dir: number; speed: number; until: number; flipAt: number; warned: boolean; lastHit: number } | null = null;
   private lunge: { vx: number; vy: number; until: number } | null = null;
   private punchUntil = 0;
@@ -104,7 +108,12 @@ export class DarkDrongusBoss extends Boss {
       const total = this.texture.frameTotal - 1;
       const punching = now < this.punchUntil && total > DD_PUNCH_F[DD_PUNCH_F.length - 1];
       const prog = 1 - (this.punchUntil - now) / 520;
-      const f = punching ? DD_PUNCH_F[Math.min(DD_PUNCH_F.length - 1, Math.floor(prog * DD_PUNCH_F.length))] : DD_IDLE[Math.floor(now / 110) % DD_IDLE.length] % total;
+      const wonkArt = now < this.wonkUntil && total > DD_WONK_F[DD_WONK_F.length - 1];
+      const f = wonkArt
+        ? DD_WONK_F[Math.floor(now / 55) % DD_WONK_F.length]
+        : punching
+          ? DD_PUNCH_F[Math.min(DD_PUNCH_F.length - 1, Math.floor(prog * DD_PUNCH_F.length))]
+          : DD_IDLE[Math.floor(now / 110) % DD_IDLE.length] % total;
       this.setFrame(f);
     }
     // the wonk: shake under a censor bar
@@ -114,7 +123,10 @@ export class DarkDrongusBoss extends Boss {
     this.aura.setPosition(this.x + jx, this.y + 6).setDepth(this.depth - 0.5);
     this.aura.setFillStyle(wonking ? 0xffffff : GOLD, (wonking ? 0.28 : 0.13) + Math.sin(now / 90) * 0.05 + this.rage * 0.06);
     this.aura.setScale(1 + Math.sin(now / 130) * 0.06 + this.rage * 0.15);
-    if (this.censor) this.censor.setPosition(this.x + jx, this.y + this.displayHeight * 0.18).setDepth(this.depth + 1);
+    // over his crotch and his hand (sheet art: it follows him), else a generic spot that shakes
+    if (this.censorBar) this.censorBar.follow();
+    else if (this.censor) this.censor.setPosition(this.x + jx, this.y + this.displayHeight * 0.18);
+    this.censor?.setDepth(this.depth + 1);
     if (!this.started) return;
     G_emit(this);
     if (this.frozen) {
@@ -303,9 +315,12 @@ export class DarkDrongusBoss extends Boss {
     synth.charge();
     for (let i = 0; i < 4; i++) synth.voice(i % 2 ? "grunt" : "mmm", 0.45, 0.55 + i * 0.05, i * 0.35);
     this.censor?.destroy();
-    const bar = sc.add.container(this.x, this.y);
-    bar.add(sc.add.rectangle(0, 0, 92, 34, 0x000000));
-    bar.add(sc.add.text(0, 0, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ffffff" }).setOrigin(0.5));
+    this.censorBar = this.art ? addCensorBar(sc, this, { pad: 2 }) : null;
+    const bar = this.censorBar?.obj ?? sc.add.container(this.x, this.y);
+    if (!this.censorBar) {
+      bar.add(sc.add.rectangle(0, 0, 92, 34, 0x000000));
+      bar.add(sc.add.text(0, 0, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ffffff" }).setOrigin(0.5));
+    }
     this.censor = bar;
     // which way will it go? It starts away from you (so you've a moment), the lane drawn faintly
     const dir = Math.random() < 0.5 ? 1 : -1;
@@ -324,6 +339,7 @@ export class DarkDrongusBoss extends Boss {
       arrow.destroy();
       this.censor?.destroy();
       this.censor = null;
+      this.censorBar = null;
       if (this.dead || !this.active || this.frozen) {
         this.nextPattern = this.world.now() + 800;
         return;
@@ -396,6 +412,7 @@ export class DarkDrongusBoss extends Boss {
     this.lunge = null;
     this.censor?.destroy();
     this.censor = null;
+    this.censorBar = null;
     this.wonkUntil = 0;
     this.punchUntil = 0;
     (this.body as Phaser.Physics.Arcade.Body | null)?.setVelocity(0, 0);

@@ -6,7 +6,8 @@ import { DialogueBox } from "../../ui/DialogueBox";
 import { fadeThen, switchTo } from "../../Flow";
 import { synth } from "../../audio/Synth";
 import { FONT, title } from "../../ui/theme";
-import { animateWalker } from "../../gfx/HD";
+import { animateWalker, playPerf } from "../../gfx/HD";
+import { censorRect } from "../../gfx/Censor";
 import { hasVfx, vfx } from "../../gfx/Vfx";
 import * as FR from "../../../content/finaleRoof";
 import { FINALE_BOTTLE_AT, FINALE_LOGS_AT, roofPreload, roofReady } from "./RoofArena";
@@ -374,17 +375,35 @@ export class RoofCutscene extends Phaser.Scene {
     synth.music("c7_stairs", true);
     // you and the lads, in a line, left; him, right
     const line: string[] = [G.s.player, ...this.others()];
-    const lads = line.map((id, i) => this.lad(id, 56 + i * 54, FLOOR + 12, 4.6, "east").setDepth(40 + i));
+    // facing us, each with his hand down there (his wonk loop), all behind one long bar
+    const lads = line.map((id, i) => this.lad(id, 52 + i * 66, FLOOR + 12, 4.6, "south").setDepth(40 + i));
+    const pumping = this.time.addEvent({ delay: 16, loop: true, paused: true, callback: () => lads.forEach((l, i) => l.active && playPerf(l, "wonk", this.time.now, 10 + (i % 3), i * 3)) });
     const ddArt = this.textures.exists("boss_dark_drongus") && this.textures.get("boss_dark_drongus").frameTotal > 2;
     const d = this.add.sprite(770, FLOOR + 14, ddArt ? "boss_dark_drongus" : "boss_drongus", 0).setOrigin(0.5, 1).setScale(ddArt ? 2.6 : 3).setDepth(50);
     if (!ddArt) d.setTint(0xffe28a);
     const idle = this.time.addEvent({ delay: 110, loop: true, callback: () => ddArt && d.active && d.setFrame(Math.floor(this.time.now / 110) % 8) });
     // one big censor bar
-    const barY = FLOOR + 12 - lads[0].displayHeight * 0.36;
-    const bar = this.add.rectangle((lads[0].x + lads[lads.length - 1].x) / 2 + 24, barY, lads[lads.length - 1].x - lads[0].x + 90, Math.max(14, lads[0].displayHeight * 0.14), 0x000000).setDepth(60);
-    const barT = this.add.text(bar.x, barY, "CENSORED  CENSORED  CENSORED  CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#ffffff" }).setOrigin(0.5).setDepth(61);
-    bar.setScale(0, 1);
-    this.tweens.add({ targets: bar, scaleX: 1, duration: 500, ease: "Quad.out" });
+    // over every crotch (and every hand): one long bar, stepped to each lad's height so the shorter lads'
+    // forearms still show going down under it. `bar` is just its overall box (the beam aims from it).
+    const crs = lads.map((l) => censorRect(l));
+    const barTop = Math.min(...crs.map((r) => r.top));
+    const barBot = Math.max(...crs.map((r) => r.bottom));
+    const barY = (barTop + barBot) / 2;
+    const barL = Math.min(...crs.map((r) => r.left)) - 16;
+    const barR = Math.max(...crs.map((r) => r.right)) + 16;
+    const bar = this.add.rectangle((barL + barR) / 2, barY, barR - barL, Math.max(14, barBot - barTop), 0x000000, 0).setDepth(60);
+    const barG = this.add.graphics().setDepth(60).setPosition(bar.x, 0);
+    crs.forEach((r, i) => {
+      const l = i ? (crs[i - 1].x + r.x) / 2 : barL;
+      const rr = i < crs.length - 1 ? (r.x + crs[i + 1].x) / 2 : barR;
+      barG.fillStyle(0x000000, 1).fillRect(l - bar.x - 1, r.top, rr - l + 2, r.bottom - r.top);
+    });
+    // the text runs along the lowest strip, where every step overlaps
+    const textY = (Math.max(...crs.map((r) => r.top)) + Math.min(...crs.map((r) => r.bottom))) / 2;
+    const barT = this.add.text(bar.x, textY, "CENSORED  CENSORED  CENSORED  CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#ffffff" }).setOrigin(0.5).setDepth(61);
+    barG.setScale(0, 1);
+    // the hands go down once the bar is across
+    this.tweens.add({ targets: barG, scaleX: 1, duration: 500, ease: "Quad.out", onComplete: () => (pumping.paused = false) });
     const moan = this.time.addEvent({ delay: 260, loop: true, callback: () => synth.voice(Math.random() < 0.5 ? "oh" : "mmm", 0.35, 0.7 + Math.random() * 0.6) });
     await this.talk(FR.KZ_STAND);
     // he throws them
@@ -434,7 +453,13 @@ export class RoofCutscene extends Phaser.Scene {
     // the wide shot: headless, he sits down
     idle.remove();
     bar.destroy();
+    barG.destroy();
     barT.destroy();
+    pumping.remove();
+    for (const l of lads) {
+      l.setData("facing", "east");
+      animateWalker(l, 0, 0, false, 0);
+    }
     if (ddArt) {
       d.setFrame(0);
       const fh = d.frame.height;

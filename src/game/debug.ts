@@ -4,7 +4,8 @@ import { synth } from "./audio/Synth";
 import { switchTo } from "./Flow";
 import type { PlayableId } from "../data/types";
 import { maxHp } from "./systems/stats";
-import { jetStream } from "./combat/Wonk";
+import { jetStream, startWonk } from "./combat/Wonk";
+import { runGroupWonk } from "./combat/GroupWonk";
 import { kreltality } from "./combat/Kreltality";
 
 /**
@@ -43,6 +44,18 @@ export function installDebug(game: Phaser.Game) {
     shieldsDown: () => {
       const d = game.scene.getScene("Dungeon") as any;
       for (const e of d?.enemies ?? []) if (e.isBoss) e.shielded = false;
+    },
+    /** Start the WONK YOUR THANG mash minigame now (skips filling the meter). */
+    wonk: () => {
+      const d = game.scene.getScene("Dungeon") as unknown as { player?: Parameters<typeof startWonk>[0]; now: () => number };
+      if (d?.player) startWonk(d.player, d.now());
+    },
+    /** Run the roof GROUP WONK in the current Dungeon scene, everyone in. */
+    groupWonk: (lads?: PlayableId[]) => {
+      const d = game.scene.getScene("Dungeon");
+      if (!d) return;
+      const player = G.s.player as PlayableId;
+      void runGroupWonk(d, { player, lads: lads ?? (["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "KREBON", "CRONGUS", "GRONNY", "MIKEY"] as PlayableId[]).filter((id) => id !== player) });
     },
     /** Fire the krezz beam straight away (skips the mash minigame). */
     jet: () => {
