@@ -6,7 +6,7 @@ import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
-import { animateWalker, backdrop } from "../gfx/HD";
+import { animateWalker, backdrop, playPerf } from "../gfx/HD";
 import { bump } from "../systems/stats";
 
 /** SanMik & SanChz's back catalogue (the files are ggg1..ggg13). */
@@ -189,6 +189,12 @@ export class VenueScene extends Phaser.Scene {
         return;
       }
       const t = time / 1000 + i * 0.7;
+      // the real act when the art has it: SanMik on the mic, SanChz dancing
+      if (!this.tweens.isTweening(p.spr) && (playPerf(p.spr, i ? "dance" : "sing", time, i ? 9 : 8) || playPerf(p.spr, "dance", time, 9, 3))) {
+        p.spr.x = p.home.x + Math.sin(t * 0.9) * 14;
+        p.spr.y = p.home.y;
+        return;
+      }
       p.spr.x = p.home.x + Math.sin(t * 2.2) * 50;
       p.spr.y = p.home.y - Math.abs(Math.sin(t * 6)) * 10;
       animateWalker(p.spr, Math.cos(t * 2.2), 0, true, time);

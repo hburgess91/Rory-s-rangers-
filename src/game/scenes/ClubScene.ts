@@ -10,7 +10,7 @@ import { switchTo } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
-import { animateWalker, backdrop } from "../gfx/HD";
+import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
 import { bump, maxBottles } from "../systems/stats";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
@@ -68,6 +68,8 @@ interface Rival {
   skill: number;
   result?: "perfect" | "over" | "under";
   finishedAt?: number;
+  /** where they are in their wonk loop (real art only) */
+  pumpPhase?: number;
   fill?: Phaser.GameObjects.Rectangle;
   label?: Phaser.GameObjects.Text;
 }
@@ -246,10 +248,12 @@ export class ClubScene extends Phaser.Scene {
     // the routine
     if (!this.onBreak && !this.dancerDown) {
       const t = time / 1000;
-      this.dancer.x = 430 + Math.sin(t * 1.3) * 60;
-      this.dancer.y = 330 - Math.abs(Math.sin(t * 3.2)) * 8;
-      // hip sway on the beat, turning to face each side now and then
-      if (!this.tweens.isTweening(this.dancer)) this.dancer.setAngle(Math.sin(t * 6.3) * 9);
+      // the real routine when the art has it; otherwise the old hip-sway wobble
+      const real = playPerf(this.dancer, "dance", time, 9);
+      this.dancer.x = 430 + Math.sin(t * 1.3) * (real ? 45 : 60);
+      this.dancer.y = real ? 330 : 330 - Math.abs(Math.sin(t * 3.2)) * 8;
+      // turning to face each side now and then
+      if (!real && !this.tweens.isTweening(this.dancer)) this.dancer.setAngle(Math.sin(t * 6.3) * 9);
       this.dancer.setFlipX(Math.floor(t / 1.9) % 2 === 1);
       if (Math.random() < 0.004) this.tweens.add({ targets: this.dancer, angle: 360, duration: 500, onComplete: () => this.dancer.setAngle(0) });
       if (time > this.nextSwap && !this.busy) this.swapDancer();
@@ -258,6 +262,12 @@ export class ClubScene extends Phaser.Scene {
     this.band.forEach((b, i) => {
       if (this.ko.has(b.spr) || this.musicStopped) return;
       const t = time / 1000 + i * 0.8;
+      // SanMik sings, SanChz dances; the old walk-and-bounce if the art isn't there
+      if (playPerf(b.spr, i ? "dance" : "sing", time, i ? 9 : 8) || playPerf(b.spr, "dance", time, 9, 3)) {
+        b.spr.x = b.x + Math.sin(t * 0.9) * 10;
+        b.spr.y = 335;
+        return;
+      }
       b.spr.x = b.x + Math.sin(t * 2) * 22;
       b.spr.y = 335 - Math.abs(Math.sin(t * 5.5)) * 9;
       animateWalker(b.spr, Math.cos(t * 2), 0, true, time);
@@ -586,7 +596,7 @@ export class ClubScene extends Phaser.Scene {
     const home = { x: this.dancer.x, y: this.dancer.y };
     this.tweens.add({ targets: this.dancer, x: this.me.x - 50, y: this.me.y - 6, duration: 500 });
     await new Promise((r) => this.time.delayedCall(550, r));
-    this.tweens.add({ targets: this.dancer, angle: { from: -10, to: 10 }, yoyo: true, repeat: 7, duration: 150 });
+    if (!perfCycle(this.dancer, "dance")) this.tweens.add({ targets: this.dancer, angle: { from: -10, to: 10 }, yoyo: true, repeat: 7, duration: 150 });
     await squeeze(this, (l) => this.talk(l), { name, spr: this.dancer }, this.me, [dir(`${name} does a private dance for you. It's mostly spinning. It's very good spinning.`)]);
     this.dancer.setAngle(0);
     this.tweens.add({ targets: this.dancer, x: home.x, y: home.y, duration: 500 });
@@ -665,6 +675,7 @@ export class ClubScene extends Phaser.Scene {
       const all: Rival[] = ids.map((id, i) => {
         const spr = this.add.sprite(x0 + i * gap, 250, `spr_${id}`, 0).setScale(3.2);
         spr.setData("x0", spr.x);
+        spr.setData("pump", perfCycle(spr, "wonk"));
         ui.add(spr);
         const wrist = addWrist(this, spr.x - 8, 278, { ...wristLook(id, CHARACTERS as any), scale: 1.6, speed: 90 + Math.random() * 60 });
         ui.add(wrist.obj);
@@ -708,6 +719,7 @@ export class ClubScene extends Phaser.Scene {
       const finishOne = (r: Rival, res: "perfect" | "over" | "under") => {
         r.result = res;
         r.finishedAt = t;
+        if (r.spr.getData("pump")) r.spr.setFrame(0);
         const txt = res === "perfect" ? "KREZZED!" : res === "over" ? "TOO EARLY" : "NOTHING";
         r.label = this.add.text(r.spr.x, 190, txt, { fontFamily: "Impact, sans-serif", fontSize: "20px", color: res === "perfect" ? "#ffffff" : "#f9a8d4", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setScale(0.3);
         ui.add(r.label);
@@ -747,6 +759,12 @@ export class ClubScene extends Phaser.Scene {
             if (r.gauge >= Z.lo && r.gauge <= Z.hi) r.inZone += 16;
             r.fill!.setSize(20, 140 * r.gauge).setFillStyle(r.gauge > Z.hi ? 0xef4444 : r.gauge >= Z.lo ? 0x22c55e : 0xff4fa3);
             r.spr.setX((r.spr.getData("x0") as number) + (Math.random() - 0.5) * (2 + r.gauge * 8));
+            // arms pumping behind the bar, faster the closer they get
+            const pump = r.spr.getData("pump") as number[] | null;
+            if (pump) {
+              r.pumpPhase = (r.pumpPhase ?? 0) + 0.016 * (7 + r.gauge * 12);
+              r.spr.setFrame(pump[Math.floor(r.pumpPhase) % pump.length]);
+            }
             if (r.gauge >= OVER) finishOne(r, "over");
             else if (r.inZone >= r.zone.need) finishOne(r, "perfect");
           }

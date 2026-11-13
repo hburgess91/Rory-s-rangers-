@@ -21,6 +21,10 @@ export interface CharMeta {
   hurt?: Record<string, number[]>;
   victory?: Record<string, number[]>;
   death?: Record<string, number[]>;
+  /** performance loops (south; some also east): dancing, singing into a mic, wonking (always drawn behind a censor bar) */
+  dance?: Record<string, number[]>;
+  sing?: Record<string, number[]>;
+  wonk?: Record<string, number[]>;
 }
 
 export interface ArtManifest {
@@ -121,6 +125,27 @@ export function attackFrame(spr: Phaser.GameObjects.Sprite, t = 0.5): number {
   const cyc = meta.attack[f] ?? meta.attack.east ?? meta.attack.south;
   if (!cyc) return 3;
   return cyc[Math.min(cyc.length - 1, Math.floor(t * cyc.length))];
+}
+
+export type PerfKind = "dance" | "sing" | "wonk" | "victory";
+
+/** The frames of a performance loop for this sprite's texture, or null when the art doesn't have it. */
+export function perfCycle(spr: Phaser.GameObjects.Sprite, kind: PerfKind, dir = "south"): number[] | null {
+  const meta = charMeta(spr.scene, spr.texture.key);
+  const cyc = meta?.[kind]?.[dir] ?? meta?.[kind]?.south;
+  return cyc?.length ? cyc : null;
+}
+
+/**
+ * Show frame `now` of a performance loop (dancing, singing, wonking) at `fps`. Returns false, and
+ * leaves the sprite alone, when the texture has no such loop, so callers keep their old fake.
+ * `offset` staggers several performers on the same loop.
+ */
+export function playPerf(spr: Phaser.GameObjects.Sprite, kind: PerfKind, now: number, fps = 9, offset = 0, dir = "south"): boolean {
+  const cyc = perfCycle(spr, kind, dir);
+  if (!cyc) return false;
+  spr.setFrame(cyc[(Math.floor((now / 1000) * fps) + offset) % cyc.length]);
+  return true;
 }
 
 /**

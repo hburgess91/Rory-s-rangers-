@@ -4,6 +4,7 @@ import { TOUCH } from "../ui/TouchControls";
 import { activeMods } from "../../data/historicalRevisions";
 import { G } from "../G";
 import { addWrist, wristLook } from "../gfx/Wrist";
+import { perfCycle } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
 import type { Player } from "./Player";
 import { kd } from "../systems/kreddle";
@@ -81,6 +82,9 @@ export function startWonk(p: Player, now: number) {
   // the wrist, going like the clappers under the bar
   const wrist = addWrist(sc, 306, 340, { ...wristLook(p.id, CHARACTERS as any), scale: 2.2 });
   ui.add(wrist.obj);
+  // the real thing, when the art has it: an arm pumping away (the business end stays behind the bar)
+  const pump = perfCycle(hero, "wonk");
+  let pumpPhase = 0;
   // keep it decent: a big censor bar over the business end
   const bar = sc.add.rectangle(320, 352, 170, 54, 0x000000);
   const barT = sc.add.text(320, 352, "CENSORED", { fontFamily: "Impact, sans-serif", fontSize: "24px", color: "#ffffff" }).setOrigin(0.5);
@@ -168,6 +172,10 @@ export function startWonk(p: Player, now: number) {
         nextMoan = t + 380 + Math.random() * 260 - Math.min(180, rate * 22);
         const k = Math.min(1, gauge * 1.1);
         synth.voice(gauge > ZONE_HI ? "grunt" : zone ? "oh" : Math.random() < 0.3 ? "grunt" : "mmm", 0.22 + k * 0.38, pitch * (0.88 + k * 0.4));
+      }
+      if (pump && rate > 0) {
+        pumpPhase += (dt / 1000) * Math.min(20, 5 + rate * 2.5);
+        hero.setFrame(pump[Math.floor(pumpPhase) % pump.length]);
       }
       hero.setX(320 + (Math.random() - 0.5) * Math.min(14, rate * 1.6));
       hero.setAngle((Math.random() - 0.5) * Math.min(8, rate));

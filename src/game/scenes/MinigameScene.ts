@@ -12,7 +12,7 @@ import { addWrist, type Wrist } from "../gfx/Wrist";
 import { dir, gabor, say } from "../../content/dsl";
 import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump } from "../systems/stats";
-import { animateWalker, backdrop } from "../gfx/HD";
+import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
 import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
 
@@ -1411,10 +1411,14 @@ export class MinigameScene extends Phaser.Scene {
         if (keys?.D.isDown || keys?.RIGHT.isDown) moveDir = 1;
         if (holdX !== null && Math.abs(holdX - benn.x) > 12) moveDir = holdX < benn.x ? -1 : 1;
         benn.x = Phaser.Math.Clamp(benn.x + moveDir * 0.32 * dt, 120, 840);
-        if (now >= pranceUntil) animateWalker(benn, moveDir, 0, moveDir !== 0, now);
-        // crowd bounces to the beat
+        // standing still, he rocks out (real art); otherwise the walk cycle
+        if (now >= pranceUntil && (moveDir !== 0 || !playPerf(benn, "dance", now, 9))) animateWalker(benn, moveDir, 0, moveDir !== 0, now);
+        // crowd bounces to the beat (and cheers, where the art has a cheer)
         const beat = Math.sin(now / 160);
-        crowd.forEach((c, i) => c.setY(470 + (i % 2) * 22 - Math.max(0, Math.sin(now / 160 + i)) * 10));
+        crowd.forEach((c, i) => {
+          c.setY(470 + (i % 2) * 22 - Math.max(0, Math.sin(now / 160 + i)) * 10);
+          playPerf(c, "victory", now, 7, i);
+        });
         lights.forEach((l, i) => l.setAlpha(0.1 + Math.max(0, Math.sin(now / 300 + i)) * 0.18));
         void beat;
         // catches
@@ -1470,6 +1474,7 @@ export class MinigameScene extends Phaser.Scene {
     let caught = 0;
     let target = 480;
     let pranceUntil = 0;
+    let rockUntil = 0;
     let holdX: number | null = null;
     let lastThrow = 0;
     const keys = this.input.keyboard?.addKeys("A,D,LEFT,RIGHT") as Record<string, Phaser.Input.Keyboard.Key> | undefined;
@@ -1613,10 +1618,15 @@ export class MinigameScene extends Phaser.Scene {
       callback: () => {
         if (this.ended) return;
         const now = this.time.now;
-        // Krebon performs: wanders the stage and prances
-        if (Math.abs(target - krebon.x) < 6 || Math.random() < 0.004) target = 140 + Math.random() * 680;
-        const dir0 = Math.sign(target - krebon.x);
-        if (now >= pranceUntil) {
+        // Krebon performs: wanders the stage, stops to rock out (real art only), and prances
+        if (now < rockUntil) {
+          playPerf(krebon, "dance", now, 9);
+        } else if (Math.abs(target - krebon.x) < 6 || Math.random() < 0.004) {
+          target = 140 + Math.random() * 680;
+          if (perfCycle(krebon, "dance") && Math.random() < 0.7) rockUntil = now + 1800 + Math.random() * 2600;
+        }
+        const dir0 = now < rockUntil ? 0 : Math.sign(target - krebon.x);
+        if (now >= pranceUntil && now >= rockUntil) {
           krebon.x += dir0 * 0.18 * 16;
           animateWalker(krebon, dir0, 0, dir0 !== 0, now);
           if (Math.random() < 0.006) {
@@ -1650,7 +1660,10 @@ export class MinigameScene extends Phaser.Scene {
           }
         }
         animateWalker(me, mv, 0, mv !== 0, now);
-        crowd.forEach((c, i) => c.setY(478 + (i % 2) * 20 - Math.max(0, Math.sin(now / 160 + i)) * 10));
+        crowd.forEach((c, i) => {
+          c.setY(478 + (i % 2) * 20 - Math.max(0, Math.sin(now / 160 + i)) * 10);
+          playPerf(c, "victory", now, 7, i);
+        });
         lights.forEach((l, i) => l.setAlpha(0.1 + Math.max(0, Math.sin(now / 300 + i)) * 0.18));
         const pr = synth.fileProgress();
         const elapsed = (now - start) / 1000;
