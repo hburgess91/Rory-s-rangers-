@@ -4901,6 +4901,37 @@
      3
     ]
    }
+  },
+  "spr_SERVANT": {
+   "file": "chars/SERVANT.png",
+   "frame": 92,
+   "idle": {
+    "south": 0,
+    "east": 1,
+    "north": 2,
+    "west": 3
+   },
+   "walk": {
+    "west": [
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11
+    ]
+   },
+   "crouch": {
+    "west": [
+     12,
+     13,
+     14,
+     15,
+     16
+    ]
+   }
   }
  },
  "images": {
@@ -6382,6 +6413,21 @@
   "p_plane_hd_l": {
    "file": "props/p_plane_hd_l.png",
    "hd": 0.1905
+  },
+  "bg_lair": {
+   "file": "backdrops/bg_lair.png"
+  },
+  "c7_ai_rig": {
+   "file": "props/c7_ai_rig.png"
+  },
+  "c7_ai_rig_wreck": {
+   "file": "props/c7_ai_rig_wreck.png"
+  },
+  "c7_drongus_gun": {
+   "file": "props/c7_drongus_gun.png"
+  },
+  "c7_calendar": {
+   "file": "props/c7_calendar.png"
   }
  },
  "sheets": {

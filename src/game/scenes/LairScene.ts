@@ -325,7 +325,17 @@ export class LairScene extends Phaser.Scene {
   }
 
   private buildStage() {
-    if (!backdrop(this, "bg_lair", { depth: -10 })) {
+    const bg = backdrop(this, "bg_lair", { depth: -10 });
+    if (bg) {
+      // lift the hall so its floor (the throne dais) sits where everyone stands, above the dialogue box
+      const src = this.textures.get("bg_lair").getSourceImage();
+      const sc = W / src.width;
+      bg.setScale(sc).setOrigin(0.5, 0).setPosition(480, FLOOR + 10 - 176 * (src.height / 216) * sc);
+      const bottom = bg.y + src.height * sc;
+      const floor = this.add.graphics().setDepth(-10);
+      floor.fillGradientStyle(0x1f0544, 0x1f0544, 0x0b0710, 0x0b0710, 1);
+      floor.fillRect(0, bottom - 1, W, 700 - bottom);
+    } else {
       const g = this.add.graphics().setDepth(-10);
       g.fillGradientStyle(0x1a0f2e, 0x1a0f2e, 0x3a1020, 0x3a1020, 1);
       g.fillRect(0, 0, W, 540);
@@ -343,7 +353,7 @@ export class LairScene extends Phaser.Scene {
     for (const id of Object.keys(RIGS) as AiId[]) this.rigs[id] = this.makeRig(id);
     this.idleScreens();
 
-    this.drongus = this.add.sprite(490, FLOOR + 6, "spr_DRONGUS", 0).setOrigin(0.5, 1).setScale(4).setDepth(60);
+    this.drongus = this.add.sprite(490, FLOOR + 6, "spr_DRONGUS", 0).setOrigin(0.5, 1).setScale(4.5).setDepth(60);
     this.drongus.setData("facing", "south");
     const svKey = this.textures.exists("spr_SERVANT") ? "spr_SERVANT" : "spr_FOLK1";
     this.servant = this.add.sprite(1010, FLOOR + 10, svKey, 0).setOrigin(0.5, 1).setScale(svKey === "spr_SERVANT" ? 3 : 4).setDepth(55).setVisible(false);
@@ -379,7 +389,7 @@ export class LairScene extends Phaser.Scene {
 
   private idleScreens() {
     const idle: Record<AiId, string> = {
-      SUNO: "Make a song about anything_",
+      SUNO: "Make a song_",
       CLAUDE: "How can I help you today?_",
       GROK: "ask me anything. no limits._",
       CHATGPT: "What can I help with?_",
@@ -717,8 +727,8 @@ export class LairScene extends Phaser.Scene {
     if (this.dead) return never();
     const d = this.drongus;
     this.setRage(0.55);
-    this.cameras.main.zoomTo(1.12, 2200, "Sine.inOut");
-    this.cameras.main.pan(d.x + 60, d.y - 90, 2200, "Sine.inOut");
+    this.cameras.main.zoomTo(1.12, 2200, "Sine.easeInOut");
+    this.cameras.main.pan(d.x + 60, d.y - 90, 2200, "Sine.easeInOut");
     this.tweens.add({ targets: d, y: d.y - 8, duration: 90, yoyo: true, repeat: 20 });
     const has = ["MWAHAHAHA", "HAHAHAHA", "HA HA HA", "AHAHAHA", "HAHA"];
     for (let i = 0; i < 9; i++) {
