@@ -6428,6 +6428,54 @@
   },
   "c7_calendar": {
    "file": "props/c7_calendar.png"
+  },
+  "r_rubble": {
+   "file": "props/r_rubble.png"
+  },
+  "r_ruin": {
+   "file": "props/r_ruin.png"
+  },
+  "r_carwreck": {
+   "file": "props/r_carwreck.png"
+  },
+  "r_deadtree": {
+   "file": "props/r_deadtree.png"
+  },
+  "r_stump": {
+   "file": "props/r_stump.png"
+  },
+  "r_crater": {
+   "file": "props/r_crater.png"
+  },
+  "r_ash": {
+   "file": "props/r_ash.png"
+  },
+  "r_debris": {
+   "file": "props/r_debris.png"
+  },
+  "r_girders": {
+   "file": "props/r_girders.png"
+  },
+  "r_busstop": {
+   "file": "props/r_busstop.png"
+  },
+  "r_bench": {
+   "file": "props/r_bench.png"
+  },
+  "r_scorch": {
+   "file": "props/r_scorch.png"
+  },
+  "r_wall": {
+   "file": "props/r_wall.png"
+  },
+  "r_pipe": {
+   "file": "props/r_pipe.png"
+  },
+  "r_lamp": {
+   "file": "props/r_lamp.png"
+  },
+  "r_fireheap": {
+   "file": "props/r_fireheap.png"
   }
  },
  "sheets": {
