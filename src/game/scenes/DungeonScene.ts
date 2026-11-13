@@ -1789,6 +1789,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       await new Promise<void>((r) => this.time.delayedCall(380, () => r()));
     }
     cam.zoomTo(1.18, 700, "Sine.easeInOut", true);
+    Juice.duckMusic(900, 500, 0.15);
+    Juice.riser(520, 0.3);
+    await new Promise<void>((r) => this.time.delayedCall(260, () => r()));
     b.setAlpha(1).setTint(0x000000);
     b.y = y0 - 260;
     b.setScale(sx * 0.82, sy * 1.25);
@@ -1806,6 +1809,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.squash(this, b, 0.3, 520);
     synth.play("boom");
     synth.play("smash");
+    Juice.subDrop(0.9, 1.1);
     this.hitStop(90);
     this.shake(420, 0.02);
     Juice.flash(this, 0xffffff, 220, 0.55, 4880);
@@ -1832,6 +1836,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.shake(500, 0.02);
     synth.play("roar");
     synth.play("explode_1");
+    Juice.subDrop(0.8, 0.9);
     Juice.slamText(this, "HALF DEAD. FULLY FURIOUS.", col, 36, 150, 900);
     this.setSlowmo(0.35);
     window.setTimeout(() => {
@@ -1847,6 +1852,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.flash(this, 0xffffff, 380, 0.85, 4880);
     synth.play("crit");
     synth.play("explode_2");
+    Juice.subDrop(1, 2.2);
+    Juice.duckMusic(1300, 900, 0.1);
     const close = Juice.letterbox(this, 46, 260);
     this.setSlowmo(0.22);
     cam.zoomTo(1.3, 500, "Cubic.easeOut", true);
