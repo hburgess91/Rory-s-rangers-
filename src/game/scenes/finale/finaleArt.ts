@@ -17,6 +17,7 @@ export const FINALE_IMAGES: Record<string, string> = {
   fr_logs: "props/fr_logs.png",
   fr_bottle: "props/fr_bottle.png",
   fr_syringe: "props/fr_syringe.png",
+  fr_drongus_skinny: "combat/fr_drongus_skinny.png",
   c7_bottle_0: "props/c7_bottle_0.png",
 };
 

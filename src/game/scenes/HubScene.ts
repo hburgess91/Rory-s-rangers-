@@ -35,6 +35,9 @@ import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../sy
 import * as FB from "../../content/finaleKrelford";
 import { finalePreload, finaleReady, logsKey } from "./finale/finaleArt";
 
+/** The first line over the whiteness. */
+const FD_WAKE_FIRST = FB.FD_WAKE.slice(0, 1);
+
 const WORLD_W = 2560;
 const WORLD_H = 1792;
 /** The stormy sky above the top of town (Da Drongus Dungeon sticks up into it). */
@@ -302,6 +305,8 @@ export class HubScene extends Phaser.Scene {
     synth.ambience("town");
     this.weather();
     G.save();
+    // the SPIRIT CUM's long whiteness, fading into the morning
+    if (data?.from === "finale_dawn") this.whiteout = this.add.rectangle(480, 270, 2000, 1200, 0xffffff, 1).setScrollFactor(0).setDepth(9500);
     this.time.delayedCall(400, () => this.onArrive(data?.from, data?.flyover, data?.at));
   }
 
@@ -313,8 +318,10 @@ export class HubScene extends Phaser.Scene {
   private weather() {
     const c0 = clock();
     // Chapter 6, from the revenge meeting to the end: a black, rainy night
-    const raidNight = (G.s.chapter === 6 && !!G.s.flags.raid_march && !G.s.flags.ch6_clear) || (G.s.chapter >= 7 && !!G.s.flags.krelworld_bombed);
-    const kind = raidNight ? "storm" : weatherFor(c0.day);
+    // after THE CONCEPT OF PAEDOPHILIA: a clear blue morning over the ruins, whatever the clock says
+    const dawn = !!G.s.flags.finale_dawn;
+    const raidNight = !dawn && ((G.s.chapter === 6 && !!G.s.flags.raid_march && !G.s.flags.ch6_clear) || (G.s.chapter >= 7 && !!G.s.flags.krelworld_bombed));
+    const kind = dawn ? null : raidNight ? "storm" : weatherFor(c0.day);
     (this as any).weatherKind = kind;
     // the sky follows Krelford's clock: night darkens, dusk and dawn glow orange, doors light up after dark
     const nightA = this.add.rectangle(480, 270, 960, 540, 0x0b1440, 1).setAlpha(0).setScrollFactor(0).setDepth(4900).setBlendMode(Phaser.BlendModes.MULTIPLY);
@@ -328,7 +335,7 @@ export class HubScene extends Phaser.Scene {
     }
     const apply = () => {
       // the ruined town is lit by its own fires: dark, but you can still see who's crawling out of what
-      const c = raidNight ? { dark: G.s.chapter >= 7 ? 0.55 : 1, twilight: 0 } : clock();
+      const c = dawn ? { dark: 0, twilight: 0.12 } : raidNight ? { dark: G.s.chapter >= 7 ? 0.55 : 1, twilight: 0 } : clock();
       nightA.setAlpha(c.dark * 0.42);
       blueA.setAlpha(c.dark * 0.18);
       dusk.setAlpha(c.twilight * 0.4);
@@ -467,6 +474,11 @@ export class HubScene extends Phaser.Scene {
     // Chapter 7 opens at the top of Da Drongus Dungeon, then Krelford wakes up in the rubble
     if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.ch7_lair_seen) {
       this.go("Lair", {});
+      return;
+    }
+    // THE FINALE, the morning after: the lads come round, Drongus comes round, and the race for the logs
+    if (s.chapter >= 7 && s.flags.concept_destroyed && s.flags.finale_dawn && !s.flags.finale_dawn_done) {
+      await this.finaleDawn();
       return;
     }
     // THE FINALE: Da Drongus Dungeon has come down. The chat logs are somewhere in town. And then...
@@ -3561,7 +3573,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.tweens.add({ targets: glow, scale: 1.5, alpha: 0.1, yoyo: true, repeat: -1, duration: 800 });
     this.tweens.add({ targets: img, y: logs.y - 6, yoyo: true, repeat: -1, duration: 700 });
     // the Krew follow you
-    PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
+    [...PLAYABLE_ORDER, "MIKEY"].filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
       const spr = this.add.sprite(this.av.x - 40 + (i % 4) * 26, this.av.y + 30 + Math.floor(i / 4) * 20, `spr_${p}`, 0).setScale(2).setDepth(this.av.y);
       this.finaleKrew.push({ spr, lag: 10 + i * 7 });
     });
@@ -3588,7 +3600,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     synth.stopMusic();
     await this.talk(FB.FB_LANDED);
     this.busy = true;
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
     const lads = ids.map((id, i) => {
       const fx = b.x - 200 + (i * 400) / Math.max(1, ids.length - 1);
       const fy = bottom + 110 + (i % 2) * 24;
@@ -3656,6 +3668,168 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     const L = this.finaleLogs;
     if (L && !this.busy && !this.finaleRumbling && Phaser.Math.Distance.Between(p.x, p.y, L.x, L.y) < 150) void this.finaleRumble();
+  }
+
+  private whiteout: Phaser.GameObjects.Rectangle | null = null;
+
+  /** A clear spot near (x, y): spirals out until it's off every heap. */
+  private clearSpot(x: number, y: number) {
+    for (let r = 0; r < 600; r += 30)
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2;
+        const px = Phaser.Math.Clamp(x + Math.cos(a) * r, 120, WORLD_W - 120);
+        const py = Phaser.Math.Clamp(y + Math.sin(a) * r, 300, WORLD_H - 140);
+        if (!this.nearBuilding(px, py, 30)) return { x: px, y: py };
+        if (r === 0) break;
+      }
+    return { x, y };
+  }
+
+  /**
+   * The morning after. Daylight; the ruins smoking. The lads come round ("urghh"), congratulate themselves on saving
+   * Krelworld (it is gone), and on the logs. Then Drongus comes round, in his pants, sees the logs, and runs for them.
+   * You get there first, by shoving him over. Then the original ending (the KREZZING HOUR). Esc skips to it.
+   */
+  private async finaleDawn() {
+    const s = G.s;
+    const cam = this.cameras.main;
+    this.busy = true;
+    this.cutscene = true;
+    this.prompt.setVisible(false);
+    this.arrow.setVisible(false);
+    (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
+    this.av.setVisible(false);
+    let over = false;
+    const finish = () => {
+      if (over) return;
+      over = true;
+      window.removeEventListener("keydown", esc);
+      s.flags.finale_dawn_done = true;
+      s.phase = "hub";
+      G.save();
+      this.cameras.main.fadeOut(900, 255, 255, 255);
+      this.time.delayedCall(950, () => switchTo(this, "Ending", {}));
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && finish();
+    window.addEventListener("keydown", esc);
+    this.events.once("shutdown", () => window.removeEventListener("keydown", esc));
+    const wait = (ms: number) => new Promise<void>((r) => this.time.delayedCall(ms, () => r()));
+    const talk = async (lines: Line[]) => {
+      if (over) return;
+      await this.talk(lines);
+      this.busy = true;
+    };
+    // the logs (where they landed), and the lads strewn about not far from them
+    const L = this.finaleSpot(s.flags.finale_logs_at, { x: 900, y: 1440 });
+    const C = this.clearSpot(L.x + 430, L.y + 10);
+    const D = this.clearSpot(L.x - 360, L.y + 20);
+    // the logs, glowing
+    const logs = this.add.image(L.x, L.y, logsKey(this)).setScale(1.3).setDepth(L.y);
+    const lglow = this.add.circle(L.x, L.y, 34, 0x22c55e, 0.3).setDepth(L.y - 1).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: lglow, scale: 1.5, alpha: 0.1, yoyo: true, repeat: -1, duration: 800 });
+    cam.stopFollow();
+    cam.centerOn(C.x, C.y - 20);
+    synth.music("hub");
+    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
+    const lads = ids.map((id, i) => {
+      const x = C.x - 160 + (i % 5) * 80 + (i >= 5 ? 40 : 0);
+      const y = C.y - 30 + Math.floor(i / 5) * 60 + (i % 2) * 10;
+      const meta = charMeta(this, `spr_${id}`);
+      const fall = meta?.death?.east ?? meta?.death?.south;
+      const spr = this.add.sprite(x, y, `spr_${id}`, fall ? fall[fall.length - 1] : 0).setScale(2).setDepth(y);
+      if (!fall) spr.setAngle(90);
+      return { id, spr, fall };
+    });
+    // Drongus, out cold, in his pants
+    const dk = this.textures.exists("fb_drongus_undies") ? "fb_drongus_undies" : this.textures.exists("fr_drongus_skinny") ? "fr_drongus_skinny" : "spr_DRONGUS";
+    const dr = this.add.sprite(D.x, D.y, dk, 0).setScale(dk === "spr_DRONGUS" ? 2 : 0.55).setAngle(-90).setDepth(D.y);
+    // the long whiteness
+    const white = this.whiteout ?? this.add.rectangle(480, 270, 2000, 1200, 0xffffff, 1).setScrollFactor(0).setDepth(9500);
+    this.whiteout = null;
+    this.scene.setVisible(false, "UI");
+    await wait(1500);
+    if (over) return;
+    await talk(FD_WAKE_FIRST);
+    this.tweens.add({ targets: white, alpha: 0, duration: 4500, ease: "Sine.in", onComplete: () => white.destroy() });
+    await wait(4200);
+    await talk(FB.FD_WAKE.slice(1));
+    // one by one, they come round
+    for (const [i, l] of lads.entries()) {
+      if (over) return;
+      vfx(this, "vfx_dust", l.spr.x, l.spr.y + 8, { scale: 1, depth: l.spr.y + 6 });
+      if (i % 2 === 0) synth.play("groan");
+      this.floatShout(l.spr, ["URGHH", "urghhh", "UURGH", "ugh…", "URGHHHH", "nnngh"][i % 6], "#e5e7eb");
+      if (l.fall) for (const f of [...l.fall].reverse()) {
+        l.spr.setFrame(f);
+        await wait(60);
+      }
+      else l.spr.setAngle(0);
+      l.spr.setFrame(charMeta(this, l.spr.texture.key)?.idle.south ?? 0);
+      this.tweens.add({ targets: l.spr, x: l.spr.x + 3, yoyo: true, repeat: 3, duration: 120 });
+      await wait(200);
+    }
+    await talk(FB.FD_URGH);
+    await talk(FB.FD_SAVED);
+    // across the rubble...
+    cam.pan(D.x, D.y - 20, 1500, Phaser.Math.Easing.Sine.InOut);
+    await wait(1600);
+    this.tweens.add({ targets: dr, x: dr.x + 3, yoyo: true, repeat: 5, duration: 90 });
+    await talk(FB.FD_DRONGUS_STIR);
+    synth.play("groan");
+    await new Promise<void>((r) => this.tweens.add({ targets: dr, angle: 0, y: D.y - 6, duration: 900, ease: "Back.out", onComplete: () => r() }));
+    this.tweens.add({ targets: dr, angle: { from: -6, to: 6 }, yoyo: true, repeat: 4, duration: 260 });
+    const stars = this.add.text(dr.x, dr.y - 46, "✦ ✧ ✦", { fontFamily: FONT, fontSize: "14px", color: "#fde68a" }).setOrigin(0.5).setDepth(6000);
+    this.tweens.add({ targets: stars, angle: 360, repeat: 3, duration: 900, onComplete: () => stars.destroy() });
+    await talk(FB.FD_DRONGUS_UP);
+    if (over) return;
+    // the logs!
+    cam.pan(L.x, L.y - 20, 700, Phaser.Math.Easing.Sine.InOut);
+    synth.play("alarm");
+    await wait(900);
+    // the race: he staggers for them; you sprint
+    const me = lads[0].spr;
+    cam.pan((L.x + C.x) / 2, L.y, 600, Phaser.Math.Easing.Sine.InOut);
+    const hitX = L.x - 90;
+    const hitY = L.y + 8;
+    const drRun = this.tweens.add({ targets: dr, x: hitX - 10, y: hitY, duration: 2300, ease: "Sine.in", onUpdate: () => {
+      dr.setDepth(dr.y);
+      dr.setAngle(Math.sin(this.time.now / 70) * 8);
+    } });
+    this.floatShout(dr as unknown as Phaser.GameObjects.Sprite, "MY LOGS!!!", "#fca5a5");
+    me.setFlipX(true);
+    this.floatShout(me, "OI!!!", "#bde0fe");
+    await this.walkSpr(me, hitX + 26, hitY, 2200);
+    // SHOVE
+    drRun.stop();
+    synth.play("punch_big");
+    cam.shake(400, 0.02);
+    cam.flash(120, 255, 255, 255);
+    const pow = this.add.text(hitX, hitY - 50, "SHOVE!!", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffd23f", stroke: "#000", strokeThickness: 6 }).setOrigin(0.5).setDepth(7000).setScale(0.3);
+    this.tweens.add({ targets: pow, scale: 1.2, duration: 160, ease: "Back.out" });
+    this.tweens.add({ targets: pow, alpha: 0, y: pow.y - 30, delay: 900, duration: 500, onComplete: () => pow.destroy() });
+    this.tweens.add({ targets: me, x: me.x - 14, yoyo: true, duration: 90 });
+    // he goes flying, end over end, and lands in a heap
+    this.tweens.add({ targets: dr, x: hitX - 260, duration: 900, ease: "Quad.out", onUpdate: () => dr.setDepth(dr.y) });
+    this.tweens.add({ targets: dr, y: hitY - 120, duration: 420, ease: "Quad.out", yoyo: true });
+    this.tweens.add({ targets: dr, angle: -720 - 90, duration: 900 });
+    await wait(900);
+    synth.play("smash");
+    cam.shake(250, 0.01);
+    vfx(this, "vfx_dust", dr.x, dr.y + 10, { scale: 2, depth: dr.y + 5 });
+    const st2 = this.add.text(dr.x, dr.y - 30, "✦ ✧ ✦", { fontFamily: FONT, fontSize: "14px", color: "#fde68a" }).setOrigin(0.5).setDepth(6000);
+    this.tweens.add({ targets: st2, angle: 360, repeat: -1, duration: 900 });
+    // and you get there
+    me.setFlipX(false);
+    await this.walkSpr(me, L.x, L.y + 14, 500);
+    lglow.destroy();
+    this.tweens.add({ targets: logs, y: me.y - 70, duration: 400, ease: "Back.out" });
+    synth.play("pickup");
+    synth.play("cheer");
+    this.tweens.add({ targets: me, y: me.y - 16, yoyo: true, repeat: 2, duration: 160 });
+    await wait(700);
+    await talk(FB.FD_GOT_THEM);
+    await wait(500);
+    finish();
   }
 
   /** "Surely not." The wreck heap moves. */

@@ -107,8 +107,15 @@ export class FinaleScene extends Phaser.Scene {
       });
       return;
     }
-    const go = () => (b === "emerge" ? switchTo(this, "Dungeon", { dungeon: "krelford_finale", room: 0 }) : switchTo(this, "Ending", {}));
-    fadeThen(this, skipped ? 300 : 900, go);
+    // after the SPIRIT CUM: the long whiteness, then the morning after in Krelford (HubScene.finaleDawn), then the Ending
+    if (b === "spirit") {
+      s.flags.finale_dawn = true;
+      G.save();
+      this.cameras.main.fadeOut(skipped ? 300 : 1200, 255, 255, 255);
+      this.time.delayedCall(skipped ? 320 : 1250, () => switchTo(this, "Hub", { at: "TOWN_HALL", from: "finale_dawn" }));
+      return;
+    }
+    fadeThen(this, skipped ? 300 : 900, () => switchTo(this, "Dungeon", { dungeon: "krelford_finale", room: 0 }));
   }
 
   // ---------------------------------------------------------------- the set
@@ -171,8 +178,8 @@ export class FinaleScene extends Phaser.Scene {
     this.tweens.add({ targets: bolt, alpha: 0, duration: 300, onComplete: () => bolt.destroy() });
     if (this.wizard) {
       this.tweens.killTweensOf(this.wizard);
-      this.wizard.setAlpha(0.6);
-      this.tweens.add({ targets: this.wizard, alpha: 0, delay: 250, duration: 900 });
+      this.wizard.setAlpha(0.7);
+      this.tweens.add({ targets: this.wizard, alpha: 0, delay: 350, duration: 1100 });
     }
     if (this.dragon) {
       this.dragon.setTintFill(0xe9d5ff);
@@ -194,7 +201,7 @@ export class FinaleScene extends Phaser.Scene {
   /** The whole Krew (you included), side-on. */
   private placeLads(xs: number[], face: "west" | "south" | "east", scale = 3, y = FLOOR + 8) {
     const s = G.s;
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
     this.lads = ids.slice(0, xs.length).map((id, i) => {
       const key = `spr_${id}`;
       const meta = charMeta(this, key);
@@ -208,8 +215,9 @@ export class FinaleScene extends Phaser.Scene {
 
   private makeDragon(x: number, y: number, scale: number) {
     // the wizard first, behind it
-    if (this.textures.exists("fb_wizard")) this.wizard = this.add.image(x + 60, y - 40, "fb_wizard").setOrigin(0.5, 1).setScale(scale * 2.3).setDepth(-12).setTint(0x8b5cf6).setAlpha(0);
-    else this.wizard = this.add.image(x + 60, y - 40, "boss_drongus", 0).setOrigin(0.5, 1).setScale(scale * 2.3).setDepth(-12).setTint(0x8b5cf6).setAlpha(0);
+    // (drawn over the monster, see-through: a spectre looming behind it that only the lightning shows)
+    const wk = this.textures.exists("fb_wizard") ? "fb_wizard" : "boss_drongus";
+    this.wizard = this.add.image(x + 70, y - 30, wk, 0).setOrigin(0.5, 1).setScale(scale * 2.6).setDepth(-9).setTint(0xa78bfa).setAlpha(0).setBlendMode(Phaser.BlendModes.SCREEN);
     const key = this.textures.exists("fb_dragon_side") ? "fb_dragon_side" : "boss_drongus";
     this.dragon = this.add.image(x, y, key).setOrigin(0.5, 1).setScale(key === "fb_dragon_side" ? scale : scale * 3).setDepth(-10);
     if (key !== "fb_dragon_side") this.dragon.setTint(0x4c1d95);
@@ -291,7 +299,7 @@ export class FinaleScene extends Phaser.Scene {
   private async transform() {
     synth.music("c7_transform", true);
     const xs = [100, 195, 290, 385, 480, 575, 670, 765, 860];
-    this.placeLads(xs, "south", 3.4, FLOOR + 30);
+    this.placeLads(xs, "south", 3.6, FLOOR + 10);
     await this.talk(FB.FB_ALL_INJECTED.slice(1));
     // power up: one by one, then all at once
     this.cameras.main.shake(12000, 0.006);
@@ -322,7 +330,7 @@ export class FinaleScene extends Phaser.Scene {
     const sp = l.spr;
     synth.play(i % 2 ? "zap" : "telegraph");
     if (this.textures.exists("fb_aura")) {
-      l.aura = this.add.sprite(sp.x, sp.y + 6, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1.9).setDepth(sp.depth - 1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffe680).setAlpha(0.9);
+      l.aura = this.add.sprite(sp.x, sp.y + 6, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1.25, 1.5).setDepth(sp.depth - 1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xfff27a).setAlpha(0.55);
       l.aura.play("fb_aura");
     } else {
       const glow = this.add.ellipse(sp.x, sp.y - 60, 110, 190, 0xffd23f, 0.35).setDepth(sp.depth - 1).setBlendMode(Phaser.BlendModes.ADD);
@@ -337,7 +345,7 @@ export class FinaleScene extends Phaser.Scene {
   /** Super-saiyan hair: gold spikes over the head. */
   private hair(sp: Phaser.GameObjects.Sprite) {
     const g = this.add.graphics().setDepth(sp.depth + 1).setBlendMode(Phaser.BlendModes.ADD);
-    const top = sp.y - sp.displayHeight * 0.82;
+    const top = sp.y - sp.displayHeight * 0.74;
     const draw = (k: number) => {
       g.clear();
       g.fillStyle(0xffe066, 0.95);
@@ -345,7 +353,6 @@ export class FinaleScene extends Phaser.Scene {
         const bx = sp.x + j * 8;
         g.fillTriangle(bx - 7, top + 14, bx + 7, top + 14, bx + j * 5, top - 16 - (3 - Math.abs(j)) * 6 - k * 3);
       }
-      g.fillStyle(0xffffff, 0.6).fillCircle(sp.x, top + 8, 10);
     };
     draw(0);
     let k = 0;
@@ -376,11 +383,8 @@ export class FinaleScene extends Phaser.Scene {
       const r = this.add.rectangle(sp.x + (Math.random() - 0.5) * 30, sp.y - sp.displayHeight * 0.5, 6 + Math.random() * 10, 5 + Math.random() * 8, col).setDepth(sp.depth + 3);
       this.tweens.add({ targets: r, x: r.x + (Math.random() - 0.5) * 260, y: r.y - 80 - Math.random() * 160, angle: 720 * (Math.random() - 0.5), alpha: 0, duration: 1100, ease: "Quad.out", onComplete: () => r.destroy() });
     }
-    // bare torsos: muscle
-    this.tweens.add({ targets: sp, scaleX: sp.scaleX * 1.1, duration: 300, ease: "Back.out" });
-    const chest = this.add.ellipse(sp.x, sp.y - sp.displayHeight * 0.5, sp.displayWidth * 0.32, sp.displayHeight * 0.2, 0xf2c9a0, 0.85).setDepth(sp.depth + 0.5);
-    chest.setStrokeStyle(2, 0x7a4a2a, 0.8);
-    this.add.line(0, 0, sp.x, chest.y - chest.height / 2 + 2, sp.x, chest.y + chest.height / 2 - 2, 0x7a4a2a, 0.8).setOrigin(0).setDepth(sp.depth + 0.6);
+    // and the muscles come out
+    this.tweens.add({ targets: sp, scaleX: sp.scaleX * 1.1, scaleY: sp.scaleY * 1.04, duration: 300, ease: "Back.out" });
   }
 
   /** Anime speed lines radiating from a point. */
@@ -408,10 +412,10 @@ export class FinaleScene extends Phaser.Scene {
   private async spirit() {
     synth.music("c7_spirit", true);
     const dragon = this.makeDragon(250, FLOOR + 40, 1.45);
-    this.placeLads([430, 475, 520, 565, 610, 470, 540, 590, 640], "west", 2.8, FLOOR + 30);
+    this.placeLads([420, 480, 540, 600, 660, 450, 510, 570, 630], "west", 3.6, FLOOR - 4);
     for (const [i, l] of this.lads.entries()) {
       if (this.textures.exists("fb_aura")) {
-        l.aura = this.add.sprite(l.spr.x, l.spr.y + 6, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1.5).setDepth(l.spr.depth - 1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffe680).setAlpha(0.7);
+        l.aura = this.add.sprite(l.spr.x, l.spr.y + 6, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1.1, 1.4).setDepth(l.spr.depth - 1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xfff27a).setAlpha(0.5);
         l.aura.play({ key: "fb_aura", startFrame: i % 8 });
       }
       l.spr.setTint(0xfff0b0);
@@ -464,7 +468,7 @@ export class FinaleScene extends Phaser.Scene {
     await new Promise<void>((res) => this.tweens.add({ targets: orb, x: dragon.x + 30, y: dragon.y - dragon.displayHeight * 0.55, scale: 3.4, duration: 1000, ease: "Quad.in", onComplete: () => res() }));
     trail.remove();
     // IMPACT
-    const white = this.add.rectangle(480, 270, W, 540, 0xffffff, 1).setDepth(980).setScrollFactor(0);
+    const white = this.add.rectangle(480, 270, W * 2, 1100, 0xffffff, 1).setDepth(980).setScrollFactor(0);
     synth.play("boom");
     synth.play("explode_1");
     this.cameras.main.shake(2000, 0.03);

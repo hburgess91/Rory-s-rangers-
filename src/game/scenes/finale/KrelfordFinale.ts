@@ -141,7 +141,7 @@ export class KrelfordFinale {
     // it rises from the wreck
     const W = h.room.w;
     const boss = new ConceptBoss(h as never, W / 2, 470);
-    boss.roam.setTo(W / 2 - 620, 380, 1240, 560);
+    boss.roam.setTo(W / 2 - 620, 420, 1240, 760);
     h.enemies.push(boss);
     h.enemyGroup.add(boss);
     h.boss = boss;
@@ -151,7 +151,9 @@ export class KrelfordFinale {
     sc.events.on("update", this.update, this);
     sc.events.once("shutdown", () => sc.events.off("update", this.update, this));
     const cp = G.s.flags.finale_cp;
-    h.player.spr.setPosition(W / 2, h.room.h - 160);
+    h.player.spr.setPosition(W / 2, 1180);
+    // pulled back a bit: it's enormous
+    h.cameras.main.setZoom(0.8);
     if (cp === "ssj") {
       // back in, already changed
       this.heals = 3;
@@ -206,6 +208,14 @@ export class KrelfordFinale {
     const sc = h.sc;
     const W = h.room.w;
     const H = h.room.h;
+    // no factory decor along the walls: this is Krelford
+    for (const o of [...sc.children.list]) {
+      const key = (o as Phaser.GameObjects.Image).texture?.key ?? "";
+      if (key.startsWith("dec_") || key.startsWith("wall_")) o.destroy();
+    }
+    (sc as unknown as { obstacles?: Phaser.Physics.Arcade.StaticGroup }).obstacles?.clear(true, true);
+    const edge = h.add.graphics().setDepth(1.5);
+    edge.fillStyle(0x0d0a08, 1).fillRect(0, 0, W, 30).fillRect(0, H - 30, W, 30).fillRect(0, 0, 30, H).fillRect(W - 30, 0, 30, H);
     if (sc.textures.exists("tile_grass")) h.add.tileSprite(24, 24, W - 48, H - 48, "tile_grass").setOrigin(0).setDepth(0.2).setTint(0x3b2f27);
     else h.add.rectangle(24, 24, W - 48, H - 48, 0x2a211c).setOrigin(0).setDepth(0.2);
     // the roads, as they were
@@ -259,11 +269,12 @@ export class KrelfordFinale {
     if (hasVfx(sc, "vfx_fire")) for (let i = 0; i < 40; i++) vfx(sc, "vfx_fire", rnd.between(60, W - 60), rnd.between(120, H - 60), { scale: 0.9 + rnd.frac() * 1.2, depth: 6, delay: rnd.between(0, 900) });
     if (hasVfx(sc, "vfx_smokecol")) for (let i = 0; i < 10; i++) vfx(sc, "vfx_smokecol", rnd.between(100, W - 100), rnd.between(150, H - 100), { scale: 1.8 + rnd.frac(), depth: 900, alpha: 0.5 });
     // night, storm, firelight
-    h.add.rectangle(480, 270, 960, 540, 0x0b1440, 0.32).setScrollFactor(0).setDepth(950).setBlendMode(Phaser.BlendModes.MULTIPLY);
-    h.add.rectangle(480, 270, 960, 540, 0xff6a2a, 0.06).setScrollFactor(0).setDepth(951).setBlendMode(Phaser.BlendModes.ADD);
+    // (the arena is seen zoomed out, so the screen-fixed layers are drawn oversize)
+    h.add.rectangle(480, 270, 2000, 1200, 0x0b1440, 0.32).setScrollFactor(0).setDepth(950).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    h.add.rectangle(480, 270, 2000, 1200, 0xff6a2a, 0.06).setScrollFactor(0).setDepth(951).setBlendMode(Phaser.BlendModes.ADD);
     if (hasVfx(sc, "vfx_rain"))
-      for (let gx = 0; gx < 3; gx++)
-        for (let gy = 0; gy < 3; gy++) vfx(sc, "vfx_rain", 160 + gx * 320, 100 + gy * 200, { fixed: true, scale: 2, depth: 955, alpha: 0.55, speed: 1.5, angle: 12 })?.anims.setProgress(Math.random());
+      for (let gx = 0; gx < 4; gx++)
+        for (let gy = 0; gy < 4; gy++) vfx(sc, "vfx_rain", 0 + gx * 320, -40 + gy * 200, { fixed: true, scale: 2, depth: 955, alpha: 0.55, speed: 1.5, angle: 12 })?.anims.setProgress(Math.random());
     synth.weatherSound("storm");
   }
 
@@ -281,7 +292,7 @@ export class KrelfordFinale {
 
   private spawnLads() {
     const h = this.h;
-    const ids = PLAYABLE_ORDER.filter((p) => p !== G.s.player && h.textures.exists(`spr_${p}`));
+    const ids = [...PLAYABLE_ORDER, "MIKEY"].filter((p) => p !== G.s.player && h.textures.exists(`spr_${p}`));
     this.lads = ids.map((id, i) => {
       const ang = Math.PI * (0.12 + (0.76 * i) / Math.max(1, ids.length - 1));
       const r = 480 + (i % 2) * 90;
@@ -385,7 +396,7 @@ export class KrelfordFinale {
     if (this.goku) return;
     const x = this.bottle.x + 70;
     const y = this.bottle.y;
-    this.goku = h.add.image(x, y + 30, "spr_TV_GOKU", 0).setOrigin(0.5, 1).setScale(h.player.spr.scaleX).setDepth(y + 30);
+    this.goku = h.add.image(x, y + 30, "spr_TV_GOKU", 0).setOrigin(0.5, 1).setScale(2).setDepth(y + 30);
     h.add.text(x, y - 46, "GOKU", { fontFamily: "sans-serif", fontSize: "10px", color: "#fdba74", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(900);
     if (charging) this.gokuCharge();
   }
@@ -393,7 +404,7 @@ export class KrelfordFinale {
   private gokuCharge() {
     const h = this.h;
     const gk = this.goku!;
-    if (h.textures.exists("fb_goku_charge")) gk.setTexture("fb_goku_charge").setScale(1.25);
+    if (h.textures.exists("fb_goku_charge")) gk.setTexture("fb_goku_charge").setScale(1.1);
     const ox = gk.x;
     const oy = gk.y - gk.displayHeight - 30;
     this.orb = h.add.container(ox, oy).setDepth(2000);
@@ -523,7 +534,7 @@ export class KrelfordFinale {
     l.spr.setTint(0xfff0b0);
     l.label.setColor("#ffe066");
     if (h.textures.exists("fb_aura") && h.sc.anims.exists("fb_aura") && !l.aura) {
-      l.aura = h.add.sprite(l.spr.x, l.spr.y + 26, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(0.95).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffe680).setAlpha(0.8);
+      l.aura = h.add.sprite(l.spr.x, l.spr.y + 26, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(0.7, 0.85).setBlendMode(Phaser.BlendModes.ADD).setTint(0xfff27a).setAlpha(0.5);
       l.aura.play({ key: "fb_aura", startFrame: Math.floor(Math.random() * 8) });
     }
     if (!instant) h.floatText(l.spr.x, l.spr.y - 60, "AAAAAAAAA", "#ffe066", 14);
@@ -533,7 +544,7 @@ export class KrelfordFinale {
     const h = this.h;
     const ps = h.player.spr;
     if (h.textures.exists("fb_aura") && h.sc.anims.exists("fb_aura") && !this.playerAura) {
-      this.playerAura = h.add.sprite(ps.x, ps.y + 26, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffe680).setAlpha(0.8);
+      this.playerAura = h.add.sprite(ps.x, ps.y + 26, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(0.75, 0.9).setBlendMode(Phaser.BlendModes.ADD).setTint(0xfff27a).setAlpha(0.5);
       this.playerAura.play("fb_aura");
     }
     ps.setTint(0xfff0b0);
