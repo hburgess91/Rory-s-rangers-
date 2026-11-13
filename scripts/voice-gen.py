@@ -89,7 +89,7 @@ def auto_tags(raw, t):
 def plan(l, c):
     """(model, text to send, settings, delivery tags) for one line."""
     vid, kind, accent, base = c
-    t = l["t"]
+    t = l["t"].replace("*", "").strip()  # stray asterisks (chat-style corrections) trip the API
     inline = [m for m in TAG.findall(t)]
     explicit = [m.strip() for m in (l.get("m") or "").split(",") if m.strip()]
     from_text = [] if (explicit or inline) else auto_tags(l.get("raw", t), t)

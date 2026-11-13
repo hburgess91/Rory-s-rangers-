@@ -112,6 +112,7 @@ export class LairScene extends Phaser.Scene {
     this.prepArt();
     this.cameras.main.fadeIn(600);
     this.box = new DialogueBox(this, 1000, 0.1);
+    Juice.pinDialogue(this, this.box);
     this.buildStage();
     this.add.text(W - 10, 8, "Esc: skip scene", { fontFamily: FONT, fontSize: "11px", color: "#8a8fa0" }).setOrigin(1, 0).setDepth(1100);
     this.events.on("update", () => this.followGun());

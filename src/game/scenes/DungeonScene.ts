@@ -1761,8 +1761,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       synth.play("roar");
     }
     if (fresh) await this.talk(txt.intro);
-    if (epic && b.active) {
-      await Juice.bossCard(this, txt.name, txt.title, epic);
+    if (epic) {
+      if (b.active) await Juice.bossCard(this, txt.name, txt.title, epic);
       closeBars?.(350);
       this.cameras.main.zoomTo(1, 350, "Cubic.easeOut", true);
     }
@@ -1788,7 +1788,14 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       // a beat of quiet before it hits
       await new Promise<void>((r) => this.time.delayedCall(380, () => r()));
     }
-    cam.zoomTo(1.18, 700, "Sine.easeInOut", true);
+    // frame the two of you (the boss can be off screen when it arrives)
+    const p = this.player.spr;
+    const dx = Math.abs(b.x - p.x) + 160;
+    const dy = Math.abs(y0 - p.y) + 200;
+    const z = Phaser.Math.Clamp(Math.min(960 / dx, 440 / dy), 1, 1.18);
+    cam.stopFollow();
+    cam.pan((b.x + p.x) / 2, (y0 + p.y) / 2 - 20, 600, "Sine.easeInOut", true);
+    cam.zoomTo(z, 700, "Sine.easeInOut", true);
     Juice.duckMusic(900, 500, 0.15);
     Juice.riser(520, 0.3);
     await new Promise<void>((r) => this.time.delayedCall(260, () => r()));
@@ -1830,6 +1837,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     return (ms = 400) => {
       close(ms);
       this.events.emit("epic-vig-off");
+      cam.startFollow(this.player.spr, true, 0.12, 0.12);
     };
   }
 
@@ -1863,6 +1871,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.duckMusic(1300, 900, 0.1);
     const close = Juice.letterbox(this, 46, 260);
     this.setSlowmo(0.22);
+    cam.stopFollow();
+    cam.pan(b.x, b.y, 400, "Cubic.easeOut", true);
     cam.zoomTo(1.3, 500, "Cubic.easeOut", true);
     Juice.shockRing(this, b.x, b.y, { color: 0xffffff, to: 640, rings: 4, ms: 900 });
     for (let i = 0; i < 4; i++) this.time.delayedCall(i * 60, () => this.boomFx(b.x + (Math.random() - 0.5) * 90, b.y + (Math.random() - 0.5) * 90, 0.8));
@@ -1871,6 +1881,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (!this.picking) this.setSlowmo(1);
     b.active && b.clearTint();
     cam.zoomTo(1, 700, "Cubic.easeInOut", true);
+    cam.startFollow(this.player.spr, true, 0.12, 0.12);
     synth.play("boom");
     Juice.debris(this, b.x, b.y, 18, { depth: 1450, speed: 420, size: 8 });
     close(500);

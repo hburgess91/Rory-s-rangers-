@@ -21,25 +21,38 @@ export function layer(sc: Phaser.Scene, depth: number): Phaser.GameObjects.Conta
   const have = store.__juiceLayers.get(depth);
   if (have && have.active && have.scene === sc) return have;
   const c = sc.add.container(0, 0).setScrollFactor(0).setDepth(depth);
+  pinToScreen(sc, c);
+  sc.events.once("shutdown", () => store.__juiceLayers?.clear());
+  store.__juiceLayers.set(depth, c);
+  return c;
+}
+
+/**
+ * Keep a screen-space container (at 0,0, scrollFactor 0) the same size and place on screen whatever the camera's
+ * zoom and rotation are doing. Use it for a scene's own dialogue box when that scene punches the camera in.
+ */
+export function pinToScreen(sc: Phaser.Scene, c: Phaser.GameObjects.Container) {
   const fix = () => {
     if (!c.active) return;
     const z = sc.cameras.main.zoom || 1;
     const r = (sc.cameras.main as unknown as { rotation?: number }).rotation || 0;
-    c.setScale(1 / z).setPosition(480 * (1 - 1 / z), 270 * (1 - 1 / z));
-    // a tilted camera (a building coming down): counter-rotate about the screen centre
+    c.setScale(1 / z);
     if (r) {
       c.setRotation(-r);
       const cx = 480 - (480 * Math.cos(-r) - 270 * Math.sin(-r)) / z;
       const cy = 270 - (480 * Math.sin(-r) + 270 * Math.cos(-r)) / z;
       c.setPosition(cx, cy);
-    } else c.setRotation(0);
+    } else c.setRotation(0).setPosition(480 * (1 - 1 / z), 270 * (1 - 1 / z));
   };
   sc.events.on("postupdate", fix);
   c.once("destroy", () => sc.events.off("postupdate", fix));
-  sc.events.once("shutdown", () => store.__juiceLayers?.clear());
   fix();
-  store.__juiceLayers.set(depth, c);
-  return c;
+}
+
+/** Pin a DialogueBox (its private root container) to the screen. */
+export function pinDialogue(sc: Phaser.Scene, box: unknown) {
+  const root = (box as { root?: Phaser.GameObjects.Container }).root;
+  if (root) pinToScreen(sc, root);
 }
 
 /** Real-time wait (ignores the scene's time scale, so it works while slow-mo is on). */
@@ -87,14 +100,14 @@ export function shake(sc: Phaser.Scene, ms: number, k: number) {
   if (shakeOn()) sc.cameras.main.shake(ms, k);
 }
 
-/** Expanding rings (a sound wave you can see). World coordinates. */
+/** Expanding rings (a sound wave you can see). World coordinates. The line stays thin as it grows. */
 export function shockRing(sc: Phaser.Scene, x: number, y: number, opts: { color?: number; to?: number; rings?: number; ms?: number; depth?: number; flat?: number } = {}) {
   const n = opts.rings ?? 2;
   for (let i = 0; i < n; i++) {
-    const r = sc.add.ellipse(x, y, 20, 20 * (opts.flat ?? 1)).setStrokeStyle(5 - i, opts.color ?? 0xffffff, 0.9).setDepth(opts.depth ?? 1450);
+    const r = sc.add.circle(x, y, 10).setStrokeStyle(Math.max(1.5, 4 - i), opts.color ?? 0xffffff, 0.9).setDepth(opts.depth ?? 1450);
     r.setFillStyle(0xffffff, 0);
-    const s = (opts.to ?? 260) / 10;
-    sc.tweens.add({ targets: r, scaleX: s, scaleY: s, alpha: 0, delay: i * 110, duration: opts.ms ?? 650, ease: "Cubic.out", onComplete: () => r.destroy() });
+    r.scaleY = opts.flat ?? 1;
+    sc.tweens.add({ targets: r, radius: (opts.to ?? 260) / 2, alpha: 0, delay: i * 110, duration: opts.ms ?? 650, ease: "Cubic.out", onComplete: () => r.destroy() });
   }
 }
 
