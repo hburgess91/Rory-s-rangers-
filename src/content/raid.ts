@@ -43,7 +43,29 @@ export const RAID_SHOUTS: Line[] = [
   say("FLENKY", "Your president's NEXT!"),
   say("SCROMBUS", "Krelworld Krew UNITE!"),
   say("KREBLIS", "Breaking news… you lot should've let us drink the juice 👍"),
+  // Kreblis has said "we should invade Kreddle" at every meeting since Chapter One and been told to shut up every time
+  say("KREBLIS", "I TOLD YOU!!! I TOLD YOU ALL!!!"),
+  say("KREBLIS", "Breaking news… we're invading Kreddle 👍👍👍"),
+  say("KREBLIS", "Best day of my life. BEST. DAY. OF. MY. LIFE."),
+  say("KREBLIS", "Since CHAPTER ONE I've been saying this!"),
+  say("KREBLIS", "Every meeting! 'Shut up, Kreblis.' WHO'S SHUTTING UP NOW?!"),
+  say("KREBLIS", "Breaking news… Kreblis was right 👍👍👍👍"),
+  say("KREBLIS", "I'm going to put this in the minutes. In CAPITALS."),
 ];
+
+/** Extra Kreblis gloating (he gets more turns than anyone else during the raid). */
+export const KREBLIS_GLOAT: Line[] = [
+  say("KREBLIS", "I TOLD YOU!!!"),
+  say("KREBLIS", "Breaking news… we're invading Kreddle 👍👍👍"),
+  say("KREBLIS", "Best day of my life."),
+  say("KREBLIS", "Since CHAPTER ONE I've been saying this!"),
+  say("KREBLIS", "Remember when you all told me to shut up? REMEMBER?!"),
+  say("KREBLIS", "INVADE KREDDLE! INVADE KREDDLE! WE'RE DOING IT!"),
+];
+
+/** Nudges: walking back toward the bridge too early, and the locked Palace gates. */
+export const RAID_NO_RETREAT: Line = say("SCROMBUS", "No turning back! Not till Kreddle's ash!");
+export const RAID_GATES_LOCKED: Line = say("SCROMBUS", "The Palace gates! Deal with the Krunchers first!");
 
 /** Shouted when a lad fires a rocket at something in the sky. */
 export const RAID_ROCKET_SHOUTS: Line[] = [
@@ -176,7 +198,7 @@ export const NUKE_PLANT: Line[] = [
   say("KREBON", "Shouldn't we turn the power off on it? Just in case?"),
   say("KREZWONK", "That's the opposite of what we want, Krebon."),
   say("CRONGUS", "I just want it on record that this is ALSO against the Krelneva Convention."),
-  say("KREZMAR", "I'll piss on that one an' all if you like, Luke."),
+  say("KREZMAR", "I'll piss on that one an' all if you like, Crongus."),
   say("KREZWONK", "Four minutes. That's how long we've got. I set it to four because I have foreseen that we are slow."),
   say("SCROMBUS", "Four minutes to get back over the bridge and into the Town Hall. Plenty of time. Probably."),
   say("FLENKY", "This is for you, Mollor."),

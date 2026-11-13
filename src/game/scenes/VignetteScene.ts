@@ -3,17 +3,24 @@ import { hasVfx, vfx } from "../gfx/Vfx";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
-import { switchTo, fadeThen } from "../Flow";
+import { switchTo, fadeThen, advanceChapter } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, gabor, ping, say } from "../../content/dsl";
 import { PLAYABLE_ORDER } from "../../data/characters";
-import { animateWalker, backdrop, charMeta } from "../gfx/HD";
+import { animateWalker, backdrop, charMeta, perfCycle, playPerf } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
 import { flap, fall, randomZone } from "../combat/Wonk";
 import { maybeFinishArc } from "../systems/arcs";
 import { addWrist, wristLook } from "../gfx/Wrist";
 import * as KR from "../../content/krunchers";
+import { GUNS } from "../combat/Guns";
+import { ensureCh6Art } from "../gfx/ch6Art";
+import {
+  KP_KLERBLE, KP_LAST, KP_PARTY, KP_PROTOCOL, KP_RUINS, KT_AFTER, KT_ARRIVE, KT_DEPART, KT_DRIVER, KT_KRUNCHERS, KT_OPEN, PE_RAIN,
+  RM_ACTUALLY, RM_ARMS, RM_CAUTION, RM_CHEM, RM_END, RM_GOT_GUN, RM_HANDS, RM_JENKO, RM_KREBLIS, RM_LUKE, RM_NUKE, RM_OPEN, RM_PISS,
+  RM_REVENGE, RM_SHOVE, RM_SHOWOFF, RM_THROW, RM_UNITE, TP_DANCE, TP_DOOM, TP_END, TP_OPEN,
+} from "../../content/ch6";
 
 /** Short scripted animations: tweens + dialogue. All violence is cartoonish and stylised. */
 /** Polson's belly: how fat he is (polson_fat) -> which of the twelve fat-sheet frames. */
@@ -26,6 +33,8 @@ const Polson = {
 export class VignetteScene extends Phaser.Scene {
   private box!: DialogueBox;
   private returnAt = "";
+  /** Who's on stage, by speaker id (their line makes them hop). */
+  private cast = new Map<string, Phaser.GameObjects.Sprite>();
 
   constructor() {
     super("Vignette");
@@ -34,6 +43,7 @@ export class VignetteScene extends Phaser.Scene {
   async create(data: { id: string; returnAt?: string }) {
     this.returnAt = data.returnAt ?? "";
     this.lastCaption = undefined;
+    this.cast = new Map();
     this.cameras.main.fadeIn(400);
     this.box = new DialogueBox(this, 1000, 0.1);
     const run: Record<string, () => Promise<void>> = {
@@ -58,12 +68,32 @@ export class VignetteScene extends Phaser.Scene {
       crobley_boom: () => this.crobleyBoom(),
       wahooga: () => this.wahooga(),
       kruncher_mikey: () => this.krunchers(),
+      klerble_train: () => this.klerbleTrain(),
+      revenge_meeting: () => this.revengeMeeting(),
+      krunch_protocol: () => this.krunchProtocol(),
+      townhall_party: () => this.townhallParty(),
     };
     await (run[data.id] ?? (async () => undefined))();
+    // rain / storm loops started by a cutscene end with it
+    synth.weatherSound(null);
     G.s.flags[`vig_${data.id}`] = true;
+    if (data.id === "revenge_meeting") {
+      Object.assign(G.s.flags, { revenge_meeting: true, raid_march: true });
+      this.giveFlamer();
+    }
+    if (data.id === "townhall_party") {
+      Object.assign(G.s.flags, { ch6_clear: true, ch6_outro: true, krelworld_bombed: true });
+      advanceChapter();
+    }
     G.save();
     const next =
-      data.id === "wahooga"
+      data.id === "revenge_meeting"
+        ? () => switchTo(this, "Hub", { at: "TOWN_HALL", from: "vignette" })
+        : data.id === "krunch_protocol"
+          ? () => switchTo(this, "Hub", { at: "TOWN_HALL", from: "krunch" })
+        : data.id === "townhall_party"
+          ? () => switchTo(this, "Hub", { at: "TOWN_HALL", from: "vignette" })
+        : data.id === "wahooga"
         ? () => switchTo(this, "CharSelect", { swap: true })
         : data.id === "kruncher_mikey"
           ? () => switchTo(this, "Home", {})
@@ -171,6 +201,7 @@ export class VignetteScene extends Phaser.Scene {
 
   /** Wipe the set for the next shot, but keep the dialogue box (depth 1000+) alive. */
   private clearStage() {
+    this.cast.clear();
     for (const o of [...this.children.list]) {
       if ((o as unknown as { depth: number }).depth >= 1000) continue;
       this.tweens.killTweensOf(o);
@@ -222,7 +253,8 @@ export class VignetteScene extends Phaser.Scene {
   }
 
   private talk(lines: Line[]) {
-    return this.box.play(lines);
+    if (!this.cast.size) return this.box.play(lines);
+    return this.box.play(lines, { onLine: (l) => this.hopSpeaker(String(l.s)) });
   }
 
   private lastCaption?: Phaser.GameObjects.Text;
@@ -2441,21 +2473,26 @@ export class VignetteScene extends Phaser.Scene {
     await this.kreddleExpress();
     // ---- back to the plane: everyone watches
     this.clearStage();
-    const skyG = this.sky(0x8fc3ea, 0xf3d9b1);
+    const skyG = this.sky(0x3b4656, 0x6b7280);
     const g2 = this.add.graphics();
     g2.fillStyle(0x5a6a80, 1);
     for (let i = 0; i < 20; i++) g2.fillRect(i * 50, 300 - ((i * 37) % 90), 44, 300);
     g2.fillStyle(0x3d6a2a, 1).fillRect(0, 430, 960, 110);
-    if (backdrop(this, "bg_city", { depth: -10 })) {
+    const city = backdrop(this, "bg_city", { depth: -10 });
+    if (city) {
       skyG.setVisible(false);
       g2.setVisible(false);
+      // a storm has rolled in over Krelford
+      city.setTint(0x8a94a6);
+      this.add.rectangle(480, 270, 960, 540, 0x0f172a, 0.35).setDepth(-9);
     }
+    this.rainOver("storm", 960);
     const tw = this.add.image(620, 430, "p_kreltower").setOrigin(0.5, 1).setScale(1.6).setDepth(10);
     const people = this.crowd(470).filter((p) => p.texture.key !== `spr_${me}`);
     synth.music("airport");
     const chute2 = this.chute(me, 150, -60);
     this.tween({ targets: chute2, y: 300, x: 110, duration: 9000, ease: "Sine.out" });
-    await this.talk([dir("Back in Krelford, everyone is outside. Everyone is looking up. You are drifting down over them under a pink parachute, waving.")]);
+    await this.talk([dir("Back in Krelford, everyone is outside. Everyone is looking up. You are drifting down over them under a pink parachute, waving."), ...PE_RAIN]);
     const plane2 = this.add.image(1020, 110, "p_plane").setScale(2.4).setFlipX(true).setDepth(20);
     await this.talk([say(lad(["KREBLIS", "GRONNY"]), "Is that… is that the plane?")]);
     await this.tween({ targets: plane2, x: 670, y: 250, angle: 8, duration: 2600, ease: "Sine.in" });
@@ -3014,5 +3051,1138 @@ export class VignetteScene extends Phaser.Scene {
     });
   }
 
+  // ================================================================ CHAPTER 6: THE KREDDLE EXPRESS
 
+  private dropCaption() {
+    this.lastCaption?.destroy();
+    this.lastCaption = undefined;
+  }
+
+  /** The speaker of each line hops (EVERYONE / ALL …: the whole cast). */
+  private hopSpeaker(s: string) {
+    const all = s === "EVERYONE" || s.startsWith("ALL ");
+    const who = all ? [...this.cast.values()] : [this.cast.get(s)].filter((x): x is Phaser.GameObjects.Sprite => !!x);
+    for (const sp of who) {
+      if (!sp.active || sp.getData("walking") || sp.getData("hop") || sp.getData("busy")) continue;
+      const y = sp.y;
+      sp.setData("hop", true);
+      this.tweens.add({ targets: sp, y: y - 12, yoyo: true, duration: 110, repeat: all ? 1 : 0, onComplete: () => {
+        sp.y = y;
+        sp.setData("hop", false);
+      } });
+    }
+  }
+
+  /** A lad (or anyone with a character sheet) on stage, registered in the cast. */
+  private actor(id: string, x: number, y: number, scale = 2.6, castAs = id) {
+    const key = this.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FOLK0";
+    const sp = this.add.sprite(x, y, key, 0).setScale(scale).setDepth(100 + y);
+    this.cast.set(castAs, sp);
+    return sp;
+  }
+
+  private face(sp: Phaser.GameObjects.Sprite, f: "south" | "east" | "north" | "west") {
+    const m = charMeta(this, sp.texture.key);
+    sp.setData("facing", f);
+    if (!m) return void sp.setFlipX(f === "west");
+    sp.setFlipX(false);
+    sp.setFrame(m.idle[f] ?? 0);
+  }
+
+  private faceTo(sp: Phaser.GameObjects.Sprite, x: number) {
+    this.face(sp, Math.abs(x - sp.x) < 20 ? "south" : x > sp.x ? "east" : "west");
+  }
+
+  /** Loop a performance (dance / sing / victory) on some sprites; a bounce when the art has none. Returns a stop function. */
+  private perform(sps: Phaser.GameObjects.Sprite[], kind: "dance" | "sing" | "victory", fps = 9) {
+    const fakes: Phaser.Tweens.Tween[] = [];
+    const real = sps.filter((sp, i) => {
+      if (perfCycle(sp, kind)) return true;
+      fakes.push(this.tweens.add({ targets: sp, angle: { from: -8, to: 8 }, yoyo: true, repeat: -1, duration: 180 + (i % 3) * 30 }));
+      return false;
+    });
+    const ev = this.time.addEvent({ delay: 50, loop: true, callback: () => real.forEach((sp, i) => sp.active && playPerf(sp, kind, this.time.now, fps, i * 2)) });
+    return () => {
+      ev.remove();
+      fakes.forEach((t) => t.remove());
+      sps.forEach((sp) => {
+        if (!sp.active) return;
+        sp.setAngle(0);
+        this.face(sp, "south");
+      });
+    };
+  }
+
+  /** A speech bubble over someone's head. */
+  private bubble(sp: Phaser.GameObjects.Sprite, text: string, bg = "#ffffff", fg = "#111111", size = 14) {
+    const t = this.add.text(sp.x, sp.y - sp.displayHeight * 0.55 - 12, text, { fontFamily: FONT, fontSize: `${size}px`, color: fg, backgroundColor: bg, padding: { x: 5, y: 2 }, fontStyle: "bold" }).setOrigin(0.5, 1).setDepth(900);
+    this.tweens.add({ targets: t, y: t.y - 18, alpha: 0, delay: 800, duration: 500, onComplete: () => t.destroy() });
+    return t;
+  }
+
+  /** A wobbling yellow stream from (sx, sy) to (tx, ty) with splashes. Returns a stop function. */
+  private peeStream(sx: number, sy: number, tx: number, ty: number, depth: number) {
+    const arcG = this.add.graphics().setDepth(depth);
+    const ev = this.time.addEvent({
+      delay: 30,
+      loop: true,
+      callback: () => {
+        const w = Math.sin(this.time.now / 70) * 3;
+        const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(sx, sy), new Phaser.Math.Vector2((sx + tx) / 2, Math.min(sy, ty) - 26 + w), new Phaser.Math.Vector2(tx + w * 0.6, ty));
+        arcG.clear();
+        arcG.lineStyle(5, 0xc9a800, 0.9);
+        curve.draw(arcG, 24);
+        arcG.lineStyle(3, 0xffe14a, 1);
+        curve.draw(arcG, 24);
+        if (Math.random() < 0.6) {
+          const d = this.add.circle(tx + (Math.random() - 0.5) * 12, ty, 2.5, 0xffe14a, 1).setDepth(depth + 1);
+          this.tweens.add({ targets: d, x: d.x + (Math.random() - 0.5) * 30, y: ty - 8 - Math.random() * 12, alpha: 0, duration: 380, onComplete: () => d.destroy() });
+        }
+      },
+    });
+    return () => {
+      ev.remove();
+      arcG.destroy();
+    };
+  }
+
+  /** Rain (and a storm's lightning) over the stage, under the dialogue box. Stopped by clearStage / the end of the vignette. */
+  private rainOver(kind: "rain" | "storm", depth = 960) {
+    synth.weatherSound(kind);
+    this.add.rectangle(480, 270, 960, 540, 0x1e293b, kind === "storm" ? 0.32 : 0.2).setDepth(depth - 1);
+    if (hasVfx(this, "vfx_rain")) {
+      for (let l = 0; l < (kind === "storm" ? 2 : 1); l++)
+        for (let gx = 0; gx < 3; gx++)
+          for (let gy = 0; gy < 3; gy++) {
+            const sp = vfx(this, "vfx_rain", 160 + gx * 320 + l * 90, 100 + gy * 200 + l * 60, { scale: 2 + l * 0.4, depth, alpha: 0.75, speed: kind === "storm" ? 1.5 : 1, angle: kind === "storm" ? 12 : 0 });
+            sp?.anims.setProgress(Math.random());
+          }
+    } else {
+      const g = this.add.graphics().setDepth(depth);
+      this.time.addEvent({ delay: 50, loop: true, callback: () => {
+        g.clear();
+        g.lineStyle(1, 0xbfdbfe, 0.6);
+        for (let i = 0; i < 90; i++) {
+          const x = Math.random() * 1000;
+          const y = Math.random() * 540;
+          g.lineBetween(x, y, x - 6, y + 18);
+        }
+      } });
+    }
+    if (kind !== "storm") return;
+    const flash = this.add.rectangle(480, 270, 960, 540, 0xeef2ff, 0).setDepth(depth + 1).setBlendMode(Phaser.BlendModes.ADD);
+    const strike = () => {
+      if (!flash.active) return;
+      this.tweens.chain({ targets: flash, tweens: [{ alpha: 0.6, duration: 40 }, { alpha: 0.05, duration: 90 }, { alpha: 0.45, duration: 40 }, { alpha: 0, duration: 450 }] });
+      this.time.delayedCall(250 + Math.random() * 500, () => flash.active && synth.play("thunder"));
+      this.time.delayedCall(3500 + Math.random() * 4500, strike);
+    };
+    this.time.delayedCall(1500, strike);
+  }
+
+  /** Fall over (the sheet's death frames, or a topple). */
+  private keel(sp: Phaser.GameObjects.Sprite, delay = 0) {
+    const m = charMeta(this, sp.texture.key);
+    const cyc = m?.death?.south ?? m?.death?.east;
+    sp.setData("busy", true);
+    this.time.delayedCall(delay, () => {
+      if (!sp.active) return;
+      if (cyc?.length) cyc.forEach((f, i) => this.time.delayedCall(i * 110, () => sp.active && sp.setFrame(f)));
+      else this.tweens.add({ targets: sp, angle: 90, y: sp.y + 20, duration: 400, ease: "Bounce.out" });
+    });
+  }
+
+  /** A prop image (origin at its feet), or a plain block of colour when the art isn't there. */
+  private prop(key: string, x: number, y: number, scale: number, depth: number, fb = 0x888888, fw = 40, fh = 40) {
+    if (this.textures.exists(key)) return this.add.image(x, y, key).setOrigin(0.5, 1).setScale(scale).setDepth(depth);
+    const fk = `c6fb_${fw}x${fh}_${fb}`;
+    if (!this.textures.exists(fk)) {
+      const g = this.make.graphics({}, false);
+      g.fillStyle(fb, 1).fillRect(0, 0, fw, fh).lineStyle(2, 0x000000, 1).strokeRect(1, 1, fw - 2, fh - 2);
+      g.generateTexture(fk, fw, fh);
+      g.destroy();
+    }
+    return this.add.image(x, y, fk).setOrigin(0.5, 1).setDepth(depth);
+  }
+
+  // ---------------------------------------------------------------- klerble_train: meanwhile, in Kreddle
+
+  private async klerbleTrain() {
+    await ensureCh6Art(this);
+    synth.music("klerble");
+    this.add.rectangle(480, 270, 960, 540, 0x150a28).setDepth(-20);
+    const bg = backdrop(this, "bg_kd_station", { depth: -10 });
+    if (bg) bg.setY(180);
+    else {
+      this.sky(0x1a0b3a, 0x5b1d73);
+      this.add.rectangle(480, 300, 960, 80, 0x2b1645).setDepth(-9);
+    }
+    // the platform the crowd stands on (the painted one sits a bit low for the camera)
+    const plat = this.add.graphics().setDepth(-5);
+    plat.fillStyle(0x2a1640, 0.75).fillRect(0, 300, 960, 60);
+    plat.lineStyle(3, 0xffd23f, 0.9).lineBetween(0, 300, 960, 300);
+    for (let x = 0; x < 960; x += 40) plat.fillStyle(0xffd23f, 0.35).fillRect(x, 302, 20, 4);
+    const sign = this.add.text(480, 26, "★ KREDDLE CENTRAL ★", { fontFamily: "Impact, sans-serif", fontSize: "30px", color: "#ff4fd8", stroke: "#12001f", strokeThickness: 6 }).setOrigin(0.5).setDepth(5);
+    sign.setShadow(0, 0, "#ff4fd8", 16, true, true);
+    this.time.addEvent({ delay: 1700, loop: true, callback: () => {
+      sign.setAlpha(0.3);
+      this.time.delayedCall(80, () => sign.setAlpha(1));
+    } });
+    const board = this.add.text(820, 70, "PLATFORM 6\n6:66 KREDDLE EXPRESS\n→ KRELWORLD\nSTATUS: PRESIDENTIAL", { fontFamily: "Courier New, monospace", fontSize: "12px", color: "#facc15", backgroundColor: "#000000dd", padding: { x: 6, y: 4 }, align: "center" }).setOrigin(0.5, 0).setDepth(5);
+    void board;
+    for (let i = 0; i < 4; i++) {
+      const beam = this.add.triangle(120 + i * 240, 300, 0, 0, -40, -420, 40, -420, [0xff4fd8, 0x22d3ee, 0xfacc15, 0xa855f7][i], 0.1).setOrigin(0, 0).setDepth(-4).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: beam, angle: { from: -25, to: 25 }, yoyo: true, repeat: -1, duration: 2400 + i * 600, ease: "Sine.inOut" });
+    }
+    // the adoring public
+    const crowd: Phaser.GameObjects.Sprite[] = [];
+    for (let i = 0; i < 11; i++) {
+      const key = ["spr_KD_MAN", "spr_KD_WOMAN"][i % 2];
+      const x = 70 + i * 52 + (i % 3) * 6;
+      const y = 318 + (i % 3) * 10;
+      const sp = this.add.sprite(x, y, this.textures.exists(key) ? key : "spr_FOLK1", 0).setScale(2.3).setDepth(100 + y);
+      if (!this.textures.exists(key)) sp.setTint(0xff9de6);
+      crowd.push(sp);
+    }
+    this.cast.set("KREDDLER", crowd[3]);
+    const cheer = (t: string[], n = 6) => {
+      synth.play("cheer");
+      for (let i = 0; i < n; i++) {
+        const p = crowd[Math.floor(Math.random() * crowd.length)];
+        this.bubble(p, t[i % t.length], ["#ff4fd8", "#22d3ee", "#facc15"][i % 3], "#12001f", 13);
+        this.tweens.add({ targets: p, y: p.y - 12, yoyo: true, repeat: 2, duration: 120, delay: i * 60 });
+      }
+    };
+    await this.talk(KT_OPEN);
+    // the Kreddle Express pulls in on the far line
+    const train = this.add.image(-560, 292, "p_train").setOrigin(0, 1).setScale(2.4).setDepth(20).setTint(0xffc4f0);
+    const livery = this.add.text(0, 0, "THE KREDDLE EXPRESS", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ff4fd8", stroke: "#12001f", strokeThickness: 4 }).setOrigin(0.5).setDepth(21);
+    const follow = () => livery.setPosition(train.x + train.displayWidth * 0.42, train.y - train.displayHeight * 0.45);
+    follow();
+    synth.play("jet");
+    this.cameras.main.shake(1600, 0.004);
+    const sparks = this.time.addEvent({ delay: 140, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + train.displayWidth - 40 - Math.random() * 300, 290, { scale: 0.8, depth: 22 }) });
+    await this.tween({ targets: train, x: 120, duration: 2600, ease: "Cubic.out", onUpdate: follow });
+    sparks.remove();
+    // the President, in a shower of confetti
+    const k = this.actor("TV_PRESIDENT_KLERBLE", -60, 330, 2.7, "PRESIDENT KLERBLE");
+    for (let i = 0; i < 6; i++) vfx(this, "vfx_confetti", 100 + i * 150, 120, { scale: 2, depth: 600, delay: i * 200 });
+    cheer(["KLERBLE!!", "YES! YES!", "I LOVE YOU!!", "MARRY ME!", "KLERBLE!!!", "THE PRESIDENT!!"], 8);
+    crowd.forEach((p) => this.tweens.add({ targets: p, y: p.y - 6, yoyo: true, repeat: 5, duration: 160, delay: Math.random() * 200 }));
+    await this.tween({ targets: k, x: 330, duration: 2400 });
+    this.face(k, "south");
+    await this.talk(KT_ARRIVE.slice(0, 3));
+    cheer(["BRAVEST MAN ALIVE", "YESSS!", "KLERBLE!!", "DRIVE IT!!"], 6);
+    await this.talk(KT_ARRIVE.slice(3));
+    // the driver gets posted into a slot machine
+    const driver = this.actor("KD_PITBOSS", 680, 312, 2.4, "TRAIN DRIVER");
+    const slot = this.prop("kd_m_slots", 900, 345, 1.1, 340, 0xa855f7, 50, 80);
+    await this.tween({ targets: k, x: 600, duration: 900 });
+    this.faceTo(k, driver.x);
+    this.faceTo(driver, k.x);
+    await this.talk(KT_DRIVER.slice(0, 2));
+    synth.play("punch_big");
+    this.cameras.main.shake(200, 0.01);
+    await this.tween({ targets: driver, x: 890, y: 250, angle: 540, duration: 650, ease: "Sine.out" });
+    await this.tween({ targets: driver, y: 300, scale: 0.4, alpha: 0, duration: 220, ease: "Quad.in" });
+    synth.play("slot_spin");
+    this.tweens.add({ targets: slot, angle: { from: -6, to: 6 }, yoyo: true, repeat: 4, duration: 70 });
+    this.time.delayedCall(700, () => {
+      synth.play("jackpot");
+      vfx(this, "vfx_coins", 900, 280, { scale: 1.6, depth: 620 });
+      const c = this.add.text(900, 220, "🍒🍒🍒", { fontSize: "22px" }).setOrigin(0.5).setDepth(620);
+      this.tweens.add({ targets: c, y: 190, alpha: 0, delay: 900, duration: 600, onComplete: () => c.destroy() });
+    });
+    cheer(["HAHAHA", "JACKPOT!", "YES!!"], 4);
+    await this.talk(KT_DRIVER.slice(2));
+    // into the cab
+    await this.tween({ targets: k, x: train.x + train.displayWidth - 80, y: 305, duration: 700 });
+    synth.play("door");
+    k.setVisible(false);
+    const cab = this.add.sprite(0, 0, k.texture.key, 4).setScale(1.5).setDepth(22);
+    const followCab = () => {
+      follow();
+      cab.setPosition(train.x + train.displayWidth - 72, train.y - train.displayHeight + 36);
+    };
+    followCab();
+    this.cast.set("PRESIDENT KLERBLE", cab);
+    // the Krunchers turn up
+    const ks: Phaser.GameObjects.Sprite[] = [];
+    KR.KRUNCHERS.forEach((kr, i) => {
+      if (!this.textures.exists(`spr_${kr.of}`)) return;
+      const sp = this.add.sprite(1000 + i * 40, 0, `spr_${kr.of}`, 0).setScale(2.4).setTint(i % 2 ? 0xff9de6 : 0x9be7ff);
+      sp.setData("home", { x: 420 + (i % 5) * 92 + (i > 4 ? 46 : 0), y: i > 4 ? 342 : 318 });
+      sp.setY((sp.getData("home") as { y: number }).y).setDepth(100 + sp.y);
+      this.cast.set(kr.name, sp);
+      ks.push(sp);
+    });
+    crowd.slice(6).forEach((p, i) => this.tweens.add({ targets: p, x: 40 + i * 30, duration: 900 }));
+    await Promise.all(ks.map((sp, i) => this.tween({ targets: sp, x: (sp.getData("home") as { x: number }).x, duration: 1500 + i * 90 })));
+    ks.forEach((sp) => this.face(sp, "south"));
+    // their banner: the Krel Tower on fire, and it's quite good
+    const banner = this.add.container(560, 200).setDepth(250);
+    banner.add(this.add.rectangle(0, 0, 260, 66, 0x12001f, 0.92).setStrokeStyle(3, 0xff4fd8));
+    if (this.textures.exists("p_kreltower")) banner.add(this.add.image(-96, 26, "p_kreltower").setOrigin(0.5, 1).setScale(0.24));
+    banner.add(this.add.text(-96, -6, "🔥", { fontSize: "18px" }).setOrigin(0.5));
+    banner.add(this.add.text(26, 0, "BURN KRELWORLD\nBURN!!", { fontFamily: "Impact, sans-serif", fontSize: "18px", color: "#ff4fd8", align: "center" }).setOrigin(0.5));
+    banner.setScale(0.2);
+    this.tween({ targets: banner, scale: 1, duration: 400, ease: "Back.out" });
+    // their lines; Kredbon has a little demonstration
+    const bon = this.cast.get("KREDBON");
+    const krung = this.cast.get("LIL' KRUNGUS");
+    let flag: Phaser.GameObjects.Container | undefined;
+    for (const line of KT_KRUNCHERS) {
+      if (line.dir && line.t.includes("pisses") && bon && krung) {
+        this.face(krung, "east");
+        flag = this.add.container(krung.x + 40, krung.y + 4).setDepth(krung.depth + 1);
+        flag.add(this.add.rectangle(0, 0, 3, 40, 0x6b4f2a).setOrigin(0.5, 1));
+        flag.add(this.add.rectangle(13, -32, 26, 16, 0xff4fd8).setStrokeStyle(1, 0x000000));
+        flag.add(this.add.text(13, -32, "K", { fontFamily: FONT, fontSize: "10px", color: "#fff" }).setOrigin(0.5));
+        await this.tween({ targets: bon, x: krung.x + 110, y: krung.y, duration: 600 });
+        this.face(bon, "west");
+        const bar = this.add.rectangle(bon.x - 8, bon.y + 8, 18, 7, 0x000000).setDepth(bon.depth + 2);
+        const stop = this.peeStream(bon.x - 10, bon.y + 8, flag.x + 13, flag.y - 28, bon.depth + 3);
+        this.time.delayedCall(1400, () => (flag?.list[1] as Phaser.GameObjects.Rectangle | undefined)?.setFillStyle(0xd9c43a));
+        synth.play("slurp");
+        cheer(["LEGEND!!", "HAHAHA", "FILM IT!", "DICK JUICE!!"], 5);
+        await this.talk([line]);
+        stop();
+        bar.destroy();
+        continue;
+      }
+      await this.talk([line]);
+    }
+    for (let i = 0; i < 3; i++) {
+      ks.forEach((sp, j) => this.time.delayedCall(j * 40, () => this.bubble(sp, ["KRELWORLD DIES!", "DIE!!", "KRUNCH!"][(i + j) % 3], "#ff4fd8", "#12001f", 12)));
+      this.cameras.main.shake(150, 0.004);
+      await this.wait(500);
+    }
+    // away it goes
+    await this.talk(KT_DEPART.slice(0, 2));
+    this.cast.delete("PRESIDENT KLERBLE");
+    synth.play("jet");
+    this.cameras.main.shake(2500, 0.008);
+    const sp2 = this.time.addEvent({ delay: 90, loop: true, callback: () => vfx(this, "vfx_sparks", train.x + 40 + Math.random() * train.displayWidth, 290, { scale: 0.9, depth: 22 }) });
+    vfx(this, "vfx_dust", train.x + 40, 285, { scale: 2.4, depth: 23 });
+    for (let i = 0; i < 8; i++) vfx(this, "vfx_confetti", 80 + i * 120, 140, { scale: 2, depth: 600, delay: i * 120 });
+    cheer(["GO ON!!", "YES! YES!", "KILL 'EM ALL!", "KLERBLE!!!", "BYE TAP-LICKERS!"], 8);
+    ks.forEach((sp, i) => this.tweens.add({ targets: sp, y: sp.y - 10, yoyo: true, repeat: 6, duration: 140, delay: i * 30 }));
+    await this.tween({ targets: train, x: 1300, duration: 2600, ease: "Cubic.in", onUpdate: followCab });
+    sp2.remove();
+    await this.talk(KT_DEPART.slice(2));
+    // remember their faces
+    ks.forEach((sp, i) => {
+      this.face(sp, "south");
+      sp.setTint(i % 2 ? 0xff7ad0 : 0x7fd6ff);
+    });
+    const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 0).setDepth(700);
+    this.tween({ targets: red, alpha: 0.35, duration: 1200 });
+    synth.play("crowd_boo");
+    ks.forEach((sp, i) => this.time.delayedCall(i * 140, () => this.bubble(sp, ["👎", "🖕", "🖕🖕"][i % 3], "#ffffff", "#111", 14)));
+    this.caption("REMEMBER THEIR FACES.", "#ff4d4d", 30);
+    await this.talk(KT_AFTER);
+    this.dropCaption();
+    synth.stopMusic();
+  }
+
+  // ---------------------------------------------------------------- revenge_meeting: the emergency meeting
+
+  /** The lads in the Town Hall: you front and centre, everyone else in two rows. */
+  private meetingCast() {
+    const me = G.s.player;
+    const order = ["FLENKY", "KREZMAR", "CRONGUS", "SCROMBUS", "MIKEY", "GRONNY", "KREZWONK", "KREBLIS", "PROCTUS", "KREBON"].filter((id) => id !== me);
+    const slots: [number, number][] = [[250, 332], [370, 336], [600, 336], [720, 332], [150, 276], [280, 270], [410, 266], [550, 266], [680, 270], [810, 276]];
+    const lads: Record<string, Phaser.GameObjects.Sprite> = {};
+    order.forEach((id, i) => {
+      const [x, y] = slots[i];
+      lads[id] = this.actor(id, x, y, 2.6);
+      lads[id].setData("home", { x, y });
+    });
+    lads[me] = this.actor(me, 480, 340, 2.8);
+    lads[me].setData("home", { x: 480, y: 340 });
+    return lads;
+  }
+
+  private goHome(sps: Phaser.GameObjects.Sprite[], ms = 900) {
+    return Promise.all(sps.map((sp) => {
+      const h = sp.getData("home") as { x: number; y: number };
+      return this.tween({ targets: sp, x: h.x, y: h.y, angle: 0, duration: ms }).then(() => {
+        sp.setDepth(100 + sp.y);
+        this.face(sp, "south");
+      });
+    }));
+  }
+
+  private async revengeMeeting() {
+    await ensureCh6Art(this);
+    const me = G.s.player;
+    if (!backdrop(this, "bg_townhall", { dim: 0.35, depth: -10 })) this.sky(0x2a2238, 0x4a3a2a);
+    this.rainOver("rain", 960);
+    // it's raining outside: the hall's windows flicker with lightning now and then
+    const win = this.add.rectangle(480, 270, 960, 540, 0xdbeafe, 0).setDepth(-8).setBlendMode(Phaser.BlendModes.ADD);
+    this.time.addEvent({ delay: 6000, loop: true, callback: () => {
+      this.tweens.chain({ targets: win, tweens: [{ alpha: 0.35, duration: 50 }, { alpha: 0, duration: 400 }] });
+      this.time.delayedCall(400, () => synth.play("thunder"));
+    } });
+    synth.music("ominous");
+    const L = this.meetingCast();
+    const all = Object.values(L);
+    const S = (id: string) => L[id] ?? L[me];
+    this.caption("EMERGENCY MEETING", "#ff4d4d", 34);
+    await this.wait(1100);
+    this.dropCaption();
+    await this.talk(RM_OPEN);
+
+    // ---- Jenko
+    const jen = S("FLENKY");
+    await this.tween({ targets: jen, x: 480, y: 250, duration: 800 });
+    jen.setDepth(400);
+    this.face(jen, "south");
+    const photo = this.add.container(jen.x + 34, jen.y - 10).setDepth(401);
+    photo.add(this.add.rectangle(0, 0, 34, 42, 0xffffff).setStrokeStyle(2, 0x111111));
+    photo.add(this.add.rectangle(0, -4, 28, 28, 0xf9a8d4));
+    photo.add(this.add.text(0, -4, "♥", { fontFamily: FONT, fontSize: "18px", color: "#be185d" }).setOrigin(0.5));
+    photo.add(this.add.text(0, 15, "MOLLOR", { fontFamily: FONT, fontSize: "7px", color: "#111" }).setOrigin(0.5));
+    const rage = this.time.addEvent({ delay: 120, loop: true, callback: () => {
+      jen.setTint(Math.random() < 0.5 ? 0xff8888 : 0xffffff);
+      if (Math.random() < 0.3) {
+        const tear = this.add.circle(jen.x + (Math.random() < 0.5 ? -8 : 8), jen.y - 20, 3, 0x60a5fa).setDepth(402);
+        this.tweens.add({ targets: tear, y: tear.y + 40, alpha: 0, duration: 600, onComplete: () => tear.destroy() });
+      }
+    } });
+    this.cameras.main.shake(300, 0.006);
+    await this.talk(RM_JENKO);
+    rage.remove();
+    jen.clearTint();
+    photo.destroy();
+    await this.goHome([jen], 700);
+
+    // ---- revenge!
+    const scr = S("SCROMBUS");
+    synth.play("smash");
+    this.cameras.main.shake(250, 0.012);
+    this.caption("REVENGE!!!", "#ff4d4d", 44);
+    await this.talk(RM_REVENGE.slice(0, 1));
+    all.forEach((sp, i) => this.time.delayedCall(i * 60, () => this.bubble(sp, ["REVENGE!", "YES!!", "KREDDLE!!", "YEAH!!"][i % 4], "#fecaca", "#7f1d1d", 13)));
+    await this.talk(RM_REVENGE.slice(1));
+    this.dropCaption();
+    // ---- Kreblis has been saying this since the first meeting
+    const kreb = S("KREBLIS");
+    await this.talk(RM_KREBLIS.slice(0, 2));
+    kreb.setDepth(450);
+    const joy = this.perform([kreb], "victory", 12);
+    const jump = this.tweens.add({ targets: kreb, y: kreb.y - 26, yoyo: true, repeat: -1, duration: 220, ease: "Quad.out" });
+    const thumbs = this.time.addEvent({ delay: 180, loop: true, callback: () => {
+      const t = this.add.text(kreb.x + (Math.random() - 0.5) * 80, kreb.y - 40, Math.random() < 0.7 ? "👍" : "😭", { fontSize: "20px" }).setOrigin(0.5).setDepth(460);
+      this.tweens.add({ targets: t, y: t.y - 60, x: t.x + (Math.random() - 0.5) * 40, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+      const tear = this.add.circle(kreb.x + (Math.random() < 0.5 ? -9 : 9), kreb.y - 22, 3, 0x60a5fa).setDepth(461);
+      this.tweens.add({ targets: tear, x: tear.x + (tear.x < kreb.x ? -30 : 30), y: tear.y + 30, alpha: 0, duration: 500, onComplete: () => tear.destroy() });
+    } });
+    synth.play("cheer");
+    vfx(this, "vfx_confetti", kreb.x, kreb.y - 60, { scale: 1.6, depth: 470 });
+    await this.talk(RM_KREBLIS.slice(2, 6));
+    jump.remove();
+    thumbs.remove();
+    joy();
+    await this.goHome([kreb], 300);
+    await this.talk(RM_KREBLIS.slice(6));
+
+    // ---- "it was you"
+    synth.stopMusic();
+    const bon = me === "KREBON" ? S("PROCTUS") : S("KREBON");
+    await this.talk(RM_ACTUALLY.slice(0, 4));
+    for (const sp of all) if (sp !== L[me]) this.faceTo(sp, L[me].x);
+    this.face(L[me], "south");
+    const sweat = this.time.addEvent({ delay: 200, loop: true, callback: () => {
+      const d = this.add.text(L[me].x + (Math.random() - 0.5) * 50, L[me].y - 50, "💦", { fontSize: "14px" }).setOrigin(0.5).setDepth(600);
+      this.tweens.add({ targets: d, y: d.y + 30, alpha: 0, duration: 600, onComplete: () => d.destroy() });
+    } });
+    this.caption("…", "#ffffff", 40);
+    await this.wait(900);
+    this.dropCaption();
+    await this.talk(RM_ACTUALLY.slice(4, 7));
+    sweat.remove();
+    synth.music("ominous");
+    // everyone nods: a fine point, well made
+    all.forEach((sp, i) => this.tweens.add({ targets: sp, y: sp.y + 5, yoyo: true, repeat: 2, duration: 160, delay: i * 50 }));
+    await this.talk(RM_ACTUALLY.slice(7, 9));
+    for (const sp of all) if (sp !== bon) this.faceTo(sp, bon.x);
+    this.tweens.add({ targets: bon, scaleX: bon.scaleX * 0.7, scaleY: bon.scaleY * 0.7, yoyo: true, hold: 900, duration: 200 });
+    await this.talk(RM_ACTUALLY.slice(9));
+    all.forEach((sp) => this.face(sp, "south"));
+
+    // ---- chemical weapons
+    const mik = S("MIKEY");
+    await this.tween({ targets: mik, x: 480, y: 250, duration: 700 });
+    mik.setDepth(400);
+    this.face(mik, "south");
+    await this.talk(RM_CHEM.slice(0, 2));
+    synth.play("cheer");
+    this.caption("CHEMICAL WEAPONS!!", "#7cff3a", 40);
+    const gas = this.time.addEvent({ delay: 90, repeat: 30, callback: () => {
+      const g = this.add.circle(Math.random() * 960, 340, 18 + Math.random() * 20, 0x84cc16, 0.3).setDepth(300);
+      this.tweens.add({ targets: g, y: g.y - 160 - Math.random() * 80, scale: 2.2, alpha: 0, duration: 1600, onComplete: () => g.destroy() });
+    } });
+    all.forEach((sp, i) => this.time.delayedCall(i * 70, () => this.bubble(sp, ["YESSSSSS!", "YESSSS!", "HA HA YES !! DIEEE!", "DIEEE!!"][i % 4], "#d9f99d", "#14532d", 13)));
+    await this.talk(RM_CHEM.slice(2));
+    gas.remove();
+    this.dropCaption();
+    await this.goHome([mik], 600);
+
+    // ---- Luke and the Krelneva Convention
+    const luke = S("CRONGUS");
+    const kz = S("KREZMAR");
+    luke.setData("busy", true);
+    await this.tween({ targets: luke, x: 380, y: 300, duration: 600 });
+    luke.setDepth(400);
+    luke.setData("busy", false);
+    this.face(luke, "east");
+    await this.talk(RM_LUKE.slice(0, 3));
+    await this.tween({ targets: kz, x: 520, y: 300, duration: 900 });
+    kz.setDepth(401);
+    this.face(kz, "west");
+    await this.talk(RM_LUKE.slice(3, 4));
+    const doc = this.prop("c6_krelneva", kz.x - 26, kz.y - 2, 0.8, 410, 0xf4ecd8, 30, 36);
+    doc.setScale(0.1);
+    synth.play("pickup");
+    await this.tween({ targets: doc, scale: this.textures.exists("c6_krelneva") ? 0.9 : 1, duration: 400, ease: "Back.out" });
+    await this.talk(RM_LUKE.slice(4));
+    this.caption("THE KRELNEVA CONVENTION", "#fde68a", 26);
+    // it goes on the floor; Krezmar does what Krezmar does
+    await this.tween({ targets: doc, x: 452, y: 336, angle: -8, duration: 400, ease: "Quad.in" });
+    synth.play("splat");
+    this.dropCaption();
+    const bar = this.add.rectangle(kz.x - 10, kz.y + 10, 20, 8, 0x000000).setDepth(420);
+    const stop = this.peeStream(kz.x - 12, kz.y + 10, 452, 320, 421);
+    if (doc instanceof Phaser.GameObjects.Image) {
+      let k = 0;
+      this.time.addEvent({ delay: 150, repeat: 20, callback: () => {
+        k++;
+        const c = Phaser.Display.Color.Interpolate.ColorWithColor(Phaser.Display.Color.ValueToColor(0xffffff), Phaser.Display.Color.ValueToColor(0xe8c830), 20, k);
+        if (doc.active) doc.setTint(Phaser.Display.Color.GetColor(c.r, c.g, c.b));
+      } });
+    }
+    const puddle = this.add.ellipse(452, 340, 10, 5, 0xf7e04a, 0.6).setDepth(405);
+    this.tweens.add({ targets: puddle, displayWidth: 120, displayHeight: 18, duration: 5000 });
+    synth.play("slurp");
+    all.forEach((sp, i) => {
+      if (sp === kz || sp === luke) return;
+      this.time.delayedCall(400 + i * 120, () => this.bubble(sp, ["HAHAHA", "LEGEND", "ON THE DOVE!!", "😂", "YES BRINKLEY"][i % 5], "#fef08a", "#713f12", 12));
+    });
+    await this.talk(RM_PISS);
+    stop();
+    bar.destroy();
+    // ...and in Luke's face
+    this.face(kz, "west");
+    await this.tween({ targets: doc, x: kz.x - 20, y: kz.y - 10, angle: 0, duration: 250 });
+    synth.play("lob");
+    await this.tween({ targets: doc, x: luke.x + 6, y: luke.y - 22, angle: -720, duration: 420, ease: "Quad.in" });
+    synth.play("splat");
+    vfx(this, "vfx_hit", luke.x, luke.y - 20, { scale: 1.6, depth: 430 });
+    for (let i = 0; i < 10; i++) {
+      const d = this.add.circle(luke.x, luke.y - 20, 3, 0xffe14a).setDepth(431);
+      this.tweens.add({ targets: d, x: d.x + (Math.random() - 0.5) * 90, y: d.y + (Math.random() - 0.2) * 70, alpha: 0, duration: 500, onComplete: () => d.destroy() });
+    }
+    const hurt = charMeta(this, luke.texture.key)?.hurt?.south;
+    if (hurt) hurt.forEach((f, i) => this.time.delayedCall(i * 90, () => luke.setFrame(f)));
+    this.tweens.add({ targets: luke, x: luke.x - 30, duration: 200 });
+    this.cameras.main.shake(200, 0.008);
+    this.caption("SPLAT", "#fde047", 40);
+    await this.talk(RM_THROW);
+    this.tween({ targets: doc, y: 340, angle: 30, duration: 400, ease: "Bounce.out" });
+    this.dropCaption();
+
+    // ---- YEAH LUKE: shoving pandemonium
+    synth.music("boss", true);
+    this.caption("YEAH LUKE!", "#ff4d4d", 38);
+    let mob = true;
+    const others = all.filter((sp) => sp !== luke);
+    const shoveOnce = () => {
+      if (!mob) return;
+      const a = others[Math.floor(Math.random() * others.length)];
+      const intoLuke = Math.random() < 0.65;
+      const b = intoLuke ? luke : others[Math.floor(Math.random() * others.length)];
+      if (a === b || a.getData("hop")) return;
+      const dir = b.x >= a.x ? 1 : -1;
+      this.tweens.killTweensOf(a);
+      this.tweens.add({ targets: a, x: Phaser.Math.Clamp(b.x - dir * 34, 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 16, 240, 340), duration: 140, onComplete: () => {
+        this.faceTo(a, b.x);
+        this.tweens.killTweensOf(b);
+        this.tweens.add({ targets: b, x: Phaser.Math.Clamp(b.x + dir * (40 + Math.random() * 50), 60, 900), y: Phaser.Math.Clamp(b.y + (Math.random() - 0.5) * 30, 240, 340), angle: dir * (8 + Math.random() * 12), duration: 220, ease: "Quad.out", onComplete: () => b.setAngle(0) });
+        a.setDepth(100 + a.y);
+        b.setDepth(100 + b.y);
+        synth.play(Math.random() < 0.3 ? "punch_big" : "punch");
+        vfx(this, Math.random() < 0.5 ? "vfx_hit" : "vfx_dust", (a.x + b.x) / 2, a.y, { scale: 1.1, depth: 500 });
+        if (Math.random() < 0.5) this.bubble(a, ["SHOVE!", "YEAH LUKE!", "OI!", "*SHOVE*", "TAKE THAT LUKE", "NO DOVES!"][Math.floor(Math.random() * 6)], "#ffffff", "#111", 12);
+        const h = charMeta(this, b.texture.key)?.hurt?.south;
+        if (h) b.setFrame(h[Math.floor(Math.random() * h.length)]);
+      } });
+    };
+    const mobEv = this.time.addEvent({ delay: 110, loop: true, callback: shoveOnce });
+    this.cameras.main.shake(4000, 0.004);
+    await this.talk(RM_SHOVE);
+    this.caption("PANDEMONIUM", "#ff4d4d", 40);
+    await this.wait(2200);
+    mob = false;
+    mobEv.remove();
+    this.dropCaption();
+    synth.music("ominous");
+    // Scrombus on the table
+    await this.talk(RM_UNITE.slice(0, 1));
+    all.forEach((sp) => {
+      this.tweens.killTweensOf(sp);
+      sp.setAngle(0);
+      this.faceTo(sp, scr.x);
+    });
+    await this.goHome(all, 800);
+    luke.setPosition(380, 300);
+    this.tweens.add({ targets: scr, y: scr.y - 40, duration: 300, ease: "Quad.out" });
+    await this.talk(RM_UNITE.slice(1, 3));
+    this.tweens.add({ targets: scr, y: (scr.getData("home") as { y: number }).y, duration: 300, ease: "Bounce.out" });
+    await this.talk(RM_UNITE.slice(3));
+    this.tween({ targets: doc, alpha: 0, duration: 300 }).then(() => doc.destroy());
+    puddle.destroy();
+    luke.setData("home", { x: luke.x, y: luke.y });
+
+    // ---- Kreddle's arsenal (who cares)
+    const arsenal = this.add.container(480, 110).setDepth(700);
+    arsenal.add(this.add.rectangle(0, 0, 520, 110, 0x0b0f1a, 0.92).setStrokeStyle(3, 0xef4444));
+    arsenal.add(this.add.text(0, -40, "KREDDLE: KNOWN ARSENAL", { fontFamily: "Impact, sans-serif", fontSize: "18px", color: "#ef4444" }).setOrigin(0.5));
+    ["c6_missile", "c6_launcher", "c6_nuke", "c6_launcher4", "c6_missile"].forEach((k, i) => {
+      const img = this.prop(k, -200 + i * 100, 48, 0.9, 0, 0x64748b, 40, 30);
+      arsenal.add(img);
+      img.setAlpha(0);
+      this.tweens.add({ targets: img, alpha: 1, delay: 200 + i * 180, duration: 200 });
+    });
+    synth.play("alarm");
+    await this.talk(RM_CAUTION.slice(0, 3));
+    synth.play("trombone");
+    await this.tween({ targets: arsenal, y: -120, angle: 8, duration: 400, ease: "Quad.in" });
+    arsenal.destroy();
+    all.forEach((sp, i) => this.time.delayedCall(i * 60, () => this.bubble(sp, ["NEVER!", "WHO CARES!", "NO BALLS!", "PFFT"][i % 4], "#ffffff", "#111", 12)));
+    await this.talk(RM_CAUTION.slice(3));
+
+    // ---- the prizes
+    const giver = me === "KREBON" ? S("KREZMAR") : S("KREBON");
+    const crate = this.prop("p_gun_crate", 480, 300, 1.6, 300, 0x8b5a2b, 70, 40);
+    crate.setX(-60);
+    await Promise.all([this.tween({ targets: giver, x: 420, y: 270, duration: 1000 }), this.tween({ targets: crate, x: 480, duration: 1000 })]);
+    synth.play("door");
+    await this.talk(RM_ARMS);
+    // the lid flies off and out it floats
+    synth.play("explode");
+    vfx(this, "vfx_dust", 480, 300, { scale: 2, depth: 310 });
+    const fl = this.prop("c6_chemflamer", 480, 290, 1.4, 600, 0x22c55e, 60, 20);
+    const glow = this.add.ellipse(480, 260, 120, 60, 0x7cff3a, 0.35).setDepth(599).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: glow, alpha: 0.1, yoyo: true, repeat: -1, duration: 300 });
+    synth.play("perfect");
+    await this.tween({ targets: [fl, glow], y: "-=70", duration: 900, ease: "Sine.out" });
+    const pl = L[me];
+    await this.tween({ targets: [fl, glow], x: pl.x + 30, y: pl.y + 20, duration: 700, ease: "Sine.inOut" });
+    glow.destroy();
+    fl.setScale(this.textures.exists("c6_chemflamer") ? 0.9 : 1);
+    this.giveFlamer();
+    this.caption("CHEMICAL FLAMETHROWER", "#7cff3a", 30);
+    synth.play("gun_flamer");
+    // a test burst at the ceiling
+    for (let i = 0; i < 10; i++) {
+      this.time.delayedCall(i * 70, () => {
+        const f = vfx(this, "vfx_fire", pl.x + 40 + i * 6, pl.y - 30 - i * 18, { scale: 1 + i * 0.12, depth: 610, tint: 0x7cff3a, add: true });
+        if (!f) {
+          const c = this.add.circle(pl.x + 40 + i * 6, pl.y - 30 - i * 18, 10 + i * 2, 0x7cff3a, 0.8).setDepth(610);
+          this.tween({ targets: c, alpha: 0, scale: 2, duration: 500 }).then(() => c.destroy());
+        }
+      });
+    }
+    this.cameras.main.shake(500, 0.006);
+    all.forEach((sp, i) => sp !== pl && this.time.delayedCall(300 + i * 60, () => this.bubble(sp, ["OOOOH", "GREEN!!", "😍", "LOVELY"][i % 4], "#d9f99d", "#14532d", 12)));
+    await this.talk(RM_GOT_GUN);
+    this.dropCaption();
+    this.tween({ targets: crate, alpha: 0, duration: 300 });
+    await this.goHome([giver], 600);
+    // everyone else's toys
+    const toy = (id: string, key: string, fb: number) => {
+      const sp = S(id);
+      const img = this.prop(key, sp.x + 34, sp.y + 34, 0.9, sp.depth + 1, fb, 26, 30);
+      img.setScale(0.1);
+      this.tween({ targets: img, scale: this.textures.exists(key) ? 0.9 : 1, duration: 300, ease: "Back.out" });
+      return img;
+    };
+    const toys: Phaser.GameObjects.Image[] = [];
+    const showLines = RM_SHOWOFF;
+    toys.push(toy("MIKEY", "c6_napalm", 0xea580c));
+    await this.talk(showLines.slice(0, 1));
+    toys.push(toy("GRONNY", "c6_mustard", 0xeab308));
+    await this.talk(showLines.slice(1, 2));
+    const nb = toy("CRONGUS", "c6_nailbomb", 0x64748b);
+    toys.push(nb);
+    const fuse = this.time.addEvent({ delay: 120, loop: true, callback: () => vfx(this, "vfx_sparks", nb.x + 18, nb.y - 40, { scale: 0.5, depth: nb.depth + 1 }) });
+    await this.talk(showLines.slice(2, 5));
+    const bucket = this.add.container(S("KREBLIS").x + 34, S("KREBLIS").y + 20).setDepth(S("KREBLIS").depth + 1);
+    bucket.add(this.add.polygon(0, 0, [0, 0, 24, 0, 20, 24, 4, 24], 0x94a3b8).setStrokeStyle(2, 0x334155));
+    await this.talk(showLines.slice(5));
+    // the nuke, under a tarp in the corner
+    const wonk = S("KREZWONK");
+    const nuke = this.prop("c6_nuke", 860, 330, 1.7, 330, 0x14532d, 90, 50);
+    const tarp = this.add.rectangle(860, 300, 130, 70, 0x475569).setStrokeStyle(2, 0x1e293b).setDepth(331);
+    await this.tween({ targets: wonk, x: 780, y: 300, duration: 900 });
+    this.face(wonk, "east");
+    await this.talk(RM_NUKE.slice(0, 1));
+    synth.play("pop");
+    await this.tween({ targets: tarp, x: 1060, y: 200, angle: 40, duration: 500, ease: "Quad.out" });
+    tarp.destroy();
+    const bow = this.add.container(nuke.x, nuke.y - 70).setDepth(332);
+    bow.add(this.add.triangle(-8, 0, 0, 0, -14, -8, -14, 8, 0xef4444));
+    bow.add(this.add.triangle(8, 0, 0, 0, 14, -8, 14, 8, 0xef4444));
+    bow.add(this.add.circle(0, 0, 4, 0xb91c1c));
+    const tick = this.add.text(nuke.x, nuke.y - 30, "04:00", { fontFamily: "Courier New, monospace", fontSize: "13px", color: "#ef4444", backgroundColor: "#000", padding: { x: 3, y: 1 } }).setOrigin(0.5).setDepth(333);
+    this.tweens.add({ targets: tick, alpha: 0.3, yoyo: true, repeat: -1, duration: 400 });
+    synth.play("gasp");
+    this.cameras.main.shake(300, 0.006);
+    this.caption("☢ A NUCLEAR BOMB ☢", "#facc15", 34);
+    await this.talk(RM_NUKE.slice(1, 4));
+    this.dropCaption();
+    // he sits on it
+    await this.tween({ targets: wonk, x: nuke.x, y: nuke.y - 55, duration: 500 });
+    wonk.setDepth(334);
+    this.face(wonk, "south");
+    await this.talk(RM_NUKE.slice(4));
+    fuse.remove();
+
+    // ---- hands in
+    await this.talk(RM_HANDS);
+    [...toys, nb].forEach((t) => t.active && this.tween({ targets: t, alpha: 0, duration: 300 }));
+    bucket.destroy();
+    const n = all.length;
+    await Promise.all(all.map((sp, i) => {
+      const a = Math.PI + (i / (n - 1)) * Math.PI;
+      const x = 480 + Math.cos(a) * 190;
+      const y = 315 + Math.sin(a) * 50 + (i % 2) * 6;
+      return this.tween({ targets: sp, x, y, duration: 1100 }).then(() => {
+        sp.setDepth(100 + sp.y);
+        this.faceTo(sp, 480);
+      });
+    }));
+    const hands = all.map((sp, i) => {
+      const h = this.add.circle(sp.x, sp.y - 6, 7, [0xf1c27d, 0xe0ac69, 0xffdbac, 0xc68642][i % 4]).setStrokeStyle(2, 0x3b2a1a).setDepth(500);
+      this.tween({ targets: h, x: 480 + (Math.random() - 0.5) * 18, y: 250 + (Math.random() - 0.5) * 10, duration: 600, delay: i * 70, ease: "Sine.out" });
+      return h;
+    });
+    await this.wait(1100);
+    synth.play("bongo");
+    await this.talk(RM_END.slice(0, 1));
+    // UNITE!
+    synth.play("cheer");
+    this.cameras.main.flash(300, 255, 255, 255);
+    this.tween({ targets: hands, y: 120, duration: 400, ease: "Back.out" });
+    const joy2 = this.perform(all, "victory", 10);
+    vfx(this, "vfx_confetti", 480, 140, { scale: 2.4, depth: 600 });
+    this.caption("KRELWORLD KREW UNITE!", "#ffd23f", 38);
+    this.tweens.add({ targets: S("KREBLIS"), y: "-=30", yoyo: true, repeat: 5, duration: 200 });
+    await this.talk(RM_END.slice(1, 4));
+    joy2();
+    hands.forEach((h) => h.destroy());
+    this.dropCaption();
+    await this.talk(RM_END.slice(4));
+    // out into the rain
+    await Promise.all(all.map((sp, i) => this.tween({ targets: sp, x: -80 - i * 30, y: 300 + (i % 3) * 14, duration: 1800 + i * 80 })));
+    synth.stopMusic();
+  }
+
+  private giveFlamer() {
+    const s = G.s;
+    s.guns = s.guns ?? {};
+    s.guns.chem_flamer = Math.max(s.guns.chem_flamer ?? 0, GUNS.chem_flamer.maxAmmo);
+    s.gun = "chem_flamer";
+  }
+
+  /** Everyone on stage, lads only (no Proctus): for the party scenes. */
+  private partyCast(y0 = 300) {
+    const me = G.s.player;
+    const ids = [...PLAYABLE_ORDER.filter((p) => p !== me), "MIKEY"];
+    ids.splice(Math.floor(ids.length / 2), 0, me);
+    return ids.map((id, i) => {
+      const x = 90 + i * (780 / (ids.length - 1));
+      const y = y0 + (i % 2) * 34;
+      const sp = this.actor(id, x, y, 2.6);
+      sp.setData("home", { x, y });
+      return sp;
+    });
+  }
+
+  // ---------------------------------------------------------------- krunch_protocol
+
+  private async krunchProtocol() {
+    await ensureCh6Art(this);
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
+    // (a) the Town Hall: hubris
+    if (!backdrop(this, "bg_townhall", { dim: 0.1, depth: -10 })) this.sky(0x6b4f2a, 0x3a2a1a);
+    synth.weatherSound("rain");
+    synth.music("crazy");
+    const lads = this.partyCast(290);
+    lads.forEach((sp) => sp.setTint(0xd6d3d1));
+    // still smoking from Kreddle
+    const smoke = this.time.addEvent({ delay: 220, loop: true, callback: () => {
+      const sp = lads[Math.floor(Math.random() * lads.length)];
+      const p = this.add.circle(sp.x + (Math.random() - 0.5) * 20, sp.y - 30, 5, 0x6b7280, 0.6).setDepth(300);
+      this.tweens.add({ targets: p, y: p.y - 50, scale: 2.5, alpha: 0, duration: 1200, onComplete: () => p.destroy() });
+    } });
+    const stop = this.perform(lads, "victory", 10);
+    for (let i = 0; i < 5; i++) vfx(this, "vfx_confetti", 120 + i * 180, 120, { scale: 2, depth: 600, delay: i * 250 });
+    synth.play("cheer");
+    this.caption("WE WON!!!", "#ffd23f", 40);
+    await this.wait(1200);
+    this.dropCaption();
+    stop();
+    await this.talk(KP_PARTY.slice(0, 7));
+    const stop2 = this.perform(lads, "victory", 12);
+    this.caption("THEY DON'T HAVE THE BALLS!!", "#ff4d4d", 34);
+    lads.forEach((sp, i) => this.time.delayedCall(i * 90, () => this.bubble(sp, ["NO BALLS!", "NEVER!!", "HAHAHA", "WOOO!"][i % 4], "#ffffff", "#111", 12)));
+    await this.talk(KP_PARTY.slice(7));
+    stop2();
+    smoke.remove();
+    this.dropCaption();
+
+    // (b) the palace: the last breath
+    synth.stopMusic();
+    synth.weatherSound(null);
+    this.cameras.main.flash(250, 0, 0, 0);
+    this.clearStage();
+    if (!backdrop(this, "tv_bunker", { dim: 0.45, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1a1020).setDepth(-10);
+    this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 0.25).setDepth(-8).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    // the lights are going
+    const dark = this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setDepth(600);
+    this.time.addEvent({ delay: 700, loop: true, callback: () => {
+      if (Math.random() < 0.5) return;
+      dark.setAlpha(0.6);
+      this.time.delayedCall(60, () => dark.setAlpha(0.1));
+      this.time.delayedCall(120, () => dark.setAlpha(0.5));
+      this.time.delayedCall(200, () => dark.setAlpha(0));
+    } });
+    for (let i = 0; i < 3; i++) this.fireBlob(80 + i * 380 + (i === 1 ? 300 : 0), 330, 40, 50);
+    this.time.addEvent({ delay: 400, loop: true, callback: () => vfx(this, "vfx_sparks", 100 + Math.random() * 760, 60 + Math.random() * 80, { scale: 1, depth: 80 }) });
+    const term = this.prop("c6_kd_terminal", 790, 345, 2.4, 200, 0x334155, 120, 90);
+    void term;
+    const screenGlow = this.add.ellipse(780, 250, 90, 60, 0xef4444, 0.25).setDepth(201).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: screenGlow, alpha: 0.05, yoyo: true, repeat: -1, duration: 500 });
+    const hasCrawl = this.textures.exists("c6_klerble_crawl");
+    const kl = hasCrawl ? this.add.image(-60, 330, "c6_klerble_crawl").setOrigin(0.5, 1).setScale(2.6).setDepth(300) : this.add.sprite(-60, 320, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(2.4).setAngle(80).setDepth(300);
+    this.cast.set("PRESIDENT KLERBLE", kl as Phaser.GameObjects.Sprite);
+    // the trail
+    const trail = this.add.graphics().setDepth(290);
+    const smear = () => {
+      trail.fillStyle(0x7f1d1d, 0.85).fillRect(-80, 322, kl.x + 10, 8);
+      trail.fillStyle(0xb91c1c, 0.7).fillRect(-80, 324, kl.x + 6, 3);
+    };
+    synth.play("roar");
+    for (let i = 0; i < 4; i++) {
+      await this.tween({ targets: kl, x: kl.x + 70, duration: 520, ease: "Quad.out", onUpdate: smear });
+      this.tweens.add({ targets: kl, scaleY: kl.scaleY * 0.9, yoyo: true, duration: 150 });
+      if (G.meta.settings.gore !== false && i % 2) vfx(this, "vfx_blood", kl.x, 320, { scale: 1, depth: 295 });
+      await this.wait(260);
+    }
+    await this.talk(KP_KLERBLE.slice(0, 3));
+    for (let i = 0; i < 5; i++) {
+      await this.tween({ targets: kl, x: kl.x + 68, duration: 560, ease: "Quad.out", onUpdate: smear });
+      await this.wait(i === 4 ? 0 : 300);
+    }
+    // up the cable
+    await this.tween({ targets: kl, x: 700, angle: -35, y: 318, duration: 800, ease: "Sine.out", onUpdate: smear });
+    await this.talk(KP_KLERBLE.slice(3));
+    // the screen
+    const scr = this.add.container(480, 175).setDepth(700).setScale(0.2).setAlpha(0);
+    scr.add(this.add.rectangle(0, 0, 520, 270, 0x050505).setStrokeStyle(6, 0x334155));
+    scr.add(this.add.text(0, -105, "KREDDLE PRESIDENTIAL SYSTEMS v6.66", { fontFamily: "Courier New, monospace", fontSize: "14px", color: "#ef4444" }).setOrigin(0.5));
+    scr.add(this.add.rectangle(0, -6, 140, 104, 0x7f1d1d).setStrokeStyle(3, 0xef4444));
+    scr.add(this.add.rectangle(-44, -60, 52, 14, 0x7f1d1d).setStrokeStyle(3, 0xef4444));
+    scr.add(this.add.text(0, -6, "KRUNCH", { fontFamily: "Impact, sans-serif", fontSize: "28px", color: "#fecaca" }).setOrigin(0.5));
+    const prompt = this.add.text(0, 92, "> INITIATE? Y/N _", { fontFamily: "Courier New, monospace", fontSize: "16px", color: "#22c55e" }).setOrigin(0.5);
+    scr.add(prompt);
+    this.tweens.add({ targets: prompt, alpha: 0.3, yoyo: true, repeat: -1, duration: 400 });
+    await this.tween({ targets: scr, scale: 1, alpha: 1, duration: 500, ease: "Back.out" });
+    synth.play("ding");
+    await this.wait(900);
+    // the last breath
+    const beat = this.time.addEvent({ delay: 900, loop: true, callback: () => synth.play("hit") });
+    await this.talk(KP_LAST);
+    beat.remove();
+    prompt.setText("> Y").setColor("#ef4444");
+    synth.play("select");
+    await this.wait(400);
+    scr.add(this.add.text(0, 120, "KRUNCH PROTOCOL: ARMED", { fontFamily: "Courier New, monospace", fontSize: "14px", color: "#ef4444" }).setOrigin(0.5));
+    await this.tween({ targets: kl, angle: 0, y: 330, duration: 600, ease: "Bounce.out" });
+    await this.wait(1200);
+
+    // (c) white
+    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff, 0).setDepth(990);
+    await this.tween({ targets: white, alpha: 1, duration: 120 });
+    this.clearStage();
+    this.cast.clear();
+    await this.wait(900);
+    // outside: the palace, then the bomb
+    if (!backdrop(this, "bg_kd_palace", { depth: -10 })) this.sky(0x1a0b3a, 0x5b1d73);
+    this.rainOver("rain", 940);
+    synth.weatherSound(null);
+    const flashW = this.add.rectangle(480, 270, 960, 540, 0xffffff, 1).setDepth(990);
+    await this.tween({ targets: flashW, alpha: 0, duration: 700 });
+    await this.wait(1500);
+    // silence. then:
+    this.cameras.main.flash(900, 255, 255, 255);
+    synth.play("boom");
+    this.time.delayedCall(80, () => synth.play("explode"));
+    this.time.delayedCall(300, () => synth.play("roar"));
+    this.cameras.main.shake(5500, 0.04);
+    const cloud = vfx(this, "vfx_mushroom", 480, 300, { scale: 3.2, depth: 400, hold: true });
+    if (!cloud) {
+      const stem = this.add.rectangle(480, 300, 60, 10, 0xf97316).setOrigin(0.5, 1).setDepth(400);
+      const cap = this.add.ellipse(480, 280, 40, 30, 0xfbbf24).setDepth(401);
+      this.tween({ targets: stem, height: 220, duration: 2000 });
+      this.tween({ targets: cap, y: 80, scaleX: 7, scaleY: 4, duration: 2000 });
+    }
+    // the shockwave: rings and a wall of dust rolling out
+    for (let i = 0; i < 4; i++) {
+      const ring = this.add.ellipse(480, 300, 40, 14).setStrokeStyle(6 - i, 0xffffff, 0.9).setDepth(410).setFillStyle(0xffffff, 0);
+      this.tweens.add({ targets: ring, scaleX: 32, scaleY: 18, alpha: 0, delay: i * 260, duration: 1800, ease: "Cubic.out", onComplete: () => ring.destroy() });
+    }
+    vfx(this, "vfx_shock", 480, 300, { scale: 9, depth: 405 });
+    for (let i = 0; i < 10; i++) vfx(this, "vfx_dust", 480 + (i - 4.5) * 100, 330, { scale: 3, depth: 420, delay: 300 + Math.abs(i - 4.5) * 120 });
+    for (let i = 0; i < 8; i++) this.time.delayedCall(i * 220, () => this.boomAt(100 + Math.random() * 760, 120 + Math.random() * 220, 1.4 + Math.random(), 380));
+    const heat = this.add.rectangle(480, 270, 960, 540, 0xff7a00, 0).setDepth(430).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: heat, alpha: 0.55, duration: 900 });
+    await this.wait(1800);
+    // it takes out all of Kreddle: everything goes white for a long, long moment
+    const wall = this.add.rectangle(480, 270, 960, 540, 0xfff7ed, 0).setDepth(990);
+    await this.tween({ targets: wall, alpha: 1, duration: 1400 });
+    synth.play("boom");
+    await this.wait(3200);
+
+    // (d) the ruins
+    this.clearStage();
+    this.cast.clear();
+    if (!backdrop(this, "bg_kd_ruins", { depth: -10 })) this.sky(0x450a0a, 0x1c1917);
+    const blood = this.add.rectangle(480, 270, 960, 540, 0x991b1b, 0.22).setDepth(-8).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    void blood;
+    for (const [x, sz] of [[90, 50], [260, 34], [640, 46], [880, 60], [420, 28]] as [number, number][]) this.fireBlob(x, 330, sz, 60);
+    const heaps: [string, number, number, number][] = [["c6_burnheap", 140, 350, 2.2], ["c6_ashpile", 330, 352, 1.8], ["c6_skeleton", 560, 352, 1.4], ["c6_burnheap", 760, 352, 2.0], ["c6_ashpile", 900, 350, 1.6]];
+    for (const [k, x, y, s] of heaps) this.prop(k, x, y, s, 80, 0x292524, 60, 30);
+    // debris and ash keep coming down
+    const rain2 = this.time.addEvent({ delay: 60, loop: true, callback: () => {
+      const ash = Math.random() < 0.7;
+      const d = ash ? this.add.circle(Math.random() * 1000, -10, 1.5 + Math.random() * 2, 0xd6d3d1, 0.8) : this.add.rectangle(Math.random() * 1000, -10, 4 + Math.random() * 8, 3 + Math.random() * 6, Math.random() < 0.3 ? 0xf97316 : 0x44403c);
+      d.setDepth(950);
+      this.tweens.add({ targets: d, y: 340 + Math.random() * 20, x: d.x - 40 - Math.random() * 80, angle: ash ? 0 : 360, duration: ash ? 3000 + Math.random() * 2000 : 1100 + Math.random() * 600, onComplete: () => d.destroy() });
+    } });
+    const fade = this.add.rectangle(480, 270, 960, 540, 0xfff7ed, 1).setDepth(990);
+    synth.music("ominous");
+    await this.tween({ targets: fade, alpha: 0, duration: 3000 });
+    fade.destroy();
+    this.caption("KREDDLE", "#a8a29e", 40);
+    await this.wait(1500);
+    this.dropCaption();
+    await this.talk(KP_RUINS);
+
+    // (e) the Krunch Protocol
+    synth.play("alarm");
+    const pads: [string, number, number][] = [["c6_launcher", 120, 345], ["c6_launcher4", 300, 350], ["c6_launcher", 500, 345], ["c6_launcher4", 690, 350], ["c6_launcher", 860, 345]];
+    const launchers = pads.map(([k, x, y], i) => {
+      const hatch = this.add.rectangle(x, y, 120, 10, 0x0a0a0a).setDepth(89);
+      void hatch;
+      const l = this.prop(k, x, y + 90, 2.2, 90, 0x3f6212, 110, 60).setFlipX(true);
+      this.tween({ targets: l, y, duration: 1600, delay: i * 350, ease: "Sine.out" });
+      this.time.delayedCall(i * 350, () => vfx(this, "vfx_dust", x, y, { scale: 2, depth: 95 }));
+      return l;
+    });
+    this.cameras.main.shake(2600, 0.006);
+    await this.wait(1800);
+    // red sights on Krelworld
+    const sights = launchers.map((l) => {
+      const c = this.add.container(l.x - 60, l.y - 120).setDepth(800);
+      c.add(this.add.circle(0, 0, 16).setStrokeStyle(2, 0xef4444));
+      c.add(this.add.rectangle(0, 0, 44, 2, 0xef4444));
+      c.add(this.add.rectangle(0, 0, 2, 44, 0xef4444));
+      this.tweens.add({ targets: c, angle: 90, yoyo: true, repeat: -1, duration: 600 });
+      return c;
+    });
+    const tgt = this.add.text(480, 60, "TARGET: KRELWORLD   ◄◄◄", { fontFamily: "Courier New, monospace", fontSize: "20px", color: "#ef4444", backgroundColor: "#000000cc", padding: { x: 8, y: 4 } }).setOrigin(0.5).setDepth(800);
+    this.tweens.add({ targets: tgt, alpha: 0.3, yoyo: true, repeat: -1, duration: 300 });
+    await this.talk(KP_PROTOCOL);
+    sights.forEach((s) => s.destroy());
+    // launch
+    synth.stopMusic();
+    this.caption("THE KRUNCH PROTOCOL", "#ef4444", 36);
+    let fired = 0;
+    const launch = this.time.addEvent({ delay: 170, repeat: 34, callback: () => {
+      const l = launchers[fired % launchers.length];
+      fired++;
+      const x0 = l.x - 20;
+      const y0 = l.y - 60;
+      synth.play(fired % 3 ? "rocket" : "lob");
+      vfx(this, "vfx_boom", x0, y0 + 10, { scale: 0.8, depth: 120 });
+      const m = this.textures.exists("c6_missile") ? this.add.image(x0, y0, "c6_missile").setScale(1.3).setDepth(130) : this.add.rectangle(x0, y0, 30, 8, 0x9ca3af).setDepth(130);
+      // up, and over to the west: Krelworld
+      const tx = -150 - Math.random() * 200;
+      const ty = -100 + Math.random() * 120;
+      const path = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(x0, y0), new Phaser.Math.Vector2(x0 - 60, -260), new Phaser.Math.Vector2(tx, ty));
+      const o = { t: 0 };
+      this.tweens.add({ targets: o, t: 1, duration: 1500 + Math.random() * 500, ease: "Sine.in", onUpdate: () => {
+        const p = path.getPoint(o.t);
+        const ang = Phaser.Math.RadToDeg(Math.atan2(p.y - m.y, p.x - m.x));
+        m.setPosition(p.x, p.y);
+        m.setAngle(ang);
+        if (Math.random() < 0.6) {
+          const puff = this.add.circle(p.x, p.y, 4 + Math.random() * 4, 0xd6d3d1, 0.7).setDepth(125);
+          this.tweens.add({ targets: puff, scale: 3, alpha: 0, duration: 900, onComplete: () => puff.destroy() });
+        }
+      }, onComplete: () => m.destroy() });
+      this.cameras.main.shake(100, 0.006);
+    } });
+    await this.wait(6600);
+    launch.remove();
+    rain2.remove();
+    this.dropCaption();
+    await this.talk([dir("Somewhere over the Kreddle Bridge, a flurry of ballistic missiles is heading for Krelworld. In the Town Hall, the music is still going.")]);
+  }
+
+  // ---------------------------------------------------------------- townhall_party: WE DID IT
+
+  private async townhallParty() {
+    await ensureCh6Art(this);
+    G.rt.timerEnd = 0;
+    G.emit("timer", null);
+    const bg = backdrop(this, "bg_townhall", { dim: 0.45, depth: -10 }) ?? this.sky(0x1a0f1f, 0x3a1a3a);
+    // disco: sweeping coloured lights
+    const lights = [0xff4fd8, 0x22d3ee, 0xfacc15, 0x7cff3a, 0xa855f7].map((c, i) => {
+      const b = this.add.triangle(480, 40, 0, 0, -70, 420, 70, 420, c, 0.14).setOrigin(0, 0).setDepth(-5).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: b, angle: { from: -40, to: 40 }, yoyo: true, repeat: -1, duration: 1300 + i * 270, delay: i * 200, ease: "Sine.inOut" });
+      return b;
+    });
+    const spots = this.time.addEvent({ delay: 200, loop: true, callback: () => {
+      const s = this.add.circle(Math.random() * 960, 120 + Math.random() * 220, 6, [0xff4fd8, 0x22d3ee, 0xfacc15][Math.floor(Math.random() * 3)], 0.6).setDepth(-4).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: s, alpha: 0, duration: 600, onComplete: () => s.destroy() });
+    } });
+    const ball = this.prop("c6_discoball", 480, 90, 1.2, 50, 0xe5e7eb, 40, 40);
+    this.tweens.add({ targets: ball, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 900 });
+    // the stage
+    const stage = this.add.rectangle(480, 250, 360, 16, 0x3f1d4f).setStrokeStyle(2, 0xff4fd8).setDepth(10);
+    const { mik, chz } = this.sanmikSprites(420, 540, 210);
+    mik.setScale(2.6).setDepth(20);
+    chz.setScale(2.6).setDepth(20);
+    this.cast.set("SANMIK", mik);
+    this.cast.set("SANCHZ", chz);
+    const d1 = this.add.sprite(300, 222, this.textures.exists("spr_TV_DANCER1") ? "spr_TV_DANCER1" : "spr_FOLK1", 0).setScale(2.4).setDepth(20);
+    const d2 = this.add.sprite(660, 222, this.textures.exists("spr_TV_DANCER2") ? "spr_TV_DANCER2" : "spr_FOLK2", 0).setScale(2.4).setDepth(20);
+    const pole = (x: number) => this.add.rectangle(x, 160, 4, 170, 0xd1d5db).setDepth(19);
+    pole(300);
+    pole(660);
+    const lads = this.partyCast(300);
+    synth.music("sanmik");
+    const s1 = this.perform([mik, chz], "sing", 9);
+    const s2 = this.perform([d1, d2], "dance", 10);
+    await this.talk(TP_OPEN);
+    // everyone dances: the lads have no disco moves on their sheets, so a lot of bouncing and the victory pose
+    const s3 = this.perform(lads, "victory", 8);
+    const groove = lads.map((sp, i) => this.tweens.add({ targets: sp, y: sp.y - 10, x: sp.x + (i % 2 ? 8 : -8), yoyo: true, repeat: -1, duration: 260 + (i % 3) * 40, ease: "Sine.inOut" }));
+    const yee = this.time.addEvent({ delay: 420, loop: true, callback: () => {
+      const sp = lads[Math.floor(Math.random() * lads.length)];
+      this.bubble(sp, ["YEEE YEE!", "WE DID IT!", "YEEE YEE!!", "WOOOO!", "WE DID IT!!"][Math.floor(Math.random() * 5)], ["#ff4fd8", "#22d3ee", "#facc15"][Math.floor(Math.random() * 3)], "#12001f", 12);
+    } });
+    for (let i = 0; i < 3; i++) vfx(this, "vfx_confetti", 200 + i * 280, 100, { scale: 2.2, depth: 600, delay: i * 300 });
+    this.caption("YEEE YEE!!", "#ff4fd8", 40);
+    await this.wait(2600);
+    this.caption("WE DID IT!!", "#22d3ee", 40);
+    await this.wait(1600);
+    this.dropCaption();
+    // (hopping during lines fights the groove: pause the groove while they talk)
+    groove.forEach((t) => t.pause());
+    await this.talk(TP_DANCE);
+    groove.forEach((t) => t.resume());
+    await this.wait(1800);
+    // the whistle
+    yee.remove();
+    synth.stopMusic();
+    groove.forEach((t) => t.remove());
+    s1();
+    s2();
+    s3();
+    synth.play("whistle");
+    lads.forEach((sp) => this.face(sp, "north"));
+    await this.talk(TP_DOOM);
+    const m = this.textures.exists("c6_missile") ? this.add.image(480, -80, "c6_missile").setScale(2).setAngle(90).setDepth(700) : this.add.rectangle(480, -80, 10, 40, 0x9ca3af).setDepth(700);
+    synth.play("whistle");
+    await this.tween({ targets: m, y: 140, duration: 700, ease: "Quad.in" });
+    m.destroy();
+    // BANG
+    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff, 1).setDepth(995);
+    synth.play("boom");
+    synth.play("explode");
+    this.cameras.main.shake(3500, 0.05);
+    this.tween({ targets: white, alpha: 0, duration: 900 });
+    spots.remove();
+    lights.forEach((l) => l.destroy());
+    this.boomAt(480, 140, 2.6, 700);
+    this.boomAt(300, 100, 1.8, 700);
+    this.boomAt(680, 110, 1.8, 700);
+    // cracks across the ceiling, and it all comes down
+    const cracks = this.add.graphics().setDepth(5);
+    cracks.lineStyle(3, 0x111111, 1);
+    for (let i = 0; i < 9; i++) {
+      let x = 60 + i * 105;
+      let y = 0;
+      cracks.beginPath();
+      cracks.moveTo(x, y);
+      for (let k = 0; k < 5; k++) {
+        x += (Math.random() - 0.5) * 50;
+        y += 20 + Math.random() * 25;
+        cracks.lineTo(x, y);
+      }
+      cracks.strokePath();
+    }
+    if (bg instanceof Phaser.GameObjects.Image) bg.setTint(0x9a8a7a);
+    this.tween({ targets: ball, y: 340, angle: 200, duration: 700, ease: "Quad.in" }).then(() => {
+      synth.play("smash");
+      vfx(this, "vfx_sparks", ball.x, 330, { scale: 2, depth: 600 });
+      ball.destroy();
+    });
+    this.tween({ targets: stage, angle: 8, y: 270, duration: 500 });
+    const screams = ["AAAAAAH", "NOOOO", "MY LEGS", "THEY HAD THE BALLS", "MOLLOR!!", "I FORESAW TH—", "TURN THE POWER OFF", "YEEE—"];
+    const everyone = [...lads, mik, chz, d1, d2];
+    everyone.forEach((sp, i) => {
+      this.time.delayedCall(i * 60, () => this.bubble(sp, screams[i % screams.length], "#fecaca", "#7f1d1d", 12));
+      sp.setData("busy", true);
+      this.tweens.add({ targets: sp, x: sp.x + (Math.random() - 0.5) * 80, duration: 500 });
+    });
+    synth.play("gasp");
+    this.time.delayedCall(300, () => synth.play("hurt_1"));
+    this.time.delayedCall(700, () => synth.play("hurt_2"));
+    // rubble rain
+    const falling = this.time.addEvent({ delay: 90, repeat: 45, callback: () => {
+      const x = 40 + Math.random() * 880;
+      const big = Math.random() < 0.35;
+      const key = big ? "c6_ceiling" : "p_rubble";
+      const r = this.textures.exists(key) ? this.add.image(x, -60, key).setScale(big ? 1.6 + Math.random() : 0.6 + Math.random() * 0.6).setDepth(500) : this.add.rectangle(x, -60, 30 + Math.random() * 40, 16 + Math.random() * 20, 0x78716c).setStrokeStyle(2, 0x292524).setDepth(500);
+      const ty = 300 + Math.random() * 60;
+      this.tweens.add({ targets: r, y: ty, angle: (Math.random() - 0.5) * 120, duration: 500 + Math.random() * 300, ease: "Quad.in", onComplete: () => {
+        vfx(this, "vfx_dust", r.x, ty, { scale: 1.4, depth: 501 });
+        if (Math.random() < 0.3) synth.play("smash");
+        r.setDepth(100 + ty + 40);
+      } });
+    } });
+    // everyone goes down under it
+    everyone.forEach((sp, i) => this.keel(sp, 500 + i * 160));
+    for (let i = 0; i < 4; i++) this.time.delayedCall(800 + i * 500, () => this.fireBlob(150 + i * 220, 320, 40, 450));
+    await this.wait(2200);
+    synth.play("boom");
+    this.cameras.main.shake(1500, 0.03);
+    for (let i = 0; i < 6; i++) vfx(this, "vfx_blastsmoke", 80 + i * 160, 300, { scale: 2, depth: 560, delay: i * 120 });
+    await this.wait(2200);
+    falling.remove();
+    // fade to black
+    const black = this.add.rectangle(480, 270, 960, 540, 0x000000, 0).setDepth(980);
+    await this.tween({ targets: black, alpha: 1, duration: 2200 });
+    synth.weatherSound(null);
+    await this.wait(1200);
+    await this.talk(TP_END);
+    await this.wait(800);
+  }
 }

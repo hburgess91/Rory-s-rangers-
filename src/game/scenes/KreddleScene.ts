@@ -14,6 +14,7 @@ import { INSULT, KRUNCHERS, KRUNCHER_BOAST, LOCAL_CHAT, PRIZE, PRIZES, SHOVES, W
 import { addKrokens, awardPrize, kd, krokenPrice, krokens, prizeOpen, rollPrize } from "../systems/kreddle";
 import type { Line } from "../../data/types";
 import { maxHp } from "../systems/stats";
+import { KreddleRaid, RAID_ART } from "./kreddle/Raid";
 
 /**
  * KREDDLE: the casino/arcade universe over the bridge. Always night. Always neon.
@@ -66,14 +67,28 @@ export class KreddleScene extends Phaser.Scene {
   /** When the last machine was closed (so the ESC that closed it doesn't also walk you out). */
   private closedAt = 0;
   private wantPrizes = false;
+  /** Chapter 6: the raid (entered with `{ raid: true }`) replaces everything else in the scene. */
+  private raid: KreddleRaid | null = null;
 
   constructor() {
     super("Kreddle");
   }
 
-  create() {
+  preload() {
+    // the raid's art, if this build's manifest doesn't list it yet
+    if (!(this.sys.settings.data as { raid?: boolean } | undefined)?.raid) return;
+    for (const k of RAID_ART) if (!this.textures.exists(k)) this.load.image(k, `art/props/${k}.png`);
+  }
+
+  create(data?: { raid?: boolean }) {
     const s = G.s;
     this.busy = false;
+    this.raid = null;
+    if (data?.raid) {
+      this.raid = new KreddleRaid(this);
+      this.raid.create();
+      return;
+    }
     synth.ambience("casino");
     this.npcs = [];
     this.spots = [];
@@ -298,6 +313,10 @@ export class KreddleScene extends Phaser.Scene {
   // ------------------------------------------------------------------ the loop
 
   update(time: number, delta: number) {
+    if (this.raid) {
+      this.raid.update(time, delta);
+      return;
+    }
     const s = G.s;
     const dt = Math.min(delta, 50);
     this.coinText.setText(`💰 ${s.coins} Krezzcoin   🎟 ${krokens(s)} Krokens`);

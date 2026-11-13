@@ -94,6 +94,20 @@ export const RM_REVENGE: Line[] = [
   say("CRONGUS", "Yeah! Revenge!! …On Kreddle! For the tower!"),
 ];
 
+/** Kreblis has been saying "we should just invade Kreddle" in every briefing since the first one. */
+export const RM_KREBLIS: Line[] = [
+  say("SCROMBUS", "So it's agreed. We invade Kreddle."),
+  say("KREBLIS", "…"),
+  say("KREBLIS", "FINALLY!!!!"),
+  say("KREBLIS", "I'VE BEEN SAYING THIS SINCE THE VERY FIRST MEETING!!"),
+  say("KREBLIS", "Breaking news… WE'RE INVADING KREDDLE 👍👍👍👍"),
+  dir("Kreblis is crying. Actual tears. He's hugging the radiator."),
+  say("KREZMAR", "You said it every single meeting. We told you to shut the fuck up about it every single meeting."),
+  say("MIKEY", "…Alright. Alright. Kreblis was right."),
+  say("KREBLIS", "Can I get that in the minutes 👍"),
+  say("SCROMBUS", "Absolutely not."),
+];
+
 export const RM_ACTUALLY: Line[] = [
   dir("A small, quiet voice from the back of the hall."),
   say("KREBON", "Um. Sorry. Just to say. It wasn't actually Kreddle who crashed into the Krel Tower.", { cond: { notPlayer: "KREBON" } }),
@@ -212,6 +226,8 @@ export const RM_HANDS: Line[] = [
 export const RM_END: Line[] = [
   say("SCROMBUS", "Krelworld Krew unite!"),
   say("EVERYONE", "KRELWORLD KREW UNITE!!!"),
+  say("KREBLIS", "WE'RE INVADING KREDDLE!!! 👍👍👍👍👍 I SAID IT!!! I SAID IT AT THE FIRST MEETING!!!"),
+  say("KREZMAR", "Yes, Kreblis. Shut the fuck up about it."),
   dir("They march out of the Town Hall into the rain. Destination: Kreddle. Lead the way."),
 ];
 
