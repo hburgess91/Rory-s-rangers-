@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { generateAll } from "../gfx/Textures";
 import { CHARACTERS } from "../../data/characters";
-import { textureHeightFactor } from "../../data/heights";
+import { fitTall, heightId, isHeightKey } from "../../data/heights";
 import { installHdScale, type ArtManifest } from "../gfx/HD";
 import { loadVfx, makeVfxAnims, type VfxDef } from "../gfx/Vfx";
 
@@ -32,6 +32,34 @@ export class BootScene extends Phaser.Scene {
     this.load.on("loaderror", () => undefined);
   }
 
+  /** Feet-to-crown height, in texture pixels, of a sheet's idle south frame (0 when it can't be read). */
+  private artHeight(key: string): number {
+    try {
+      const fr = this.textures.get(key).get(0);
+      const c = document.createElement("canvas");
+      c.width = fr.cutWidth;
+      c.height = fr.cutHeight;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return 0;
+      ctx.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fr.cutWidth, fr.cutHeight);
+      const a = ctx.getImageData(0, 0, c.width, c.height).data;
+      let top = -1;
+      let bot = -1;
+      for (let y = 0; y < c.height; y++) {
+        let n = 0;
+        for (let x = 0; x < c.width; x++) if (a[(y * c.width + x) * 4 + 3] > 40) n++;
+        // ignore a stray pixel or two (a hair tip, a sparkle)
+        if (n >= 3) {
+          if (top < 0) top = y;
+          bot = y;
+        }
+      }
+      return top < 0 ? 0 : bot - top + 1;
+    } catch {
+      return 0;
+    }
+  }
+
   create() {
     // Opened straight from a downloaded file: the browser won't let the page load its art and music,
     // so everything falls back to the old placeholder graphics. Say so, rather than just looking broken.
@@ -45,13 +73,22 @@ export class BootScene extends Phaser.Scene {
     }
     installHdScale();
     const m = this.cache.json.get("artmanifest") as ArtManifest | undefined;
+    // Heights (data/heights.ts): each lad's idle frame is measured and scaled to his real height. A SUPER_ form
+    // and the San brothers' own sheets use their base lad's scale, so transforming never changes his size.
+    const talls: Record<string, number> = {};
+    const tallFor = (key: string): number => {
+      if (!isHeightKey(key)) return 1;
+      const base = `spr_${heightId(key.slice(4))}`;
+      const src = this.textures.exists(base) ? base : key;
+      return (talls[src] ??= fitTall(src.slice(4), this.artHeight(src)));
+    };
     for (const [key, c] of Object.entries(m?.chars ?? {})) {
       if (!this.textures.exists(key)) continue;
       const tex = this.textures.get(key);
-      // old character code uses setScale(2) for 16x24 sprites; draw the new sheets at native size there
-      // `tall` is the lad's height (data/heights.ts): folded into hd so every setScale draws him at his height,
-      // and HD.ts moves the origin so he grows from his feet
-      const tall = textureHeightFactor(key);
+      // old character code uses setScale(2) for 16x24 sprites; draw the new sheets at native size there.
+      // `tall` is folded into hd so every setScale draws him at his height, and HD.ts moves the origin so he
+      // grows from his feet
+      const tall = tallFor(key);
       tex.customData = { ...tex.customData, hd: 0.5 * tall, tall, char: c };
     }
     for (const [key, im] of Object.entries({ ...(m?.images ?? {}), ...(m?.sheets ?? {}) })) {

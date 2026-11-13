@@ -155,7 +155,7 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     color: 0x9b59ff,
     portrait: "pt_krezwonk",
     playable: true,
-    look: { skin: SKIN, hair: 0x1a1a1a, hairStyle: "beanie", beard: 0xb07a4a, glasses: "none", top: 0x4b4f4a, bottom: 0x2f3a4a, shoes: 0x222222, bulk: 1 },
+    look: { skin: SKIN, hair: 0xb8955e, hairStyle: "short", beard: 0xa07a4c, glasses: "none", top: 0xf2f2ee, bottom: 0x3a3d40, shoes: 0xeeeeee, bulk: 1 },
     maxHp: 80,
     speed: 190,
     damage: 12,

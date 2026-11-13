@@ -59,6 +59,26 @@ export function heightFactor(id: string): number {
   return Math.round(raw * HEIGHT_SNAP) / HEIGHT_SNAP;
 }
 
+/** How many pixels tall a 5'10" lad stands in his 64px frame (feet to crown, idle facing south). */
+export const REF_PX = 60;
+
+/**
+ * The scale that makes a lad's art stand at his height. The sheets were drawn by different hands at slightly
+ * different sizes (and some have big caricature heads), so the figure's own pixel height `artPx` (feet to crown
+ * in the idle south frame) is measured and scaled to REF_PX x his height factor, rounded to whole pixels.
+ * Clamped so a stray pixel in the art can't make anyone a giant.
+ */
+export function fitTall(id: string, artPx: number): number {
+  const target = Math.round(REF_PX * heightFactor(id));
+  if (!(artPx > 0)) return heightFactor(id);
+  return Math.min(1.25, Math.max(0.85, target / artPx));
+}
+
+/** Is this sprite texture key one of the people in the height table (`spr_<ID>`, `spr_SUPER_<ID>`, variants)? */
+export function isHeightKey(key: string): boolean {
+  return key.startsWith("spr_") && HEIGHT_INCHES[heightId(key.slice(4))] !== undefined;
+}
+
 /**
  * Height factor for a sprite texture key: `spr_<ID>` and `spr_SUPER_<ID>` sheets of the people above.
  * Everything else (bosses, enemies, townsfolk, TV guests, Drongus's boss forms) is 1.
