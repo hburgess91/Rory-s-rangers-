@@ -23,6 +23,19 @@ const SHOUTS: Record<string, [number, number][]> = {
 /** Recorded music (public/audio). Ids not listed here fall back to the synthesised tracks. */
 export const MUSIC_FILES: Record<string, string> = {
   title: "audio/krel_world.mp3",
+  // Chapter 7 score (ElevenLabs Music)
+  c7_dungeon: "audio/c7_dungeon.mp3",
+  c7_corridor: "audio/c7_corridor.mp3",
+  c7_krex: "audio/c7_krex.mp3",
+  c7_ascent: "audio/c7_ascent.mp3",
+  c7_elon: "audio/c7_elon.mp3",
+  c7_drongus1: "audio/c7_drongus1.mp3",
+  c7_stairs: "audio/c7_stairs.mp3",
+  c7_deranged: "audio/c7_deranged.mp3",
+  c7_roof: "audio/c7_roof.mp3",
+  c7_concept: "audio/c7_concept.mp3",
+  c7_spirit: "audio/c7_spirit.mp3",
+  c7_transform: "audio/c7_transform.mp3",
   hub: "audio/hub.mp3",
   klerble: "audio/klerble.mp3",
   home: "audio/home.mp3",
