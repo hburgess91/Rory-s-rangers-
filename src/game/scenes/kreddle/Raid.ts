@@ -7,6 +7,7 @@ import { synth } from "../../audio/Synth";
 import { FONT } from "../../ui/theme";
 import { TOUCH } from "../../ui/TouchControls";
 import { hasVfx, vfx, type VfxOpts } from "../../gfx/Vfx";
+import * as Juice from "../../gfx/Juice";
 import { animateWalker, playPerf } from "../../gfx/HD";
 import { PLAYABLE_IDS, type Line } from "../../../data/types";
 import { KRUNCHERS } from "../../../content/kreddle";
@@ -213,6 +214,10 @@ export class KreddleRaid {
   private fireBtn: Phaser.GameObjects.Arc | null = null;
   private statics: (Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible & { x: number; displayWidth?: number })[] = [];
   private flameAt = 0;
+  private lastSec = -1;
+  private redVig: Phaser.GameObjects.Image | null = null;
+  private krunchCount = 0;
+  private lastKrunchFx = 0;
 
   constructor(scene: Phaser.Scene) {
     this.sc = scene;
@@ -571,12 +576,92 @@ export class KreddleRaid {
     this.standoffDone = true;
     this.phase = "cutscene";
     this.busy = true;
-    this.bigTitle("THE KREDDLE KRUNCHERS", "#ff4fd8", 48);
-    // the lads bunch up behind you
-    await this.wait(900);
+    const sc = this.sc;
+    const cam = sc.cameras.main;
+    // a held breath: the bars come in, the music drops, the camera swings round to frame them
+    const close = Juice.letterbox(sc, 52, 500, D_HUD + 2);
+    Juice.duckMusic(2600, 900, 0.12);
+    const ks = this.npcs.filter((n) => n.kind === "kruncher" && n.state !== "dead");
+    const kx = ks.length ? ks.reduce((a, n) => a + n.spr.x, 0) / ks.length : this.me.x + 400;
+    cam.stopFollow();
+    // (off the world bounds for a moment, so the street sits above the dialogue box)
+    cam.removeBounds();
+    cam.pan((this.me.x + kx) / 2 + 60, 600, 1100, "Sine.easeInOut");
+    cam.zoomTo(1.12, 1100, "Sine.easeInOut");
+    await this.wait(700);
+    // they step forward one at a time, each one landing with a thud
+    for (const [i, n] of ks.entries()) {
+      sc.time.delayedCall(i * 140, () => {
+        if (!n.spr.active) return;
+        Juice.squash(sc, n.spr, 0.22, 380);
+        n.spr.setTintFill(0xffffff);
+        sc.time.delayedCall(70, () => n.spr.active && n.spr.setTint(n.baseTint ?? 0xffffff));
+        synth.play("punch");
+      });
+    }
+    await this.wait(ks.length * 140 + 300);
+    Juice.heartbeat(0.8);
+    await Juice.bossCard(sc, "THE KREDDLE KRUNCHERS", "Kreddle's Evil Doppelgangers · Pissed In The Great Tap · Still Got Mikey's Bongo", "#ff4fd8", D_HUD + 3);
     await this.talk(KRUNCHER_STANDOFF);
+    close(400);
+    cam.zoomTo(1, 500, "Sine.easeInOut");
+    cam.pan(this.me.x, Math.min(this.me.y, H - 270), 500, "Sine.easeInOut");
+    sc.time.delayedCall(520, () => {
+      cam.setBounds(0, 0, RW, H);
+      cam.startFollow(this.me, true, 0.1, 0.1);
+    });
     this.phase = "krunchers";
     this.busy = false;
+  }
+
+  /** A Kruncher goes up: freeze, white, slow-mo, their name stamped on the screen. The last one: much bigger. */
+  private kruncherDeath(n: RNpc) {
+    const sc = this.sc;
+    const spr = n.spr;
+    this.krunchCount++;
+    const left = this.npcs.filter((m) => m.kind === "kruncher" && m.state !== "dead").length;
+    const last = left === 0;
+    const x = spr.x;
+    const y = spr.y;
+    spr.setTintFill(0xffffff);
+    Juice.shockRing(sc, x, y - 10, { color: GREEN, to: last ? 520 : 260, rings: last ? 4 : 2, depth: D_LIGHT + 20, flat: 0.6 });
+    vfx(sc, "vfx_bigboom", x, y - 20, { scale: last ? 2.4 : 1.4, depth: D_LIGHT + 30, tint: GREEN });
+    Juice.debris(sc, x, y - 10, last ? 20 : 10, { colors: [0x1c1917, 0x44403c, 0xb6ff5a, 0xff8a3a], depth: D_LIGHT + 25, floor: y + 30 });
+    synth.play(Math.random() < 0.5 ? "explode_1" : "explode_2");
+    Juice.subDrop(last ? 1 : 0.6, last ? 1.8 : 0.8);
+    const name = n.name ?? "KRUNCHER";
+    if (last) {
+      synth.play("crit");
+      Juice.duckMusic(1600, 900, 0.1);
+      Juice.flash(sc, 0xffffff, 500, 0.9, D_HUD + 1);
+      const close = Juice.letterbox(sc, 48, 250, D_HUD + 2);
+      const cam = sc.cameras.main;
+      cam.stopFollow();
+      cam.pan(x, y - 30, 300, "Quad.easeOut");
+      cam.zoomTo(1.4, 300, "Quad.easeOut");
+      Juice.slowMo(sc, 0.15, 1300);
+      Juice.shake(sc, 900, 0.02);
+      Juice.realWait(1300).then(() => {
+        if (!sc.sys.settings.active) return;
+        Juice.slamText(sc, "KRUNCHERS: KRUNCHED", "#b6ff5a", 60, 220, 1300, D_HUD + 4);
+        Juice.earRing(2200, 0.06);
+        cam.zoomTo(1, 700, "Cubic.easeInOut");
+        cam.pan(this.me.x, this.me.y, 700, "Cubic.easeInOut");
+        sc.time.delayedCall(720, () => cam.startFollow(this.me, true, 0.1, 0.1));
+        close(500);
+      });
+    } else {
+      const now = Date.now();
+      if (now - this.lastKrunchFx > 280) {
+        this.lastKrunchFx = now;
+        Juice.flash(sc, 0xffffff, 160, 0.45, D_HUD + 1);
+        Juice.slowMo(sc, 0.3, 300);
+        Juice.punchZoom(sc, 0.06, 360, 1);
+        Juice.shake(sc, 260, 0.012);
+      }
+      // each name gets its own line, so a chain reaction reads as a roll call
+      Juice.slamText(sc, `${name}: ASHES`, "#ff4fd8", 28, 205 + ((this.krunchCount - 1) % 5) * 32, 900, D_HUD + 4);
+    }
   }
 
   private async krunchersDead() {
@@ -623,13 +708,35 @@ export class KreddleRaid {
       const ev = sc.time.addEvent({ delay: 16, loop: true, callback: () => animateWalker(planter, px - planter.x, py - planter.y, true, sc.time.now - t0) });
       sc.tweens.add({ targets: planter, x: px - 40, y: py, duration: 1300, onComplete: () => { ev.remove(); r(); } });
     });
+    const close = Juice.letterbox(sc, 50, 500, D_HUD + 2);
+    cam.zoomTo(1.15, 1400, "Sine.easeInOut");
     await this.talk(NUKE_PLANT.slice(0, 2));
     synth.play("lob");
     this.nuke = sc.textures.exists("kd_nuke") ? sc.add.image(px, py + 20, "kd_nuke").setOrigin(0.5, 1).setScale(1.5).setDepth(py + 20) : null;
     if (!this.nuke) this.nuke = sc.add.image(px, py + 20, "raid_dot").setScale(6).setTint(0x111111).setDepth(py + 20);
     const blink = sc.add.circle(px + 18, py, 5, 0xff0000).setDepth(D_LIGHT + 4).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: blink, alpha: 0.1, yoyo: true, repeat: -1, duration: 250 });
+    Juice.squash(sc, this.nuke, 0.3, 500);
+    synth.play("smash");
+    Juice.shake(sc, 200, 0.008);
+    // the timer arms: a beep, the light, a heartbeat, the music drops out
+    Juice.duckMusic(2400, 300, 0.05);
+    sc.time.delayedCall(300, () => {
+      synth.play("telegraph");
+      Juice.heartbeat();
+      cam.zoomTo(1.45, 900, "Cubic.easeOut");
+      cam.pan(px, py - 10, 900, "Cubic.easeOut");
+    });
+    sc.time.delayedCall(1300, () => Juice.heartbeat());
+    const glow = sc.add.circle(px + 18, py, 28, 0xff0000, 0.35).setDepth(D_LIGHT + 3).setBlendMode(Phaser.BlendModes.ADD);
+    sc.tweens.add({ targets: glow, scale: 2.2, alpha: 0, repeat: -1, duration: 500 });
+    await this.wait(1900);
     await this.talk(NUKE_PLANT.slice(2));
+    close(300);
+    Juice.riser(600, 0.4);
+    cam.zoomTo(1, 500, "Cubic.easeIn");
+    Juice.flash(sc, 0xff0000, 450, 0.55, D_HUD + 1);
+    Juice.shake(sc, 500, 0.02);
     cam.pan(this.me.x, this.me.y, 500, "Sine.easeInOut");
     sc.time.delayedCall(520, () => cam.startFollow(this.me, true, 0.1, 0.1));
     s.flags.nuke_planted = true;
@@ -665,6 +772,27 @@ export class KreddleRaid {
     }
   }
 
+  /** Every second of the countdown: the edges of the screen pulse red, and under a minute your heart's going. */
+  private escapePulse(sec: number) {
+    const sc = this.sc;
+    if (!this.redVig || !this.redVig.active) this.redVig = Juice.vignette(sc, 0xb91c1c, 0, D_HUD - 2);
+    const urgent = sec <= 60;
+    const peak = urgent ? 0.75 : 0.4;
+    sc.tweens.killTweensOf(this.redVig);
+    this.redVig.setAlpha(peak);
+    sc.tweens.add({ targets: this.redVig, alpha: urgent ? 0.25 : 0.08, duration: 700, ease: "Quad.out" });
+    if (urgent || sec % 2 === 0) Juice.heartbeat(urgent ? 0.9 : 0.5);
+    if (sec <= 10 && sec > 0) {
+      Juice.slamText(sc, String(sec), "#ff3b3b", 90, 270, 450, D_HUD + 4);
+      synth.play("telegraph");
+    }
+    // the palace end of the Strip keeps going up behind you
+    if (sec % 3 === 0) {
+      const x = this.me.x + 300 + Math.random() * 500;
+      this.explode(x, TOP + Math.random() * 200, 1 + Math.random() * 0.6);
+    }
+  }
+
   private leave() {
     if (this.phase === "leaving") return;
     this.phase = "leaving";
@@ -691,14 +819,19 @@ export class KreddleRaid {
 
   update(time: number, delta: number) {
     const s = G.s;
-    const dt = Math.min(delta, 50);
-    s.playtimeMs += dt;
+    s.playtimeMs += Math.min(delta, 50);
+    // slow-mo (a Kruncher going up) slows the whole Strip down, not just the tweens
+    const dt = Math.min(delta, 50) * this.sc.tweens.timeScale;
     // the nuke timer, every frame
     if (s.flags.nuke_planted) {
       if (!G.rt.timerEnd) G.rt.timerEnd = Date.now() + 240000;
       const left = Math.max(0, (G.rt.timerEnd - Date.now()) / 1000);
       G.emit("timer", left);
       const sec = Math.ceil(left);
+      if (sec !== this.lastSec && this.phase === "escape") {
+        this.lastSec = sec;
+        this.escapePulse(sec);
+      }
       this.countdown.setText(`☢ DETONATION IN ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`).setColor(sec % 2 ? "#ff3b3b" : "#ffffff");
       if (left <= 0 && this.phase === "escape") this.leave();
     }
@@ -1142,6 +1275,7 @@ export class KreddleRaid {
     if (n.state === "dead") return;
     n.state = "dead";
     this.torched++;
+    if (n.kind === "kruncher") this.kruncherDeath(n);
     const sc = this.sc;
     const spr = n.spr;
     const fire = n.fire;

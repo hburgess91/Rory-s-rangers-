@@ -104,6 +104,12 @@ export interface Line {
   /** Messenger-notification style instead of a dialogue box. */
   notify?: boolean;
   emo?: string;
+  /**
+   * How the recorded voice delivers the line: an ElevenLabs v3 audio tag such as "angry", "whispers", "laughs"
+   * (comma-separated for several: "sad, crying"). Never shown on screen. Without one, the voice generator
+   * picks a delivery from the text (see docs/VOICE_MOODS.md). Inline tags like "[sighs]" in `t` also work.
+   */
+  mood?: string;
   /** Play this KrelTV episode on the telly right here, then carry on. */
   tv?: string;
 }

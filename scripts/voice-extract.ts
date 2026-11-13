@@ -1,23 +1,28 @@
 // Collects every spoken line in the game (dialogue, canon chat quotes, TV) for pre-recorded voices.
-// Run: npx vite-node scripts/voice-extract.ts > voice-lines.json
-import { writeFileSync } from "node:fs";
+// Run: npx vite-node scripts/voice-extract.ts voice-lines.json
+// Each entry: { k: key, s: speaker, t: spoken text (delivery tags kept), m: explicit mood ("" if none),
+//               raw: the line as written (for auto-mood), file }. Lines written straight into scene code as
+// say("SPEAKER", "literal") are picked up too (template strings with ${} can't be pre-recorded).
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { speakable, voiceKey } from "../src/game/audio/voiceKey";
 import { CHARACTERS } from "../src/data/characters";
 
 const PLAYABLE = Object.values(CHARACTERS).filter((c: any) => c.playable).map((c: any) => c.id as string);
 
 const mods = import.meta.glob("../src/content/**/*.ts", { eager: true }) as Record<string, Record<string, unknown>>;
-const out = new Map<string, { s: string; t: string; file: string }>();
+const out = new Map<string, { s: string; t: string; m: string; raw: string; file: string }>();
 let CANON: Record<string, { speaker: string; text: string }> = {};
 for (const [f, m] of Object.entries(mods)) if ((m as any).CANON) CANON = (m as any).CANON;
 
 const SILENT = new Set(["NARRATOR", "ARCHIVE", "TAP"]);
-function add(s: unknown, t: unknown, file: string) {
+function add(s: unknown, t: unknown, file: string, mood?: unknown) {
   if (typeof s !== "string" || typeof t !== "string" || !t.trim() || SILENT.has(s.toUpperCase())) return;
-  const sp = speakable(t);
-  if (!sp) return;
+  if (!speakable(t)) return;
   const k = voiceKey(s, t);
-  if (!out.has(k)) out.set(k, { s, t: sp, file });
+  const m = typeof mood === "string" ? mood.trim() : "";
+  const prev = out.get(k);
+  if (!prev || (m && !prev.m)) out.set(k, { s, t: speakable(t, true), m, raw: t, file });
 }
 const seen = new WeakSet<object>();
 function walk(o: unknown, file: string) {
@@ -28,17 +33,43 @@ function walk(o: unknown, file: string) {
   if (typeof r.s === "string" && !r.dir) {
     let text = typeof r.t === "string" && r.t ? r.t : typeof r.canon === "string" && CANON[r.canon] ? CANON[r.canon].text : "";
     const speakers = r.s === "YOU" ? PLAYABLE : [r.s || (typeof r.canon === "string" ? CANON[r.canon]?.speaker : "")];
-    for (const sp of speakers) if (sp && text) add(sp, text, file);
-    if (r.variants && typeof r.variants === "object") for (const [p, v] of Object.entries(r.variants as Record<string, string>)) add(r.s === "YOU" ? p : r.s, v, file);
+    for (const sp of speakers) if (sp && text) add(sp, text, file, r.mood);
+    if (r.variants && typeof r.variants === "object") for (const [p, v] of Object.entries(r.variants as Record<string, string>)) add(r.s === "YOU" ? p : r.s, v, file, r.mood);
     if (r.role && PLAYABLE.includes(r.s as string)) {
       if (typeof r.proctus === "string") add("PROCTUS", r.proctus, file);
       else if (text) add("PROCTUS", `(reading the wrong cue card) "${text}"... is that right? It says ${(CHARACTERS as any)[r.s as string].name} on the back.`, file);
     }
   }
-  if (r.type === "speaker" && typeof r.character === "string") add(r.character, r.text, file);
+  if (r.type === "speaker" && typeof r.character === "string") add(r.character, r.text, file, r.mood);
   for (const v of Object.values(r)) walk(v, file);
 }
 for (const [f, m] of Object.entries(mods)) walk(m, f.replace("../src/content/", ""));
+
+// Scene code: say("SPEAKER", "text" [, { mood: "..." }]) with literal strings only.
+const DYNAMIC: Record<string, string[]> = { "this.dancerName()": ["DESTINY", "CRYSTAL"] };
+const CALL = /\b(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
+function unquote(lit: string) {
+  const q = lit[0], body = lit.slice(1, -1);
+  return body.replace(/\\(u\{?[0-9a-fA-F]+\}?|.)/g, (_m, e: string) =>
+    e[0] === "u" ? String.fromCodePoint(parseInt(e.replace(/[u{}]/g, ""), 16)) : e === "n" ? "\n" : e === "t" ? "\t" : e === q ? q : e);
+}
+function* files(dir: string): Generator<string> {
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f);
+    if (statSync(p).isDirectory()) yield* files(p);
+    else if (p.endsWith(".ts")) yield p;
+  }
+}
+const gameDir = new URL("../src/game", import.meta.url).pathname;
+for (const p of files(gameDir)) {
+  const src = readFileSync(p, "utf8");
+  for (const m of src.matchAll(CALL)) {
+    const who = m[1].startsWith('"') ? [m[1].slice(1, -1)] : DYNAMIC[m[1]] ?? [];
+    const text = unquote(m[2]);
+    const mood = m[3]?.match(/mood:\s*["']([^"']+)["']/)?.[1];
+    for (const sp of who.flatMap((w) => (w === "YOU" ? PLAYABLE : [w]))) add(sp, text, "game/" + p.slice(gameDir.length + 1), mood);
+  }
+}
 const arr = [...out.entries()].map(([k, v]) => ({ k, ...v }));
 writeFileSync(process.argv[2] ?? "voice-lines.json", JSON.stringify(arr, null, 0));
 const by: Record<string, number> = {};

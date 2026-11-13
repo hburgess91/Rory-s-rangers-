@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { charMeta } from "../gfx/HD";
 import { voice } from "../audio/Voice";
+import { displayText } from "../audio/voiceKey";
 import { ALL_EPISODES, CHANNELS, setKeyFor } from "../../content/television/channels";
 import { beatDuration, type TVBeat, type TVEpisode } from "../systems/tv";
 import { G } from "../G";
@@ -368,7 +369,7 @@ export class TVScene extends Phaser.Scene {
     if (b.type !== "speaker" && b.type !== "direction") this.subs.setText("");
     switch (b.type) {
       case "titleCard":
-        this.card.setText(b.text);
+        this.card.setText(displayText(b.text));
         this.subs.setText("");
         break;
       case "shot":
@@ -378,7 +379,7 @@ export class TVScene extends Phaser.Scene {
       case "speaker": {
         this.card.setText("");
         const a = this.ensureActor(b.character);
-        this.subs.setText(this.showSubs ? `${b.character}: ${b.text}` : "").setVisible(this.showSubs);
+        this.subs.setText(this.showSubs ? `${b.character}: ${displayText(b.text)}` : "").setVisible(this.showSubs);
         voice.say(b.character, b.text);
         if (a) {
           this.mouthTimer = this.time.addEvent({ delay: 130, loop: true, callback: () => a.spr.setFrame(String(a.spr.frame.name) === "3" ? 0 : 3) });

@@ -16,6 +16,7 @@ import { addWrist, wristLook } from "../gfx/Wrist";
 import * as KR from "../../content/krunchers";
 import { GUNS } from "../combat/Guns";
 import { ensureCh6Art } from "../gfx/ch6Art";
+import * as Juice from "../gfx/Juice";
 import {
   KP_KLERBLE, KP_LAST, KP_PARTY, KP_PROTOCOL, KP_RUINS, KT_AFTER, KT_ARRIVE, KT_DEPART, KT_DRIVER, KT_KRUNCHERS, KT_OPEN, PE_RAIN,
   RM_ACTUALLY, RM_ARMS, RM_CAUTION, RM_CHEM, RM_END, RM_GOT_GUN, RM_HANDS, RM_JENKO, RM_KREBLIS, RM_LUKE, RM_NUKE, RM_OPEN, RM_PISS,
@@ -39,6 +40,20 @@ interface BigTower {
   h: number;
   w: number;
   at: (f: number) => number;
+}
+
+/** Everyone on stage as black silhouettes for one frozen frame (the instant of a blast), then back to normal. */
+function everyoneSil(sc: Phaser.Scene, sps: Phaser.GameObjects.Sprite[]) {
+  const was = sps.map((sp) => ({ sp, d: sp.depth, tint: sp.isTinted ? sp.tintTopLeft : -1 }));
+  for (const sp of sps) if (sp.active) sp.setTintFill(0x000000).setDepth(Math.max(sp.depth, 996));
+  window.setTimeout(() => {
+    for (const { sp, d, tint } of was) {
+      if (!sp.active || !sc.sys.settings.active) continue;
+      sp.clearTint();
+      if (tint >= 0) sp.setTint(tint);
+      sp.setDepth(d);
+    }
+  }, 170);
 }
 
 export class VignetteScene extends Phaser.Scene {
@@ -3944,6 +3959,10 @@ export class VignetteScene extends Phaser.Scene {
     const hasCrawl = this.textures.exists("c6_klerble_crawl");
     const kl = hasCrawl ? this.add.image(-60, 352, "c6_klerble_crawl").setOrigin(0.5, 1).setScale(2.6).setDepth(300) : this.add.sprite(-60, 340, "spr_TV_PRESIDENT_KLERBLE", 4).setScale(2.4).setAngle(80).setDepth(300);
     this.cast.set("PRESIDENT KLERBLE", kl as Phaser.GameObjects.Sprite);
+    const kpBars = Juice.letterbox(this, 50, 600, 985);
+    Juice.vignette(this, 0x000000, 0.65, 984);
+    // a slow, creeping push-in for the whole crawl
+    this.cameras.main.zoomTo(1.12, 9000, "Sine.easeInOut");
     // the trail
     const trail = this.add.graphics().setDepth(290);
     const smear = () => {
@@ -3978,16 +3997,35 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: scr, scale: 1, alpha: 1, duration: 500, ease: "Back.out" });
     synth.play("ding");
     await this.wait(900);
-    // the last breath
-    const beat = this.time.addEvent({ delay: 900, loop: true, callback: () => synth.play("hit") });
+    // the last breath: the screen pulls away and we're in close on him, his heart giving out
+    this.tween({ targets: scr, alpha: 0.35, scale: 0.8, y: 120, duration: 500 });
+    const cam = this.cameras.main;
+    cam.pan(kl.x - 20, kl.y - 70, 900, "Sine.easeInOut");
+    cam.zoomTo(1.7, 900, "Sine.easeInOut");
+    let beatN = 0;
+    const beat = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      Juice.heartbeat(Math.max(0.3, 0.9 - beatN * 0.12));
+      beatN++;
+    } });
+    Juice.heartbeat();
     await this.talk(KP_LAST);
     beat.remove();
+    // back out to the screen: one keystroke
+    cam.pan(480, 270, 400, "Cubic.easeOut");
+    cam.zoomTo(1, 400, "Cubic.easeOut");
+    await this.tween({ targets: scr, alpha: 1, scale: 1, y: 175, duration: 400, ease: "Cubic.out" });
     prompt.setText("> Y").setColor("#ef4444");
     synth.play("select");
+    Juice.punchZoom(this, 0.08, 400, 1);
     await this.wait(400);
     scr.add(this.add.text(0, 120, "KRUNCH PROTOCOL: ARMED", { fontFamily: "Courier New, monospace", fontSize: "14px", color: "#ef4444" }).setOrigin(0.5));
     await this.tween({ targets: kl, angle: 0, y: 352, duration: 600, ease: "Bounce.out" });
-    await this.wait(1200);
+    // one last, very faint heartbeat. Then nothing.
+    this.time.delayedCall(500, () => Juice.heartbeat(0.25));
+    await this.wait(1600);
+    kpBars(300);
+    Juice.riser(900, 0.35);
+    await this.wait(900);
 
     // (c) white
     const white = this.add.rectangle(480, 270, 960, 540, 0xffffff).setAlpha(0).setDepth(990);
@@ -4003,11 +4041,26 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: flashW, alpha: 0, duration: 700 });
     await this.wait(1500);
     // silence. then:
+    const nukeBars = Juice.letterbox(this, 44, 300, 985);
     this.cameras.main.flash(900, 255, 255, 255);
     synth.play("boom");
+    Juice.subDrop(1, 3.2);
     this.time.delayedCall(80, () => synth.play("explode"));
     this.time.delayedCall(300, () => synth.play("roar"));
+    this.time.delayedCall(450, () => synth.play("explode_2"));
+    this.time.delayedCall(900, () => synth.play("thunder"));
     this.cameras.main.shake(5500, 0.04);
+    // the punch: in hard on the flash, then a long slow pull back to take in the size of it
+    this.cameras.main.setZoom(1.35);
+    this.cameras.main.zoomTo(1, 4200, "Cubic.easeOut");
+    // chunks of the palace thrown at the camera
+    for (let i = 0; i < 16; i++) {
+      this.time.delayedCall(150 + i * 70, () => {
+        const a = Math.random() * Math.PI * 2;
+        const ch = this.add.rectangle(480 + Math.cos(a) * 30, 300 + Math.sin(a) * 20, 8 + Math.random() * 10, 6 + Math.random() * 8, [0x292524, 0x44403c, 0xf97316, 0x1c1917][i % 4]).setDepth(450);
+        this.tweens.add({ targets: ch, x: 480 + Math.cos(a) * (500 + Math.random() * 300), y: 300 + Math.sin(a) * (320 + Math.random() * 200), scale: 4 + Math.random() * 4, angle: 720, alpha: { from: 1, to: 0.9 }, duration: 700 + Math.random() * 400, ease: "Quad.in", onComplete: () => ch.destroy() });
+      });
+    }
     // a fireball swallows the palace, then the cloud climbs out of it
     const ball = this.add.circle(480, 300, 20, 0xffe08a, 1).setDepth(395).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: ball, radius: 330, alpha: 0.15, duration: 2600, ease: "Cubic.out" });
@@ -4033,9 +4086,14 @@ export class VignetteScene extends Phaser.Scene {
     this.tweens.add({ targets: heat, alpha: 0.55, duration: 900 });
     await this.wait(1800);
     // it takes out all of Kreddle: everything goes white for a long, long moment
-    const wall = this.add.rectangle(480, 270, 960, 540, 0xfff7ed).setAlpha(0).setDepth(990);
+    const wall = this.add.rectangle(480, 270, 1400, 900, 0xfff7ed).setAlpha(0).setDepth(990);
     await this.tween({ targets: wall, alpha: 1, duration: 1400 });
     synth.play("boom");
+    Juice.subDrop(0.8, 2.5);
+    // and then your ears ring for a while
+    Juice.earRing(4000, 0.08);
+    nukeBars(10);
+    this.cameras.main.setZoom(1);
     await this.wait(3200);
 
     // (d) the ruins
@@ -4091,7 +4149,14 @@ export class VignetteScene extends Phaser.Scene {
     sights.forEach((s) => s.destroy());
     // launch
     synth.stopMusic();
+    // a beat of quiet, then everything goes at once
+    Juice.riser(1100, 0.4);
+    await this.wait(1100);
     this.caption("THE KRUNCH PROTOCOL", "#ef4444", 36);
+    Juice.subDrop(0.9, 1.4);
+    Juice.flash(this, 0xff3b3b, 400, 0.4, 960);
+    this.cameras.main.setZoom(1.15);
+    this.cameras.main.zoomTo(1, 6000, "Sine.easeOut");
     let fired = 0;
     const launch = this.time.addEvent({ delay: 170, repeat: 34, callback: () => {
       const l = launchers[fired % launchers.length];
@@ -4188,17 +4253,32 @@ export class VignetteScene extends Phaser.Scene {
     s3();
     synth.play("whistle");
     lads.forEach((sp) => this.face(sp, "north"));
+    // the room goes quiet; the camera creeps in on everyone looking up
+    const bars = Juice.letterbox(this, 48, 700, 985);
+    this.cameras.main.zoomTo(1.15, 3000, "Sine.easeInOut");
     await this.talk(TP_DOOM);
     const m = this.textures.exists("c6_missile") ? this.add.image(480, -80, "c6_missile").setScale(2).setAngle(90).setDepth(700) : this.add.rectangle(480, -80, 10, 40, 0x9ca3af).setDepth(700);
     synth.play("whistle");
+    Juice.riser(700, 0.45);
     await this.tween({ targets: m, y: 140, duration: 700, ease: "Quad.in" });
     m.destroy();
-    // BANG
-    const white = this.add.rectangle(480, 270, 960, 540, 0xffffff, 1).setDepth(995);
+    // BANG: a frozen white frame (everyone mid-scream as silhouettes), then the world comes back in slow motion
+    const white = this.add.rectangle(480, 270, 1300, 800, 0xffffff, 1).setDepth(995);
     synth.play("boom");
     synth.play("explode");
+    Juice.subDrop(1, 3);
+    this.time.delayedCall(120, () => synth.play("explode_2"));
+    this.cameras.main.setZoom(1.4);
+    everyoneSil(this, [...lads, mik, chz, d1, d2]);
+    await Juice.realWait(160);
+    white.setAlpha(0.85);
+    Juice.slowMo(this, 0.25, 900);
+    this.cameras.main.zoomTo(1, 1400, "Cubic.easeOut");
     this.cameras.main.shake(3500, 0.05);
+    // the floor tips as the building goes
+    this.tweens.add({ targets: this.cameras.main, rotation: -0.035, duration: 2600, ease: "Quad.in" });
     this.tween({ targets: white, alpha: 0, duration: 900 });
+    Juice.earRing(5000, 0.07);
     spots.remove();
     lights.forEach((l) => l.destroy());
     this.boomAt(480, 140, 2.6, 700);
@@ -4259,8 +4339,10 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(2200);
     falling.remove();
     // fade to black
-    const black = this.add.rectangle(480, 270, 960, 540, 0x000000).setAlpha(0).setDepth(980);
+    const black = this.add.rectangle(480, 270, 1400, 900, 0x000000).setAlpha(0).setDepth(980);
     await this.tween({ targets: black, alpha: 1, duration: 2200 });
+    bars(10);
+    this.cameras.main.setRotation(0);
     synth.weatherSound(null);
     await this.wait(1200);
     await this.talk(TP_END);

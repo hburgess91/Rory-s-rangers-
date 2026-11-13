@@ -4,6 +4,7 @@ import { REACTION_EMOJI } from "../../data/types";
 import { G } from "../G";
 import { voice } from "../audio/Voice";
 import { resolveLine, type ResolvedLine } from "../systems/narrative";
+import { displayText } from "../audio/voiceKey";
 import { evalCond } from "../systems/conditions";
 import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
@@ -263,7 +264,7 @@ export class DialogueBox {
     if (key) items.push(this.scene.add.image(x + 38, 172, key).setDisplaySize(36, 36));
     items.push(this.scene.add.text(x + 64, 162, line.speakerName || "Messenger", { fontFamily: FONT, fontSize: "15px", color: "#050505", fontStyle: "bold" }));
     items.push(this.scene.add.text(x + bubbleW - 20, 164, "now", { fontFamily: FONT, fontSize: "12px", color: "#65676b" }).setOrigin(1, 0));
-    const body = this.scene.add.text(x + 32, 208, line.t, { fontFamily: FONT, fontSize: "17px", color: "#ffffff", wordWrap: { width: bubbleW - 64, useAdvancedWrap: true } });
+    const body = this.scene.add.text(x + 32, 208, displayText(line.t), { fontFamily: FONT, fontSize: "17px", color: "#ffffff", wordWrap: { width: bubbleW - 64, useAdvancedWrap: true } });
     items.push(body);
     this.overlay.add(items);
     this.fullText = line.t;
@@ -440,7 +441,7 @@ export class DialogueBox {
       this.nameText.setText("");
       this.titleText.setText("");
       this.bodyText.setPosition(40, 384).setWordWrapWidth(W - 80).setFontStyle("italic").setColor("#d6d8e4");
-      this.typeOut(rl.t);
+      this.typeOut(displayText(rl.t));
       return;
     }
     opts.onSpeaker?.(rl.s, rl);
@@ -457,6 +458,6 @@ export class DialogueBox {
       .setWordWrapWidth(W - tx - 40)
       .setFontStyle("normal")
       .setColor("#ffffff");
-    this.typeOut(rl.t);
+    this.typeOut(displayText(rl.t));
   }
 }

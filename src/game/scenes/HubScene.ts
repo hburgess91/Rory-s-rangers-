@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { hasVfx, vfx } from "../gfx/Vfx";
+import { ensureCh6Art } from "../gfx/ch6Art";
+import * as Juice from "../gfx/Juice";
 import { squeeze } from "../systems/squeeze";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
@@ -3327,34 +3329,95 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setVisible(false);
     synth.stopMusic();
     cam.stopFollow();
+    await ensureCh6Art(this);
     const red = this.add.rectangle(480, 270, 960, 540, 0x7f1d1d, 1).setAlpha(0.25).setScrollFactor(0).setDepth(4950).setBlendMode(Phaser.BlendModes.MULTIPLY);
     void red;
+    const bars = Juice.letterbox(this, 46, 600, 4990);
+    Juice.vignette(this, 0x000000, 0.6, 4960);
     synth.play("alarm");
     await this.talk([dir("Krelford. The sky is full of little lights. They are getting bigger.")]);
     const order = BUILDINGS.filter((b) => b.door).sort((a, b) => a.y - b.y || a.x - b.x);
-    for (const b of order) {
-      cam.pan(b.x, b.y, 450, Phaser.Math.Easing.Sine.InOut);
-      await new Promise((r) => this.time.delayedCall(480, r));
-      // the missile comes in
-      const m = this.add.rectangle(b.x + 220, b.y - 420, 6, 26, 0xe5e7eb).setAngle(-28).setDepth(9000);
-      await new Promise<void>((res) => this.tweens.add({ targets: m, x: b.x, y: b.y - 10, duration: 360, ease: "Quad.in", onComplete: () => res() }));
+    const wait = (ms: number) => new Promise((r) => this.time.delayedCall(ms, r));
+    // a montage that speeds up as it goes: the first few you watch land, then they're coming in faster than you can look
+    for (const [i, b] of order.entries()) {
+      const k = Math.max(0.35, 1 - i * 0.07);
+      cam.pan(b.x, b.y, 450 * k, Phaser.Math.Easing.Sine.InOut);
+      await wait(480 * k);
+      // the lock-on: a red reticle closes on the building, beeping
+      const ret = this.add.container(b.x, b.y).setDepth(9050);
+      ret.add(this.add.circle(0, 0, 60).setStrokeStyle(3, 0xef4444, 0.95));
+      ret.add(this.add.rectangle(0, 0, 150, 2, 0xef4444, 0.8));
+      ret.add(this.add.rectangle(0, 0, 2, 150, 0xef4444, 0.8));
+      ret.setScale(2.4).setAlpha(0);
+      this.tweens.add({ targets: ret, scale: 1, alpha: 1, angle: 90, duration: 300 * k, ease: "Cubic.out" });
+      synth.play("telegraph");
+      // the missile comes in, trailing smoke
+      const sx = b.x + 260;
+      const sy = b.y - 460;
+      const m = this.textures.exists("c6_missile") ? this.add.image(sx, sy, "c6_missile").setScale(1.4).setDepth(9000) : this.add.rectangle(sx, sy, 6, 26, 0xe5e7eb).setDepth(9000);
+      m.setRotation(Math.atan2(b.y - sy, b.x - sx) + (this.textures.exists("c6_missile") ? 0 : Math.PI / 2));
+      synth.play("whistle");
+      await new Promise<void>((res) =>
+        this.tweens.add({
+          targets: m,
+          x: b.x,
+          y: b.y - 10,
+          duration: 420 * k + 120,
+          ease: "Quad.in",
+          onUpdate: () => {
+            const p = this.add.circle(m.x, m.y, 4 + Math.random() * 3, 0xd6d3d1, 0.7).setDepth(8999);
+            this.tweens.add({ targets: p, scale: 3, alpha: 0, duration: 700, onComplete: () => p.destroy() });
+          },
+          onComplete: () => res(),
+        }),
+      );
       m.destroy();
+      ret.destroy();
+      // impact: white flash on the building, a held frame, then it's a burning shell
+      const img = this.bImg[b.id];
       synth.play(Math.random() < 0.5 ? "explode_1" : "explode_2");
-      cam.shake(350, 0.012);
+      synth.play("boom");
+      Juice.subDrop(0.7, 0.9);
+      Juice.flash(this, 0xffffff, 140, 0.5, 4970);
+      cam.shake(350, 0.014);
+      Juice.punchZoom(this, 0.06, 380, 1);
+      if (img?.active) {
+        img.setTintFill(0xffffff);
+        this.time.delayedCall(70, () => {
+          if (!img.active) return;
+          img.clearTint().setTint(0x4a3a3a);
+          this.tweens.add({ targets: img, x: { from: img.x - 4, to: img.x }, duration: 50, repeat: 4, yoyo: true });
+          this.tweens.add({ targets: img, scaleY: img.scaleY * 0.93, y: img.y + img.displayHeight * 0.035, duration: 500, ease: "Bounce.out" });
+        });
+      }
+      Juice.shockRing(this, b.x, b.y + b.h * 0.3, { color: 0xffd8a8, to: Math.max(260, b.w * 1.6), rings: 2, depth: 9002, flat: 0.45 });
+      Juice.debris(this, b.x, b.y, 12, { depth: 9003, speed: 380, size: 9, floor: b.y + b.h / 2 });
       vfx(this, hasVfx(this, "vfx_bigboom") ? "vfx_bigboom" : "vfx_boom", b.x, b.y, { scale: 2.6, depth: 9001 });
-      for (let i = 0; i < 3; i++) vfx(this, "vfx_boom", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.5) * b.h * 0.6, { scale: 1.6, depth: 9001, delay: 120 + i * 110 });
-      for (let i = 0; i < 2; i++) vfx(this, "vfx_fire", b.x + (i ? 1 : -1) * b.w * 0.22, b.y + b.h * 0.2, { scale: 2.2, depth: b.y + 200, delay: 300 });
+      for (let j = 0; j < 3; j++) vfx(this, "vfx_boom", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.5) * b.h * 0.6, { scale: 1.6, depth: 9001, delay: 120 + j * 110 });
+      for (let j = 0; j < 2; j++) vfx(this, "vfx_fire", b.x + (j ? 1 : -1) * b.w * 0.22, b.y + b.h * 0.2, { scale: 2.2, depth: b.y + 200, delay: 300 });
       vfx(this, "vfx_smokecol", b.x, b.y - b.h * 0.2, { scale: 2.4, depth: b.y + 199, delay: 450 });
-      const label = this.add.text(b.x, b.y - b.h / 2 - 30, b.id === "HOME" ? "YOUR HOUSE" : b.name, { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffd23f", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(9100);
-      this.tweens.add({ targets: label, alpha: 0, delay: 500, duration: 400, onComplete: () => label.destroy() });
-      await new Promise((r) => this.time.delayedCall(320, r));
+      const label = this.add.text(b.x, b.y - b.h / 2 - 30, b.id === "HOME" ? "YOUR HOUSE" : b.name, { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ffd23f", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setDepth(9100).setScale(2);
+      this.tweens.add({ targets: label, scale: 1, duration: 160, ease: "Quad.in" });
+      this.tweens.add({ targets: label, alpha: 0, delay: 600, duration: 400, onComplete: () => label.destroy() });
+      await wait(320 * k + 60);
     }
-    cam.pan(1280, 790, 700);
-    await new Promise((r) => this.time.delayedCall(800, r));
-    vfx(this, "vfx_bigboom", 1280, 790, { scale: 3.2, depth: 9001 });
+    // the last one: the Town Hall, where they're all still dancing. Silence first.
+    cam.pan(1280, 790, 900, Phaser.Math.Easing.Sine.InOut);
+    cam.zoomTo(1.25, 1600, Phaser.Math.Easing.Sine.InOut);
+    await wait(1000);
+    Juice.riser(900, 0.45);
+    await wait(900);
+    vfx(this, "vfx_bigboom", 1280, 790, { scale: 3.6, depth: 9001 });
     synth.play("explode_1");
-    cam.shake(800, 0.02);
-    await new Promise((r) => this.time.delayedCall(1400, r));
+    synth.play("boom");
+    Juice.subDrop(1, 2.4);
+    Juice.flash(this, 0xffffff, 600, 0.9, 4970);
+    Juice.shockRing(this, 1280, 800, { color: 0xffffff, to: 700, rings: 3, depth: 9002, flat: 0.5, ms: 1000 });
+    Juice.debris(this, 1280, 780, 20, { depth: 9003, speed: 460, size: 10, floor: 860 });
+    cam.shake(1000, 0.025);
+    cam.zoomTo(1, 1800, Phaser.Math.Easing.Cubic.Out);
+    await wait(1400);
+    bars(500);
     await this.talk([dir("Somewhere under all of it, in the Town Hall, the party is still going.")]);
     this.go("Vignette", { id: "townhall_party", returnAt: "TOWN_HALL" });
   }
