@@ -357,6 +357,7 @@ export class DialogueBox {
     this.root.setVisible(true);
     const queue = [...lines];
     const s = G.s;
+    voice.prefetch(queue.filter((l) => !l.dir && l.t).map((l) => ({ s: String(l.s === "YOU" ? s.player : l.s), t: l.t })));
     // On the register: whoever speaks to you first opens with what they think of you.
     if (s.flags.on_register && !(((s.flags.on_register_until as number) ?? Infinity) < s.playtimeMs)) {
       const i = queue.findIndex((l) => !l.dir && !l.notify && l.s !== "NARRATOR" && l.s !== s.player && !!l.t && evalCond(l.cond, s));

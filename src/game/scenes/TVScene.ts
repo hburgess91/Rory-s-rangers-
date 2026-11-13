@@ -327,6 +327,7 @@ export class TVScene extends Phaser.Scene {
     this.setKey = "";
     this.mode = "playing";
     this.ep = e;
+    voice.prefetch(e.beats.filter((b: any) => b.type === "speaker" && b.text).map((b: any) => ({ s: b.character, t: b.text })));
     this.beat = 0;
     this.pausedPlay = false;
     synth.stopMusic();

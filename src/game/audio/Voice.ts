@@ -1,6 +1,32 @@
 // Text-to-speech for dialogue, using the browser's built-in voices (Web Speech API).
 // Each character gets a stable voice, pitch and rate. Stage directions stay silent.
 import { G } from "../G";
+import { speakable, voiceKey } from "./voiceKey";
+import { synth } from "./Synth";
+
+// ------------------------------------------------------------------ recorded lines (ElevenLabs, pre-generated)
+// public/audio/voice/index.json maps a line's key to [bundle, offset, length, voice]; bundles are mp3 clips
+// concatenated together, so a scene's lines arrive in one download. Lines without a recording fall back to TTS.
+type RecEntry = [string, number, number, string];
+let recIndex: Record<string, RecEntry> | null = null;
+let recIndexP: Promise<void> | null = null;
+const recBundles: Record<string, Promise<ArrayBuffer | null>> = {};
+function loadRecIndex() {
+  recIndexP ??= fetch("audio/voice/index.json")
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((j) => void (recIndex = j as Record<string, RecEntry>))
+    .catch(() => void (recIndex = {}));
+  return recIndexP;
+}
+function recBundle(b: string) {
+  return (recBundles[b] ??= fetch(`audio/voice/${b}.bin`)
+    .then((r) => (r.ok ? r.arrayBuffer() : null))
+    .catch(() => null));
+}
+if (typeof window !== "undefined") setTimeout(() => void loadRecIndex(), 1500);
+let recToken = 0;
+let recPending = false;
+let recSrc: AudioBufferSourceNode | null = null;
 
 interface Profile {
   pitch: number;
@@ -129,19 +155,7 @@ function pickVoice(speaker: string, female: boolean) {
   return list[hash(speaker) % list.length];
 }
 
-/** Strip things that shouldn't be read aloud. */
-export function speakable(text: string) {
-  return text
-    .replace(/\*[^*]*\*/g, " ")
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, " ")
-    .replace(/[#@]/g, "")
-    .replace(/\?\?+/g, "?")
-    .replace(/!!+/g, "!")
-    .replace(/…/g, "... ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+export { speakable };
 
 /** Split text into chunks of whole sentences (or clauses / words if needed), each at most `max` chars. */
 export function chunkSpeech(text: string, max = 160): string[] {
@@ -169,18 +183,83 @@ let live: SpeechSynthesisUtterance[] = [];
 
 export const voice = {
   enabled() {
-    return "speechSynthesis" in window && G.meta.settings.voices !== false;
+    return G.meta.settings.voices !== false;
   },
   stop() {
+    recToken++;
+    recPending = false;
+    if (recSrc) {
+      try {
+        recSrc.stop();
+      } catch {
+        /* already stopped */
+      }
+      recSrc = null;
+    }
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   },
   /** True while a line (or any of its chunks) is still being read out. */
   busy() {
-    return "speechSynthesis" in window && this.enabled() && (window.speechSynthesis.speaking || window.speechSynthesis.pending);
+    if (!this.enabled()) return false;
+    if (recPending || recSrc) return true;
+    return "speechSynthesis" in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending);
   },
-  /** Speak a line as `speaker`. Cancels whatever was being said. */
+  /** Start downloading the recordings for lines that are about to be said. */
+  prefetch(lines: { s: string; t: string }[]) {
+    void loadRecIndex().then(() => {
+      for (const l of lines) {
+        const e = recIndex?.[voiceKey(l.s, l.t)];
+        if (e) void recBundle(e[0]);
+      }
+    });
+  },
+  /** Speak a line as `speaker`: the recording if there is one, otherwise the browser's voice. Cancels whatever was being said. */
   say(speaker: string, text: string) {
     if (!this.enabled()) return;
+    this.stop();
+    const my = recToken;
+    const key = voiceKey(speaker, text);
+    const go = () => {
+      if (my !== recToken) return;
+      const e = recIndex?.[key];
+      const ctx = synth.ctx;
+      if (!e || !ctx) return this.tts(speaker, text);
+      recPending = true;
+      void recBundle(e[0]).then(async (buf) => {
+        if (my !== recToken) return;
+        if (!buf) {
+          recPending = false;
+          return this.tts(speaker, text);
+        }
+        let audio: AudioBuffer;
+        try {
+          audio = await ctx.decodeAudioData(buf.slice(e[1], e[1] + e[2]));
+        } catch {
+          recPending = false;
+          return this.tts(speaker, text);
+        }
+        if (my !== recToken) return;
+        const src = ctx.createBufferSource();
+        src.buffer = audio;
+        // the speed setting was tuned for robot voices (default 1.5x): recordings only nudge a little either way
+        src.playbackRate.value = Math.max(0.85, Math.min(1.25, 1 + ((G.meta.settings.voiceSpeed ?? 1.5) - 1.5) * 0.3));
+        const g = ctx.createGain();
+        g.gain.value = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1) * 1.4;
+        src.connect(g).connect(ctx.destination);
+        src.onended = () => {
+          if (recSrc === src) recSrc = null;
+        };
+        recSrc = src;
+        recPending = false;
+        src.start();
+      });
+    };
+    if (recIndex) go();
+    else void loadRecIndex().then(go);
+  },
+  /** The browser's built-in text-to-speech. */
+  tts(speaker: string, text: string) {
+    if (!("speechSynthesis" in window)) return;
     const t = speakable(text);
     if (!t) return;
     const prof = PROFILES[speaker.toUpperCase()] ?? { pitch: 0.8 + (hash(speaker) % 9) / 15, rate: 0.95 + (hash(speaker + "r") % 5) / 20 };
