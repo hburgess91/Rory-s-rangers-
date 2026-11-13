@@ -113,3 +113,61 @@ export const ANTHEM_DOOR: Line[] = [
   dir("The anthem swells. The huge red door at the end of the gallery shudders, and then, very slowly, it opens. For you."),
   say("DRONGUS", "(over the tannoy) Come in, then. Since you're up."),
 ];
+
+// ---------------------------------------------------------------- 5. THE INNER SANCTUM: DRONGUS, PHASE ONE
+
+export const SANCTUM_ENTER: Line[] = [
+  dir("Behind the red door: another foyer. Smaller. Colder. Black marble, a thousand candles, a stained-glass window of Drongus being crowned by Drongus. At the far end, a narrow door, and stairs going up into the dark."),
+  dir("And in the middle of the room, waiting for you, holding something enormous: Drongus B. Drippin'."),
+];
+
+export const DRONGUS1_MEET: Line[] = [
+  say("DRONGUS", "Oh. You came. On your own. That's sad, actually. That's quite sad."),
+  say("YOU", "Where are the lads, Drongus?"),
+  say("DRONGUS", "The lads? The Krelworld Krew? They're upstairs. On the roof of the lair. All of them. Strapped in. Nice and comfy."),
+  say("DRONGUS", "I'm training AI models on their brains. Every message. Every voice note. Every 'lol'. All going into the machine."),
+  say("DRONGUS", "And when it's done, I'll have a brand new group chat. Same lads. Same banter. Except this time…"),
+  say("DRONGUS", "…EVERYONE LISTENS TO MY MUSIC."),
+  say("DRONGUS", "Fourteen-minute songs. Reacted to. Every one. Hearts. Fire emojis. 'Banger, Drongus.' Forever."),
+];
+
+/** Shouted big, anime-style, with speed lines. */
+export const DRONGUS1_NEVER = "NO!! NEVER!!!";
+
+export const DRONGUS1_DEFY: Line[] = [
+  say("YOU", "NO! NEVER!! I'LL NEVER LET YOU DO THAT TO THEM, DRONGUS!!!"),
+];
+
+export const DRONGUS1_LOGS: Line[] = [
+  say("DRONGUS", "Ha. Ha ha. You'll never get the chat logs. Never. Every message you lot ever sent. Every screenshot. Every 'seen by 9'."),
+  say("DRONGUS", "And very, VERY shortly, I'm exposing them. All of them. To everyone."),
+  say("DRONGUS", "Now hold still. I want to try my new gun."),
+];
+
+/** As he runs for the stairs (phase one beaten). */
+export const DRONGUS1_FLEE: Line[] = [
+  say("DRONGUS", "Ow. OW. Right. Fine. FINE. That's — that's just phase one, that is. Everyone knows that's just phase one."),
+  say("DRONGUS", "Come up to the top, then. If you can be bothered. The lads are waiting. Sort of. Their brains are."),
+];
+
+// ---------------------------------------------------------------- 6. THE FINAL STAIRS
+
+export const STAIRS_ENTER: Line[] = [
+  dir("THE FINAL STAIRS. Through the narrow door, a staircase goes up, and up, and up, around the inside of the very top of the tower. Stained glass. Storm. Nothing else. No guards. No dogs. Nobody."),
+  dir("Somewhere far above, very faintly, you can hear music. It's fourteen minutes long."),
+];
+
+/** Drongus's voice, echoing down the stairwell as you climb (subtitles, no stopping). */
+export const STAIRS_ECHOES: Line[] = [
+  say("DRONGUS", "(echoing, far above) You know what the worst thing is? Seen by nine. Nine. And not one react."),
+  say("DRONGUS", "(echoing) I gave you a song. A whole song. I gave you everything."),
+  say("DRONGUS", "(echoing, closer) Keep climbing. I'll be right here. With the lads. Well. With their brains."),
+];
+
+export const STAIRS_DOOR: Line[] = [
+  dir("The top of the stairs. One door. Black iron, taller than a house. The music behind it is very loud now. Light leaks out from under it, red and gold."),
+];
+
+export const STAIRS_OPEN: Line[] = [
+  dir("You push. The door is heavier than anything has any right to be. It swings open, slowly, and the light comes out to meet you."),
+];

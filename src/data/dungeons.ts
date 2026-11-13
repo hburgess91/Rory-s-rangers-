@@ -27,7 +27,7 @@ export interface RoomDef {
   waves?: [string, number][][];
   props?: PropDef[];
   /** Special scripted event handled by the dungeon scene. */
-  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon";
+  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon" | "drongus1" | "stairs";
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
@@ -237,6 +237,41 @@ function anthemCorridor(): RoomDef {
     exitLabel: "",
     gunCrate: true,
     enterLines: CD.ANTHEM_ENTER,
+  };
+}
+
+/** THE FINAL STAIRS (Chapter 7): no enemies. A long, slow, zig-zag climb round the top of the tower, past the storm,
+ *  candles going out behind you, Drongus's voice echoing down. A black door at the top (E to open). */
+function finalStairs(): RoomDef {
+  const FLIGHTS = 9;
+  const RISE = 112;
+  const PER = 4;
+  const platforms: [number, number, number][] = [];
+  let h = 115;
+  for (let f = 0; f < FLIGHTS; f++) {
+    const right = f % 2 === 0;
+    for (let i = 0; i < PER; i++) {
+      const fx = right ? 0.2 + i * 0.17 : 0.8 - i * 0.17;
+      // the last step of a flight is a wide landing
+      platforms.push([fx, h, i === PER - 1 ? 240 : 150]);
+      h += RISE;
+    }
+  }
+  const top = h;
+  platforms.push([0.5, top, 760]);
+  return {
+    name: "The Final Stairs",
+    view: "side",
+    tower: true,
+    w: 960,
+    h: top + 260,
+    theme: "citadel",
+    music: "ominous",
+    event: "stairs",
+    platforms,
+    exitAt: [0.5, top],
+    exitLabel: "",
+    enterLines: CD.STAIRS_ENTER,
   };
 }
 
@@ -581,6 +616,18 @@ export const DUNGEONS: Record<string, DungeonDef> = {
       drongusCorridor(),
       theAscent(),
       anthemCorridor(),
+      {
+        name: "The Inner Sanctum",
+        w: 1300,
+        h: 900,
+        theme: "citadel",
+        event: "drongus1",
+        boss: "drongus1",
+        goal: "He's run up the stairs. Through the door at the back.",
+        enterLines: CD.SANCTUM_ENTER,
+      },
+      finalStairs(),
+      // PHASE TWO (side-on) plugs in here. For now: the old final fight and the ending.
       {
         name: "The Summit: Government Chamber",
         w: 1400,

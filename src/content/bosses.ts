@@ -1,5 +1,6 @@
 import type { Line } from "../data/types";
 import { dir, gabor, ping, say } from "./dsl";
+import { DRONGUS1_FLEE } from "./citadel";
 
 export interface BossText {
   id: string;
@@ -491,6 +492,18 @@ export const BOSS_TEXT: Record<string, BossText> = {
       dir("Behind Da Squeezing Room, a little pink door clicks open. Mollor's in there."),
     ],
     taunts: ["SWEET HUGS!", "SWEETER SQUEEZES!", "Have a token!", "Juices, please!", "COME HERE!", "SO COSY!", "LONGER! LONGER!", "NOBODY CUDDLES THE CRONSTER!"],
+  },
+  // ---- Chapter 7: Drongus, phase one (the inner sanctum). He doesn't die: he legs it up the stairs.
+  drongus1: {
+    id: "drongus1",
+    name: "DRONGUS B. DRIPPIN'",
+    title: "Supreme Leader · Holding The Drongus Gun",
+    intro: [
+      say("DRONGUS", "DRONGUS AI: stand by to generate. Drongus Gun: ARMED."),
+      dir("TIP: Learn the gun. Green lines are aimed plasma (step out of them). The sweep shows its whole arc first (get behind him). The MEGA SHOT charges for ages and locks on just before it fires (move as it locks). When he says RELOADING, unload on him. He gets nastier at two-thirds and a third."),
+    ],
+    outro: DRONGUS1_FLEE,
+    taunts: ["SEEN BY NINE!", "REACT TO IT!", "BANGER!", "FOURTEEN MINUTES!", "IT'S A DRONGUS GUN!", "HOLD STILL!", "LISTEN TO IT!", "THAT'S MY SONG!"],
   },
   // ---- Chapter 7: Da Drongus Dungeon mini-bosses (generated live by Drongus's AI)
   krex: {
