@@ -148,9 +148,31 @@ interface Npc {
   bubble?: Phaser.GameObjects.Text;
   folk?: boolean;
   plate: Phaser.GameObjects.Text;
+  /** Chapter 7: a soot-covered survivor, shuffling about the ruins. */
+  dazed?: boolean;
   /** Mikey: follows you around begging to join the group. */
   follower?: { hits: number; koUntil: number; nextWhine: number; lastHit: number };
 }
+
+/** Chapter 7: what the survivors mumble, wandering the ruins. */
+const SURVIVOR_BARKS = [
+  "…what day is it?",
+  "Has anyone seen my house? It was here.",
+  "I can't hear anything. Is that normal?",
+  "My eyebrows. Where are my eyebrows.",
+  "Is the Tap open?",
+  "I think I had a nice time last night.",
+  "Mum? MUM?",
+  "Everything's on fire. Should someone ring the council?",
+  "I've lost a shoe. And the street.",
+  "Was there a party? I feel like there was a party.",
+  "Ringing. Constant ringing.",
+  "Who moved the pub?",
+  "I'm fine. I'm fine. Is my face still on?",
+  "Seen by 9.",
+  "Hello? Is anyone… Hello?",
+  "I need a fizzy bongo. I need it so badly.",
+];
 
 const MIKEY_WHINES = [
   "Can I join the group?",
@@ -1455,19 +1477,32 @@ export class HubScene extends Phaser.Scene {
     }
     // Proctus fills the player's spot
     this.addNpc("PROCTUS", NPC_SPOTS[s.player] ?? { x: 1300, y: 640 });
-    // townsfolk
-    for (let i = 0; i < 6; i++) {
-      const x = 400 + i * 330;
-      const y = i % 2 ? 840 : 720;
-      this.addNpc(`FOLK${i % 4}`, { x, y }, true);
-    }
+    // townsfolk (in Chapter 7: dazed, sooty survivors wandering the ruins)
+    if (this.ruined) {
+      const rnd = new Phaser.Math.RandomDataGenerator(["survivors"]);
+      for (let i = 0, made = 0; made < 12 && i < 200; i++) {
+        const x = rnd.between(200, WORLD_W - 200);
+        const y = rnd.between(300, WORLD_H - 250);
+        if (this.nearBuilding(x, y, 40)) continue;
+        this.addNpc(`FOLK${made % 4}`, { x, y }, true);
+        const n = this.npcs[this.npcs.length - 1];
+        n.dazed = true;
+        n.spr.setTint(0x8f8279);
+        made++;
+      }
+    } else
+      for (let i = 0; i < 6; i++) {
+        const x = 400 + i * 330;
+        const y = i % 2 ? 840 : 720;
+        this.addNpc(`FOLK${i % 4}`, { x, y }, true);
+      }
     // The Tap as a speaker (interactable)
     this.interactables.push({
       x: 1280,
       y: 900,
       r: 80,
-      label: () => (G.s.chapter === 1 && !G.s.flags.ch1_clear ? "Inspect the Great Tap (dry)" : "Drink from the Great Tap"),
-      use: () => this.useTap(),
+      label: () => (this.ruined ? "Look into the crater" : G.s.chapter === 1 && !G.s.flags.ch1_clear ? "Inspect the Great Tap (dry)" : "Drink from the Great Tap"),
+      use: () => (this.ruined ? void this.talk([dir("A crater. At the bottom, a bent pipe. A single pink drip forms on the end of it, thinks better of it, and goes back in.")]) : this.useTap()),
     });
   }
 
@@ -1568,7 +1603,7 @@ export class HubScene extends Phaser.Scene {
       const dy = n.target.y - n.spr.y;
       const d = Math.hypot(dx, dy);
       if (d > 3) {
-        const sp = (n.folk ? 50 : 35) * (dt / 1000);
+        const sp = (n.dazed ? 20 : n.folk ? 50 : 35) * (dt / 1000);
         n.spr.x += (dx / d) * sp;
         n.spr.y += (dy / d) * sp;
         animateWalker(n.spr, dx, dy, true, now);
@@ -1579,7 +1614,8 @@ export class HubScene extends Phaser.Scene {
       // ambient barks near the player
       if (now > n.nextBark && Phaser.Math.Distance.Between(n.spr.x, n.spr.y, this.av.x, this.av.y) < 420) {
         n.nextBark = now + 9000 + Math.random() * 12000;
-        if (n.folk) this.bubble(n, FOLK_BARKS[Math.floor(Math.random() * FOLK_BARKS.length)]);
+        if (n.dazed) this.bubble(n, SURVIVOR_BARKS[Math.floor(Math.random() * SURVIVOR_BARKS.length)]);
+        else if (n.folk) this.bubble(n, FOLK_BARKS[Math.floor(Math.random() * FOLK_BARKS.length)]);
         else {
           const list = (BARKS[n.id] ?? []).filter((b) => evalCond(b.cond, G.s));
           if (list.length) this.bubble(n, list[Math.floor(Math.random() * list.length)].t);
@@ -3017,6 +3053,15 @@ You are required by law to sign the Sex Offenders Register.`, {
     for (let x = 260; x < WORLD_W - 200; x += 300) {
       if (Math.abs(x - 1280) < 200) continue;
       this.ruinProp("r_carwreck", x + rnd.between(-40, 40), rnd.frac() < 0.5 ? 810 : 870, 1.7);
+    }
+    // the ones who didn't get up
+    const dead = ["c6_skeleton", "kd_charred", "c6_skeleton", "c6_ashpile", "kd_charred", "c6_skeleton"];
+    for (let i = 0; i < 55; i++) {
+      const x = rnd.between(80, WORLD_W - 80);
+      const y = rnd.between(160, WORLD_H - 140);
+      if (GATES.some((g) => Math.hypot(g.x - x, g.y - y) < 70)) continue;
+      const key = dead[i % dead.length];
+      if (this.textures.exists(key)) this.add.image(x, y, key).setOrigin(0.5, 0.7).setScale(1.1 + rnd.frac() * 0.4).setAngle(rnd.between(-30, 30)).setFlipX(rnd.frac() < 0.5).setDepth(y - 6);
     }
     const scatter = ["r_debris", "r_ash", "r_bench", "r_busstop", "r_lamp", "r_debris", "r_ash", "r_fireheap", "r_wall"];
     for (let i = 0; i < 90; i++) {
