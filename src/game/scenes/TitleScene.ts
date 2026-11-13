@@ -4,7 +4,7 @@ import { G } from "../G";
 import { button, FONT, title, label } from "../ui/theme";
 import { synth } from "../audio/Synth";
 import { continueRun, switchTo, fadeThen } from "../Flow";
-import { PLAYABLE_ORDER } from "../../data/characters";
+import { LADS } from "../../data/characters";
 
 const LEAK = ["[citation needed]", "Seen by 9", "Hello?", "KREZZ", "Drongi", "WONK", "pls", "Krebon is coming", "lore withdrawn", "THE KREZZING HOUR", "Krez-ousers", "purple", "Big Bertha", "12 Midday", "cheesegate"];
 
@@ -39,7 +39,7 @@ export class TitleScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: t.y + H, duration: 9000 + Math.random() * 9000, repeat: -1, onRepeat: () => (t.y = -20) });
     }
     // marching cabinet
-    PLAYABLE_ORDER.forEach((id, i) => {
+    LADS.forEach((id, i) => {
       const s = this.add.sprite(-40 - i * 40, H - 70, `spr_${id}`, 0).setScale(2.5);
       this.tweens.add({ targets: s, x: W + 60, duration: 16000, delay: i * 500, repeat: -1 });
       this.time.addEvent({ delay: 180, loop: true, callback: () => animateWalker(s, 1, 0, true, this.time.now) });

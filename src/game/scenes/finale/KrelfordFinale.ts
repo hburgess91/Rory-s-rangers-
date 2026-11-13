@@ -5,7 +5,7 @@ import { synth } from "../../audio/Synth";
 import { FONT } from "../../ui/theme";
 import { hasVfx, vfx } from "../../gfx/Vfx";
 import { animateWalker, tallOf } from "../../gfx/HD";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../../data/characters";
+import { CHARACTERS, LADS } from "../../../data/characters";
 import { ConceptBoss } from "../../combat/ConceptBoss";
 import type { Enemy } from "../../combat/Enemy";
 import type { Player } from "../../combat/Player";
@@ -295,7 +295,7 @@ export class KrelfordFinale {
 
   private spawnLads() {
     const h = this.h;
-    const ids = [...PLAYABLE_ORDER, "MIKEY"].filter((p) => p !== G.s.player && h.textures.exists(`spr_${p}`));
+    const ids = [...LADS, "MIKEY"].filter((p) => p !== G.s.player && h.textures.exists(`spr_${p}`));
     this.lads = ids.map((id, i) => {
       const ang = Math.PI * (0.12 + (0.76 * i) / Math.max(1, ids.length - 1));
       const r = 480 + (i % 2) * 90;

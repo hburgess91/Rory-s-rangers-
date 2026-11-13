@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
+import { kruncherVictim } from "../systems/sanmik";
 import { hasVfx, vfx } from "../gfx/Vfx";
 import type { Line } from "../../data/types";
 import { G } from "../G";
@@ -7,7 +9,7 @@ import { switchTo, fadeThen, advanceChapter } from "../Flow";
 import { synth } from "../audio/Synth";
 import { FONT, title } from "../ui/theme";
 import { dir, gabor, ping, say } from "../../content/dsl";
-import { PLAYABLE_ORDER } from "../../data/characters";
+import { LADS } from "../../data/characters";
 import { animateWalker, backdrop, charMeta, perfCycle, playPerf } from "../gfx/HD";
 import { CHARACTERS } from "../../data/characters";
 import { flap, fall, randomZone } from "../combat/Wonk";
@@ -155,14 +157,17 @@ export class VignetteScene extends Phaser.Scene {
     if (!backdrop(this, "bg_city", { depth: -10 })) this.sky(0x8fc3ea, 0xf3d9b1);
     this.add.rectangle(480, 450, 960, 200, 0x5b5b66).setDepth(-5);
     this.add.text(480, 200, "KRELBURGER", { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffd23f", stroke: "#7f1d1d", strokeThickness: 6 }).setOrigin(0.5).setDepth(-4);
-    const mikey = this.add.sprite(480, 345, "spr_MIKEY", 0).setScale(3).setDepth(50);
-    const mm = charMeta(this, "spr_MIKEY");
+    // playing as Mikey, it's Polson they get (protein shake for bongo)
+    const pol = kruncherVictim(s) === "POLSON";
+    const vKey = pol ? "spr_POLSON" : "spr_MIKEY";
+    const mikey = this.add.sprite(480, 345, vKey, 0).setScale(3).setDepth(50);
+    const mm = charMeta(this, vKey);
     const gang = this.kruncherSprites(-600, 340, 60, 2.8);
     await this.tween({ targets: gang, x: "+=640", duration: 1800 });
-    await this.talk(KR.KR_MIKEY_MEET);
+    await this.talk(pol ? KR.KR_POLSON_MEET : KR.KR_MIKEY_MEET);
     // they close in round him
     await this.tween({ targets: gang, x: (_t: unknown, _k: string, _v: number, i: number) => 330 + (i % 5) * 70 + (i > 4 ? 30 : 0), y: (_t: unknown, _k: string, _v: number, i: number) => (i > 4 ? 365 : 325), duration: 700 });
-    await this.talk(KR.KR_MIKEY_BEG);
+    await this.talk(pol ? KR.KR_POLSON_BEG : KR.KR_MIKEY_BEG);
     const hits = ["WHAM!", "KRUNCH!", "BOSH!", "THWACK!", "SPLAT!", "KAPOW!", "OOF!", "NOT THE FACE!", "WALLOP!", "KRUNCH!!"];
     for (let i = 0; i < hits.length; i++) {
       const k = gang[i % gang.length];
@@ -184,12 +189,26 @@ export class VignetteScene extends Phaser.Scene {
     else mikey.setAngle(90);
     vfx(this, "vfx_dust", mikey.x, mikey.y, { scale: 2, depth: 45 });
     this.lastCaption?.destroy();
-    if (this.textures.exists("p_bongo")) this.add.image(mikey.x - 10, mikey.y - 30, "p_bongo").setScale(1.4).setAngle(20).setDepth(60);
-    // from here on (for the rest of Chapter 3) Mikey's portrait has the black eye and fat lip
+    if (pol) this.proteinShake(mikey.x + 46, mikey.y - 4);
+    else if (this.textures.exists("p_bongo")) this.add.image(mikey.x - 10, mikey.y - 30, "p_bongo").setScale(1.4).setAngle(20).setDepth(60);
+    // from here on (for the rest of Chapter 3) the victim's portrait has the black eye and fat lip
     s.flags.krunchers_invaded = true;
-    await this.talk(KR.KR_MIKEY_AFTER);
+    await this.talk(pol ? KR.KR_POLSON_AFTER : KR.KR_MIKEY_AFTER);
     await this.tween({ targets: gang, x: "+=900", duration: 2000 });
 
+  }
+
+  /** Polson's protein shake, on his head like a little hat (a shaker bottle: lid, body, label). */
+  private proteinShake(x: number, y: number) {
+    const c = this.add.container(x, y).setDepth(60).setAngle(105);
+    c.add(this.add.rectangle(0, 6, 26, 34, 0xe5e7eb).setStrokeStyle(2, 0x111827));
+    c.add(this.add.rectangle(0, 8, 26, 12, 0x7c3aed));
+    c.add(this.add.text(0, 8, "WHEY", { fontFamily: FONT, fontSize: "7px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5));
+    c.add(this.add.rectangle(0, -14, 22, 8, 0x111827));
+    c.add(this.add.rectangle(6, -20, 5, 6, 0x111827));
+    // a dribble down his face
+    const d = this.add.rectangle(x - 18, y + 6, 3, 4, 0xf5f0e6).setOrigin(0.5, 0).setDepth(61);
+    this.tweens.add({ targets: d, scaleY: 6, duration: 1600 });
   }
 
   /** A drawn explosion (PixelLab VFX) plus smoke; false if the art isn't loaded. Pass a container to put it inside one. */
@@ -345,8 +364,8 @@ export class VignetteScene extends Phaser.Scene {
   }
 
   private crowd(y: number) {
-    const ids = [...PLAYABLE_ORDER.filter((p) => p !== G.s.player), "PROCTUS", G.s.player, "FOLK0", "FOLK1", "FOLK2", "FOLK3"];
-    return ids.map((id, i) => this.add.sprite(60 + i * 64, y + (i % 2) * 14, `spr_${id}`, 0).setScale(2.6).setDepth(50));
+    const ids = [...LADS.filter((p) => p !== G.s.player), "PROCTUS", G.s.player, "FOLK0", "FOLK1", "FOLK2", "FOLK3"];
+    return ids.map((id, i) => this.add.sprite(60 + i * 64, y + (i % 2) * 14, id === G.s.player ? playerKey(this) : `spr_${id}`, 0).setScale(2.6).setDepth(50));
   }
 
   // ---------------------------------------------------------------- THE KRELTOWER INCIDENT
@@ -531,7 +550,7 @@ export class VignetteScene extends Phaser.Scene {
 
   /** `spy` = the player is somebody else, watching Lulon from the bushes. */
   private async pudding(spy?: string) {
-    const watcherId = spy ?? (G.s.flags.pudding_follower as string) ?? PLAYABLE_ORDER.filter((id) => id !== "CRONGUS")[Math.floor(Math.random() * 8)];
+    const watcherId = spy ?? (G.s.flags.pudding_follower as string) ?? LADS.filter((id) => id !== "CRONGUS")[Math.floor(Math.random() * 8)];
     if (!spy) G.s.flags.pudding_follower = watcherId;
     const skyP = this.sky(0x0a0a1a, 0x1a1a2e);
     const g = this.add.graphics();
@@ -1057,7 +1076,7 @@ export class VignetteScene extends Phaser.Scene {
       this.add.text(480, 300, "TREADMILL", { fontFamily: FONT, fontSize: "12px", color: "#fff" }).setOrigin(0.5);
     }
     const pol = this.add.sprite(200, 380, "spr_POLSON", 0).setScale(3).setDepth(10);
-    const me = this.add.sprite(120, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const me = this.add.sprite(120, 390, playerKey(this), 0).setScale(3).setDepth(10);
     synth.music("hub");
     await this.talk([
       dir("Krunch Gym. You have taken Polson for 'an intense workout'. He is wearing brand new trainers, brand new shorts and a headband. The tags are still on all of them."),
@@ -1091,7 +1110,7 @@ export class VignetteScene extends Phaser.Scene {
     if (!this.textures.exists("bg_restaurant")) this.add.rectangle(480, 380, 520, 60, 0x7a5230).setDepth(5);
     this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
     const pol2 = this.add.sprite(420, 320, "spr_POLSON", 0).setScale(3).setDepth(10);
-    this.add.sprite(560, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    this.add.sprite(560, 320, playerKey(this), 0).setScale(3).setDepth(10);
     void me;
     await this.talk([
       say("POLSON", "Four burgers please!! Double. Large pizza, meat feast, extra cheese, stuffed crust. And the fudge. All the fudge 😝"),
@@ -1180,7 +1199,7 @@ export class VignetteScene extends Phaser.Scene {
     const post2 = this.add.rectangle(520, 360, 14, 110, 0x9ca3af).setDepth(12);
     this.add.text(480, 290, "KRUNCH GYM — MEMBERS ONLY", { fontFamily: FONT, fontSize: "12px", color: "#ffd23f", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(12);
     const pol = this.fatPolson(300, 380);
-    const me = this.add.sprite(160, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const me = this.add.sprite(160, 390, playerKey(this), 0).setScale(3).setDepth(10);
     synth.music("hub");
     await this.talk([
       dir("Krunch Gym. Again. Polson is wearing the same headband. The headband is now under considerable tension."),
@@ -1249,7 +1268,7 @@ export class VignetteScene extends Phaser.Scene {
     if (!backdrop(this, "bg_restaurant", { depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_pub").setOrigin(0);
     this.add.text(480, 80, "🍔 KREZ-KING BURGERS & PIZZA & FUDGE 🍕", { fontFamily: FONT, fontSize: "22px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
     const pol2 = this.fatPolson(420, 320);
-    this.add.sprite(620, 320, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    this.add.sprite(620, 320, playerKey(this), 0).setScale(3).setDepth(10);
     await this.talk([
       say("WAITER", "Oh no. Not him again. Last time he ate a chair leg by accident."),
       say("POLSON", "Protein shake please!! Chocolate. Blend a fudge into it. Blend two fudges. And a burger 😝"),
@@ -1398,7 +1417,7 @@ export class VignetteScene extends Phaser.Scene {
     G.s.flags.polson_fat = Math.max(25, (G.s.flags.polson_fat as number) ?? 0);
     if (this.textures.exists("p_sofa")) this.add.image(330, 430, "p_sofa").setScale(2.6).setDepth(5);
     const pol = this.fatPolson(330, 360);
-    const me = this.add.sprite(800, 390, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const me = this.add.sprite(800, 390, playerKey(this), 0).setScale(3).setDepth(10);
     void me;
     // the cake: one big four-tier stack
     const cake = this.add.container(600, 430).setDepth(9);
@@ -1562,6 +1581,11 @@ export class VignetteScene extends Phaser.Scene {
     return { mik: mk("spr_SANMIK", "spr_MIKEY", lx, 0xb0c4ff), chz: mk("spr_SANCHZ", "spr_POLSON", rx, 0xffe08a) };
   }
 
+  /** Playing as Mikey you ARE SanMik: lines the player says *to* SanMik go to someone else in the room. */
+  private youTo(alt: string): string {
+    return G.s.player === "MIKEY" ? alt : G.s.player;
+  }
+
   /** Mash to do a thing. Resolves after `need` taps. */
   private mashFor(need: number, label: string, onTap: (n: number) => void) {
     return new Promise<void>((resolve) => {
@@ -1586,7 +1610,8 @@ export class VignetteScene extends Phaser.Scene {
   private async sanmikLampe() {
     if (!backdrop(this, "bg_gig", { dim: 0.25, depth: -10 })) this.add.rectangle(480, 270, 960, 540, 0x1a0f1f);
     const { mik, chz } = this.sanmikSprites(330, 640, 360);
-    const me = this.add.sprite(820, 380, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    // playing as Mikey, SanMik is you: no second one
+    const me = G.s.player === "MIKEY" ? mik : this.add.sprite(820, 380, playerKey(this), 0).setScale(3).setDepth(10);
     // the lamp
     const lamp = this.add.container(470, 400).setDepth(20);
     lamp.add(this.add.ellipse(0, 0, 56, 24, 0xd4a017).setStrokeStyle(2, 0x7c5a00));
@@ -1599,9 +1624,9 @@ export class VignetteScene extends Phaser.Scene {
       say("SANMIK", "Found this in the skip out the back. Magic lamp. Looks like a naughty little dildo and it smells like rank fanny juice. Proper vintage."),
       say("SANCHZ", "Rub it."),
       say("SANMIK", "I'm gonna rub it like I rubbed one out last night, yee. Hehehe."),
-      say(G.s.player, "Please don't say it like that."),
+      say(this.youTo("SANCHZ"), "Please don't say it like that."),
     ]);
-    await this.mashFor(12, "TAP / SPACE: help SanMik rub the lamp (sorry)", (n) => {
+    await this.mashFor(12, G.s.player === "MIKEY" ? "TAP / SPACE: rub the lamp (sorry)" : "TAP / SPACE: help SanMik rub the lamp (sorry)", (n) => {
       synth.play(n % 2 ? "select" : "hit");
       lamp.setAngle(n % 2 ? -8 : 8);
       mik.x = 400 + (n % 2) * 8;
@@ -1627,7 +1652,7 @@ export class VignetteScene extends Phaser.Scene {
       say("SANMIK", "Ooh. Well that's a tough question. Yee. Mm. Let me see."),
       say("SANMIK", "Number one: a fucking pet goat."),
       say("SANMIK", "Number two: a Pepsi Max."),
-      say(G.s.player, "Mikey. Think about this. You can have anything—"),
+      say(this.youTo("SANCHZ"), "Mikey. Think about this. You can have anything—"),
       say("SANMIK", "And number three… a Pepsi normal."),
       say("GENIE", "…"),
       say("GENIE", "WHAT A BLOODY FUCKING WASTE. YOU COULD HAVE LEARNED TO BLOODY FUCKING FLY."),
@@ -1669,7 +1694,7 @@ export class VignetteScene extends Phaser.Scene {
     if (!backdrop(this, "bg_townhall", { dim: 0.2, depth: -10 })) this.sky(0x9ec5e8, 0xe8d8b0);
     const { mik, chz } = this.sanmikSprites(220, 740, 330);
     const kre = this.add.sprite(480, 300, "spr_KREBLIS", 0).setScale(2.6).setDepth(9);
-    const me = this.add.sprite(480, 430, `spr_${G.s.player}`, 0).setScale(3).setDepth(12);
+    const me = G.s.player === "MIKEY" ? mik : this.add.sprite(480, 430, playerKey(this), 0).setScale(3).setDepth(12);
     const leftCrowd = [0, 1, 2].map((i) => this.add.sprite(110 + i * 50, 410 + (i % 2) * 14, `spr_FOLK${i}`, 0).setScale(2.4).setDepth(11));
     const rightCrowd = [1, 2, 3].map((i) => this.add.sprite(760 + i * 50, 410 + (i % 2) * 14, `spr_FOLK${i}`, 0).setScale(2.4).setDepth(11).setFlipX(true));
     const goat = this.textures.exists("p_gabor") ? this.add.image(480, 470, "p_gabor").setOrigin(0.5, 1).setScale(1.1).setDepth(13) : this.add.ellipse(480, 450, 50, 30, 0xffffff).setDepth(13);
@@ -1716,7 +1741,7 @@ export class VignetteScene extends Phaser.Scene {
     this.lastCaption?.destroy();
     await this.talk([
       dir("Both nations begin to advance. Very slowly. Doreen has a hip."),
-      say(G.s.player, "STOP. Both of you. There's only one place the San Brothers have ever settled anything."),
+      say(this.youTo("KREBLIS"), "STOP. Both of you. There's only one place the San Brothers have ever settled anything."),
       say("SANMIK", "…"),
       say("SANCHZ", "…"),
       say("SANMIK & SANCHZ", "THE HOT TUB."),
@@ -1725,7 +1750,7 @@ export class VignetteScene extends Phaser.Scene {
     this.cameras.main.flash(300, 255, 255, 255);
     leftCrowd.concat(rightCrowd).forEach((p) => p.setVisible(false));
     kre.setPosition(820, 330);
-    me.setPosition(140, 400);
+    if (me !== mik) me.setPosition(140, 400);
     goat.setPosition(860, 470);
     const tub = this.textures.exists("p_hottub") ? this.add.image(480, 470, "p_hottub").setOrigin(0.5, 1).setScale(2.6).setDepth(20) : this.add.rectangle(480, 420, 300, 120, 0x7c4a1e).setDepth(20);
     mik.setPosition(420, 300).setDepth(19);
@@ -1790,7 +1815,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(1500);
     await this.talk([
       say("SANMIK", "Yee! I'm the fucking best! Michael Jackson is second best! I am also best dressed!"),
-      say(G.s.player, "You're in a G-string."),
+      say(this.youTo("KREBLIS"), "You're in a G-string."),
       say("SANMIK", "Best dressed, blud."),
       say("SANCHZ", "Everyone knows he's solid. No cunt touches him."),
       dir("Gabor the Goat headbutts SanMik in the bum. SanMik falls down the Town Hall steps, all of them, one at a time, still twerking."),
@@ -1809,7 +1834,7 @@ export class VignetteScene extends Phaser.Scene {
   private async sanmikFinale() {
     if (!backdrop(this, "sm_bigtub", { depth: -10 })) this.sky(0x2a1050, 0x9b59ff);
     const { mik, chz } = this.sanmikSprites(200, 760, 400);
-    const me = this.add.sprite(110, 410, `spr_${G.s.player}`, 0).setScale(3).setDepth(10);
+    const me = G.s.player === "MIKEY" ? mik : this.add.sprite(110, 410, playerKey(this), 0).setScale(3).setDepth(10);
     const goat = this.textures.exists("p_gabor") ? this.add.image(860, 440, "p_gabor").setOrigin(0.5, 1).setScale(1).setDepth(10) : this.add.circle(860, 420, 20, 0xffffff);
     void me;
     synth.music("ggg8");
@@ -2292,7 +2317,7 @@ export class VignetteScene extends Phaser.Scene {
       const tex = i === 3 ? "npc_journo" : `spr_FOLK${i % 4}`;
       press.push(this.add.sprite(250 + i * 85, 470 + (i % 2) * 12, tex, 0).setScale(tex === "npc_journo" ? 1.7 : 2.4).setDepth(30 + i));
     }
-    const lads = PLAYABLE_ORDER.filter((p) => p !== G.s.player).slice(0, 2);
+    const lads = LADS.filter((p) => p !== G.s.player).slice(0, 2);
     [G.s.player, ...lads].forEach((id, i) => this.add.sprite(60 + i * 50, 440 + i * 10, `spr_${id}`, 0).setScale(2.4).setDepth(40));
     synth.music("ominous");
     const munch = () => {
@@ -2372,7 +2397,7 @@ export class VignetteScene extends Phaser.Scene {
       giant = this.art(480, 200, "p_crobley", 4, 0xf9a8d4).setDepth(6);
       this.add.rectangle(480, 500, 960, 80, 0x1f2937).setDepth(4);
     }
-    const me = this.add.sprite(300, 480, `spr_${G.s.player}`, 0).setScale(2.6).setDepth(20);
+    const me = this.add.sprite(300, 480, playerKey(this), 0).setScale(2.6).setDepth(20);
     synth.music("ominous");
     await this.talk([dir("You sprint out of the factory gates. Behind you, a low rumble. Then a higher rumble. Then a rumble that sounds a lot like a child singing 'Nibble on a Crobley', very slowly, underwater.")]);
     await this.tween({ targets: me, x: 900, duration: 900 });
@@ -2428,7 +2453,7 @@ export class VignetteScene extends Phaser.Scene {
     await this.wait(1500);
     this.lastCaption?.destroy();
     // the lads, and someone under a blanket
-    const lads = PLAYABLE_ORDER.filter((p) => p !== G.s.player).slice(0, 3);
+    const lads = LADS.filter((p) => p !== G.s.player).slice(0, 3);
     lads.forEach((id, i) => this.add.sprite(120 + i * 70, 470, `spr_${id}`, 0).setScale(2.6).setDepth(22));
     const crobson = this.add.sprite(340, 472, "spr_FOLK2", 0).setScale(2.6).setDepth(22).setTint(0xc7d2fe);
     this.add.text(340, 410, "CROBSON CROBLEY\n(RECENTLY RESURRECTED)", { fontFamily: FONT, fontSize: "10px", color: "#e0e7ff", backgroundColor: "#000000aa", align: "center", padding: { x: 3, y: 2 } }).setOrigin(0.5).setDepth(23);
@@ -2602,7 +2627,7 @@ export class VignetteScene extends Phaser.Scene {
     this.rainOver("storm", 960);
     const tw = this.bigTower(620, 440);
     const hitY = tw.at(0.66);
-    const people = this.crowd(470).filter((p) => p.texture.key !== `spr_${me}`);
+    const people = this.crowd(470).filter((p) => p.texture.key !== playerKey(this));
     synth.music("airport");
     const chute2 = this.chute(me, 150, -60);
     this.tween({ targets: chute2, y: 300, x: 110, duration: 9000, ease: "Sine.out" });
@@ -2833,7 +2858,7 @@ export class VignetteScene extends Phaser.Scene {
     const canopy = this.add.graphics();
     canopy.fillStyle(0xff4fa3, 1).slice(0, 0, 46, Math.PI, 0, false).fillPath();
     canopy.lineStyle(2, 0xffffff, 1).lineBetween(-44, 0, 0, 56).lineBetween(44, 0, 0, 56).lineBetween(0, -40, 0, 56);
-    c.add([canopy, this.add.sprite(0, 70, `spr_${me}`, 0).setScale(2)]);
+    c.add([canopy, this.add.sprite(0, 70, me === G.s.player ? playerKey(this) : `spr_${me}`, 0).setScale(2)]);
     this.tweens.add({ targets: c, angle: { from: -8, to: 8 }, yoyo: true, repeat: -1, duration: 900 });
     return c;
   }
@@ -3205,7 +3230,7 @@ export class VignetteScene extends Phaser.Scene {
 
   /** A lad (or anyone with a character sheet) on stage, registered in the cast. */
   private actor(id: string, x: number, y: number, scale = 2.6, castAs = id) {
-    const key = this.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FOLK0";
+    const key = id === G.s.player ? playerKey(this) : this.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FOLK0";
     const sp = this.add.sprite(x, y, key, 0).setScale(scale).setDepth(100 + y);
     this.cast.set(castAs, sp);
     return sp;
@@ -3968,7 +3993,7 @@ export class VignetteScene extends Phaser.Scene {
   /** Everyone on stage, lads only (no Proctus): for the party scenes. */
   private partyCast(y0 = 300) {
     const me = G.s.player;
-    const ids = [...PLAYABLE_ORDER.filter((p) => p !== me), "MIKEY"];
+    const ids: string[] = [...LADS, "MIKEY"].filter((p) => p !== me);
     ids.splice(Math.floor(ids.length / 2), 0, me);
     return ids.map((id, i) => {
       const x = 90 + i * (780 / (ids.length - 1));
@@ -4329,7 +4354,14 @@ export class VignetteScene extends Phaser.Scene {
     const pole = (x: number) => this.add.rectangle(x, 160, 4, 170, 0xd1d5db).setDepth(19);
     pole(300);
     pole(660);
-    const lads = this.partyCast(300);
+    let lads = this.partyCast(300);
+    // playing as Mikey, you're the act up there (SanMik): not also down on the dance floor
+    if (G.s.player === "MIKEY") {
+      const meOnFloor = this.cast.get("MIKEY");
+      lads = lads.filter((sp) => sp !== meOnFloor);
+      meOnFloor?.destroy();
+      this.cast.set("MIKEY", mik);
+    }
     synth.music("sanmik");
     const s1 = this.perform([mik, chz], "sing", 9);
     const s2 = this.perform([d1, d2], "dance", 10);

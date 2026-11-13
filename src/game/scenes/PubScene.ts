@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
 import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { PUB_CONVERSATIONS, PUB_SNIPPETS, type PubConversation } from "../../content/dialogue/pub";
@@ -14,7 +15,7 @@ import { activeMods } from "../../data/historicalRevisions";
 import { canTurnIn, completePersonal, pickupsInHub, collectPickup, personalQuest, pickupFlag } from "../systems/quests";
 import { CHARACTERS } from "../../data/characters";
 import { dir, ping, say } from "../../content/dsl";
-import { PLAYABLE_ORDER } from "../../data/characters";
+import { LADS } from "../../data/characters";
 import type { Line } from "../../data/types";
 
 export class PubScene extends Phaser.Scene {
@@ -120,7 +121,7 @@ export class PubScene extends Phaser.Scene {
     items.push(["🍺 Get a Fizzy Bongo in at the bar (10 Krezzcoin)", () => this.drinkHere()]);
     items.push(["🛍 Fizzy Bongo to take away (12 Krezzcoin)", () => this.buy()]);
     items.push([s.flags.pub_tv_off ? "📺 Turn the telly back on" : "📺 Turn the telly off", () => this.toggleTv()]);
-    if (this.sanmikOn) items.push(["🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
+    if (this.sanmikOn) items.push([G.s.player === "MIKEY" ? "🎤 Back room: you're on (SanMik & SanChz, live, mid-song)" : "🎤 Back room: SANMIK & SANCHZ are on (live, mid-song)", () => switchTo(this, "Venue", {})]);
     {
       const left = ((s.flags.club_banned_until as number) ?? 0) - s.playtimeMs;
       items.push([left > 0 ? `💃 The Wonky Pole strip room (barred: ${Math.ceil(left / 60000)} min)` : "💃 Through the curtain: THE WONKY POLE (strip room)", () => (left > 0 ? this.barred(left) : switchTo(this, "Club", {}))]);
@@ -215,7 +216,7 @@ export class PubScene extends Phaser.Scene {
     const gap = Math.min(150, 640 / seats.length);
     seats.forEach((id, i) => {
       const x = 480 - ((seats.length - 1) * gap) / 2 + i * gap;
-      const key = this.textures.exists(`spr_${id}`) ? `spr_${id}` : `spr_${s.player}`;
+      const key = this.textures.exists(`spr_${id}`) ? `spr_${id}` : playerKey(this);
       const spr = this.add.sprite(x, 290, key, 0).setScale(3.4);
       const sway = s.intoxication / 100;
       if (sway > 0.15) this.tweens.add({ targets: spr, angle: { from: -8 * sway, to: 8 * sway }, yoyo: true, repeat: -1, duration: 900 - sway * 400 });
@@ -276,7 +277,7 @@ export class PubScene extends Phaser.Scene {
     this.busy = true;
     this.menu.setVisible(false);
     this.table.removeAll(true);
-    const crowdIds = Phaser.Utils.Array.Shuffle(PLAYABLE_ORDER.filter((id) => id !== me && this.textures.exists(`spr_${id}`)).slice()).slice(0, 4) as string[];
+    const crowdIds = Phaser.Utils.Array.Shuffle(LADS.filter((id) => id !== me && this.textures.exists(`spr_${id}`)).slice()).slice(0, 4) as string[];
     const shoveLines = ["Wot u lookin at!!", "Eh?? Wot r u tryin 2 say?!", "Sounds lyke ur cumin on2 me 😡", "Wot goin on I cud take any1 anytyme!!!", "Oi. OI. You spilt me bongo.", "Let's av a fite."];
     await this.box.play([
       dir("The room tilts. Somebody at the bar looks at you. Funny."),
@@ -286,7 +287,7 @@ export class PubScene extends Phaser.Scene {
     ]);
     // ---- the brawl: tap / SPACE to swing at whoever's nearest
     const layer = this.add.container(0, 0).setDepth(500);
-    const hero = this.add.sprite(480, 330, `spr_${me}`, 0).setScale(3.4);
+    const hero = this.add.sprite(480, 330, playerKey(this), 0).setScale(3.4);
     const foes = crowdIds.map((id, i) => {
       const spr = this.add.sprite(i < 2 ? 200 + i * 110 : 650 + (i - 2) * 110, 330 + (i % 2) * 30, `spr_${id}`, 0).setScale(3.2);
       spr.setData("hp", 3);

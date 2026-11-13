@@ -10,6 +10,15 @@ import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { FONT, UI, uiFrame } from "./theme";
+import { kruncherVictim, sanmikActive } from "../systems/sanmik";
+
+/** SanMik isn't in CHARACTERS (he's Mikey in a wig): his name colour. */
+const SANMIK_COLOR = 0xb0c4ff;
+
+/** Playing as Mikey while he's SanMik: Mikey's lines are SanMik's (name and face; the voice is the same man). */
+function faceOf(speaker: string): string {
+  return speaker === "MIKEY" && sanmikActive(G.s) ? "SANMIK" : speaker;
+}
 
 export interface PlayOptions {
   historical?: boolean;
@@ -188,12 +197,13 @@ export class DialogueBox {
     }
     // a talking portrait (PixelLab mouth shapes, talk_<SPEAKER>) if this speaker has one
     let tk = `talk_${speaker.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
-    // Mikey's face after the Kreddle Krunchers got him: black eye, fat lip, for the rest of Chapter 3
-    if (tk === "talk_MIKEY" && G.s.flags.krunchers_invaded && G.s.chapter === 3 && this.scene.textures.exists("talk_MIKEY_HURT")) tk = "talk_MIKEY_HURT";
+    // the Kreddle Krunchers' victim (Mikey, or Polson if you're Mikey): black eye, fat lip, for the rest of Chapter 3
+    const victim = kruncherVictim(G.s);
+    if (tk === `talk_${victim}` && G.s.flags.krunchers_invaded && G.s.chapter === 3 && this.scene.textures.exists(`talk_${victim}_HURT`)) tk = `talk_${victim}_HURT`;
     this.talkKey = this.scene.textures.exists(tk) ? tk : null;
     if (this.talkKey) this.portrait.setTexture(this.talkKey, 0).setDisplaySize(112, 112).setVisible(true);
     else this.portrait.setTexture(key).setDisplaySize(112, 112).setVisible(true);
-    const col = CHARACTERS[speaker]?.color ?? 0x888888;
+    const col = CHARACTERS[speaker]?.color ?? (speaker === "SANMIK" ? SANMIK_COLOR : 0x888888);
     this.portraitFrame.fillStyle(0x000000, 1);
     this.portraitFrame.fillRect(24, 392, 120, 120);
     this.portraitFrame.lineStyle(3, col, 1);
@@ -259,10 +269,11 @@ export class DialogueBox {
     g.fillRoundedRect(x, 150, bubbleW, 150, 18);
     g.fillStyle(0x0084ff, 1);
     g.fillRoundedRect(x + 16, 196, bubbleW - 32, 90, 16);
-    const key = portraitKey(this.scene, line.s);
+    const face = faceOf(line.s);
+    const key = portraitKey(this.scene, face);
     const items: Phaser.GameObjects.GameObject[] = [g];
     if (key) items.push(this.scene.add.image(x + 38, 172, key).setDisplaySize(36, 36));
-    items.push(this.scene.add.text(x + 64, 162, line.speakerName || "Messenger", { fontFamily: FONT, fontSize: "15px", color: "#050505", fontStyle: "bold" }));
+    items.push(this.scene.add.text(x + 64, 162, (face !== line.s ? "SANMIK" : line.speakerName) || "Messenger", { fontFamily: FONT, fontSize: "15px", color: "#050505", fontStyle: "bold" }));
     items.push(this.scene.add.text(x + bubbleW - 20, 164, "now", { fontFamily: FONT, fontSize: "12px", color: "#65676b" }).setOrigin(1, 0));
     const body = this.scene.add.text(x + 32, 208, displayText(line.t), { fontFamily: FONT, fontSize: "17px", color: "#ffffff", wordWrap: { width: bubbleW - 64, useAdvancedWrap: true } });
     items.push(body);
@@ -446,11 +457,13 @@ export class DialogueBox {
     }
     opts.onSpeaker?.(rl.s, rl);
     this.drawBox("speech");
-    this.setPortrait(rl.s);
+    const face = faceOf(rl.s);
+    this.setPortrait(face);
     const hasPortrait = this.portrait.visible;
     const tx = hasPortrait ? 160 : 40;
-    const def = CHARACTERS[rl.s];
-    this.nameText.setPosition(tx, 372).setText(rl.speakerName).setColor(def ? "#" + def.color.toString(16).padStart(6, "0") : "#ffd23f");
+    const def = CHARACTERS[face];
+    const col = def ? def.color : face === "SANMIK" ? SANMIK_COLOR : null;
+    this.nameText.setPosition(tx, 372).setText(face !== rl.s ? "SANMIK" : rl.speakerName).setColor(col !== null ? "#" + col.toString(16).padStart(6, "0") : "#ffd23f");
     const tag = rl.tag === "canon" ? "ARCHIVE QUOTE" : "";
     this.titleText.setPosition(tx, 393).setText([rl.speakerTitle, tag].filter(Boolean).join("  ·  "));
     this.bodyText

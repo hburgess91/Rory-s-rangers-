@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
+import { sanmikActive } from "../systems/sanmik";
 import { backdrop } from "../gfx/HD";
 import { MEETINGS } from "../../content/meetings";
 import type { MeetingScript, SpeakerId } from "../../data/types";
@@ -6,7 +8,7 @@ import { REACTION_EMOJI } from "../../data/types";
 import { DialogueBox } from "../ui/DialogueBox";
 import { G } from "../G";
 import { goNext, type Next } from "../Flow";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { synth } from "../audio/Synth";
 import { FONT, hexStr, UI } from "../ui/theme";
 import { CANON } from "../../content/archive/canonQuotes";
@@ -132,7 +134,7 @@ export class TownMeetingScene extends Phaser.Scene {
       }
       return [...ids];
     }
-    const list: string[] = [...PLAYABLE_ORDER, "MIKEY"];
+    const list: string[] = [...LADS, "MIKEY"];
     list.splice(list.indexOf(G.s.player) + 1, 0, "PROCTUS");
     for (const a of m.attendees ?? []) if (!list.includes(a as string)) list.push(a as string);
     return list;
@@ -146,9 +148,10 @@ export class TownMeetingScene extends Phaser.Scene {
       const ang = Phaser.Math.DegToRad(158 - t * 136);
       const x = W / 2 + Math.cos(ang) * 275;
       const y = 190 + Math.sin(ang) * 118;
-      const spr = this.add.sprite(x, y, `spr_${id}`, 0).setScale(2.4).setDepth(10 + y);
       const isPlayer = !m.historical && id === G.s.player;
-      const plateName = id === "PROCTUS" && !m.historical ? `PROCTUS (${CHARACTERS[G.s.player].proctusTitle})` : CHARACTERS[id]?.name ?? id;
+      // playing as Mikey while he's SanMik: SanMik is in your seat
+      const spr = this.add.sprite(x, y, isPlayer ? playerKey(this) : `spr_${id}`, 0).setScale(2.4).setDepth(10 + y);
+      const plateName = id === "PROCTUS" && !m.historical ? `PROCTUS (${CHARACTERS[G.s.player].proctusTitle})` : isPlayer && sanmikActive(G.s) ? "SANMIK" : CHARACTERS[id]?.name ?? id;
       const plate = this.add
         .text(x, y + 34, isPlayer ? `${plateName} (YOU)` : plateName, { fontFamily: FONT, fontSize: "9px", color: hexStr(CHARACTERS[id]?.color ?? 0xffffff), backgroundColor: "#000000aa", padding: { x: 3, y: 1 }, align: "center", wordWrap: { width: 120 } })
         .setOrigin(0.5, 0)

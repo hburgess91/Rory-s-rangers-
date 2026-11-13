@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { FONT } from "./theme";
+import { G } from "../G";
 
 /** Shared touch state, written by the on-screen pad and read by Controls. */
 export const TOUCH = {
@@ -82,6 +83,11 @@ export class TouchControls {
       btn(640, 420, 24, "CUME", "cume", false, 0x93c5fd);
     } else {
       btn(860, 450, 44, "E", "interact");
+    }
+    // playing as Mikey: become SanMik (and back)
+    if (G.s?.player === "MIKEY") {
+      if (combat) btn(640, 340, 24, "SAN\nMIK", "sanmik", false, 0xb0c4ff);
+      else btn(760, 470, 30, "SAN\nMIK", "sanmik", false, 0xb0c4ff);
     }
     btn(930, 180, 22, "II", "pause");
   }

@@ -1,5 +1,6 @@
 import { addKrokens } from "../systems/kreddle";
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -14,7 +15,7 @@ import { arcStepAt, completeStep, maybeFinishArc } from "../systems/arcs";
 import { bump, maxBottles, maxHp } from "../systems/stats";
 import { GUNS, gunMax } from "../combat/Guns";
 import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
 
 const MIKEY_BARKS = [
@@ -799,7 +800,7 @@ export class MinigameScene extends Phaser.Scene {
     if (!backdrop(this, "bg_gym", { dim: 0.2, depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     title(this, 480, 70, "DEADLIFT: 300KG (RECORD: 280)", 28);
     this.add.text(480, 102, "Mash Tap / SPACE. Don't stop. The HGH is doing most of the work.", { fontFamily: FONT, fontSize: "14px", color: "#d6d6d6" }).setOrigin(0.5);
-    const lifter = this.add.sprite(480, 380, `spr_${G.s.player}`, 0).setScale(5).setDepth(10);
+    const lifter = this.add.sprite(480, 380, playerKey(this), 0).setScale(5).setDepth(10);
     const bar = this.add.image(480, 420, "p_barbell").setScale(3.2).setDepth(11);
     const prog = this.add.rectangle(140, 480, 0, 22, 0x22c55e).setOrigin(0, 0.5).setDepth(5);
     this.add.rectangle(480, 480, 680, 22).setStrokeStyle(2, 0xffffff).setDepth(6);
@@ -993,7 +994,7 @@ export class MinigameScene extends Phaser.Scene {
     title(this, 480, 40, "WOODCUTTING → 99", 26, "#ffff00");
     this.add.text(480, 70, "Tap / SPACE to chop. When the gear runs out, RE-UP (G or the button).", { fontFamily: FONT, fontSize: "13px", color: "#ffffff" }).setOrigin(0.5);
     const tree = this.add.image(560, 300, "p_tree").setScale(4);
-    const me = this.add.sprite(400, 330, `spr_${G.s.player}`, 0).setScale(4);
+    const me = this.add.sprite(400, 330, playerKey(this), 0).setScale(4);
     const lvlT = this.add.text(40, 110, "", { fontFamily: "monospace", fontSize: "18px", color: "#ffff00", stroke: "#000", strokeThickness: 4 });
     this.add.text(40, 186, "GEAR", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", fontStyle: "bold" });
     this.add.rectangle(40, 208, 200, 14, 0x111111).setOrigin(0, 0.5);
@@ -1076,7 +1077,7 @@ export class MinigameScene extends Phaser.Scene {
     if (!backdrop(this, "bg_gym", { dim: 0.25, depth: -10 })) this.add.tileSprite(0, 0, 960, 540, "tile_industrial").setOrigin(0);
     title(this, 480, 44, "EMOM: CHEST-TO-FLOOR BURPEES", 26);
     this.add.text(480, 76, "Alternate DOWN and UP (arrow keys / S then W / tap bottom then top half). 30 burpees before time.", { fontFamily: FONT, fontSize: "13px", color: "#ffffff" }).setOrigin(0.5);
-    const me = this.add.sprite(480, 330, `spr_${G.s.player}`, 0).setScale(5);
+    const me = this.add.sprite(480, 330, playerKey(this), 0).setScale(5);
     const cue = this.add.text(480, 170, "DOWN", { fontFamily: FONT, fontSize: "40px", color: "#22c55e", fontStyle: "bold", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
     const life = this.add.text(480, 460, "", { fontFamily: FONT, fontSize: "16px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5);
     const need = 30;
@@ -1464,7 +1465,7 @@ export class MinigameScene extends Phaser.Scene {
     const krebon = this.add.sprite(480, 310, "spr_KREBON", 0).setScale(3).setDepth(10);
     const others = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1"].filter((id) => id !== G.s.player && this.textures.exists(`spr_${id}`));
     const crowd = others.map((id, i) => this.add.sprite(40 + i * 64, 478 + (i % 2) * 20, `spr_${id}`, 0).setScale(2).setDepth(20 + (i % 2)));
-    const me = this.add.sprite(480, 440, `spr_${G.s.player}`, 0).setScale(2.4).setDepth(40);
+    const me = this.add.sprite(480, 440, playerKey(this), 0).setScale(2.4).setDepth(40);
     this.add.text(480, 404, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
     title(this, 480, 26, "TWITCHER MUTINY · KREBON LIVE AT THE KREZZ ARMS", 21, "#ffd23f").setDepth(200);
     this.add.text(480, 52, "Move A/D or drag low · SPACE / tap high to throw underwear at Krebon · F / tap a mosher to PUNCH · knock stage invaders off with a throw", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", stroke: "#000", strokeThickness: 3, align: "center", wordWrap: { width: 900 } }).setOrigin(0.5).setDepth(200);
@@ -1692,7 +1693,7 @@ export class MinigameScene extends Phaser.Scene {
     this.add.text(480, 46, "SanMik ft. the entire cabinet · ← / A = LEFT HAND · → / D = RIGHT HAND · ↑ / W / SPACE = CHOMP", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(200);
     // ---- the dancers: everyone, in a line, extremely serious
     const me = G.s.player;
-    const crew = [...PLAYABLE_ORDER.filter((id) => id !== me), "POLSON", "PROCTUS"].filter((id) => this.textures.exists(`spr_${id}`));
+    const crew = [...LADS.filter((id) => id !== me), "POLSON", "PROCTUS"].filter((id) => this.textures.exists(`spr_${id}`));
     type Dancer = { spr: Phaser.GameObjects.Sprite; skin: number; l: number; r: number; you: boolean };
     const dancers: Dancer[] = [];
     const back = crew.slice(0, 10);
@@ -1701,7 +1702,7 @@ export class MinigameScene extends Phaser.Scene {
       const spr = this.add.sprite(x, 300 + (i % 2) * 18, `spr_${id}`, 0).setScale(2.2).setDepth(20 + (i % 2));
       dancers.push({ spr, skin: CHARACTERS[id]?.look?.skin ?? 0xf0b095, l: 0, r: 0, you: false });
     });
-    const meSpr = this.add.sprite(480, 410, `spr_${me}`, 0).setScale(3).setDepth(40);
+    const meSpr = this.add.sprite(480, 410, playerKey(this), 0).setScale(3).setDepth(40);
     dancers.push({ spr: meSpr, skin: CHARACTERS[me]?.look?.skin ?? 0xf0b095, l: 0, r: 0, you: true });
     this.add.text(480, 448, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
     const arms = this.add.graphics().setDepth(45);
@@ -1880,7 +1881,7 @@ export class MinigameScene extends Phaser.Scene {
     this.add.rectangle(480, 470, 960, 140, 0x8b6b3a).setDepth(501);
     this.add.text(760, 300, "KRELFORD PLAYGROUND", { fontFamily: FONT, fontSize: "14px", color: "#fff4cc", backgroundColor: "#1a1033cc", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(502);
     const kids = [0, 1, 2, 3, 4].map((i) => {
-      const key = this.textures.exists(`spr_KID${i}`) ? `spr_KID${i}` : this.textures.exists(`spr_FOLK${i}`) ? `spr_FOLK${i}` : `spr_${G.s.player}`;
+      const key = this.textures.exists(`spr_KID${i}`) ? `spr_KID${i}` : this.textures.exists(`spr_FOLK${i}`) ? `spr_FOLK${i}` : playerKey(this);
       return this.add.sprite(640 + i * 60, 400 + (i % 2) * 20, key, 0).setScale(2).setDepth(510);
     });
     await this.box.play([
@@ -1981,7 +1982,7 @@ export class MinigameScene extends Phaser.Scene {
     } else plane.setScale(2);
     const barrel = this.add.rectangle(110, 440, 90, 26, 0x1f2937).setOrigin(0.1, 0.5).setStrokeStyle(3, 0x000000).setDepth(20);
     this.add.circle(110, 450, 26, 0x374151).setStrokeStyle(3, 0x000000).setDepth(21);
-    const hero = this.add.sprite(110, 420, `spr_${G.s.player}`, 0).setScale(2).setDepth(19).setVisible(false);
+    const hero = this.add.sprite(110, 420, playerKey(this), 0).setScale(2).setDepth(19).setVisible(false);
     const powBg = this.add.rectangle(110, 300, 20, 120, 0x000000, 0.6).setStrokeStyle(2, 0xffffff).setDepth(30).setVisible(false);
     const pow = this.add.rectangle(110, 360, 16, 0, 0xef4444).setOrigin(0.5, 1).setDepth(31).setVisible(false);
     let phase: "angle" | "power" | "flying" | "landed" | "done" = "angle";

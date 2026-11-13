@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
 import { vfx } from "../gfx/Vfx";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
@@ -87,6 +88,13 @@ export class DriveScene extends Phaser.Scene {
   private maceUntil = 0;
   private mace!: Phaser.GameObjects.Rectangle;
   private bridgeStarted = false;
+  /** Playing as Mikey you're SanMik, on the guns: Gabor the Goat takes the wheel (and SanMik's lines). */
+  private get gaborDrives() {
+    return G.s.player === "MIKEY";
+  }
+  private get driver() {
+    return this.gaborDrives ? "GABOR THE GOAT" : "SANMIK";
+  }
   private scroll = 0;
 
   constructor() {
@@ -142,11 +150,17 @@ export class DriveScene extends Phaser.Scene {
     // the truck: SanMik at the wheel, SanChz and you in the back, Gabor somewhere
     this.truck = this.add.container(TRUCK_X, ROAD_Y).setDepth(20);
     const truckImg = this.textures.exists("p_truck") ? this.add.image(0, 0, "p_truck").setScale(2.2).setOrigin(0.5, 0.75) : this.add.rectangle(0, 0, 240, 70, 0xe5e7eb);
-    const mik = this.add.sprite(70, -62, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(1.6);
+    // playing as Mikey you're SanMik (on the guns): Gabor the Goat is at the wheel instead
+    const mik = this.gaborDrives
+      ? this.textures.exists("p_gabor")
+        ? this.add.image(70, -60, "p_gabor").setScale(0.62)
+        : this.add.circle(70, -60, 14, 0xffffff)
+      : this.add.sprite(70, -62, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(1.6);
+    if (this.gaborDrives) this.tweens.add({ targets: mik, angle: { from: -5, to: 5 }, yoyo: true, repeat: -1, duration: 260 });
     const chz = this.add.sprite(-80, -66, this.textures.exists("spr_SANCHZ") ? "spr_SANCHZ" : "spr_POLSON", 0).setScale(1.9);
-    this.me = this.add.sprite(-30, -70, `spr_${G.s.player}`, 0).setScale(1.9);
+    this.me = this.add.sprite(-30, -70, playerKey(this), 0).setScale(1.9);
     this.gun = this.add.rectangle(-30, -84, 44, 9, 0x374151).setOrigin(0.1, 0.5).setStrokeStyle(2, 0x111827);
-    const goat = this.textures.exists("p_gabor") ? this.add.image(-118, -46, "p_gabor").setScale(0.55) : this.add.circle(-118, -46, 12, 0xffffff);
+    const goat = this.gaborDrives ? this.add.container(0, 0) : this.textures.exists("p_gabor") ? this.add.image(-118, -46, "p_gabor").setScale(0.55) : this.add.circle(-118, -46, 12, 0xffffff);
     const head = this.add.triangle(130, -8, 0, 0, 280, -50, 280, 50, 0xfef9c3, 0.14).setOrigin(0, 0.5);
     this.truck.add([head, chz, this.me, goat, mik, truckImg, this.gun]);
     this.tweens.add({ targets: truckImg, y: -2, yoyo: true, repeat: -1, duration: 90 });
@@ -185,13 +199,13 @@ export class DriveScene extends Phaser.Scene {
     this.box
       .play([
         dir("The Bank of Catford, 2am. Alarms. Smoke. A pickup truck mounts the pavement outside with its hazards on."),
-        say("SANMIK", "YEEE! We went and robbed a bank like Jason Statham in Crank!"),
+        say(this.driver, "YEEE! We went and robbed a bank like Jason Statham in Crank!"),
         say("SANCHZ", "A million pounds in stashed-up notes. YEGHHH."),
-        say("SANMIK", "And a goat. For some reason they kept a goat in that bank."),
+        say(this.driver, "And a goat. For some reason they kept a goat in that bank."),
         gabor("It was me. I asked them to lock me in the vault overnight. It was the best night of my life. Thank you for ruining it."),
         dir("Sirens. Lots of sirens. Fifteen sets of blue lights swing round the corner. Then a helicopter. Then another one. Then, somehow, a tank."),
-        say("SANMIK", "I'm driving. You're on the guns. Hold on to your bollocks. Let's have this night of freedom."),
-        dir("HOW TO PLAY: SanMik drives and does the jumps. Hold the mouse (or your finger) to fire the machine gun: it never runs out. Right-click, Space or F (or ROCKET) fires a rocket. Kills fill SanMik's SLOPPY SURPRISE: press R / SLOPPY. Survive to the drawbridge."),
+        say(this.driver, "I'm driving. You're on the guns. Hold on to your bollocks. Let's have this night of freedom."),
+        dir("HOW TO PLAY: SanMik drives and does the jumps. Hold the mouse (or your finger) to fire the machine gun: it never runs out. Right-click, Space or F (or ROCKET) fires a rocket. Kills fill SanMik's SLOPPY SURPRISE: press R / SLOPPY. Survive to the drawbridge.", { variants: { MIKEY: "HOW TO PLAY: Gabor drives and does the jumps (somehow). Hold the mouse (or your finger) to fire the machine gun: it never runs out. Right-click, Space or F (or ROCKET) fires a rocket. Kills fill your SLOPPY SURPRISE: press R / SLOPPY. Survive to the drawbridge." } }),
       ])
       .then(() => {
         this.running = true;
@@ -354,12 +368,18 @@ export class DriveScene extends Phaser.Scene {
 
   private bark(who?: "SANMIK" | "SANCHZ", text?: string) {
     const w = who ?? (Math.random() < 0.6 ? "SANMIK" : "SANCHZ");
+    // playing as Mikey, "SANMIK" here is the driver's seat: Gabor's. (His SLOPPY SURPRISE is yours.)
+    if (this.gaborDrives && w === "SANMIK" && text === "SLOPPY SURPRISE!!") {
+      this.pop(this.truck.x - 30, this.truck.y - 130, text, "#b0c4ff", 15);
+      synth.shout("yee", 0.85);
+      return;
+    }
     const mik = ["YEEEE!", "SanMik is here, I don't give a fuck!", "Away from the feds, away from the scum!", "Fifteen cop cars on my tail!", "Yee yee! Brap brap!", "Turn on your fucking TV!", "Channel U, baby!", "HOLD ON!", "Shoot the chopper, blud!"];
     const chz = ["YEGHHHH!", "Mork.", "Big up the getaway!", "That's great for the core", "YEGH YEGH", "MORE ROCKETS!"];
     const list = w === "SANMIK" ? mik : chz;
     const t = text ?? list[Math.floor(Math.random() * list.length)];
-    this.pop(this.truck.x + (w === "SANMIK" ? 70 : -80), this.truck.y - 120, t, w === "SANMIK" ? "#b0c4ff" : "#ffe08a", 15);
-    synth.shout(w === "SANMIK" ? "yee" : "yegh", 0.85);
+    this.pop(this.truck.x + (w === "SANMIK" ? 70 : -80), this.truck.y - 120, t, w === "SANMIK" ? (this.gaborDrives ? "#f5f5f4" : "#b0c4ff") : "#ffe08a", 15);
+    if (!(this.gaborDrives && w === "SANMIK")) synth.shout(w === "SANMIK" ? "yee" : "yegh", 0.85);
   }
 
   private fireRocket() {
@@ -410,7 +430,7 @@ export class DriveScene extends Phaser.Scene {
     this.ended = true;
     this.running = false;
     this.explode(this.truck.x, this.truck.y - 30, true);
-    this.box.play([dir("The truck spins out and stops against a bollard. The feds pile out. SanMik winds down his window."), say("SANMIK", "Officer. I'll be honest with you. That's illegal. I wrote the law."), dir("…Somehow, it works. Try that again.")]).then(() => {
+    this.box.play([dir("The truck spins out and stops against a bollard. The feds pile out. SanMik winds down his window.", { variants: { MIKEY: "The truck spins out and stops against a bollard. The feds pile out. Gabor winds down his window with his teeth." } }), say(this.driver, "Officer. I'll be honest with you. That's illegal. I wrote the law."), dir("…Somehow, it works. Try that again.")]).then(() => {
       this.cameras.main.fadeOut(300);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.restart(this.startData));
     });
@@ -432,7 +452,7 @@ export class DriveScene extends Phaser.Scene {
     const bx = 1100;
     const left = this.add.rectangle(bx, ROAD_Y + 26, 260, 26, 0x6b4f2a).setOrigin(0, 0.5).setDepth(10).setStrokeStyle(3, 0x2a1d0f);
     const right = this.add.rectangle(bx + 520, ROAD_Y + 26, 260, 26, 0x6b4f2a).setOrigin(1, 0.5).setDepth(10).setStrokeStyle(3, 0x2a1d0f);
-    await this.box.play([say("SANMIK", "There's a drawbridge about to lift."), say("SANMIK", "Into the highest gear I shift."), dir("MASH (tap / Space) to shift into the highest gear!")]);
+    await this.box.play([say(this.driver, "There's a drawbridge about to lift."), say(this.driver, "Into the highest gear I shift."), dir("MASH (tap / Space) to shift into the highest gear!")]);
     this.tweens.add({ targets: [left, right], x: `-=${bx - 520}`, duration: 2600 });
     this.tweens.add({ targets: left, angle: -24, delay: 1200, duration: 1400 });
     this.tweens.add({ targets: right, angle: 24, delay: 1200, duration: 1400 });
@@ -475,13 +495,13 @@ export class DriveScene extends Phaser.Scene {
     }
     this.cameras.main.flash(300, 255, 200, 120);
     await this.box.play([
-      say("SANMIK", "We jumped the drawbridge! We lost the fucking damn police! YEEEEEE!"),
+      say(this.driver, "We jumped the drawbridge! We lost the fucking damn police! YEEEEEE!"),
       say("SANCHZ", "YEGHHHHHHH."),
       gabor("I fell out twice. Can we do it again? Please no. Please yes."),
-      say("SANMIK", "Let's have this night of freedom. Let's have this night of love."),
-      say("SANMIK", "And all you pricks who doubted me, turn on your fucking TV. Put it onto Channel U. You'll see me say FUCK YOU."),
+      say(this.driver, "Let's have this night of freedom. Let's have this night of love."),
+      say(this.driver, "And all you pricks who doubted me, turn on your fucking TV. Put it onto Channel U. You'll see me say FUCK YOU."),
       dir(`${this.kills} police vehicles destroyed. The truck screeches into a warehouse car park on the edge of the estate. The ground is shaking. Not from the police. From the bass.`),
-      say("SANMIK", "Yee. The Nu Warehouse. Where it all began. We can't fix the hot tub sober, blud. Nobody's ever fixed a hot tub sober."),
+      say(this.driver, "Yee. The Nu Warehouse. Where it all began. We can't fix the hot tub sober, blud. Nobody's ever fixed a hot tub sober."),
     ]);
     this.finish();
   }

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { bindSanmikToggle, playerKey } from "../gfx/sanmikForm";
 import { vfx } from "../gfx/Vfx";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
@@ -8,7 +9,7 @@ import { synth } from "../audio/Synth";
 import { FONT, button, uiFrame } from "../ui/theme";
 import { dir, say } from "../../content/dsl";
 import { animateWalker } from "../gfx/HD";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { DECOR } from "../../content/home";
 import { INSULT, KRUNCHERS, KRUNCHER_BOAST, LOCAL_CHAT, PRIZE, PRIZES, SHOVES, WELCOME_SPEECH } from "../../content/kreddle";
 import { addKrokens, awardPrize, kd, krokenPrice, krokens, prizeOpen, rollPrize } from "../systems/kreddle";
@@ -101,7 +102,8 @@ export class KreddleScene extends Phaser.Scene {
     this.drawWorld();
     this.drawStrip();
     this.spawnPeople();
-    this.me = this.add.sprite(110, 560, `spr_${s.player}`, 0).setScale(2).setDepth(560);
+    this.me = this.add.sprite(110, 560, playerKey(this), 0).setScale(2).setDepth(560);
+    bindSanmikToggle(this, { sprites: () => [this.me], can: () => !this.busy });
     this.me.setData("facing", "east");
     this.cameras.main.startFollow(this.me, true, 0.1, 0.1);
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#1a0b24dd", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(3000).setVisible(false);
@@ -256,7 +258,7 @@ export class KreddleScene extends Phaser.Scene {
     });
     this.add.text(2240, 690, "THE KREDDLE KRUNCHERS", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ff4fd8", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5, 1).setDepth(700);
     void s;
-    void PLAYABLE_ORDER;
+    void LADS;
   }
 
   // ------------------------------------------------------------------ arriving and leaving

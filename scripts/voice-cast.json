@@ -11,7 +11,12 @@
     "SANCHZ",
     "FLENKY",
     "DARK JENKO",
-    "KREBLIS"
+    "KREBLIS",
+    "CRONGUS",
+    "LIL' CRONGUS",
+    "KREZWONK",
+    "KREZMAR",
+    "KREBON"
   ],
   "clones": {
     "MIKEY": "WsgNALUzdTM8230kgCyy",
@@ -98,7 +103,7 @@
     "KROZNO": "0OZ7i8PR5oCCKDAS7EEm",
     "TANK CROBLEY": "w6T6Mq8Bx1Ccju1YeIxp",
     "CROBSON CROBLEY": "wHadodnRXVvxqCj4JTU2",
-    "GABOR THE GOAT": "vfph97nrRXUWiVvTJW8J",
+    "GABOR THE GOAT": "mqPEJqsIBoDCRpjueUmF",
     "PIT BOSS": "7DC1x89zZMqW6fNVXnRx",
     "WAITER": "tpyWmf5nW5UNnfZaHIIx",
     "THE COLONEL": "z1BeuDf0Zuz95yNORKlH",
@@ -286,7 +291,7 @@
     "KROZNO": "A maniacal, cackling villain with a Russian accent. Wheezy and gleeful.",
     "TANK CROBLEY": "A booming, gung-ho Texan man in his forties with a thick Texas drawl. Loud drill-sergeant energy, patriotic and dim.",
     "CROBSON CROBLEY": "A creaky, kindly old English factory owner in his eighties, recently back from the dead. Raspy, polite and bewildered.",
-    "GABOR THE GOAT": "A bleating, warbling, goat-like voice. Wavering and quavering, nasal and silly.",
+    "GABOR THE GOAT": "A warbly, high-pitched, nasal male voice that sounds weird, unstable and neurotic. Wavering, jittery pitch that cracks and wobbles, anxious and over-apologetic, always on the edge of a nervous breakdown. English accent.",
     "PIT BOSS": "A menacing casino pit boss with a Las Vegas American accent. Cold, slow and threatening.",
     "WAITER": "A snooty waiter with a strong French accent. Weary and disdainful.",
     "THE COLONEL": "A blustering old British army colonel in his seventies. Posh, loud and pompous.",
@@ -414,7 +419,8 @@
     "JOURNALIST 1": "condescending",
     "JOURNALIST 3": "condescending",
     "JOURNALIST 6": "condescending",
-    "JOURNALIST 4": "sarcastic"
+    "JOURNALIST 4": "sarcastic",
+    "GABOR THE GOAT": "nervous"
   },
   "female": [
     "EDEN",
@@ -567,5 +573,8 @@
     "BIG BERTHA": "~robot",
     "KRELBERT AND RONSON": "KRELBERT",
     "REPORTER": "~press_f_us"
+  },
+  "clone_accents": {
+    "_doc": "Accent tag added to cloned voices on eleven_v3 (mood lines), which otherwise drift American. Default 'British accent'."
   }
 }

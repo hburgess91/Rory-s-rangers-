@@ -24,7 +24,7 @@ function scriptLines(id: string): Line[] {
   if (m) {
     const ch = CHAPTERS[Number(m[1]) - 1];
     if (!ch) return [];
-    return m[2] === "intro" ? [...ch.intro, ...ch.playerScene[G.s.player]] : ch.outro;
+    return m[2] === "intro" ? [...ch.intro, ...(ch.playerScene[G.s.player] ?? [])] : ch.outro;
   }
   return [];
 }

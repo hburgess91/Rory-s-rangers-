@@ -179,5 +179,5 @@ export function advanceChapter() {
 export function chapterIntroLines(n: number, player: PlayableId): Line[] {
   const ch = CHAPTERS[n - 1];
   if (!ch) return [];
-  return n === 1 ? ch.playerScene[player] : [...ch.intro, ...ch.playerScene[player]];
+  return n === 1 ? (ch.playerScene[player] ?? []) : [...ch.intro, ...(ch.playerScene[player] ?? [])];
 }

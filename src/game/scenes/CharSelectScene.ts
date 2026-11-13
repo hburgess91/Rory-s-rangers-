@@ -8,6 +8,7 @@ import { portraitKey } from "../gfx/Textures";
 import { synth } from "../audio/Synth";
 import { G } from "../G";
 import { maxHp } from "../systems/stats";
+import { keysFor, prettyKey } from "../systems/keybinds";
 
 const COLS = 4;
 
@@ -41,16 +42,16 @@ export class CharSelectScene extends Phaser.Scene {
       const col = i % COLS;
       const row = Math.floor(i / COLS);
       const x = 18 + col * 116;
-      const y = 76 + row * 148;
+      const y = 74 + row * 138;
       const def = CHARACTERS[id];
       const done = G.meta.completedWith.includes(id);
       const gone = this.swap && id === "KREBON";
-      const card = this.add.rectangle(x, y, 110, 140, gone ? 0x0e0f18 : 0x1b1e33).setOrigin(0).setStrokeStyle(2, def.color).setInteractive({ useHandCursor: true });
+      const card = this.add.rectangle(x, y, 110, 132, gone ? 0x0e0f18 : 0x1b1e33).setOrigin(0).setStrokeStyle(2, def.color).setInteractive({ useHandCursor: true });
       const pk = portraitKey(this, id);
-      if (pk) this.add.image(x + 55, y + 42, pk).setDisplaySize(64, 64);
-      this.add.sprite(x + 92, y + 82, `spr_${id}`, 0).setScale(1.2);
-      this.add.text(x + 55, y + 96, def.name, { fontFamily: FONT, fontSize: "11px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 104 } }).setOrigin(0.5, 0);
-      this.add.text(x + 55, y + 124, def.realName ?? "", { fontFamily: FONT, fontSize: "9px", color: "#8a8fa0" }).setOrigin(0.5, 0);
+      if (pk) this.add.image(x + 55, y + 38, pk).setDisplaySize(60, 60);
+      this.add.sprite(x + 92, y + 76, `spr_${id}`, 0).setScale(1.2);
+      this.add.text(x + 55, y + 90, def.name, { fontFamily: FONT, fontSize: "11px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 104 } }).setOrigin(0.5, 0);
+      this.add.text(x + 55, y + 117, def.nickname ? `"${def.nickname}"` : def.realName ?? "", { fontFamily: FONT, fontSize: def.nickname ? "10px" : "9px", color: def.nickname ? hexStr(def.color) : "#8a8fa0", fontStyle: def.nickname ? "bold" : "normal" }).setOrigin(0.5, 0);
       if (done) this.add.text(x + 4, y + 3, "✓", { fontFamily: FONT, fontSize: "11px", color: "#5ad35a" });
       card.on("pointerover", () => this.select(i));
       card.on("pointerdown", () => this.select(i));
@@ -66,10 +67,10 @@ export class CharSelectScene extends Phaser.Scene {
     kb.on("keydown-RIGHT", () => this.select((this.sel + 1) % N));
     kb.on("keydown-UP", () => this.select((this.sel + N - COLS) % N));
     kb.on("keydown-DOWN", () => this.select((this.sel + COLS) % N));
-    kb.on("keydown-A", () => this.select((this.sel + 8) % 9));
-    kb.on("keydown-D", () => this.select((this.sel + 1) % 9));
-    kb.on("keydown-W", () => this.select((this.sel + 6) % 9));
-    kb.on("keydown-S", () => this.select((this.sel + 3) % 9));
+    kb.on("keydown-A", () => this.select((this.sel + N - 1) % N));
+    kb.on("keydown-D", () => this.select((this.sel + 1) % N));
+    kb.on("keydown-W", () => this.select((this.sel + N - COLS) % N));
+    kb.on("keydown-S", () => this.select((this.sel + COLS) % N));
     kb.on("keydown-ENTER", () => this.confirm());
     kb.on("keydown-ESC", () => fadeThen(this, 200, () => switchTo(this, "Title")));
     button(this, 120, H - 26, "◀ BACK", () => fadeThen(this, 200, () => switchTo(this, "Title")), { w: 140, h: 32, size: 14 });
@@ -85,8 +86,8 @@ export class CharSelectScene extends Phaser.Scene {
     const X = 488;
     const add = (o: Phaser.GameObjects.GameObject) => this.detail.add(o);
     add(this.add.rectangle(X, 76, 456, 420, UI.panel).setOrigin(0).setStrokeStyle(2, d.color));
-    add(this.add.text(X + 16, 88, d.name, { fontFamily: FONT, fontSize: "24px", color: hexStr(d.color), fontStyle: "bold" }));
-    add(this.add.text(X + 16, 118, d.aka ?? "", { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 420 } }));
+    add(this.add.text(X + 16, 88, d.nickname ? `${d.name.split(" ")[0]} "${d.nickname}"` : d.name, { fontFamily: FONT, fontSize: "24px", color: hexStr(d.color), fontStyle: "bold" }));
+    add(this.add.text(X + 16, 118, (d.aka ?? "") + (id === "MIKEY" ? `  Press ${prettyKey(keysFor("sanmik")[0] ?? "V")} to become SANMIK whenever you like.` : ""), { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 146, d.combatBlurb ?? "", { fontFamily: FONT, fontSize: "14px", color: "#ffffff", wordWrap: { width: 420 } }));
     const bars: [string, number, number][] = [
       ["HEALTH", d.maxHp ?? 100, 160],

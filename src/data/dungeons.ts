@@ -31,7 +31,7 @@ export interface RoomDef {
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
-  enterLines?: { s: string; t: string; dir?: boolean; cond?: Cond }[];
+  enterLines?: { s: string; t: string; dir?: boolean; cond?: Cond; variants?: Line["variants"] }[];
   /** Side-scrolling rooms: backdrop image and one-way platforms [x (0..1), height above the ground, width]. */
   backdrop?: string;
   platforms?: [number, number, number][];
@@ -441,10 +441,10 @@ const SANMIK_HANGOUT: RoomDef = {
 const SANMIK_ARRIVAL: RoomDef["enterLines"] = [
   { s: "NARRATOR", t: "THE SANMIKVERSE. You land on some decking, in a back yard in what is definitely, allegedly, Catford. Fairy lights. A caravan with CAFÉ painted on the side. A hot tub. The sky is the colour of Pepsi Max.", dir: true },
   { s: "SANMIK", t: "CATFORD! Yee! I'm HOME, blud!" },
-  { s: "NARRATOR", t: "A phone rings in the caravan. A big furry arm passes SanMik a flip phone through the hatch.", dir: true },
+  { s: "NARRATOR", t: "A phone rings in the caravan. A big furry arm passes SanMik a flip phone through the hatch.", dir: true, variants: { MIKEY: "A phone rings in the caravan. A big furry arm passes you a flip phone through the hatch." } },
   { s: "BEGOUR THE BEAR", t: "Hiya SanMik love, it's Begour. I'm ever so sorry to do this. It's about Dawna. She's… she's broken up with you, love." },
   { s: "BEGOUR THE BEAR", t: "Smell my fart. It's lavender. It'll help, I promise." },
-  { s: "NARRATOR", t: "SanMik grows another head. Then he does a cartwheel. Then he breakdances on the decking. Both heads are crying.", dir: true },
+  { s: "NARRATOR", t: "SanMik grows another head. Then he does a cartwheel. Then he breakdances on the decking. Both heads are crying.", dir: true, variants: { MIKEY: "You grow another head. Then you do a cartwheel. Then you breakdance on the decking. Both heads are crying." } },
   { s: "BEGOUR THE BEAR", t: "Oh, come here. Both of you. Both heads. Big hug." },
   { s: "GENIE", t: "(from inside the lamp, muffled) TEN THOUSAND YEARS. I WANT A BATH. A HOT ONE. WITH JETS. FIX THE GIANT HOT TUB OF CATFORD AND I WILL SEND YOU HOME. UNTIL THEN, NOBODY LEAVES." },
   { s: "NARRATOR", t: "SIDE-ON CONTROLS: A / D to run · W (or up) to jump, press again in the air to double jump · S to drop through platforms · aim and attack with the mouse as normal · Space to dash. The exit is on the far right. Talk to everyone first. Begour gives hugs (they heal).", dir: true },
@@ -787,7 +787,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
           { s: "NARRATOR", t: "Catford High Street, as remembered by a man on three energy drinks. Kebab shop. Bookies. Pound shop. Open manholes everywhere, because the council 'is getting to it'. The kebab shop extractor fans vent pure grease steam onto the pavement.", dir: true },
           { s: "SANMIK", t: "YEEE! San Brothers, assemble! SanChz, you're on food. I'm on bars." },
           { s: "SANCHZ", t: "YEGHHH." },
-          { s: "NARRATOR", t: "SANMIK and SANCHZ have joined you. They fight on their own. When you krezz (R), SanMik does his version: the SLOPPY SURPRISE. Jump the manholes. Mind the steam.", dir: true },
+          { s: "NARRATOR", t: "SANMIK and SANCHZ have joined you. They fight on their own. When you krezz (R), SanMik does his version: the SLOPPY SURPRISE. Jump the manholes. Mind the steam.", dir: true, variants: { MIKEY: "SANCHZ has joined you. He fights on his own. Jump the manholes. Mind the steam." } },
         ],
       },
       {
@@ -851,7 +851,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [
           { s: "NARRATOR", t: "THE NU WAREHOUSE. A derelict warehouse on the edge of Catford, shaking at the seams. Lasers. Smoke. Five hundred people in bucket hats. On the decks, playing it for the ninth time in a row: 'MDMAzing'.", dir: true },
           { s: "SANMIK", t: "Yee. Here. Have this." },
-          { s: "NARRATOR", t: "He presses something small into your hand. It is shaped like a goat. It is pink. It has 'YEE' stamped on it.", dir: true },
+          { s: "NARRATOR", t: "He presses something small into your hand. It is shaped like a goat. It is pink. It has 'YEE' stamped on it.", dir: true, variants: { MIKEY: "You press something small into SanChz's hand, and keep one for yourself. It is shaped like a goat. It is pink. It has 'YEE' stamped on it." } },
           { s: "SANMIK", t: "Magic pill. Basically a vitamin. Gets you in the zone, innit. Can't fix a hot tub without being in the zone." },
           { s: "SANCHZ", t: "YEGHHH. I've had four." },
           { s: "NARRATOR", t: "You take the magic pill.", dir: true },
@@ -897,7 +897,8 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         enterLines: [
           { s: "NARRATOR", t: "You are four millimetres tall, and you are inside Uncle Rik's large intestine. Specifically the transverse colon. The walls are pink, ridged (haustra) and wet (mucosa). They are slowly contracting (peristalsis).", dir: true },
           { s: "GENIE", t: "(on the radio, from the lamp) Peristalsis. That's the squeezing. Don't touch the walls. Don't touch ANYTHING. Oh god, I'm going to be sick in my own lamp." },
-          { s: "SANMIK", t: "(on the radio) Find the crystal. Plant the bombs. Get out. Yee." },
+          { s: "SANMIK", t: "(on the radio) Find the crystal. Plant the bombs. Get out. Yee.", cond: { notPlayer: "MIKEY" } },
+          { s: "SANCHZ", t: "(on the radio) Find the crystal. Plant the bombs. Get out. Yee.", cond: { player: "MIKEY" } },
           { s: "NARRATOR", t: "Something in the dark is gnawing. Something else is screaming about being cancerous. TIP: prise the cum crystal out of the wall, then plant all four bombs (E on the red circles).", dir: true },
         ],
       },

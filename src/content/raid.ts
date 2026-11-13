@@ -35,7 +35,7 @@ export const RAID_SHOUTS: Line[] = [
   say("CRONGUS", "…oh fuck it. BURN!"),
   say("GRONNY", "Me no like Kreddle! Me make Kreddle HOT!"),
   say("GRONNY", "FIRE! Fire good! Kreddle bad!"),
-  say("MIKEY", "For my bongo!! FOR MY FIZZY BONGO!!"),
+  say("MIKEY", "For my bongo!! FOR MY FIZZY BONGO!!", { variants: { MIKEY: "For Polson's shake!! FOR POLSON'S PROTEIN SHAKE!!" } }),
   say("MIKEY", "Fragmar was worse than this. Not much worse."),
   say("MIKEY", "FGM ops never sleep, Kreddle!"),
   say("KREZMAR", "We hate you!"),
@@ -182,7 +182,7 @@ export const KRUNCHER_DEATHS: Line[] = [
 /** When the last Kruncher is ash. */
 export const KRUNCHERS_DONE: Line[] = [
   dir("Nine little piles of ash. The rain hisses on them."),
-  say("MIKEY", "And THAT'S for my bongo."),
+  say("MIKEY", "And THAT'S for my bongo.", { variants: { MIKEY: "And THAT'S for Polson's shake." } }),
   say("FLENKY", "WOOOOOOOO!!!"),
   say("GRONNY", "Krunchers crunched! Ha ha!"),
   say("KREBLIS", "Breaking news… the Kreddle Krunchers are cancelled 👍"),

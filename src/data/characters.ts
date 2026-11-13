@@ -35,6 +35,8 @@ export interface CharacterDef {
   id: CharacterId;
   name: string;
   realName?: string;
+  /** What the lads call him (shown on the select card in place of anything else). */
+  nickname?: string;
   aka?: string;
   color: number;
   look: SpriteLook;
@@ -291,7 +293,8 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     id: "MIKEY",
     name: "MIKEY NEVITT",
     realName: "Mikey Nevitt",
-    aka: "FGM ULTRA operative, call sign RUSSHEN",
+    nickname: "KREBLAR",
+    aka: "FGM ULTRA operative, call sign RUSSHEN. After dark: SANMIK.",
     color: 0x4fc3f7,
     portrait: "pt_mikey",
     playable: true,
@@ -386,4 +389,11 @@ export const PLAYABLE_ORDER: PlayableId[] = [
   "KREBON",
   "CRONGUS",
   "GRONNY",
+  "MIKEY",
 ];
+
+/**
+ * The Krew: the lads who turn up together (meetings, marches, brawls, the finale). Mikey isn't one of them (he's
+ * the one who wants to be): scenes add him by name where he tags along. Playing as Mikey, it's everyone else.
+ */
+export const LADS: PlayableId[] = PLAYABLE_ORDER.filter((id) => id !== "MIKEY");

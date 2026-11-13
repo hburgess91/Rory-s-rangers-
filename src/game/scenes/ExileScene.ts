@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { playerKey } from "../gfx/sanmikForm";
 import { backdrop } from "../gfx/HD";
 import { G } from "../G";
 import { enterExile, pickChallenge } from "../systems/ban";
@@ -32,7 +33,7 @@ export class ExileScene extends Phaser.Scene {
     this.add.text(480, 108, "THE GROUP CHAT", { fontFamily: FONT, fontSize: "12px", color: "#888" }).setOrigin(0.5);
     title(this, 480, 40, "YOU HAVE BEEN REMOVED FROM THE GROUP", 24, "#ff4d4d");
     this.add.text(480, 70, data?.why ?? "", { fontFamily: FONT, fontSize: "13px", color: "#ffaaaa" }).setOrigin(0.5);
-    this.add.sprite(380, 330, `spr_${s.player}`, 0).setScale(3.5);
+    this.add.sprite(380, 330, playerKey(this), 0).setScale(3.5);
     if (s.player !== "FLENKY") this.add.sprite(600, 330, "spr_FLENKY", 0).setScale(3.5);
     else this.add.sprite(600, 330, "spr_PROCTUS", 0).setScale(3.5);
     synth.music("doc");

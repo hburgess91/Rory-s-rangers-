@@ -1,6 +1,8 @@
 import { carriesCrystal, crystalCount, CRYSTALS_NEEDED, CRYSTAL_BOSSES } from "../systems/crystals";
 import { squeeze } from "../systems/squeeze";
 import Phaser from "phaser";
+import { bindSanmikToggle } from "../gfx/sanmikForm";
+import { SANMIK_FLAG } from "../systems/sanmik";
 import { DUNGEONS, type DungeonDef, type RoomDef, type PropDef } from "../../data/dungeons";
 import { ENEMIES } from "../../data/enemies";
 import type { Line } from "../../data/types";
@@ -80,6 +82,9 @@ const clearKey = (dungeon: string, room: number) => `dclr_${dungeon}_${room}`;
 
 /** How much bigger people are drawn in side-scrolling rooms. */
 const SIDE_BIG = 1.4;
+
+/** Who's on the radio from outside in the SanMikverse: SanMik, or SanChz when you ARE SanMik (playing as Mikey). */
+const sanRadio = () => (G.s.player === "MIKEY" ? "SANCHZ" : "SANMIK");
 
 export class DungeonScene extends Phaser.Scene implements CombatWorld {
   sc!: Phaser.Scene;
@@ -307,6 +312,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const cpy = typeof cp === "string" ? Number(cp.split(",")[1]) : NaN;
     const startX = this.side ? (Number.isFinite(cpx) ? cpx : 90) : r.w / 2;
     const startY = this.side ? (Number.isFinite(cpy) ? cpy : this.groundY - 40) : r.h - 90;
+    // the SanMikverse: playing as Mikey, you're SanMik in there (whatever chapter it is)
+    const sanmikverse = this.dungeon.id === "arena_sanmik" || this.dungeon.id === "sanmik_hangout";
+    if (sanmikverse && G.s.player === "MIKEY") G.s.flags[SANMIK_FLAG] = true;
     this.player = new Player(this, startX, startY);
     if (Number.isFinite(cpx)) this.sideLevel?.skipTo(cpx, cpy);
     if (this.side) {
@@ -327,7 +335,18 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.companion = new Companion(this, this.player, s.flags.companion);
       s.flags.companion_used = true;
     }
-    this.bros = r.sanBros ? [new SanBrother(this, this.player, "SANMIK"), new SanBrother(this, this.player, "SANCHZ")] : [];
+    // playing as Mikey you ARE SanMik in the SanMikverse: just SanChz alongside you
+    this.bros = r.sanBros ? (G.s.player === "MIKEY" ? [new SanBrother(this, this.player, "SANCHZ")] : [new SanBrother(this, this.player, "SANMIK"), new SanBrother(this, this.player, "SANCHZ")]) : [];
+    bindSanmikToggle(this, {
+      sprites: () => [this.player?.spr],
+      can: () => {
+        if (sanmikverse) {
+          this.toast("THE SANMIKVERSE", "You can't be Mikey here. In the SanMikverse you ARE SanMik.");
+          return false;
+        }
+        return !this.busy && !!this.player && this.time.now >= this.player.superUntil;
+      },
+    });
     this.enemyGroup = this.physics.add.group();
     if (!this.side) this.physics.add.collider(this.enemyGroup, this.enemyGroup);
     this.physics.add.collider(this.player.spr, this.obstacles);
@@ -851,6 +870,8 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       }
       case "talker": {
         const key = p.image ?? `spr_${p.speaker}`;
+        // playing as Mikey you're SanMik in here: no second one standing about
+        if (G.s.player === "MIKEY" && (key === "spr_SANMIK" || key === "spr_MIKEY")) break;
         const big = key.startsWith("p_");
         const tex = this.textures.exists(key) ? key : "p_sign";
         const spr = key.startsWith("spr_") ? this.add.sprite(x, y, tex, 0).setScale(this.side ? 2.6 : 2.2) : this.add.image(x, y, tex).setScale(big ? (this.side ? (key === "p_hottub" ? 1.5 : 1.25) : 1.2) : 2);
@@ -920,7 +941,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
             this.plantedBomb(x, y, ring);
             const all = (this.room.props ?? []).filter((q) => q.kind === "bomb_spot");
             const n = all.filter((q) => G.s.flags[`rik_bomb_${q.id}`]).length;
-            if (n < all.length) this.toast(`BOMB ${n} OF ${all.length} PLANTED`, n === 1 ? "SANMIK (radio): Yee. Lovely. Keep going." : n === 2 ? "GENIE (radio): Hurry. Something just MOVED in there." : "SANMIK (radio): One more, then leg it.");
+            if (n < all.length) this.toast(`BOMB ${n} OF ${all.length} PLANTED`, n === 1 ? `${sanRadio()} (radio): Yee. Lovely. Keep going.` : n === 2 ? "GENIE (radio): Hurry. Something just MOVED in there." : `${sanRadio()} (radio): One more, then leg it.`);
             else void this.colonFinale();
           },
         });
@@ -961,7 +982,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     await this.talk([
       dir("You get both hands round the cum crystal and pull. The colon pulls back. You pull harder. With a noise you will hear for the rest of your life, it comes free."),
       say("UNCLE RIK", "(from somewhere above, booming) OI. WHO'S IN THERE. I FELT THAT."),
-      say("SANMIK", "(radio) Yee. Now the bombs. Four of 'em. The red circles. Leave him a present."),
+      say(sanRadio(), "(radio) Yee. Now the bombs. Four of 'em. The red circles. Leave him a present."),
       dir("NEW OBJECTIVE: plant all four bombs (the red circles)."),
     ]);
   }
@@ -973,7 +994,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     for (const e of [...this.enemies]) if (!e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
     for (const sh of [...this.shots]) this.killShot(sh);
     await this.talk([
-      say("SANMIK", "(radio) That's all four. LEG IT. Back the way you came. The Genie's reversing the shrink ray."),
+      say(sanRadio(), "(radio) That's all four. LEG IT. Back the way you came. The Genie's reversing the shrink ray."),
       dir("You run. Past the poo. Past the gerbils. Past a tumour, who shouts something about being cancerous as you go by. Then the shrink ray finds you, and the world goes white."),
     ]);
     const cam = this.cameras.main;
@@ -1035,7 +1056,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const p = this.player.spr;
     await this.talk([
       say("GENIE", "(from the lamp) I can get you in there. I have a shrink ray. Don't ask why a genie has a shrink ray. I've had a long life."),
-      say("SANMIK", "Yee. Shrink 'em. Go in. Get the crystal. And while you're in there… leave him a present."),
+      say(sanRadio(), "Yee. Shrink 'em. Go in. Get the crystal. And while you're in there… leave him a present."),
       dir("The Genie hands you a bag. It's full of bombs. Four of them. You don't ask either."),
     ]);
     const lamp = this.add.circle(p.x - 160, p.y - 60, 10, 0xffd23f).setDepth(p.depth + 2);
@@ -1076,7 +1097,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       say(G.s.player, "It looks like you're making sweet love to a jam donut, mate."),
       say("SANCHZ", "…It's exactly what it looks like."),
       dir("The donut, to its credit, looks content."),
-      say("SANMIK", "(bursting in) YEEE — oh. Oh SanChz. Not again. Not in the Job Centre."),
+      say("SANMIK", "(bursting in) YEEE — oh. Oh SanChz. Not again. Not in the Job Centre.", { variants: { MIKEY: "YEEE — oh. Oh SanChz. Not again. Not in the Job Centre." } }),
       say("SANCHZ", "She's called Jaqueline. We met at Greggs. She gets me. YEGHHH."),
       gabor("Was that allowed? I don't think that was allowed. Report me. No, report HIM. Report both of us."),
       dir("Outside, the whole Job Centre shakes. Something enormous is rolling across the car park, screaming a name."),
@@ -1152,7 +1173,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async startRoom() {
     const r = this.room;
     this.busy = true;
-    const enter: Line[] = (r.enterLines ?? []).map((l) => ({ s: l.s, t: l.t, dir: l.dir, cond: l.cond, tag: "new" as const }));
+    const enter: Line[] = (r.enterLines ?? []).map((l) => ({ s: l.s, t: l.t, dir: l.dir, cond: l.cond, variants: l.variants, tag: "new" as const }));
     if (r.event === "cheesegate") enter.push(...DOMESTICS[0].lines);
     if (r.event === "mork") enter.push(...DOMESTICS[2].lines);
     if (r.rule) {

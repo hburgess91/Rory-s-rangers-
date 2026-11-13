@@ -12,6 +12,7 @@ import { synth } from "../audio/Synth";
 import { TouchControls, isTouchDevice } from "../ui/TouchControls";
 import { ammoLabel, weaponIcon, weaponList } from "../ui/weapons";
 import { DRONGUS_STATUSES } from "../../content/dialogue/drongusStatuses";
+import { playerFace, sanmikActive } from "../systems/sanmik";
 
 interface Toast {
   c: Phaser.GameObjects.Container;
@@ -85,8 +86,9 @@ export class UIScene extends Phaser.Scene {
         this.onEvent("fbstatus", { text: st.t, year: st.y });
       },
     });
-    const pk = portraitKey(this, G.s.player);
-    if (pk) this.add.image(34, 34, pk).setDisplaySize(52, 52);
+    this.face = playerFace(G.s);
+    const pk = portraitKey(this, this.face);
+    if (pk) this.faceImg = this.add.image(34, 34, pk).setDisplaySize(52, 52);
     this.add.rectangle(34, 34, 54, 54).setStrokeStyle(2, CHARACTERS[G.s.player].color);
     this.nameT = this.add.text(68, 6, "", { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", fontStyle: "bold" }).setShadow(1, 1, "#000", 0);
     this.statT = this.add.text(12, 66, "", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", lineSpacing: 2 }).setShadow(1, 1, "#000", 0);
@@ -261,6 +263,9 @@ export class UIScene extends Phaser.Scene {
   private hpGhost = 1;
   private hpGhostAt = 0;
 
+  private face = "";
+  private faceImg: Phaser.GameObjects.Image | null = null;
+
   update(time: number) {
     const s = G.s;
     const g = this.g;
@@ -345,7 +350,14 @@ export class UIScene extends Phaser.Scene {
       this.fartChip?.setVisible(false);
       this.statT.setY(66);
     }
-    const nm = time < this.renameUntil && this.rename ? this.rename : CHARACTERS[s.player].name;
+    // playing as Mikey: Mikey ⇄ SanMik changes the face and the name up here too
+    const face = playerFace(s);
+    if (face !== this.face) {
+      this.face = face;
+      const fk = portraitKey(this, face);
+      if (fk && this.faceImg) this.faceImg.setTexture(fk).setDisplaySize(52, 52);
+    }
+    const nm = time < this.renameUntil && this.rename ? this.rename : sanmikActive(s) ? "SANMIK" : CHARACTERS[s.player].name;
     this.nameT.setText(nm);
     this.hpT.setText(hpS);
     this.kzT.setText(kzS);

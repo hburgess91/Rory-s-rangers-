@@ -7,7 +7,7 @@ import { synth } from "../audio/Synth";
 import { FONT } from "../ui/theme";
 import { charMeta } from "../gfx/HD";
 import { hasVfx, vfx } from "../gfx/Vfx";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import * as FB from "../../content/finaleKrelford";
 import { finalePreload, finaleReady } from "./finale/finaleArt";
 
@@ -201,7 +201,7 @@ export class FinaleScene extends Phaser.Scene {
   /** The whole Krew (you included), side-on. */
   private placeLads(xs: number[], face: "west" | "south" | "east", scale = 3, y = FLOOR + 8) {
     const s = G.s;
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...LADS.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
     this.lads = ids.slice(0, xs.length).map((id, i) => {
       const key = `spr_${id}`;
       const meta = charMeta(this, key);

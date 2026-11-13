@@ -7542,6 +7542,11 @@
    "file": "props/c6_klerble_crawl_anim.png",
    "frameWidth": 64,
    "frameHeight": 32
+  },
+  "talk_POLSON_HURT": {
+   "file": "talk/talk_POLSON_HURT.png",
+   "frameWidth": 64,
+   "frameHeight": 64
   }
  },
  "vfx": {

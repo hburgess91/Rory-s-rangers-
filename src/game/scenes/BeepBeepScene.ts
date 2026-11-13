@@ -124,7 +124,8 @@ export class BeepBeepScene extends Phaser.Scene {
     const mirror = this.add.container(mx, my).setDepth(510);
     if (!hasDash) mirror.add(this.add.rectangle(0, 0, 220, 54, 0x0f172a).setStrokeStyle(4, 0x111827));
     else mirror.add(this.add.rectangle(0, 0, 190, 40, 0x1e293b, 0.85));
-    if (this.textures.exists("spr_SANMIK")) mirror.add(this.add.image(-45, 16, "spr_SANMIK", 0).setScale(1.3));
+    // playing as Mikey you're SanMik, at the wheel: just SanChz in the back
+    if (this.textures.exists("spr_SANMIK") && G.s.player !== "MIKEY") mirror.add(this.add.image(-45, 16, "spr_SANMIK", 0).setScale(1.3));
     if (this.textures.exists("spr_SANCHZ")) mirror.add(this.add.image(45, 16, "spr_SANCHZ", 0).setScale(1.3));
     const mm = this.make.graphics({}).fillRect(mx - 95, my - 20, 190, 40);
     mirror.setMask(mm.createGeometryMask());
@@ -137,7 +138,7 @@ export class BeepBeepScene extends Phaser.Scene {
     synth.music("beepbeep", true);
     this.box
       .play([
-        dir("A stolen Range Rover, idling on Catford High Street. SanChz nicked it. SanMik has made you drive it. The sat-nav has been set to THE BANK OF CATFORD, via THE PAVEMENT."),
+        dir("A stolen Range Rover, idling on Catford High Street. SanChz nicked it. SanMik has made you drive it. The sat-nav has been set to THE BANK OF CATFORD, via THE PAVEMENT.", { variants: { MIKEY: "A stolen Range Rover, idling on Catford High Street. SanChz nicked it. You're driving it, because you're SanMik and you said so. The sat-nav has been set to THE BANK OF CATFORD, via THE PAVEMENT." } }),
         say("SANMIK", "Yee. We need to get to the bank. Shortest route's through all them people."),
         say("SANCHZ", "YEGHHH. Pedestrians are just speed bumps with opinions."),
         say("SANMIK", "Twenty-five of 'em before the song ends, or we're late for the robbery. Traffic wardens count double. Bins count for nothing but they're satisfying."),

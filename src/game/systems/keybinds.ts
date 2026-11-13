@@ -17,6 +17,7 @@ export const ACTIONS: { id: string; label: string; defaults: string[] }[] = [
   { id: "swap", label: "Swap gun", defaults: ["X"] },
   { id: "transform", label: "Golden transformation", defaults: ["T"] },
   { id: "cume", label: "Cumehameha (while golden)", defaults: ["C"] },
+  { id: "sanmik", label: "Mikey ⇄ SanMik (as Mikey)", defaults: ["V"] },
 ];
 
 export function keysFor(action: string): string[] {

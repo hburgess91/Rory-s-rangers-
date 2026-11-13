@@ -1,3 +1,4 @@
+import { playerKey } from "../gfx/sanmikForm";
 import Phaser from "phaser";
 import { cumehameha, goSuper, megaMelee, superTick } from "./Super";
 import { charMeta, facingFrom, feetBody, steer } from "../gfx/HD";
@@ -110,7 +111,7 @@ export class Player {
     this.id = G.s.player;
     this.def = CHARACTERS[this.id];
     const sc = world.sc;
-    this.spr = sc.physics.add.sprite(x, y, `spr_${this.id}`, 0).setScale(2).setDepth(500);
+    this.spr = sc.physics.add.sprite(x, y, playerKey(sc), 0).setScale(2).setDepth(500);
     const body = this.spr.body as Phaser.Physics.Arcade.Body;
     if (charMeta(sc, this.spr.texture.key)) feetBody(this.spr, 20, 20, 24);
     else body.setSize(10, 10).setOffset(3, 13);

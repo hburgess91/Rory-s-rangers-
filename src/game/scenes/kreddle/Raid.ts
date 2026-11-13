@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { bindSanmikToggle, playerKey } from "../../gfx/sanmikForm";
 import { G } from "../../G";
 import { Controls } from "../../combat/Controls";
 import { DialogueBox } from "../../ui/DialogueBox";
@@ -247,7 +248,8 @@ export class KreddleRaid {
     this.spawnPeople(planted);
     this.spawnLads();
     const startX = planted ? 9300 : 130;
-    this.me = sc.add.sprite(startX, 560, `spr_${s.player}`, 0).setScale(2).setDepth(560);
+    this.me = sc.add.sprite(startX, 560, playerKey(sc), 0).setScale(2).setDepth(560);
+    bindSanmikToggle(sc, { sprites: () => [this.me], can: () => !this.busy });
     this.me.setData("facing", planted ? "west" : "east");
     sc.cameras.main.startFollow(this.me, true, 0.1, 0.1);
     for (const l of this.lads) l.spr.setPosition(this.me.x + l.off.x * (planted ? -1 : 1), this.me.y + l.off.y);
@@ -615,7 +617,7 @@ export class KreddleRaid {
     }
     await this.wait(ks.length * 140 + 300);
     Juice.heartbeat(0.8);
-    await Juice.bossCard(sc, "THE KREDDLE KRUNCHERS", "Kreddle's Evil Doppelgangers · Pissed In The Great Tap · Still Got Mikey's Bongo", "#ff4fd8", D_HUD + 3);
+    await Juice.bossCard(sc, "THE KREDDLE KRUNCHERS", `Kreddle's Evil Doppelgangers · Pissed In The Great Tap · ${G.s.player === "MIKEY" ? "Still Got Polson's Shake" : "Still Got Mikey's Bongo"}`, "#ff4fd8", D_HUD + 3);
     await this.talk(KRUNCHER_STANDOFF);
     close(400);
     sc.tweens.add({ targets: hud, alpha: 1, duration: 400 });
@@ -1465,7 +1467,7 @@ export class KreddleRaid {
 
   private shoutLine(line: Line) {
     const spr = this.ladSprite(String(line.s)) ?? this.lads[Math.floor(Math.random() * this.lads.length)]?.spr;
-    if (spr) this.bubble(spr, line.t, "#ffffff", true);
+    if (spr) this.bubble(spr, line.variants?.[G.s.player] ?? line.t, "#ffffff", true);
   }
 
   private throwSomething() {

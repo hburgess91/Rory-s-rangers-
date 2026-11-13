@@ -7,6 +7,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { speakable, voiceKey } from "../src/game/audio/voiceKey";
 import { CHARACTERS } from "../src/data/characters";
+import { goat } from "../src/content/dsl";
 
 const PLAYABLE = Object.values(CHARACTERS).filter((c: any) => c.playable).map((c: any) => c.id as string);
 
@@ -46,8 +47,9 @@ function walk(o: unknown, file: string) {
 for (const [f, m] of Object.entries(mods)) walk(m, f.replace("../src/content/", ""));
 
 // Scene code: say("SPEAKER", "text" [, { mood: "..." }]) with literal strings only.
-const DYNAMIC: Record<string, string[]> = { "this.dancerName()": ["DESTINY", "CRYSTAL"] };
-const CALL = /(?<![.\w])(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
+// speakers picked at run time: Night of Freedom's driver (SanMik, or Gabor when you're Mikey), the SanMikverse radio
+const DYNAMIC: Record<string, string[]> = { "this.dancerName()": ["DESTINY", "CRYSTAL"], "this.driver": ["SANMIK", "GABOR THE GOAT"], "sanRadio()": ["SANMIK", "SANCHZ"] };
+const CALL = /(?<![.\w])(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\)|this\.driver|sanRadio\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
 function unquote(lit: string) {
   const q = lit[0], body = lit.slice(1, -1);
   return body.replace(/\\(u\{?[0-9a-fA-F]+\}?|.)/g, (_m, e: string) =>
@@ -69,6 +71,12 @@ for (const p of files(gameDir)) {
     const mood = m[3]?.match(/mood:\s*["']([^"']+)["']/)?.[1];
     for (const sp of who.flatMap((w) => (w === "YOU" ? PLAYABLE : [w]))) add(sp, text, "game/" + p.slice(gameDir.length + 1), mood);
   }
+}
+// Gabor the Goat in scene code: gabor("literal") is said in goat-speak (content/dsl.ts goat()).
+const GABOR = /(?<![.\w])gabor\(\s*("(?:[^"\\\n]|\\.)*")\s*(,\s*\{[^}]*\})?\s*\)/g;
+for (const p of files(gameDir)) {
+  const src = readFileSync(p, "utf8");
+  for (const m of src.matchAll(GABOR)) add("GABOR THE GOAT", goat(unquote(m[1])), "game/" + p.slice(gameDir.length + 1), m[2]?.match(/mood:\s*["']([^"']+)["']/)?.[1]);
 }
 const arr = [...out.entries()].map(([k, v]) => ({ k, ...v }));
 writeFileSync(process.argv[2] ?? "voice-lines.json", JSON.stringify(arr, null, 0));

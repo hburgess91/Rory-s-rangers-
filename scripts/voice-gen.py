@@ -101,6 +101,9 @@ def plan(l, c):
             tags = [dflt]
     if v2_ok and not tags and not inline:
         return V2, t, SETTINGS[V2], []
+    if kind == "clone" and not accent:
+        # v3 drifts cloned voices towards American: pin every lad's own accent on mood lines
+        accent = CAST.get("clone_accents", {}).get(base, "British accent")
     prefix = "".join(f"[{x}] " for x in ([accent] if accent else []) + tags)
     return V3, prefix + t, SETTINGS[V3], tags
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { G } from "../G";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { PLAYER_BARKS } from "../../content/dialogue/ambient";
 import { animateWalker, tallOf } from "../gfx/HD";
 import type { Player } from "./Player";
@@ -20,7 +20,7 @@ export class Companion {
   }
 
   static pick(player: string): string {
-    const pool = PLAYABLE_ORDER.filter((id) => id !== player);
+    const pool = LADS.filter((id) => id !== player);
     return pool[Math.floor(Math.random() * pool.length)];
   }
 

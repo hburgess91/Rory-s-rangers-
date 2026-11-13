@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { bindSanmikToggle, playerKey } from "../gfx/sanmikForm";
+import { SANMIK_FLAG } from "../systems/sanmik";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -57,6 +59,9 @@ export class VenueScene extends Phaser.Scene {
   private lastHit = 0;
   private busy = false;
 
+  private performer = false;
+  private spot: Phaser.GameObjects.Ellipse | null = null;
+
   constructor() {
     super("Venue");
   }
@@ -78,14 +83,16 @@ export class VenueScene extends Phaser.Scene {
       const l = this.add.circle(120 + i * 144, 150, 80, [0xff2e88, 0x5ad1ff, 0xffd23f][i % 3], 0.14).setBlendMode(Phaser.BlendModes.ADD).setDepth(3);
       this.tweens.add({ targets: l, alpha: 0.32, duration: 300 + i * 70, yoyo: true, repeat: -1 });
     }
-    const sanmik = this.add.sprite(400, 270, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(3).setDepth(270);
+    // playing as Mikey, SanMik is you: just SanChz up there, and you're the one in the wig (walk about, sing when you stop)
+    this.performer = G.s.player === "MIKEY";
     const sanchz = this.add.sprite(580, 272, this.textures.exists("spr_SANCHZ") ? "spr_SANCHZ" : "spr_POLSON", 0).setScale(3).setDepth(272);
-    if (!this.textures.exists("spr_SANMIK")) sanmik.setTint(0xb0c4ff);
     if (!this.textures.exists("spr_SANCHZ")) sanchz.setTint(0xffe08a);
-    this.performers = [
-      { spr: sanmik, name: "SANMIK", hurt: SANMIK_HURT, hits: 0, home: { x: 400, y: 270 } },
-      { spr: sanchz, name: "SANCHZ", hurt: SANCHZ_HURT, hits: 0, home: { x: 580, y: 272 } },
-    ];
+    this.performers = [{ spr: sanchz, name: "SANCHZ", hurt: SANCHZ_HURT, hits: 0, home: { x: 580, y: 272 } }];
+    if (!this.performer) {
+      const sanmik = this.add.sprite(400, 270, this.textures.exists("spr_SANMIK") ? "spr_SANMIK" : "spr_MIKEY", 0).setScale(3).setDepth(270);
+      if (!this.textures.exists("spr_SANMIK")) sanmik.setTint(0xb0c4ff);
+      this.performers.unshift({ spr: sanmik, name: "SANMIK", hurt: SANMIK_HURT, hits: 0, home: { x: 400, y: 270 } });
+    }
     // the crowd
     const ids = ["FOLK0", "FOLK1", "FOLK2", "FOLK3", "KID0", "COP", "BOGGOR", "EDEN", "FOLK1", "FOLK0"].filter((k) => this.textures.exists(`spr_${k}`));
     ids.forEach((id, i) => {
@@ -94,7 +101,11 @@ export class VenueScene extends Phaser.Scene {
       this.crowd.push(c);
     });
     // you
-    this.me = this.add.sprite(480, 500, `spr_${G.s.player}`, 0).setScale(2).setDepth(500);
+    if (this.performer) G.s.flags[SANMIK_FLAG] = true;
+    this.me = this.add.sprite(this.performer ? 400 : 480, this.performer ? 280 : 500, playerKey(this), 0).setScale(2).setDepth(500);
+    this.spot = this.performer ? this.add.ellipse(this.me.x, this.me.y + 22, 120, 36, 0xfff1a8, 0.32).setBlendMode(Phaser.BlendModes.ADD).setDepth(2) : null;
+    if (this.spot) this.tweens.add({ targets: this.spot, alpha: 0.18, yoyo: true, repeat: -1, duration: 420 });
+    bindSanmikToggle(this, { sprites: () => [this.me], can: () => !this.busy });
     this.add.rectangle(480, 532, 90, 14, 0xffd23f, 0.3).setStrokeStyle(2, 0xffd23f).setDepth(1);
     this.add.text(480, 532, "EXIT", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f" }).setOrigin(0.5).setDepth(2);
     this.banner = this.add.text(480, 116, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#1a1033cc", padding: { x: 8, y: 3 } }).setOrigin(0.5).setDepth(200);
@@ -109,7 +120,9 @@ export class VenueScene extends Phaser.Scene {
     this.time.delayedCall(600, () => {
       if (G.s.flags.sanmik_seen) return;
       G.s.flags.sanmik_seen = true;
-      this.talk([dir("The back room of the Krezz Arms. It is very hot. On stage, in a huge afro wig, white sunglasses and a goatee drawn on in marker pen: SANMIK. Next to him, in a gold shell suit: SANCHZ."), dir("They are midway through a song. They have been midway through a song since 2011."), dir("Walk up and attack them if you want it to stop. Head to the EXIT when you've had enough.")]);
+      if (this.performer)
+        this.talk([dir("The back room of the Krezz Arms. It is very hot. On stage, in a huge afro wig, white sunglasses and a goatee drawn on in marker pen: you. SANMIK. Next to you, in a gold shell suit: SANCHZ."), dir("You are midway through a song. You have been midway through a song since 2011."), dir("Wander about mid-verse if you like (stand still and you sing). Head to the EXIT when you've had enough.")]);
+      else this.talk([dir("The back room of the Krezz Arms. It is very hot. On stage, in a huge afro wig, white sunglasses and a goatee drawn on in marker pen: SANMIK. Next to him, in a gold shell suit: SANCHZ."), dir("They are midway through a song. They have been midway through a song since 2011."), dir("Walk up and attack them if you want it to stop. Head to the EXIT when you've had enough.")]);
     });
   }
 
@@ -172,7 +185,10 @@ export class VenueScene extends Phaser.Scene {
     if (p.hits === 4) {
       p.spr.setAngle(90);
       this.float(p.spr.x, p.spr.y - 40, "💤", "#ffffff");
-      if (this.performers.every((q) => q.hits >= 4)) {
+      if (this.performers.every((q) => q.hits >= 4) && this.performer) {
+        G.s.coins += 15;
+        this.talk([dir("SanChz lies on the stage. The crowd goes quiet. Somebody finds 15 Krezzcoin in SanChz's bumbag and gives it to you, out of fear."), say("POLSON", "(from the floor) Mork.")]);
+      } else if (this.performers.every((q) => q.hits >= 4)) {
         G.s.coins += 15;
         this.talk([dir("SanMik and SanChz lie on the stage. The crowd goes quiet. Somebody finds 15 Krezzcoin in SanChz's bumbag and gives it to you, out of fear."), say("MIKEY", "(from the floor) We'll be back next week. Same time."), say("POLSON", "(from the floor) Mork.")]);
       }
@@ -190,7 +206,8 @@ export class VenueScene extends Phaser.Scene {
       }
       const t = time / 1000 + i * 0.7;
       // the real act when the art has it: SanMik on the mic, SanChz dancing
-      if (!this.tweens.isTweening(p.spr) && (playPerf(p.spr, i ? "dance" : "sing", time, i ? 9 : 8) || playPerf(p.spr, "dance", time, 9, 3))) {
+      const sings = p.name === "SANMIK";
+      if (!this.tweens.isTweening(p.spr) && (playPerf(p.spr, sings ? "sing" : "dance", time, sings ? 8 : 9) || playPerf(p.spr, "dance", time, 9, 3))) {
         p.spr.x = p.home.x + Math.sin(t * 0.9) * 14;
         p.spr.y = p.home.y;
         return;
@@ -233,7 +250,13 @@ export class VenueScene extends Phaser.Scene {
     this.me.x = Phaser.Math.Clamp(this.me.x + mv.x * sp, 40, 920);
     this.me.y = Phaser.Math.Clamp(this.me.y + mv.y * sp, 250, 520);
     this.me.setDepth(this.me.y);
-    animateWalker(this.me, mv.x, mv.y, Math.hypot(mv.x, mv.y) > 0.1, time);
+    const moving = Math.hypot(mv.x, mv.y) > 0.1;
+    animateWalker(this.me, mv.x, mv.y, moving, time);
+    if (this.performer) {
+      const live = !this.stopped && !this.between;
+      this.spot?.setPosition(this.me.x, this.me.y + 22).setVisible(live);
+      if (live && !moving && this.me.texture.key === "spr_SANMIK") playPerf(this.me, "sing", time, 8);
+    }
     // what's in reach
     const near = this.performers.find((p) => p.hits < 4 && Phaser.Math.Distance.Between(p.spr.x, p.spr.y, this.me.x, this.me.y) < 80);
     const atExit = this.me.y > 495 && Math.abs(this.me.x - 480) < 70;

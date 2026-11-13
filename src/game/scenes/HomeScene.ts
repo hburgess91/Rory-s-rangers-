@@ -1,5 +1,6 @@
 import { KR_HOME } from "../../content/krunchers";
 import Phaser from "phaser";
+import { bindSanmikToggle, playerKey } from "../gfx/sanmikForm";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -90,7 +91,8 @@ export class HomeScene extends Phaser.Scene {
       { x: 420, y: 445, r: 55, label: "E: Look out of the window", use: () => this.talk([dir(s.flags.met_emergency ? "Krelford. The sky has a faint grey tint, like an unloaded page. Somewhere, a Tap is not running." : "Krelford, in the evening. Somewhere a fizzy bongo is opened. Somewhere else, the Great Tap gurgles. All is well. For now.")]) },
       { x: 760, y: 450, r: 60, label: "E: Go outside", use: () => this.leave() },
     );
-    this.me = this.add.sprite(s.flags.home_seen ? 740 : 420, 500, `spr_${s.player}`, 0).setOrigin(0.5, 1).setScale(5.5).setDepth(500);
+    this.me = this.add.sprite(s.flags.home_seen ? 740 : 420, 500, playerKey(this), 0).setOrigin(0.5, 1).setScale(5.5).setDepth(500);
+    bindSanmikToggle(this, { sprites: () => [this.me], can: () => !this.busy });
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#000000cc", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(1000).setVisible(false);
     this.controls = new Controls(this);
     this.box = new DialogueBox(this, 2000, 0.2);

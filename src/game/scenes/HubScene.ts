@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { pursuerId } from "../systems/sanmik";
+import { bindSanmikToggle } from "../gfx/sanmikForm";
+import { keysFor, prettyKey } from "../systems/keybinds";
+import { playerKey } from "../gfx/sanmikForm";
 import { hasVfx, vfx } from "../gfx/Vfx";
 import { ensureCh6Art } from "../gfx/ch6Art";
 import * as Juice from "../gfx/Juice";
@@ -6,7 +10,7 @@ import { squeeze } from "../systems/squeeze";
 import { G } from "../G";
 import { Controls } from "../combat/Controls";
 import { FONT, hexStr, button } from "../ui/theme";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { BARKS } from "../../content/dialogue/ambient";
 import { NPC_TALK, type TalkSet } from "../../content/dialogue/npc";
 import { CHATTER } from "../../content/dialogue/chatter";
@@ -200,6 +204,22 @@ const MIKEY_WHINES = [
   "I've got a mobility scooter now. Can't use it. Can I come?",
 ];
 const MIKEY_HURT = ["OW", "OOF", "That's fair", "Fair play", "I deserved that", "Is that a yes?", "Lads??", "Ow. Can I still come?", "Hahaha. Ow."];
+/** Playing as Mikey, Polson does the following-you-about instead. */
+const POLSON_WHINES = [
+  "Yeeeggghhhh!! Where we going? Can I come? 😅",
+  "Mikey!! Wbu?? What we doing today?",
+  "Gym later? Or food. Food first. Then gym 😅",
+  "Eden says I can come out. For an hour. Two if it's food.",
+  "Is it a pub thing? I'm in. I'll ask Eden. I'm in.",
+  "Can I come?? I'll drive. I can't drive. I'll get a lift.",
+  "It's on the list!! Hanging out with you. It's on the list 😅",
+  "Wait for me!! I'm bulking!!",
+  "Mikey. Mikey. MIKEY. Wbu?",
+  "Thoughts? On me coming? 😅",
+  "Takeaway after? Thoughts?",
+  "I'm free!! Eden's at her mum's!!",
+];
+const POLSON_HURT = ["OOF", "Yeeeggghhhh!!", "Fair 😅", "That's fair", "Ow. Still coming though", "Is that a no?", "Eden's gonna hear about this", "Hahaha. Ow.", "Mikey!!"];
 
 interface HubInteract {
   x: number;
@@ -286,9 +306,15 @@ export class HubScene extends Phaser.Scene {
     this.drawWorld();
     this.controls = new Controls(this);
     const start = this.spawnPoint(data?.at);
-    this.av = this.physics.add.sprite(start.x, start.y, `spr_${s.player}`, 0).setScale(2).setDepth(start.y);
+    this.av = this.physics.add.sprite(start.x, start.y, playerKey(this), 0).setScale(2).setDepth(start.y);
     feetBody(this.av, 20, 16, this.hd ? 26 : 22).setCollideWorldBounds(true);
     this.physics.add.collider(this.av, this.colliders);
+    // playing as Mikey: V (or the SANMIK button) and he's SanMik, there and then
+    bindSanmikToggle(this, { sprites: () => [this.av as unknown as Phaser.GameObjects.Sprite], can: () => !this.busy && !this.cutscene });
+    if (s.player === "MIKEY" && !s.flags.sanmik_hint && s.chapter !== 5) {
+      s.flags.sanmik_hint = true;
+      this.time.delayedCall(2500, () => G.emit("toast", { title: "KREBLAR, AKA SANMIK", text: `Press ${prettyKey(keysFor("sanmik")[0] ?? "V")} any time to become SanMik (and back). Whoever you are, you stay that way.` }));
+    }
     // headroom above the map so the top of Da Drongus Dungeon fits on screen
     this.cameras.main.setBounds(0, -SKY_H, WORLD_W, WORLD_H + SKY_H);
     this.cameras.main.startFollow(this.av, true, 0.12, 0.12);
@@ -910,7 +936,7 @@ export class HubScene extends Phaser.Scene {
         const ang = Math.random() * Math.PI * 2;
         const sx = T.x + Math.cos(ang) * 420;
         const sy = T.y + Math.sin(ang) * 260;
-        const folk = this.add.sprite(sx, sy, this.textures.exists(`spr_FOLK${(i % 3) + 1}`) ? `spr_FOLK${(i % 3) + 1}` : `spr_${s.player}`, 0).setScale(2).setDepth(sy);
+        const folk = this.add.sprite(sx, sy, this.textures.exists(`spr_FOLK${(i % 3) + 1}`) ? `spr_FOLK${(i % 3) + 1}` : playerKey(this), 0).setScale(2).setDepth(sy);
         const bucket = this.add.text(sx + 12, sy - 4, "🪣", { fontSize: "16px" }).setDepth(sy + 1);
         const tx = T.x + Math.cos(ang) * 80;
         const ty = T.y + 40 + Math.sin(ang) * 40;
@@ -1484,8 +1510,10 @@ export class HubScene extends Phaser.Scene {
   private spawnNpcs() {
     const s = G.s;
     // Eden moved out of Polson Towers in chapter 2
-    for (const id of [...PLAYABLE_ORDER, "POLSON"]) {
-      if (id === s.player) continue;
+    // the one who follows you round town wanting a shove: Mikey, or Polson if you ARE Mikey (not in Polson's chapters)
+    const chaser = pursuerId(s);
+    for (const id of [...LADS, "POLSON"]) {
+      if (id === s.player || id === "MIKEY" || id === chaser) continue;
       if ((id === "POLSON" || id === "EDEN") && s.chapter < 3) continue;
       if (id === "KREBON" && s.flags.krebon_gone) continue;
       // from chapter 2 the others are out doing their own side stories
@@ -1497,14 +1525,20 @@ export class HubScene extends Phaser.Scene {
         n.spr.setScale(n.spr.scaleX * k, n.spr.scaleY * (1 + (k - 1) * 0.2));
       }
     }
-    // Mikey: not playable. Follows you everywhere asking to join the group.
-    if (s.player !== "MIKEY") {
-      this.addNpc("MIKEY", { x: (NPC_SPOTS.MIKEY?.x ?? 430), y: (NPC_SPOTS.MIKEY?.y ?? 980) });
+    // Mikey follows you everywhere asking to join the group (playing as Mikey: Polson does, wanting to come out)
+    if (chaser) {
+      const spot = NPC_SPOTS[chaser] ?? { x: 430, y: 980 };
+      this.addNpc(chaser, { x: spot.x, y: spot.y });
       const m = this.npcs[this.npcs.length - 1];
+      if (chaser === "POLSON" && s.flags.polson_fat) {
+        const k = 1 + Math.min(60, s.flags.polson_fat as number) * 0.04;
+        m.spr.setScale(m.spr.scaleX * k, m.spr.scaleY * (1 + (k - 1) * 0.2));
+      }
       m.follower = { hits: 0, koUntil: 0, nextWhine: this.time.now + 4000, lastHit: 0 };
+      const nm = chaser === "POLSON" ? "Polson" : "Mikey";
       const it = this.interactables.find((i) => (i as any).__npc === m);
       if (it) {
-        it.label = () => (m.follower!.koUntil > this.time.now ? "Mikey is unconscious (talk to him anyway)" : "Shove Mikey");
+        it.label = () => (m.follower!.koUntil > this.time.now ? `${nm} is unconscious (talk to him anyway)` : `Shove ${nm}`);
         it.use = () => (m.follower!.koUntil > this.time.now ? this.talkTo(m) : this.hitMikey(m, false));
       }
     }
@@ -1564,7 +1598,7 @@ export class HubScene extends Phaser.Scene {
     } else {
       if (spr.angle !== 0) {
         spr.setAngle(0);
-        this.bubble(n, "I forgive you. Can I join now?", 2600);
+        this.bubble(n, n.id === "POLSON" ? "Yeeegh. I forgive you. Where we going? 😅" : "I forgive you. Can I join now?", 2600);
       }
       const dx = this.av.x - spr.x;
       const dy = this.av.y - spr.y;
@@ -1578,7 +1612,8 @@ export class HubScene extends Phaser.Scene {
       animateWalker(spr, dx, dy, moving, now);
       if (now > f.nextWhine && d < 360 && !this.busy) {
         f.nextWhine = now + 5500 + Math.random() * 4000;
-        this.bubble(n, MIKEY_WHINES[Math.floor(Math.random() * MIKEY_WHINES.length)]);
+        const whines = n.id === "POLSON" ? POLSON_WHINES : MIKEY_WHINES;
+        this.bubble(n, whines[Math.floor(Math.random() * whines.length)]);
       }
     }
     spr.setDepth(spr.y);
@@ -1605,12 +1640,13 @@ export class HubScene extends Phaser.Scene {
     if (f.hits >= 4) {
       f.hits = 0;
       f.koUntil = now + 40000;
-      bump(G.s, "mikey_kos");
+      bump(G.s, n.id === "POLSON" ? "polson_kos" : "mikey_kos");
       this.bubble(n, "…(knocked out)…", 2200);
-      G.emit("toast", { title: "MIKEY: KNOCKED OUT", text: "Peace and quiet. For about 40 seconds." });
+      G.emit("toast", { title: `${n.id}: KNOCKED OUT`, text: "Peace and quiet. For about 40 seconds." });
     } else {
       f.nextWhine = now + 1500;
-      this.bubble(n, MIKEY_HURT[Math.floor(Math.random() * MIKEY_HURT.length)], 1600);
+      const hurt = n.id === "POLSON" ? POLSON_HURT : MIKEY_HURT;
+      this.bubble(n, hurt[Math.floor(Math.random() * hurt.length)], 1600);
     }
   }
 
@@ -2215,7 +2251,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "BAN_TRIBUNAL":
         return s.flags.ban_tribunal_open ? "Enter the Ban Tribunal" : "Ban Tribunal (closed until the Cronster briefing)";
       case "BOOTH":
-        return "The Booth (Bully Mikey · vent your frustration)";
+        return s.player === "MIKEY" ? "The Booth (nobody to bully today)" : "The Booth (Bully Mikey · vent your frustration)";
       case "CROBLEY_FACTORY":
         return s.flags.crobley_factory_destroyed ? "The smouldering wreck of Crobley Corp HQ" : "Crobley Corp HQ";
       case "UNIVERSITY":
@@ -2328,9 +2364,11 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "BOOTH":
         await this.talk(
           s.player === "MIKEY"
-            ? [dir("The Booth. There's a heavy bag in here shaped like you. Mikey can't bully Mikey, so Proctus Krelmor has been volunteered as Acting Mikey."), say("PROCTUS", "I've been told this is ministerial.")]
+            ? [dir("The Booth. There's a heavy bag in here shaped like you. You leave it be. You've had enough of that for one lifetime.")]
             : [dir("The Booth. Mikey is hanging from the ceiling in a punching-bag harness. He has brought his own harness."), say("MIKEY", "Mikey here. Go on then. Get it out of your system.")],
         );
+        // playing as Mikey there's no bullying Mikey
+        if (s.player === "MIKEY") return;
         this.go("Minigame", { mode: "bully", returnAt: "BOOTH" });
         return;
       case "UNIVERSITY":
@@ -3126,7 +3164,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     const door = b.door!;
     cam.stopFollow();
     cam.pan(door.x, door.y - 60, 700, Phaser.Math.Easing.Sine.InOut);
-    const ids = PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`));
+    const ids = LADS.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`));
     const lads = ids.map((id, i) => this.add.sprite(door.x - 160 + (i % 4) * 40, door.y + 150 + Math.floor(i / 4) * 34, `spr_${id}`, 0).setScale(2).setDepth(door.y + 150));
     await new Promise((r) => this.time.delayedCall(750, r));
     await this.talk(CITADEL_ENTRY.slice(0, 3));
@@ -3158,7 +3196,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.av.setVisible(false);
     synth.stopMusic();
     // rubble heaps with the Krew under them
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...LADS.filter((p) => p !== s.player)].filter((p) => this.textures.exists(`spr_${p}`));
     const lads = ids.map((id, i) => {
       const x = cx - 200 + i * 50;
       const y = cy + (i % 2) * 22;
@@ -3291,7 +3329,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     const marching = s.chapter === 6 && s.flags.raid_march && !s.flags.krunch_started;
     if (!marching) return;
     if (!this.raidKrew.length) {
-      PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
+      LADS.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
         const spr = this.add.sprite(this.av.x - 30 - i * 10, this.av.y + 20, `spr_${p}`, 0).setScale(2).setDepth(this.av.y);
         this.raidKrew.push({ spr, lag: 10 + i * 7 });
       });
@@ -3498,7 +3536,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     synth.play("punch");
     b.shoves++;
     vfx(this, "vfx_hit", near.x, near.y - 30, { scale: 1.2, depth: 6000 });
-    this.floatShout(this.av as unknown as Phaser.GameObjects.Sprite, Phaser.Utils.Array.GetRandom(["SHOVE!", "SCRAM!", ...KR.KREW_SHOUTS]), "#bde0fe");
+    this.floatShout(this.av as unknown as Phaser.GameObjects.Sprite, Phaser.Utils.Array.GetRandom(["SHOVE!", "SCRAM!", ...(G.s.player === "MIKEY" ? KR.KREW_SHOUTS_POLSON : KR.KREW_SHOUTS)]), "#bde0fe");
     if (Math.random() < 0.6) this.time.delayedCall(250, () => near.active && this.floatShout(near, Phaser.Utils.Array.GetRandom(KR.KR_SHOUTS), "#ffd1f3"));
   }
 
@@ -3507,7 +3545,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     const s = G.s;
     const { x, y } = b.spot;
     // the krew turn up
-    b.krew = PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).map((p, i) => {
+    b.krew = LADS.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).map((p, i) => {
       const sp = this.add.sprite(x + 260 + (i % 4) * 40, y - 40 + Math.floor(i / 4) * 50, `spr_${p}`, 0).setScale(2).setDepth(y);
       return sp;
     });
@@ -3535,7 +3573,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.tweens.add({ targets: a, x: a.x + (v.x - a.x) * 0.5, y: a.y + (v.y - a.y) * 0.5, duration: 120, yoyo: true, onUpdate: () => a.setDepth(a.y) });
         this.time.delayedCall(120, () => this.knock(v, a.x, a.y));
         if (Math.random() < 0.5) synth.play("punch");
-        if (Math.random() < 0.55) this.floatShout(a, Phaser.Utils.Array.GetRandom(a === kr ? KR.KR_SHOUTS : KR.KREW_SHOUTS), a === kr ? "#ffd1f3" : "#bde0fe");
+        if (Math.random() < 0.55) this.floatShout(a, Phaser.Utils.Array.GetRandom(a === kr ? KR.KR_SHOUTS : G.s.player === "MIKEY" ? KR.KREW_SHOUTS_POLSON : KR.KREW_SHOUTS), a === kr ? "#ffd1f3" : "#bde0fe");
         // stragglers drift back into the scrum
         for (const sp of all) if (Phaser.Math.Distance.Between(sp.x, sp.y, x + 40, y) > 200) this.tweens.add({ targets: sp, x: x + 40 + (Math.random() - 0.5) * 160, y: y + (Math.random() - 0.5) * 100, duration: 700, onUpdate: () => sp.setDepth(sp.y) });
         // and now and then one of them shoves YOU
@@ -3627,7 +3665,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     const s = G.s;
     // the lads are with you now, not scattered round town
     for (const n of [...this.npcs]) {
-      if (!(PLAYABLE_ORDER as readonly string[]).includes(n.id) && n.id !== "MIKEY") continue;
+      if (!(LADS as readonly string[]).includes(n.id) && n.id !== "MIKEY" && !n.follower) continue;
       n.spr.destroy();
       n.plate.destroy();
       n.bubble?.destroy();
@@ -3642,7 +3680,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.tweens.add({ targets: glow, scale: 1.5, alpha: 0.1, yoyo: true, repeat: -1, duration: 800 });
     this.tweens.add({ targets: img, y: logs.y - 6, yoyo: true, repeat: -1, duration: 700 });
     // the Krew follow you
-    [...PLAYABLE_ORDER, "MIKEY"].filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
+    [...LADS, "MIKEY"].filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).forEach((p, i) => {
       const spr = this.add.sprite(this.av.x - 40 + (i % 4) * 26, this.av.y + 30 + Math.floor(i / 4) * 20, `spr_${p}`, 0).setScale(2).setDepth(this.av.y);
       this.finaleKrew.push({ spr, lag: 10 + i * 7 });
     });
@@ -3669,7 +3707,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     synth.stopMusic();
     await this.talk(FB.FB_LANDED);
     this.busy = true;
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...LADS.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
     const lads = ids.map((id, i) => {
       const fx = b.x - 200 + (i * 400) / Math.max(1, ids.length - 1);
       const fy = bottom + 110 + (i % 2) * 24;
@@ -3799,7 +3837,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     cam.stopFollow();
     cam.centerOn(C.x, C.y - 20);
     synth.music("hub");
-    const ids = [s.player, ...PLAYABLE_ORDER.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
+    const ids = [s.player, ...LADS.filter((p) => p !== s.player), "MIKEY"].filter((p, i, a) => a.indexOf(p) === i && this.textures.exists(`spr_${p}`));
     const lads = ids.map((id, i) => {
       const x = C.x - 160 + (i % 5) * 80 + (i >= 5 ? 40 : 0);
       const y = C.y - 30 + Math.floor(i / 5) * 60 + (i % 2) * 10;

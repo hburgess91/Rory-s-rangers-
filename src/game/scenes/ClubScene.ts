@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { bindSanmikToggle, playerKey, swapSheet } from "../gfx/sanmikForm";
+import { SANMIK_FLAG } from "../systems/sanmik";
 import { vfx } from "../gfx/Vfx";
 import { squeeze } from "../systems/squeeze";
 import { addWrist, wristLook, type Wrist } from "../gfx/Wrist";
@@ -13,7 +15,7 @@ import { dir, say } from "../../content/dsl";
 import { animateWalker, backdrop, perfCycle, playPerf } from "../gfx/HD";
 import { censorRect } from "../gfx/Censor";
 import { bump, maxBottles } from "../systems/stats";
-import { CHARACTERS, PLAYABLE_ORDER } from "../../data/characters";
+import { CHARACTERS, LADS } from "../../data/characters";
 import { TOUCH } from "../ui/TouchControls";
 import { SANMIK_SONGS } from "./VenueScene";
 
@@ -89,7 +91,11 @@ export class ClubScene extends Phaser.Scene {
   private onBreak = false;
   private spots: Phaser.GameObjects.Arc[] = [];
   /** SanMik & SanChz, when they're the live act tonight. */
-  private band: { spr: Phaser.GameObjects.Sprite; x: number }[] = [];
+  private band: { spr: Phaser.GameObjects.Sprite; x: number; name: "SANMIK" | "SANCHZ" }[] = [];
+  /** Playing as Mikey: you ARE the act (SanMik). The song plays, the spotlight follows you, and you can still walk about. */
+  private performer = false;
+  private spot: Phaser.GameObjects.Ellipse | null = null;
+  private nextNote = 0;
   private songIdx = -1;
   private between = false;
   private banner: Phaser.GameObjects.Text | null = null;
@@ -128,7 +134,7 @@ export class ClubScene extends Phaser.Scene {
     this.nextSwap = this.time.now + 35000;
     // the lads, front row
     const s = G.s;
-    const ids = [...PLAYABLE_ORDER.filter((id) => id !== s.player && !(id === "KREBON" && s.flags.krebon_gone)), "MIKEY"].slice(0, 7);
+    const ids = [...LADS, "MIKEY"].filter((id) => id !== s.player && !(id === "KREBON" && s.flags.krebon_gone)).slice(0, 7);
     const seats = [
       [150, 470],
       [255, 478],
@@ -152,7 +158,8 @@ export class ClubScene extends Phaser.Scene {
     if (G.s.flags.golden_unlocked) this.add.text(860, 470, "💋 PRIVATE\nBOOTH", { fontFamily: FONT, fontSize: "11px", color: "#fde047", align: "center", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
     this.add.rectangle(480, 532, 90, 14, 0xffd23f, 0.3).setStrokeStyle(2, 0xffd23f).setDepth(1);
     this.add.text(480, 532, "EXIT", { fontFamily: FONT, fontSize: "10px", color: "#ffd23f" }).setOrigin(0.5).setDepth(2);
-    this.me = this.add.sprite(480, 495, `spr_${s.player}`, 0).setScale(2).setDepth(495);
+    this.me = this.add.sprite(480, 495, playerKey(this), 0).setScale(2).setDepth(495);
+    bindSanmikToggle(this, { sprites: () => [this.me], can: () => !this.busy });
     this.prompt = this.add.text(0, 0, "", { fontFamily: FONT, fontSize: "13px", color: "#ffffff", backgroundColor: "#000000cc", padding: { x: 6, y: 3 } }).setOrigin(0.5).setDepth(1000).setVisible(false);
     this.controls = new Controls(this);
     this.box = new DialogueBox(this, 2000, 0.2);
@@ -160,6 +167,8 @@ export class ClubScene extends Phaser.Scene {
     else this.scene.get("UI").events.emit("mode", "hub");
     // some nights SanMik & SanChz are the live act (always the first time you visit since they got the gig)
     this.band = [];
+    this.performer = false;
+    this.spot = null;
     this.hits = new Map();
     this.ko = new Set();
     this.brawl = 0;
@@ -187,13 +196,22 @@ export class ClubScene extends Phaser.Scene {
 
   private startBand(first: boolean) {
     const s = G.s;
-    const mk = (key: string, fallback: string, x: number, tint: number) => {
+    const mk = (name: "SANMIK" | "SANCHZ", key: string, fallback: string, x: number, tint: number) => {
       const spr = this.add.sprite(x, 335, this.textures.exists(key) ? key : fallback, 0).setScale(2.6).setDepth(335);
       if (!this.textures.exists(key)) spr.setTint(tint);
-      this.band.push({ spr, x });
+      this.band.push({ spr, x, name });
     };
-    mk("spr_SANMIK", "spr_MIKEY", 215, 0xb0c4ff);
-    mk("spr_SANCHZ", "spr_POLSON", 650, 0xffe08a);
+    // playing as Mikey, SanMik is you: no second one on stage. You're in the wig, under the spotlight, wherever you wander.
+    if (s.player === "MIKEY") {
+      this.performer = true;
+      if (!s.flags[SANMIK_FLAG]) {
+        s.flags[SANMIK_FLAG] = true;
+        swapSheet(this.me, "spr_SANMIK");
+      }
+      this.spot = this.add.ellipse(this.me.x, this.me.y + 22, 120, 36, 0xfff1a8, 0.32).setBlendMode(Phaser.BlendModes.ADD).setDepth(2);
+      this.tweens.add({ targets: this.spot, alpha: 0.18, yoyo: true, repeat: -1, duration: 420 });
+    } else mk("SANMIK", "spr_SANMIK", "spr_MIKEY", 215, 0xb0c4ff);
+    mk("SANCHZ", "spr_SANCHZ", "spr_POLSON", 650, 0xffe08a);
     this.banner = this.add.text(480, 92, "", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#1a0b24cc", padding: { x: 8, y: 3 } }).setOrigin(0.5).setDepth(200);
     this.playSong(Math.floor(Math.random() * SANMIK_SONGS.length), 0.2 + Math.random() * 0.4);
     if (first) {
@@ -263,8 +281,9 @@ export class ClubScene extends Phaser.Scene {
     this.band.forEach((b, i) => {
       if (this.ko.has(b.spr) || this.musicStopped) return;
       const t = time / 1000 + i * 0.8;
+      const sings = b.name === "SANMIK";
       // SanMik sings, SanChz dances; the old walk-and-bounce if the art isn't there
-      if (playPerf(b.spr, i ? "dance" : "sing", time, i ? 9 : 8) || playPerf(b.spr, "dance", time, 9, 3)) {
+      if (playPerf(b.spr, sings ? "sing" : "dance", time, sings ? 8 : 9) || playPerf(b.spr, "dance", time, 9, 3)) {
         b.spr.x = b.x + Math.sin(t * 0.9) * 10;
         b.spr.y = 335;
         return;
@@ -298,7 +317,19 @@ export class ClubScene extends Phaser.Scene {
     this.me.x = Phaser.Math.Clamp(this.me.x + mv.x * sp, 40, 920);
     this.me.y = Phaser.Math.Clamp(this.me.y + mv.y * sp, 380, 520);
     this.me.setDepth(this.me.y);
-    animateWalker(this.me, mv.x, mv.y, Math.hypot(mv.x, mv.y) > 0.1, time);
+    const moving = Math.hypot(mv.x, mv.y) > 0.1;
+    animateWalker(this.me, mv.x, mv.y, moving, time);
+    // you're the act: mid-song you sing when you stop, the spotlight follows you, the notes come off you
+    if (this.performer && this.band.length) {
+      const live = !this.musicStopped && !this.between;
+      this.spot?.setPosition(this.me.x, this.me.y + 22).setVisible(live);
+      if (live && !moving && this.me.texture.key === "spr_SANMIK") playPerf(this.me, "sing", time, 8);
+      if (live && time > this.nextNote) {
+        this.nextNote = time + 700 + Math.random() * 600;
+        const n = this.add.text(this.me.x + (Math.random() - 0.5) * 30, this.me.y - 60, Math.random() < 0.5 ? "♪" : "♫", { fontFamily: FONT, fontSize: "18px", color: "#b0c4ff", stroke: "#000", strokeThickness: 3 }).setDepth(1400);
+        this.tweens.add({ targets: n, y: n.y - 40, x: n.x + (Math.random() - 0.5) * 30, alpha: 0, duration: 1200, onComplete: () => n.destroy() });
+      }
+    }
     const atStage = this.me.y < 430 && Math.abs(this.me.x - 430) < 130;
     const atBar = this.me.x > 780 && this.me.y < 440;
     const atTable = this.me.x < 130 && this.me.y < 470;
@@ -349,7 +380,7 @@ export class ClubScene extends Phaser.Scene {
   private nearestTarget(): { name: string; spr: Phaser.GameObjects.Sprite; kind: "lad" | "band" | "dancer" | "derek" } | null {
     const all: { name: string; spr: Phaser.GameObjects.Sprite; kind: "lad" | "band" | "dancer" | "derek" }[] = [];
     for (const p of this.patrons) all.push({ name: CHARACTERS[p.id]?.name ?? p.id, spr: p.spr, kind: "lad" });
-    this.band.forEach((b, i) => all.push({ name: i ? "SANCHZ" : "SANMIK", spr: b.spr, kind: "band" }));
+    this.band.forEach((b) => all.push({ name: b.name, spr: b.spr, kind: "band" }));
     if (!this.onBreak) all.push({ name: this.dancerName(), spr: this.dancer, kind: "dancer" });
     if (this.derek && !this.derek.down) all.push({ name: "BIG DEREK", spr: this.derek.spr, kind: "derek" });
     // when Derek's on you, he's the one you're swinging at
@@ -651,7 +682,7 @@ export class ClubScene extends Phaser.Scene {
     this.onBreak = true;
     this.tweens.add({ targets: this.dancer, x: 1020, duration: 900 });
     this.spots.forEach((l) => this.tweens.add({ targets: l, alpha: 0.03, duration: 600 }));
-    if (this.band.length) this.bubble(this.band[0].spr, "(still playing) This one's for the wonkers.", 2200, "#e0e7ff");
+    if (this.band.length) this.bubble(this.performer ? this.me : this.band[0].spr, "(still playing) This one's for the wonkers.", 2200, "#e0e7ff");
     if (this.patrons.some((p) => p.id === "MIKEY")) this.bubble(this.patrons.find((p) => p.id === "MIKEY")!.spr, "Can I join the wonk-off?", 1800);
     await new Promise((r) => this.time.delayedCall(900, r));
     this.busy = true;
