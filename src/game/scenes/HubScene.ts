@@ -3000,15 +3000,17 @@ You are required by law to sign the Sex Offenders Register.`, {
   private ruinTown() {
     // fires everywhere, smoke columns over the worst of it
     const rnd = new Phaser.Math.RandomDataGenerator(["krunch"]);
+    // the morning after the finale: mostly burnt out, just smouldering
+    const dawn = !!G.s.flags.finale_dawn;
     for (let i = 0; i < 70; i++) {
       const x = rnd.between(60, WORLD_W - 60);
       const y = rnd.between(120, WORLD_H - 140);
-      vfx(this, "vfx_fire", x, y, { scale: 1 + rnd.frac() * 1.6, depth: y + 10, delay: rnd.between(0, 900) });
+      if (!dawn || i % 4 === 0) vfx(this, "vfx_fire", x, y, { scale: (1 + rnd.frac() * 1.6) * (dawn ? 0.6 : 1), depth: y + 10, delay: rnd.between(0, 900) });
       if (i % 5 === 0) vfx(this, "vfx_smokecol", x, y - 30, { scale: 1.6 + rnd.frac(), depth: y + 9, alpha: 0.75 });
     }
     for (const b of BUILDINGS) {
       if (b.id === "CITADEL") continue;
-      for (let i = 0; i < 3; i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.1) * b.h * 0.5, { scale: 1.6 + Math.random() * 1.2, depth: b.y + b.h / 2 + 6, delay: Math.random() * 600 });
+      for (let i = 0; i < (dawn ? 1 : 3); i++) vfx(this, "vfx_fire", b.x + (Math.random() - 0.5) * b.w * 0.8, b.y + (Math.random() - 0.1) * b.h * 0.5, { scale: 1.6 + Math.random() * 1.2, depth: b.y + b.h / 2 + 6, delay: Math.random() * 600 });
       vfx(this, "vfx_smokecol", b.x, b.y - b.h * 0.1, { scale: 2.2, depth: b.y + b.h / 2 + 5, alpha: 0.8 });
     }
     // ash falling
@@ -3031,8 +3033,10 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.tweens.add({ targets: e, x: e.x + 80 + Math.random() * 120, y: e.y - 300 - Math.random() * 200, alpha: 0, duration: 3000 + Math.random() * 2000, onComplete: () => e.destroy() });
       },
     });
+    // daylight, at last
+    if (dawn) this.add.rectangle(480, 270, 960, 540, 0xcfe3ff, 1).setAlpha(0.13).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
     // the glow of the fires over everything
-    this.add.rectangle(480, 270, 960, 540, 0xff6a2a, 1).setAlpha(0.07).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
+    if (!dawn) this.add.rectangle(480, 270, 960, 540, 0xff6a2a, 1).setAlpha(0.07).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
   }
 
   /** A debris prop from the ruins sheet; false if the art isn't there. */
@@ -3548,8 +3552,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const [a, b] = String(v ?? "").split(",").map(Number);
     let x = Phaser.Math.Clamp(Number.isFinite(a) ? a : def.x, 100, WORLD_W - 100);
     let y = Phaser.Math.Clamp(Number.isFinite(b) ? b : def.y, 300, WORLD_H - 120);
-    for (let i = 0; i < 30 && this.nearBuilding(x, y, 24); i++) y += 30;
-    if (this.nearBuilding(x, y, 24)) ({ x, y } = def);
+    for (let i = 0; i < 30 && this.nearBuilding(x, y, 60); i++) y += 30;
+    if (this.nearBuilding(x, y, 60)) ({ x, y } = def);
     return { x, y };
   }
 
@@ -3679,7 +3683,7 @@ You are required by law to sign the Sex Offenders Register.`, {
         const a = (k / 8) * Math.PI * 2;
         const px = Phaser.Math.Clamp(x + Math.cos(a) * r, 120, WORLD_W - 120);
         const py = Phaser.Math.Clamp(y + Math.sin(a) * r, 300, WORLD_H - 140);
-        if (!this.nearBuilding(px, py, 30)) return { x: px, y: py };
+        if (!this.nearBuilding(px, py, 60)) return { x: px, y: py };
         if (r === 0) break;
       }
     return { x, y };
@@ -3742,7 +3746,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     });
     // Drongus, out cold, in his pants
     const dk = this.textures.exists("fb_drongus_undies") ? "fb_drongus_undies" : this.textures.exists("fr_drongus_skinny") ? "fr_drongus_skinny" : "spr_DRONGUS";
-    const dr = this.add.sprite(D.x, D.y, dk, 0).setScale(dk === "spr_DRONGUS" ? 2 : 0.55).setAngle(-90).setDepth(D.y);
+    const dr = this.add.sprite(D.x, D.y, dk, 0).setScale(dk === "spr_DRONGUS" ? 2 : 0.62).setAngle(-90).setDepth(D.y + 60);
     // the long whiteness
     const white = this.whiteout ?? this.add.rectangle(480, 270, 2000, 1200, 0xffffff, 1).setScrollFactor(0).setDepth(9500);
     this.whiteout = null;
@@ -3788,11 +3792,11 @@ You are required by law to sign the Sex Offenders Register.`, {
     await wait(900);
     // the race: he staggers for them; you sprint
     const me = lads[0].spr;
-    cam.pan((L.x + C.x) / 2, L.y, 600, Phaser.Math.Easing.Sine.InOut);
+    cam.startFollow(me, true, 0.08, 0.08);
     const hitX = L.x - 90;
     const hitY = L.y + 8;
     const drRun = this.tweens.add({ targets: dr, x: hitX - 10, y: hitY, duration: 2300, ease: "Sine.in", onUpdate: () => {
-      dr.setDepth(dr.y);
+      dr.setDepth(dr.y + 60);
       dr.setAngle(Math.sin(this.time.now / 70) * 8);
     } });
     this.floatShout(dr as unknown as Phaser.GameObjects.Sprite, "MY LOGS!!!", "#fca5a5");
@@ -3809,7 +3813,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.tweens.add({ targets: pow, alpha: 0, y: pow.y - 30, delay: 900, duration: 500, onComplete: () => pow.destroy() });
     this.tweens.add({ targets: me, x: me.x - 14, yoyo: true, duration: 90 });
     // he goes flying, end over end, and lands in a heap
-    this.tweens.add({ targets: dr, x: hitX - 260, duration: 900, ease: "Quad.out", onUpdate: () => dr.setDepth(dr.y) });
+    this.tweens.add({ targets: dr, x: hitX - 260, duration: 900, ease: "Quad.out", onUpdate: () => dr.setDepth(dr.y + 60) });
     this.tweens.add({ targets: dr, y: hitY - 120, duration: 420, ease: "Quad.out", yoyo: true });
     this.tweens.add({ targets: dr, angle: -720 - 90, duration: 900 });
     await wait(900);
@@ -3819,6 +3823,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     const st2 = this.add.text(dr.x, dr.y - 30, "✦ ✧ ✦", { fontFamily: FONT, fontSize: "14px", color: "#fde68a" }).setOrigin(0.5).setDepth(6000);
     this.tweens.add({ targets: st2, angle: 360, repeat: -1, duration: 900 });
     // and you get there
+    cam.stopFollow();
+    cam.pan(L.x - 60, L.y, 500, Phaser.Math.Easing.Sine.InOut);
     me.setFlipX(false);
     await this.walkSpr(me, L.x, L.y + 14, 500);
     lglow.destroy();

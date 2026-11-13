@@ -21,6 +21,7 @@ import { DarkDrongusBoss } from "../combat/DarkDrongus";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
 import { BOSS_TEXT } from "../../content/bosses";
+import * as Juice from "../gfx/Juice";
 import { enemyDamageMult, enemyHpMult, maxHp, bump, maxBottles } from "../systems/stats";
 import { activeMods } from "../../data/historicalRevisions";
 import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban";
@@ -70,6 +71,10 @@ interface Interactable {
 }
 
 const SHAKE = () => G.meta.settings.shake;
+
+/** Chapter 6 / 7 bosses get the full treatment: a cinematic entrance, a title card, a phase-change pulse and a
+ *  slow-mo killing blow. (Kept to these so the earlier chapters play exactly as before.) */
+const EPIC_BOSSES: Record<string, string> = { krozno: "#38bdf8", krex: "#a855f7", elon: "#22d3ee", drongus1: "#ef4444", drongus2: "#ff2a2a" };
 
 const clearKey = (dungeon: string, room: number) => `dclr_${dungeon}_${room}`;
 
@@ -1746,13 +1751,115 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (id === "rik") b.setPosition(r.w / 2, this.groundY - 120);
       if (id === "krex") bb.setSize(78, 96).setOffset(28, 21);
     }
-    b.setAlpha(0);
-    this.tweens.add({ targets: b, alpha: 1, duration: 800 });
-    synth.play("roar");
-    if (!(typeof pct === "number") || this.rushIdx > 0) await this.talk(txt.intro);
+    const epic = EPIC_BOSSES[id];
+    const fresh = !(typeof pct === "number") || this.rushIdx > 0;
+    let closeBars: ((ms?: number) => void) | null = null;
+    if (epic) closeBars = await this.epicEntrance(b, fresh);
+    else {
+      b.setAlpha(0);
+      this.tweens.add({ targets: b, alpha: 1, duration: 800 });
+      synth.play("roar");
+    }
+    if (fresh) await this.talk(txt.intro);
+    if (epic && b.active) {
+      await Juice.bossCard(this, txt.name, txt.title, epic);
+      closeBars?.(350);
+      this.cameras.main.zoomTo(1, 350, "Cubic.easeOut", true);
+    }
     this.busy = false;
     b.started = true;
     b.nextPattern = this.now() + 1200;
+  }
+
+  /**
+   * A big boss arrives: letterbox, a beat of silence, the camera pushes in on them, they drop in out of the dark and
+   * land with a slam (squash, dust, shockwave, shake), then the roar. Returns the bars' close().
+   */
+  private async epicEntrance(b: Boss, fresh: boolean) {
+    const cam = this.cameras.main;
+    const close = Juice.letterbox(this, 50, 420);
+    const vig = Juice.vignette(this, 0x000000, 0.55, 4890);
+    this.events.once("epic-vig-off", () => this.tweens.add({ targets: vig, alpha: 0, duration: 600, onComplete: () => vig.destroy() }));
+    const sx = b.scaleX;
+    const sy = b.scaleY;
+    const y0 = b.y;
+    b.setAlpha(0);
+    if (fresh) {
+      // a beat of quiet before it hits
+      await new Promise<void>((r) => this.time.delayedCall(380, () => r()));
+    }
+    cam.zoomTo(1.18, 700, "Sine.easeInOut", true);
+    b.setAlpha(1).setTint(0x000000);
+    b.y = y0 - 260;
+    b.setScale(sx * 0.82, sy * 1.25);
+    const body = b.body as Phaser.Physics.Arcade.Body | null;
+    const wasOn = body?.enable ?? false;
+    if (body) body.enable = false;
+    await new Promise<void>((r) => this.tweens.add({ targets: b, y: y0, duration: 420, ease: "Quad.in", onComplete: () => r() }));
+    if (body && wasOn) {
+      body.enable = true;
+      body.reset(b.x, b.y);
+    }
+    if (!b.active) return close;
+    b.clearTint();
+    b.setScale(sx, sy);
+    Juice.squash(this, b, 0.3, 520);
+    synth.play("boom");
+    synth.play("smash");
+    this.hitStop(90);
+    this.shake(420, 0.02);
+    Juice.flash(this, 0xffffff, 220, 0.55, 4880);
+    Juice.shockRing(this, b.x, b.y + b.displayHeight * 0.4, { color: 0xffffff, to: 420, rings: 3, flat: 0.35 });
+    vfx(this, "vfx_dust", b.x - 50, b.y + b.displayHeight * 0.4, { scale: 2, depth: b.depth + 1 });
+    vfx(this, "vfx_dust", b.x + 50, b.y + b.displayHeight * 0.4, { scale: 2, depth: b.depth + 1, flipX: true });
+    Juice.debris(this, b.x, b.y + b.displayHeight * 0.35, 12, { depth: b.depth + 2, speed: 300, size: 7 });
+    this.time.delayedCall(260, () => synth.play("roar"));
+    this.tweens.add({ targets: b, angle: { from: -2, to: 2 }, yoyo: true, repeat: 3, duration: 60, onComplete: () => b.active && b.setAngle(0) });
+    await new Promise<void>((r) => this.time.delayedCall(500, () => r()));
+    return (ms = 400) => {
+      close(ms);
+      this.events.emit("epic-vig-off");
+    };
+  }
+
+  /** Chapter 6/7 bosses: crossing half health is a moment (flash, slow-mo beat, a shockwave off them, a shout). */
+  private epicPhasePulse(b: Boss) {
+    const col = EPIC_BOSSES[b.bossId];
+    this.hitStop(120);
+    Juice.flash(this, 0xffffff, 240, 0.6, 4880);
+    Juice.punchZoom(this, 0.08, 500, 1);
+    Juice.shockRing(this, b.x, b.y, { color: Phaser.Display.Color.HexStringToColor(col).color, to: 520, rings: 3 });
+    this.shake(500, 0.02);
+    synth.play("roar");
+    synth.play("explode_1");
+    Juice.slamText(this, "HALF DEAD. FULLY FURIOUS.", col, 36, 150, 900);
+    this.setSlowmo(0.35);
+    window.setTimeout(() => {
+      if (this.sys.settings.active && !this.picking && this.slowmo !== 1) this.setSlowmo(1);
+    }, 520);
+  }
+
+  /** The killing blow on a chapter 6/7 boss: freeze, white, slow-mo push-in, then the boom lands. */
+  private async epicKillingBlow(b: Boss) {
+    const cam = this.cameras.main;
+    this.hitStop(160);
+    b.setTintFill(0xffffff);
+    Juice.flash(this, 0xffffff, 380, 0.85, 4880);
+    synth.play("crit");
+    synth.play("explode_2");
+    const close = Juice.letterbox(this, 46, 260);
+    this.setSlowmo(0.22);
+    cam.zoomTo(1.3, 500, "Cubic.easeOut", true);
+    Juice.shockRing(this, b.x, b.y, { color: 0xffffff, to: 640, rings: 4, ms: 900 });
+    for (let i = 0; i < 4; i++) this.time.delayedCall(i * 60, () => this.boomFx(b.x + (Math.random() - 0.5) * 90, b.y + (Math.random() - 0.5) * 90, 0.8));
+    await Juice.realWait(1100);
+    if (!this.sys.settings.active) return;
+    if (!this.picking) this.setSlowmo(1);
+    b.active && b.clearTint();
+    cam.zoomTo(1, 700, "Cubic.easeInOut", true);
+    synth.play("boom");
+    Juice.debris(this, b.x, b.y, 18, { depth: 1450, speed: 420, size: 8 });
+    close(500);
   }
 
   private miniBossKey() {
@@ -1864,6 +1971,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async onBossDefeated(b: Boss) {
     this.player?.cheer(this.now(), 2600);
     this.busy = true;
+    if (EPIC_BOSSES[b.bossId]) await this.epicKillingBlow(b);
     {
       const hd = (b.texture?.customData as { hd?: number } | undefined)?.hd ?? 1;
       this.krelTarget = b.texture ? { key: b.texture.key, frame: b.frame.name, x: b.x, y: b.y, scale: b.scaleX / hd, flip: b.flipX, name: BOSS_TEXT[b.bossId]?.name ?? "THE BOSS" } : null;
@@ -2458,8 +2566,10 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (opts.label !== "" && Math.random() < 0.3) this.floatText(e.x, e.y - 40, "SHIELDED", "#88aaff", 12);
       return;
     }
+    const hpBefore = e.hp;
     e.hp -= a;
     e.flashUntil = now + 70;
+    if (e instanceof Boss && EPIC_BOSSES[e.bossId] && e.hp > 0 && hpBefore > e.maxHp * 0.5 && e.hp <= e.maxHp * 0.5) this.epicPhasePulse(e);
     if (extraViolence(G.s) && a > 0 && now - this.lastSplat > 45) {
       this.lastSplat = now;
       this.splatter(e.x, e.y, e.isBoss ? 5 : 3, 0.7);

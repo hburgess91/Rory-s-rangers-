@@ -86,7 +86,7 @@ export class ConceptBoss extends Boss {
     if (this.mode === "immortal") {
       // it only ever loses so much before it puts itself back together
       const floor = this.maxHp * (1 - this.healAt);
-      const a = Math.min(amount * 0.6, Math.max(0, this.hp - floor));
+      const a = Math.min(amount * 1.2, Math.max(0, this.hp - floor));
       if (this.hp - a <= floor + 0.5 && !this.healing) {
         this.healing = true;
         this.scene.time.delayedCall(10, () => this.onHeal?.());
@@ -95,7 +95,7 @@ export class ConceptBoss extends Boss {
     }
     // real
     const floor = this.maxHp * 0.02;
-    const a = Math.min(amount * 2.2, Math.max(0, this.hp - floor));
+    const a = Math.min(amount * 1.6, Math.max(0, this.hp - floor));
     if (this.hp - a <= floor + 0.5 && !this.lowFired) {
       this.lowFired = true;
       this.scene.time.delayedCall(10, () => this.onLow?.());

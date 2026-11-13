@@ -55,7 +55,8 @@ describe("content integrity", () => {
 
   it("dungeons reference real enemies and bosses", () => {
     for (const d of Object.values(DUNGEONS)) {
-      if (d.id !== "sanmik_hangout" && d.id !== "rik_colon") expect(d.rooms.some((r) => r.boss), d.id).toBeTruthy();
+      // (the Krelford finale makes its own boss: THE CONCEPT OF PAEDOPHILIA, scenes/finale/KrelfordFinale.ts)
+      if (d.id !== "sanmik_hangout" && d.id !== "rik_colon" && d.id !== "krelford_finale") expect(d.rooms.some((r) => r.boss), d.id).toBeTruthy();
       for (const r of d.rooms) {
         for (const w of r.waves ?? []) for (const [t] of w) expect(ENEMIES[t], `${d.id}:${t}`).toBeTruthy();
         if (r.boss) expect(BOSS_TEXT[r.boss]).toBeTruthy();

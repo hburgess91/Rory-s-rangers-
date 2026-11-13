@@ -235,12 +235,15 @@ export class KrelfordFinale {
       const w = rnd.between(40, 180);
       g.fillStyle(rnd.frac() < 0.6 ? 0x14100d : 0x8f8a84, rnd.frac() < 0.6 ? 0.55 : 0.25).fillEllipse(rnd.between(30, W - 30), rnd.between(30, H - 30), w, w * 0.5);
     }
-    const prop = (key: string, x: number, y: number, s: number) => {
-      if (!sc.textures.exists(key)) return false;
-      h.add.image(x, y, key).setOrigin(0.5, 0.85).setScale(s).setDepth(y);
+    // the middle of town is where it fights: nothing standing there to draw over it
+    const fight = new Phaser.Geom.Rectangle(W / 2 - 800, 260, 1600, 1080);
+    const prop = (key: string, x: number, y: number, s: number, flat = false) => {
+      if (!sc.textures.exists(key)) return true;
+      if (!flat && fight.contains(x, y)) return true;
+      h.add.image(x, y, key).setOrigin(0.5, 0.85).setScale(s).setDepth(flat ? 0.5 : y);
       return true;
     };
-    for (let i = 0; i < 26; i++) prop(rnd.frac() < 0.5 ? "r_scorch" : "r_crater", rnd.between(80, W - 80), rnd.between(500, H - 80), 1.5 + rnd.frac());
+    for (let i = 0; i < 26; i++) prop(rnd.frac() < 0.5 ? "r_scorch" : "r_crater", rnd.between(80, W - 80), rnd.between(500, H - 80), 1.5 + rnd.frac(), true);
     // rubble where every building stood (low, so you can still run over the edges of it)
     const keys = ["r_rubble", "r_ruin", "r_girders", "r_wall", "r_fireheap", "r_debris"];
     for (const [bx, by, bw] of RUINS) {
@@ -251,7 +254,7 @@ export class KrelfordFinale {
       for (let i = 0; i < n; i++) {
         const x = x0 - (bw * K) / 2 + ((bw * K) * (i + 0.5)) / n + rnd.between(-12, 12);
         const y = y0 + rnd.between(-20, 20);
-        if (!prop(keys[(i + rnd.between(0, 5)) % keys.length], x, y, 1.5 + rnd.frac() * 0.6)) h.add.ellipse(x, y, 70, 34, 0x3a2f2a).setDepth(y);
+        prop(keys[(i + rnd.between(0, 5)) % keys.length], x, y, 1.5 + rnd.frac() * 0.6);
       }
       if (hasVfx(sc, "vfx_fire")) vfx(sc, "vfx_fire", x0 + rnd.between(-40, 40), y0, { scale: 1.4 + rnd.frac(), depth: y0 + 12, delay: rnd.between(0, 800) });
     }
@@ -331,7 +334,7 @@ export class KrelfordFinale {
       // shoot it
       if (now >= l.nextShot && b.mode !== "still") {
         const a = Math.atan2(b.y - l.spr.y, b.x - l.spr.x);
-        const dmg = l.ssj ? 26 : 9;
+        const dmg = l.ssj ? 12 : 9;
         h.shoot(l.spr.x, l.spr.y - 6, { owner: "player", damage: dmg, speed: 620, angle: a + (Math.random() - 0.5) * 0.08, color: l.ssj ? 0xffe066 : CHARACTERS[l.id]?.color ?? 0x86efac, life: 1400, scale: l.ssj ? 1.4 : 1 });
         l.spr.setFlipX(Math.cos(a) < 0);
         l.nextShot = now + (l.ssj ? 380 : 620) + Math.random() * 240;
