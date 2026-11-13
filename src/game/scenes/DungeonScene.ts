@@ -1712,7 +1712,6 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (b.bossId === "krozno") {
       await this.talk(BOSS_TEXT.krozno.outro);
       await this.slitThroat(b);
-      await this.crystalGet(b);
       G.rt.timerEnd = 0;
       G.emit("timer", null);
       s.coins += 300;

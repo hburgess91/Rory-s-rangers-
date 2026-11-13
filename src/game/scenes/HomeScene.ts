@@ -466,7 +466,7 @@ export class HomeScene extends Phaser.Scene {
       if (has) c.setTint(tints[i]);
       else c.setTint(0x111111).setAlpha(0.5);
       root.add(c);
-      root.add(this.add.text(x, 205, has ? BOSS_TEXT[b]?.name ?? b : "???", { fontFamily: FONT, fontSize: "11px", color: has ? "#ffffff" : "#475569", align: "center", wordWrap: { width: 120 } }).setOrigin(0.5, 0));
+      root.add(this.add.text(x, 205, has ? (b === "krunch" ? "Found in the rubble (nobody knows how)" : BOSS_TEXT[b]?.name ?? b) : "???", { fontFamily: FONT, fontSize: "11px", color: has ? "#ffffff" : "#475569", align: "center", wordWrap: { width: 120 } }).setOrigin(0.5, 0));
     });
     const got = Object.keys(KREL_TROPHIES).filter((b) => s.flags[`krel_${b}`]);
     root.add(this.add.text(480, 270, "KRELTALITY TROPHIES", { fontFamily: FONT, fontSize: "15px", color: "#ef4444", fontStyle: "bold" }).setOrigin(0.5));

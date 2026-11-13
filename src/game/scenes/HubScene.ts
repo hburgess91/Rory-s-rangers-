@@ -26,7 +26,7 @@ import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD"
 import { Beatup } from "./hub/Beatup";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
-import { KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
+import { CRYSTAL_SIX, KR6_LAST_CHANCE } from "../../content/chapters/ch6prompt";
 import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
@@ -419,6 +419,15 @@ export class HubScene extends Phaser.Scene {
         await this.talk(KR6_LAST_CHANCE);
       } else G.emit("toast", { title: "⚠ LAST CHANCE", text: "Stock up on weapons, ammo, upgrades, Krezzcoin and Krokens. Go to the Town Hall when you're ready to begin Chapter 6." });
       return;
+    }
+    // After Chapter 6 fades to black: the sixth cum crystal, out of nowhere
+    if (s.chapter >= 7 && s.flags.ch6_clear && !s.flags.crystal_krunch_seen) {
+      s.flags.crystal_krunch_seen = true;
+      s.flags.crystal_krunch = true;
+      G.save();
+      await this.talk(CRYSTAL_SIX);
+      synth.play("ding");
+      G.emit("toast", { title: "CUM CRYSTAL 6/6", text: "Nobody knows where it came from. Nobody's asking." });
     }
     // Chapter 6 finale: home in time (or not): Kreddle's Krunch Protocol comes for every building in town
     if (from === "krunch") {
