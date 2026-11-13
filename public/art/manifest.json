@@ -6314,6 +6314,66 @@
   },
   "kd_slots_burnt": {
    "file": "props/kd_slots_burnt.png"
+  },
+  "bg_kd_station": {
+   "file": "backdrops/bg_kd_station.png"
+  },
+  "bg_kd_palace": {
+   "file": "backdrops/bg_kd_palace.png"
+  },
+  "bg_kd_ruins": {
+   "file": "backdrops/bg_kd_ruins.png"
+  },
+  "c6_launcher": {
+   "file": "props/c6_launcher.png"
+  },
+  "c6_launcher4": {
+   "file": "props/c6_launcher4.png"
+  },
+  "c6_missile": {
+   "file": "props/c6_missile.png"
+  },
+  "c6_nuke": {
+   "file": "props/c6_nuke.png"
+  },
+  "c6_krelneva": {
+   "file": "props/c6_krelneva.png"
+  },
+  "c6_mustard": {
+   "file": "props/c6_mustard.png"
+  },
+  "c6_napalm": {
+   "file": "props/c6_napalm.png"
+  },
+  "c6_nailbomb": {
+   "file": "props/c6_nailbomb.png"
+  },
+  "c6_chemflamer": {
+   "file": "props/c6_chemflamer.png"
+  },
+  "c6_kd_terminal": {
+   "file": "props/c6_kd_terminal.png"
+  },
+  "c6_ashpile": {
+   "file": "props/c6_ashpile.png"
+  },
+  "c6_ceiling": {
+   "file": "props/c6_ceiling.png"
+  },
+  "c6_discoball": {
+   "file": "props/c6_discoball.png"
+  },
+  "c6_klerble_statue": {
+   "file": "props/c6_klerble_statue.png"
+  },
+  "c6_skeleton": {
+   "file": "props/c6_skeleton.png"
+  },
+  "c6_burnheap": {
+   "file": "props/c6_burnheap.png"
+  },
+  "c6_klerble_crawl": {
+   "file": "props/c6_klerble_crawl.png"
   }
  },
  "sheets": {
