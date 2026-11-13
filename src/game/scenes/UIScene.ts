@@ -28,6 +28,24 @@ export class UIScene extends Phaser.Scene {
   private fartChip!: Phaser.GameObjects.Text;
   private roomT!: Phaser.GameObjects.Text;
   private objT!: Phaser.GameObjects.Text;
+  private lastObjective = "";
+  private objCard: Phaser.GameObjects.Container | null = null;
+
+  /** A big, central "NEW OBJECTIVE" card that slides in, sits for a few seconds and fades. */
+  private popObjective(text: string) {
+    this.objCard?.destroy();
+    const c = this.add.container(480, 150).setDepth(900);
+    const body = this.add.text(0, 14, text, { fontFamily: FONT, fontSize: "16px", color: "#ffffff", align: "center", wordWrap: { width: 560 }, lineSpacing: 3 }).setOrigin(0.5, 0);
+    const h = body.height + 46;
+    const bg = this.add.rectangle(0, h / 2 - 8, Math.min(620, Math.max(360, body.width + 60)), h, 0x0b0820, 0.88).setStrokeStyle(2, 0xffd23f);
+    const head = this.add.text(0, -2, "★ NEW OBJECTIVE ★", { fontFamily: FONT, fontSize: "13px", color: "#ffd23f", fontStyle: "bold" }).setOrigin(0.5, 0.5);
+    c.add([bg, head, body]);
+    c.setAlpha(0).setScale(0.85);
+    this.objCard = c;
+    synth.play("notify");
+    this.tweens.add({ targets: c, alpha: 1, scale: 1, duration: 260, ease: "Back.out" });
+    this.tweens.add({ targets: c, alpha: 0, y: 130, delay: 4200, duration: 600, onComplete: () => { if (this.objCard === c) this.objCard = null; c.destroy(); } });
+  }
   private ruleT!: Phaser.GameObjects.Text;
   private bossT!: Phaser.GameObjects.Text;
   private wonkT!: Phaser.GameObjects.Text;
@@ -342,8 +360,14 @@ export class UIScene extends Phaser.Scene {
     );
     // objective
     if (this.mode === "hub") {
+      // objectives pop up in the middle when they change, then get out of the way (they're always in the pause menu)
       const st = currentStep();
-      this.objT.setText(st ? `OBJECTIVE: ${st.text}` : "").setVisible(!!st);
+      this.objT.setVisible(false);
+      const txt = st?.text ?? "";
+      if (txt !== this.lastObjective) {
+        this.lastObjective = txt;
+        if (txt) this.popObjective(txt);
+      }
       this.roomT.setText(`CHAPTER ${s.chapter} · KRELFORD`);
     } else this.objT.setVisible(false);
     // ban risk

@@ -2720,7 +2720,9 @@ You are required by law to sign the Sex Offenders Register.`, {
         body.velocity.y += (ty - body.velocity.y) * Math.min(1, dt / 260);
       } else steer(body, tx, ty, dt);
       const moving = Math.hypot(mv.x, mv.y) > 0.1;
-      leadCamera(this.cameras.main, body.velocity.x, body.velocity.y, dt);
+      // near the top of the map the view lifts so Da Drongus Dungeon's spire isn't cut off
+      const lift = this.towerUp() ? Phaser.Math.Clamp((620 - this.av.y) * 0.75, 0, 230) : 0;
+      leadCamera(this.cameras.main, body.velocity.x, body.velocity.y, dt, 0.18, 48, lift);
       animateWalker(this.av, mv.x, mv.y, moving, time);
       if (moving) {
         this.idleMs = 0;

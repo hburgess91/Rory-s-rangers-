@@ -199,9 +199,10 @@ export function steer(body: Phaser.Physics.Arcade.Body, tx: number, ty: number, 
 }
 
 /** Camera leads a little in the direction of travel. */
-export function leadCamera(cam: Phaser.Cameras.Scene2D.Camera, vx: number, vy: number, dt: number, amount = 0.18, max = 48) {
+export function leadCamera(cam: Phaser.Cameras.Scene2D.Camera, vx: number, vy: number, dt: number, amount = 0.18, max = 48, biasY = 0) {
   const tx = Phaser.Math.Clamp(-vx * amount, -max, max);
-  const ty = Phaser.Math.Clamp(-vy * amount, -max * 0.7, max * 0.7);
+  // biasY > 0 lifts the view (e.g. to show something tall at the top of the map)
+  const ty = Phaser.Math.Clamp(-vy * amount, -max * 0.7, max * 0.7) + biasY;
   const k = 1 - Math.exp(-dt / 350);
   cam.setFollowOffset(cam.followOffset.x + (tx - cam.followOffset.x) * k, cam.followOffset.y + (ty - cam.followOffset.y) * k);
 }
