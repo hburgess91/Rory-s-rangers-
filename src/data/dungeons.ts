@@ -27,7 +27,7 @@ export interface RoomDef {
   waves?: [string, number][][];
   props?: PropDef[];
   /** Special scripted event handled by the dungeon scene. */
-  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon" | "drongus1" | "stairs";
+  event?: "cheesegate" | "mork" | "valves" | "reaction_terminal" | "bertha" | "records" | "anthem" | "colon" | "drongus1" | "stairs" | "drongus2";
   boss?: string;
   /** Arbitrary Drongus rule active in this room (chapter 4). */
   rule?: string;
@@ -623,11 +623,26 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         theme: "citadel",
         event: "drongus1",
         boss: "drongus1",
+        music: "boss_feedback",
         goal: "He's run up the stairs. Through the door at the back.",
         enterLines: CD.SANCTUM_ENTER,
       },
       finalStairs(),
-      // PHASE TWO (side-on) plugs in here. For now: the old final fight and the ending.
+      {
+        name: "The Top Of The Tower",
+        view: "side",
+        w: 960,
+        h: 540,
+        theme: "citadel",
+        backdrop: "bg_lair",
+        music: "boss_machine",
+        event: "drongus2",
+        boss: "drongus2",
+        goal: "He's gone through the roof. When you're ready: the cauldron.",
+        platforms: [[0.17, 150, 200], [0.83, 150, 200], [0.5, 290, 260]],
+        enterLines: CD.OFFICE_ENTER,
+      },
+      // PHASE THREE plugs in here (the cauldron in the room above leads to the next room). For now: the old final fight and the ending.
       {
         name: "The Summit: Government Chamber",
         w: 1400,

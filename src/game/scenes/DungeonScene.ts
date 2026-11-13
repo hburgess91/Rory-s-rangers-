@@ -14,6 +14,7 @@ import { PuddingDemonBoss } from "../combat/MindBoss";
 import { KrexBoss } from "../combat/KrexBoss";
 import { ElonBoss } from "../combat/ElonBoss";
 import { DrongusPhaseOneBoss } from "../combat/DrongusPhaseOne";
+import { DerangedDrongusBoss } from "../combat/DerangedDrongus";
 import { Citadel, citadelPreload, citadelReady } from "./citadel/Citadel";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
@@ -253,6 +254,20 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         inGap: (x, pad) => !!this.sideLevel?.inGap(x, pad),
         door: () => this.door,
         interact: (it) => this.interactables.push(it),
+        hideDoor: () => {
+          this.door.setAlpha(0);
+          this.doorZone.setTo(-9999, -9999, 1, 1);
+        },
+        next: () => {
+          this.busy = false;
+          this.goNextRoom();
+        },
+        bank: () => {
+          this.scene.launch("Menu", { mode: "bank", caller: "Dungeon" });
+          this.paused = true;
+          this.scene.pause();
+        },
+        setBusy: (b) => (this.busy = b),
       });
     this.buildRoom();
     this.controls = new Controls(this);
@@ -308,7 +323,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     else this.scene.get("UI").events.emit("mode", "dungeon");
     G.emit("room", { name: `${this.dungeon.name} · ${r.name}`, idx: this.roomIdx, total: this.dungeon.rooms.length });
     G.emit("boss", null);
-    synth.music(r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : r.music ?? this.dungeon.music);
+    synth.music(r.boss && r.theme === "citadel" && r.music ? r.music : r.boss ? (r.boss === "drongus" ? "final" : MUSIC_FILES[`boss_${r.boss}`] ? `boss_${r.boss}` : "boss") : r.music ?? this.dungeon.music);
     // background ambience for the place (quiet, under the music)
     synth.ambience(this.dungeon.id === "rik_colon" ? "colon" : r.theme === "industrial" || this.dungeon.id === "crobley_factory" ? "factory" : "dungeon");
     this.player.headbuttMode = r.boss === "troll";
@@ -445,7 +460,6 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.platforms.add(plat);
     }
     this.sideLevel?.build(this.platforms);
-    this.citadel?.side();
     this.obstacles = this.physics.add.staticGroup();
     const dx = r.exitAt ? r.w * r.exitAt[0] : r.w - 70;
     const dy = r.exitAt ? gy - r.exitAt[1] - 7 : gy;
@@ -454,6 +468,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const exitLabel = r.boss ? "" : r.exitLabel ?? (r.tower ? "THE SQUEEZING ROOM ↑" : "EXIT →");
     if (exitLabel) this.add.text(dx, dy - 78, exitLabel, { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(6);
     if (r.tower) this.decorateTower();
+    else this.citadel?.side();
     this.sideQuestPickups();
     const t = this.add.text(480, 200, r.name.toUpperCase(), { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "bold" }).setOrigin(0.5).setScrollFactor(0).setDepth(950).setShadow(3, 3, "#000", 0);
     this.tweens.add({ targets: t, alpha: 0, delay: 1300, duration: 700, onComplete: () => t.destroy() });
@@ -1672,7 +1687,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     const bx = at?.x ?? r.w / 2;
     const by = at?.y ?? r.h / 2 - 100;
-    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : id === "drongus1" ? new DrongusPhaseOneBoss(this, bx, by) : createBoss(id, this, bx, by);
+    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : id === "drongus1" ? new DrongusPhaseOneBoss(this, bx, by) : id === "drongus2" ? new DerangedDrongusBoss(this, bx, by) : createBoss(id, this, bx, by);
     // bosses toughen up as the story goes on (the bank is how you keep up)
     const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
     if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
@@ -1682,6 +1697,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const pct = (this as any)._bossHpPct;
     if (typeof pct === "number" && pct > 0 && pct < 1) b.hp = Math.max(1, Math.round(b.maxHp * pct));
     this.boss = b;
+    this.citadel?.onBoss(b);
     this.enemies.push(b);
     this.enemyGroup.add(b);
     if (this.side) {
@@ -1791,7 +1807,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
   private async maybeKreltality(b: Boss) {
-    if (["drongus", "cronster", "reinhardt", "krozno", "rik", "krex", "drongus1"].includes(b.bossId) || !this.krelTarget) {
+    if (["drongus", "cronster", "reinhardt", "krozno", "rik", "krex", "drongus1", "drongus2"].includes(b.bossId) || !this.krelTarget) {
       await this.bossFall();
       return;
     }

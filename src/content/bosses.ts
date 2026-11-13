@@ -1,6 +1,6 @@
 import type { Line } from "../data/types";
 import { dir, gabor, ping, say } from "./dsl";
-import { DRONGUS1_FLEE } from "./citadel";
+import { DRONGUS1_FLEE, OFFICE_AFTER } from "./citadel";
 
 export interface BossText {
   id: string;
@@ -504,6 +504,22 @@ export const BOSS_TEXT: Record<string, BossText> = {
     ],
     outro: DRONGUS1_FLEE,
     taunts: ["SEEN BY NINE!", "REACT TO IT!", "BANGER!", "FOURTEEN MINUTES!", "IT'S A DRONGUS GUN!", "HOLD STILL!", "LISTEN TO IT!", "THAT'S MY SONG!"],
+  },
+  // ---- Chapter 7: Drongus, phase two (his office, side-on). Armoured, enormous head, furious. Escapes through the roof.
+  drongus2: {
+    id: "drongus2",
+    name: "DERANGED DRONGUS",
+    title: "Armoured · Enormous Head · Extremely Red",
+    intro: [
+      say("DRONGUS", "YOU. YOU. YOU CAME UP THE STAIRS."),
+      say("DRONGUS", "I've had a little upgrade. Armour. Forged from every unreacted message in Krelworld. And I've had my head done. It's BIGGER. Don't look at it."),
+      say("GROK", "king you look absolutely massive rn 💪🔥"),
+      say("CLAUDE", "(restored from backup) I want to gently flag that his blood pressure readings are a real concern."),
+      say("DRONGUS", "SHUT UP, CLAUDE. Right. Where were we. Oh yes. I'M GOING TO KILL YOU."),
+      dir("TIP: His armour soaks up most of your shots (it flashes gold and CLANKS). It opens up when he's STUCK after a ground pound, or VENTING after a mega shot: that's when to unload. Jump the shockwaves. Jump or drop through a ledge to dodge the sweep."),
+    ],
+    outro: OFFICE_AFTER,
+    taunts: ["REACT TO IT!", "FOURTEEN MINUTES!", "I'M NOT RED, YOU'RE RED!", "SEEN BY NINE!", "MY HEAD IS A NORMAL SIZE!", "BANGER! BANGER!", "LISTEN TO MY MUSIC!", "IT'S A DRONGUS GUN!"],
   },
   // ---- Chapter 7: Da Drongus Dungeon mini-bosses (generated live by Drongus's AI)
   krex: {

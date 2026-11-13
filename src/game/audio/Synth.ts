@@ -893,6 +893,15 @@ export class Synth {
         this.tone(523, 0.7, "triangle", 0.28, 0.42);
         this.burst(0.5, 0.06, 0.9, 2400);
         break;
+      case "step_echo":
+        // a footstep in a big empty stone room, and its echoes
+        this.tone(95, 0.09, "triangle", 0.22, 0, 0.6);
+        this.burst(0.05, 0.12, 0, 900);
+        this.tone(95, 0.09, "triangle", 0.09, 0.19, 0.6);
+        this.burst(0.05, 0.05, 0.19, 700);
+        this.tone(95, 0.09, "triangle", 0.04, 0.38, 0.6);
+        this.burst(0.05, 0.02, 0.38, 500);
+        break;
       case "thunder":
         // distant thunder: a long low rumble
         this.burst(2.4, 0.5, 0, 180, undefined, 0.5);

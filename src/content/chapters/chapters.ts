@@ -292,15 +292,15 @@ export const CHAPTERS: ChapterDef[] = [
   {
     n: 7,
     title: "DA DRONGUS DUNGEON",
-    subtitle: "Six Crystals · The Great Wiki Citadel Within · The Reaction Network Terminal",
+    subtitle: "Six Crystals · The Tower · The Tannoy · The Anthem · The Top",
     dungeon: "citadel",
     dungeonDoor: "CITADEL",
     steps: [
       { id: "s_final", text: "Attend the Final Reading (Town Hall)", done: { flag: "final_reading" }, target: "TOWN_HALL" },
-      { id: "s_dungeon", text: "Six cum crystals, six slots. Open Da Drongus Dungeon and climb the Great Wiki Citadel inside it. React to the song.", done: { flag: "ch7_clear" }, target: "CITADEL" },
+      { id: "s_dungeon", text: "Six cum crystals, six slots. Open Da Drongus Dungeon and climb to the very top. Find the lads.", done: { flag: "ch7_clear" }, target: "CITADEL" },
     ],
     intro: [
-      dir("CHAPTER SEVEN. The Citadel gates are open. Through them you can see corridors made of wiki pages. One of the walls is the 'Krezzsplosion' article. It is very long. It is still being edited."),
+      dir("CHAPTER SEVEN. The Citadel gates are open. Through them: black stone, stained glass, server racks humming in the dark, and a staircase going up into the storm."),
       ping("DRONGUS", "There's a new sheriff in town boys…"),
     ],
     playerScene: {

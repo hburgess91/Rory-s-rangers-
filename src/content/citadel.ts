@@ -174,3 +174,24 @@ export const STAIRS_DOOR: Line[] = [
 export const STAIRS_OPEN: Line[] = [
   dir("You push. The door is heavier than anything has any right to be. It swings open, slowly, and the light comes out to meet you."),
 ];
+
+// ---------------------------------------------------------------- 7. THE OFFICE: DERANGED DRONGUS (phase two)
+
+export const OFFICE_ENTER: Line[] = [
+  dir("The top of the tower. His office: the same throne room. Four hundred candles, the storm, the calendar that still says 9 JANUARY, and the three AI rigs (two of them still smoking, both 'restored from backup')."),
+  dir("New since last time: a huge black cauldron in the middle of the floor, bubbling gold. Either side of it, two enormous bottles of something golden and alive: flittering, sparkling, humming."),
+  dir("And on the far side of the room, something that used to be Drongus."),
+];
+
+/** As his armour falls apart, he does a runner: through the cauldron, up through the roof. (Floating shouts.) */
+export const DRONGUS2_BREAK = ["NOOOOOOOOO!!!", "MY ARMOUR!", "…don't look at me.", "MY JUICE! MINE!", "GERONIMOOOOO!"];
+
+export const OFFICE_AFTER: Line[] = [
+  dir("Silence. Rain drips through the hole in the roof. The rigs hum. A candle gutters. Somewhere very far above, very faintly, someone is screaming about chat logs."),
+  say("GROK", "(quietly) uh. he went through the roof. anyway. the gift shop's still open on the terminal if you want it 🛍️"),
+];
+
+export const CAULDRON_JUMP: Line[] = [
+  dir("You climb up onto the rim of the cauldron. The gold is warm. It hums. It smells like… no. Don't think about what it smells like."),
+  say("YOU", "Right. Here goes nothing."),
+];

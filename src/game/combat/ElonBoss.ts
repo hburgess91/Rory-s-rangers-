@@ -65,7 +65,7 @@ export class ElonBoss extends Boss {
     // hover beside and above you, swapping sides now and then
     if (Math.random() < 0.004) this.hoverSide *= -1;
     const tx = Phaser.Math.Clamp(p.x + this.hoverSide * 230, w.bounds.left + 80, w.bounds.right - 80);
-    const ty = p.y - 170;
+    const ty = p.y - 110;
     const d = Phaser.Math.Distance.Between(this.x, this.y, tx, ty);
     if (d > 20) this.moveToward(tx, ty, Math.min(260, d * 2) * ts);
     else this.halt();

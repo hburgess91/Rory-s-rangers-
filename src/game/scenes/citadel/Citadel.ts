@@ -6,6 +6,10 @@ import { FONT } from "../../ui/theme";
 import { BOSS_TEXT } from "../../../content/bosses";
 import { ANTHEM_DOOR, ANTHEM_PA, ANTHEM_SCOLDS, DRONGUS1_DEFY, DRONGUS1_LOGS, DRONGUS1_MEET, DRONGUS1_NEVER, STAIRS_DOOR, STAIRS_ECHOES, STAIRS_OPEN } from "../../../content/citadel";
 import { voice } from "../../audio/Voice";
+import { CAULDRON_JUMP } from "../../../content/citadel";
+import { PRIZES } from "../../../content/kreddle";
+import { addKrokens, awardPrize, krokenPrice, krokens, prizeOpen } from "../../systems/kreddle";
+import { G } from "../../G";
 
 /**
  * DA DRONGUS DUNGEON (Chapter 7): the gothic-cyber look (stone, stained glass, server racks, cables, red and purple
@@ -33,6 +37,7 @@ export const CITADEL_SHEETS: Record<string, SheetDef> = {
   en_honour_guard: { file: "combat/en_honour_guard.png", frameWidth: 64, frameHeight: 64, hd: 0.6 },
   boss_krex: { file: "combat/boss_krex.png", frameWidth: 128, frameHeight: 128 },
   boss_elon: { file: "combat/boss_elon.png", frameWidth: 128, frameHeight: 128 },
+  boss_drongus2: { file: "combat/boss_drongus2.png", frameWidth: 128, frameHeight: 128 },
   c7d_door: { file: "props/c7d_door.png", frameWidth: 128, frameHeight: 128 },
 };
 export const CITADEL_IMAGES: Record<string, string> = {
@@ -67,6 +72,19 @@ export const CITADEL_IMAGES: Record<string, string> = {
   c7_rocket: "combat/c7_rocket.png",
   // the Drongus Gun (from the Lair cutscene's own art)
   c7_drongus_gun: "props/c7_drongus_gun.png",
+  c7_ai_rig: "props/c7_ai_rig.png",
+  c7_calendar: "props/c7_calendar.png",
+  // phase two: the office
+  c7_cauldron: "props/c7_cauldron.png",
+  c7_bottle_0: "props/c7_bottle_0.png",
+  c7_bottle_1: "props/c7_bottle_1.png",
+  c7_armour_0: "combat/c7_armour_0.png",
+  c7_armour_1: "combat/c7_armour_1.png",
+  c7_armour_2: "combat/c7_armour_2.png",
+  c7_armour_3: "combat/c7_armour_3.png",
+  c7_armour_4: "combat/c7_armour_4.png",
+  c7_rubble: "props/c7_rubble.png",
+  c7_drongus_skinny: "combat/c7_drongus_skinny.png",
 };
 
 /** A texture that is only the procedural stand-in made at boot (so the real art should replace it). */
@@ -127,11 +145,20 @@ export interface CitadelHooks {
   openExit(): void;
   inGap(x: number, pad?: number): boolean;
   door(): Phaser.GameObjects.Image;
+  /** The way out isn't the door (the office: it's the cauldron). */
+  hideDoor(): void;
+  /** On to the next room. */
+  next(): void;
+  /** Open the Krezzcoin counter (the bank menu) over the dungeon. */
+  bank(): void;
+  /** Freeze/unfreeze the fight (for overlays). */
+  setBusy(b: boolean): void;
   /** Add an E-to-use spot. */
   interact(it: { x: number; y: number; r: number; label: string; use: () => void | Promise<void>; enabled?: () => boolean }): void;
 }
 
 const NEON = 0xff2d95;
+const GOLD_C = 0xffd23f;
 const PURPLE = 0xa855f7;
 
 /** Every boss we can hang in the Anthem Corridor, in the order you met them. [texture, BOSS_TEXT id] */
@@ -173,8 +200,47 @@ export class Citadel {
   private doorGlow: Phaser.GameObjects.Rectangle | null = null;
   private lightning: Phaser.GameObjects.Rectangle | null = null;
   private nextBolt = 0;
+  private culled = false;
 
-  constructor(private sc: CitadelHost, private room: RoomDef, private hooks: CitadelHooks) {}
+  /** Where this room's objects start in the display list (for culling the static dressing). */
+  private firstChild: number;
+  private cull: { o: Phaser.GameObjects.GameObject & { visible: boolean; setVisible: (v: boolean) => unknown }; l: number; r: number; t: number; b: number; hid?: boolean }[] = [];
+  private nextCull = 0;
+
+  constructor(private sc: CitadelHost, private room: RoomDef, private hooks: CitadelHooks) {
+    this.firstChild = sc.children.list.length;
+  }
+
+  /** Long rooms have hundreds of static bits: only draw the ones near the camera. Call once the room is built. */
+  private collectCull() {
+    const list = this.sc.children.list.slice(this.firstChild);
+    for (const o of list as (Phaser.GameObjects.GameObject & { scrollFactorX?: number; body?: unknown; getBounds?: () => Phaser.Geom.Rectangle; visible: boolean; setVisible: (v: boolean) => unknown })[]) {
+      if (o.scrollFactorX !== 1 || o.body || !o.getBounds) continue;
+      const b = o.getBounds();
+      if (b.width > 1500 || b.height > 1500) continue;
+      this.cull.push({ o, l: b.left, r: b.right, t: b.top, b: b.bottom });
+    }
+  }
+
+  private doCull() {
+    const now = this.sc.time.now;
+    if (now < this.nextCull || !this.cull.length) return;
+    this.nextCull = now + 150;
+    const v = this.sc.cameras.main.worldView;
+    const m = 300;
+    for (const c of this.cull) {
+      if (!c.o.active) continue;
+      const on = c.r > v.x - m && c.l < v.right + m && c.b > v.y - m && c.t < v.bottom + m;
+      // only ever un-hide what the culling hid (things hidden on purpose stay hidden)
+      if (!on && c.o.visible) {
+        c.o.setVisible(false);
+        c.hid = true;
+      } else if (on && c.hid) {
+        c.o.setVisible(true);
+        c.hid = false;
+      }
+    }
+  }
 
   private get gy() {
     return this.sc.groundY;
@@ -191,7 +257,7 @@ export class Citadel {
   private flame(x: number, y: number, depth: number, size = 1) {
     const sc = this.sc;
     const fl = sc.add.ellipse(x, y, 5 * size, 9 * size, 0xfbbf24).setDepth(depth + 0.1);
-    const glow = sc.add.circle(x, y, 16 * size, 0xf97316, 0.16).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
+    const glow = sc.add.circle(x, y, 16 * size, 0xf97316, 0.12).setDepth(depth);
     sc.tweens.add({ targets: [fl, glow], scaleY: { from: 0.85, to: 1.2 }, alpha: { from: 0.7, to: 1 }, yoyo: true, repeat: -1, duration: 150 + Math.floor(Math.random() * 130) });
     this.flames.push({ fl, glow, y, lit: true });
   }
@@ -215,8 +281,11 @@ export class Citadel {
   }
 
   /** Lightning through the stained glass every few seconds (a white flash over the backdrop only). */
-  private storm(depth: number) {
-    this.lightning = this.sc.add.rectangle(0, 0, 960, 540, 0xe0e7ff, 0).setOrigin(0).setScrollFactor(0).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
+  private boltK = 1;
+
+  private storm(depth: number, strength = 1) {
+    this.boltK = strength;
+    this.lightning = this.sc.add.rectangle(0, 0, 960, 540, 0xe0e7ff, 0).setOrigin(0).setScrollFactor(0).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
     this.nextBolt = this.sc.time.now + 3000;
   }
 
@@ -224,12 +293,14 @@ export class Citadel {
     const l = this.lightning;
     if (!l) return;
     if (this.onStairs) this.sc.time.delayedCall(300 + Math.random() * 900, () => synth.play("thunder"));
+    l.setVisible(true);
     this.sc.tweens.chain({
       targets: l,
+      onComplete: () => l.setVisible(false),
       tweens: [
-        { fillAlpha: 0.45, duration: 50 },
-        { fillAlpha: 0.05, duration: 90 },
-        { fillAlpha: 0.32, duration: 50 },
+        { fillAlpha: 0.45 * this.boltK, duration: 50 },
+        { fillAlpha: 0.05 * this.boltK, duration: 90 },
+        { fillAlpha: 0.32 * this.boltK, duration: 50 },
         { fillAlpha: 0, duration: 500 },
       ],
     });
@@ -268,6 +339,8 @@ export class Citadel {
   /** The tannoy: a chime, a TANNOY tag on screen, and the lines. The AI's angry refusals flash the screen red. */
   async pa(lines: Line[]) {
     const sc = this.sc;
+    // the room fades in while the first lines are up (the dialogue pauses the scene): show it now
+    sc.cameras.main.resetFX();
     synth.play("tannoy");
     const tag = sc.add.text(480, 34, "📢  TANNOY  📢", { fontFamily: "Impact, sans-serif", fontSize: "22px", color: "#ff4d6d", stroke: "#000", strokeThickness: 6, backgroundColor: "#12030acc", padding: { x: 10, y: 3 } }).setOrigin(0.5).setScrollFactor(0).setDepth(2000);
     sc.tweens.add({ targets: tag, alpha: 0.55, yoyo: true, repeat: -1, duration: 420 });
@@ -310,7 +383,7 @@ export class Citadel {
     for (const x of [r.w * 0.14, r.w * 0.3, r.w * 0.7, r.w * 0.86]) {
       const win = this.img(x, 62, "c7d_window", 1, 1.5);
       if (!win) sc.add.rectangle(x, 34, 40, 56, 0x6d28d9).setDepth(1.5).setStrokeStyle(3, 0x111111);
-      const beam = sc.add.graphics().setDepth(0.7).setBlendMode(Phaser.BlendModes.ADD);
+      const beam = sc.add.graphics().setDepth(0.7);
       beam.fillStyle(x < r.w / 2 ? 0xa855f7 : 0xdc2626, 0.07).fillTriangle(x - 22, 60, x + 22, 60, x + 90, 420).fillTriangle(x - 22, 60, x + 90, 420, x - 60, 420);
       sc.tweens.add({ targets: beam, alpha: { from: 0.7, to: 1 }, yoyo: true, repeat: -1, duration: 2200 + Math.random() * 900 });
     }
@@ -321,7 +394,7 @@ export class Citadel {
     for (const [x, y] of [[70, 150], [r.w - 70, 150], [70, r.h - 70], [r.w - 70, r.h - 70]]) {
       const rack = this.img(x, y, "dec_citadel_1", 1.3, y);
       if (rack) {
-        const led = sc.add.rectangle(x, y - 40, 30, 2, NEON, 0.9).setDepth(y + 1).setBlendMode(Phaser.BlendModes.ADD);
+        const led = sc.add.rectangle(x, y - 40, 30, 2, NEON, 0.9).setDepth(y + 1);
         sc.tweens.add({ targets: led, alpha: 0.2, yoyo: true, repeat: -1, duration: 300 + Math.random() * 400 });
       }
     }
@@ -339,7 +412,7 @@ export class Citadel {
     const v = sc.add.graphics().setDepth(2).setScrollFactor(0);
     v.fillStyle(0x0a0412, 0.4).fillRect(0, 0, 960, 40).fillRect(0, 500, 960, 40).fillRect(0, 0, 40, 540).fillRect(920, 0, 40, 540);
     sc.add.rectangle(0, 0, r.w, r.h, 0x16052a, 0.22).setOrigin(0).setDepth(1.9);
-    this.storm(1.95);
+    this.storm(1.95, 0.18);
   }
 
   // ---------------------------------------------------------------- side-on: Da Drongus Corridor / the Anthem Corridor
@@ -349,19 +422,16 @@ export class Citadel {
     const r = this.room;
     const sc = this.sc;
     const gy = this.gy;
+    if (r.event === "drongus2") return this.office();
     if (sc.textures.exists("c7d_bg_arches")) {
       const src = sc.textures.get("c7d_bg_arches").getSourceImage();
       const k = 540 / src.height;
       const ts = sc.add.tileSprite(0, 0, 960, 540, "c7d_bg_arches").setOrigin(0).setScrollFactor(0).setDepth(-9).setTileScale(k).setAlpha(0.9);
       this.layers.push({ ts, f: 0.6, k });
     }
-    // a purple haze along the floor, and dark at the top
-    sc.add.rectangle(0, 0, 960, 140, 0x05010a, 0.55).setOrigin(0).setScrollFactor(0).setDepth(-8);
-    const fog = sc.add.rectangle(0, 380, 960, 160, 0x4c1d95, 0.14).setOrigin(0).setScrollFactor(0).setDepth(-7).setBlendMode(Phaser.BlendModes.ADD);
-    sc.tweens.add({ targets: fog, fillAlpha: 0.22, yoyo: true, repeat: -1, duration: 2600 });
     this.storm(-8.5);
     // a neon strip along the floor's edge
-    sc.add.rectangle(0, gy - 2, r.w, 3, NEON, 0.55).setOrigin(0).setDepth(3).setBlendMode(Phaser.BlendModes.ADD);
+    sc.add.rectangle(0, gy - 2, r.w, 3, NEON, 0.55).setOrigin(0).setDepth(3);
     if (r.event === "anthem") return this.gallery();
     // set dressing: every few hundred pixels, something gothic or something humming
     let i = 0;
@@ -373,7 +443,7 @@ export class Citadel {
           if (ground) {
             const rack = this.img(x, gy, "dec_citadel_1", 2, -2);
             if (rack) {
-              const led = sc.add.rectangle(x, gy - 90, 46, 3, NEON, 0.9).setDepth(-1.9).setBlendMode(Phaser.BlendModes.ADD);
+              const led = sc.add.rectangle(x, gy - 90, 46, 3, NEON, 0.9).setDepth(-1.9);
               sc.tweens.add({ targets: led, alpha: 0.15, yoyo: true, repeat: -1, duration: 260 + Math.random() * 500 });
             }
           }
@@ -402,21 +472,28 @@ export class Citadel {
     }
   }
 
-  /** A gothic-cyber ledge: dark stone, a magenta neon edge, little corbels underneath. */
+  /** A gothic-cyber ledge: dark stone, a magenta neon edge, little corbels underneath, a few LEDs.
+   *  Drawn once per width into a texture (Graphics redraw every frame; images are cheap). */
   platform(x: number, y: number, w: number, tower: boolean) {
-    const g = this.sc.add.graphics().setDepth(4);
-    g.fillStyle(0x1a1222, 1).fillRect(x - w / 2, y - 7, w, 16);
-    g.fillStyle(0x2a1f36, 1).fillRect(x - w / 2, y - 7, w, 5);
-    for (let bx = x - w / 2 + 18; bx < x + w / 2 - 4; bx += 26) g.fillStyle(0x0d0812, 1).fillRect(bx, y - 2, 2, 11);
-    g.fillStyle(NEON, 1).fillRect(x - w / 2, y - 9, w, 2);
-    g.fillStyle(NEON, 0.18).fillRect(x - w / 2, y - 13, w, 4);
-    for (let cx = x - w / 2 + 16; cx < x + w / 2 - 6; cx += 32) g.fillStyle(0x140d1b, 1).fillTriangle(cx - 9, y + 9, cx + 9, y + 9, cx, y + (tower ? 24 : 20));
-    g.lineStyle(1, 0x000000, 0.7).strokeRect(x - w / 2, y - 7, w, 16);
-    // a few blinking LEDs
-    for (let lx = x - w / 2 + 10; lx < x + w / 2; lx += 44) {
-      const led = this.sc.add.rectangle(lx, y + 2, 3, 3, Math.random() < 0.5 ? 0xef4444 : PURPLE).setDepth(4.1);
-      this.sc.tweens.add({ targets: led, alpha: 0.15, yoyo: true, repeat: -1, duration: 250 + Math.random() * 700 });
+    const key = `c7plat_${Math.round(w)}_${tower ? 1 : 0}`;
+    const sc = this.sc;
+    if (!sc.textures.exists(key)) {
+      const W = Math.round(w);
+      const g = sc.make.graphics({ x: 0, y: 0 }, false);
+      const top = 6;
+      g.fillStyle(NEON, 0.18).fillRect(0, top - 6, W, 4);
+      g.fillStyle(NEON, 1).fillRect(0, top - 2, W, 2);
+      g.fillStyle(0x1a1222, 1).fillRect(0, top, W, 16);
+      g.fillStyle(0x2a1f36, 1).fillRect(0, top, W, 5);
+      for (let bx = 18; bx < W - 4; bx += 26) g.fillStyle(0x0d0812, 1).fillRect(bx, top + 5, 2, 11);
+      for (let cx = 16; cx < W - 6; cx += 32) g.fillStyle(0x140d1b, 1).fillTriangle(cx - 9, top + 16, cx + 9, top + 16, cx, top + (tower ? 31 : 27));
+      for (let lx = 10, i = 0; lx < W; lx += 44, i++) g.fillStyle(i % 2 ? 0xef4444 : PURPLE, 1).fillRect(lx, top + 8, 3, 3);
+      g.lineStyle(1, 0x000000, 0.7).strokeRect(0, top, W, 16);
+      g.generateTexture(key, W, top + 32);
+      g.destroy();
     }
+    // the texture's walkable top (y - 7 in the old drawing) lines up with the platform's top
+    sc.add.image(x, y - 13, key).setOrigin(0.5, 0).setDepth(4);
   }
 
   // ---------------------------------------------------------------- the tower (THE ASCENT)
@@ -438,7 +515,7 @@ export class Citadel {
     // shafts of stained-glass light falling across the climb
     for (let y = gy - 200; y > 200; y -= 520) {
       const x = 160 + ((y * 7) % 640);
-      const beam = sc.add.graphics().setDepth(-6).setBlendMode(Phaser.BlendModes.ADD);
+      const beam = sc.add.graphics().setDepth(-6);
       const col = (y / 520) % 2 < 1 ? PURPLE : 0xdc2626;
       beam.fillStyle(col, 0.08).fillTriangle(x - 30, y - 260, x + 30, y - 260, x + 260, y + 160).fillTriangle(x - 30, y - 260, x + 260, y + 160, x + 60, y + 160);
       sc.tweens.add({ targets: beam, alpha: { from: 0.6, to: 1 }, yoyo: true, repeat: -1, duration: 2400 + Math.random() * 1000 });
@@ -556,6 +633,12 @@ export class Citadel {
   /** Every frame: parallax, lightning, the guards telling you off, the door. */
   update(_dt: number) {
     const sc = this.sc;
+    if (!this.culled) {
+      // first frame: the room is fully built by now
+      this.culled = true;
+      if (this.room.view === "side" && (this.room.w > 960 || this.room.h > 540)) this.collectCull();
+    }
+    this.doCull();
     const cam = sc.cameras.main;
     for (const l of this.layers) l.ts.tilePositionX = (cam.scrollX * l.f) / l.k;
     if (this.lightning && sc.time.now > this.nextBolt) {
@@ -563,6 +646,7 @@ export class Citadel {
       this.bolt();
     }
     if (this.onStairs) this.updateStairs();
+    if (this.officeObj) this.updateOffice();
     if (!this.anthemOn) return;
     const p = sc.player;
     const now = sc.time.now;
@@ -620,17 +704,29 @@ export class Citadel {
   /** Before the fight: the talk, the anime-style NO!! NEVER!!!, the chat logs. */
   async drongusMeet(x: number, y: number) {
     const sc = this.sc;
+    sc.cameras.main.resetFX();
     const d = sc.add.sprite(x, y, sc.textures.exists("boss_drongus") ? "boss_drongus" : "spr_DRONGUS", 0).setDepth(450).setScale(3);
     const gun = sc.textures.exists("c7_drongus_gun") ? sc.add.image(x + 18, y - 8, "c7_drongus_gun").setScale(0.9).setDepth(451).setAngle(15) : null;
+    // frame the two of you
+    const cam = sc.cameras.main;
+    cam.stopFollow();
+    // you walk up the carpet to him
+    sc.tweens.add({ targets: sc.player.spr, x, y: y + 230, duration: 900, ease: "Sine.inOut" });
+    this.meetMid = { x, y: y + 120 };
+    cam.pan(this.meetMid.x, this.meetMid.y, 900, "Sine.easeInOut");
+    await new Promise<void>((res) => sc.time.delayedCall(950, () => res()));
     await this.hooks.talk(DRONGUS1_MEET);
     await this.animeNever();
     await this.hooks.talk(DRONGUS1_LOGS);
+    cam.startFollow(sc.player.spr, true, 0.12, 0.12);
     if (gun) sc.tweens.add({ targets: gun, angle: -10, duration: 300, ease: "Back.out" });
     sc.time.delayedCall(700, () => {
       d.destroy();
       gun?.destroy();
     });
   }
+
+  private meetMid: { x: number; y: number } | null = null;
 
   /** Big anime shout: zoom in, speed lines, a huge caption, the screen shakes. */
   private async animeNever() {
@@ -644,7 +740,7 @@ export class Citadel {
     cam.shake(900, 0.02);
     const z0 = cam.zoom;
     sc.tweens.addCounter({ from: z0, to: 1.6, duration: 260, ease: "Cubic.out", onUpdate: (t) => cam.setZoom(t.getValue() ?? 1) });
-    cam.pan(p.x, p.y - 20, 260, "Cubic.out");
+    cam.pan(p.x, p.y - 20, 260, "Cubic.easeOut");
     // speed lines, redrawn every few frames so they crackle
     const lines = sc.add.graphics().setScrollFactor(0).setDepth(1980);
     objs.push(lines);
@@ -662,7 +758,7 @@ export class Citadel {
     };
     draw();
     const tick = sc.time.addEvent({ delay: 70, loop: true, callback: draw });
-    const cap = sc.add.text(480, 120, DRONGUS1_NEVER, { fontFamily: "Impact, sans-serif", fontSize: "86px", color: "#ffffff", stroke: "#b0003a", strokeThickness: 14 }).setOrigin(0.5).setScrollFactor(0).setDepth(1990).setScale(3).setAngle(-6);
+    const cap = sc.add.text(480, 150, DRONGUS1_NEVER, { fontFamily: "Impact, sans-serif", fontSize: "70px", color: "#ffffff", stroke: "#b0003a", strokeThickness: 14 }).setOrigin(0.5).setScrollFactor(0).setDepth(1990).setScale(3).setAngle(-6);
     cap.setShadow(6, 6, "#000000", 0, true, true);
     objs.push(cap);
     sc.tweens.add({ targets: cap, scale: 1, duration: 220, ease: "Back.out" });
@@ -672,9 +768,9 @@ export class Citadel {
     tick.remove();
     sc.tweens.add({ targets: objs, alpha: 0, duration: 300, onComplete: () => objs.forEach((o) => o.destroy()) });
     sc.tweens.addCounter({ from: 1.6, to: z0, duration: 400, ease: "Cubic.inOut", onUpdate: (t) => cam.setZoom(t.getValue() ?? 1) });
-    cam.pan(p.x, p.y, 400, "Cubic.inOut");
+    if (this.meetMid) cam.pan(this.meetMid.x, this.meetMid.y, 400, "Cubic.easeInOut");
+    else cam.pan(p.x, p.y, 400, "Cubic.easeInOut");
     await new Promise<void>((res) => sc.time.delayedCall(420, () => res()));
-    cam.startFollow(p.spr, true, 0.12, 0.12);
   }
 
   // ---------------------------------------------------------------- THE FINAL STAIRS
@@ -784,6 +880,185 @@ export class Citadel {
     const t = sc.add.text(480, 470, `${who}: ${text}`, { fontFamily: "Georgia, serif", fontSize: "16px", color: "#fca5a5", fontStyle: "italic", align: "center", wordWrap: { width: 760 }, backgroundColor: "#000000aa", padding: { x: 10, y: 6 } }).setOrigin(0.5).setScrollFactor(0).setDepth(1900).setAlpha(0);
     sc.tweens.add({ targets: t, alpha: 1, duration: 600 });
     sc.tweens.add({ targets: t, alpha: 0, delay: 5200, duration: 900, onComplete: () => t.destroy() });
+  }
+
+  // ---------------------------------------------------------------- THE OFFICE (phase two)
+
+  private officeObj: { cauldron: { x: number; y: number }; bottles: Phaser.GameObjects.Image[] } | null = null;
+  private afterFight = false;
+  private lastStep = 0;
+
+  /** His office at the top of the tower: the AI rigs, the calendar, the cauldron, the two bottles of gold. */
+  office() {
+    const sc = this.sc;
+    const gy = this.gy;
+    sc.add.rectangle(0, 0, 960, 540, 0x0a0312, 0.15).setOrigin(0).setScrollFactor(0).setDepth(-9);
+    this.storm(-8.5, 0.6);
+    // the Council of Machines along the back wall
+    const rigs: [number, string, string, string][] = [
+      [112, "SUNO", "♪", "#ff9de6"],
+      [262, "CLAUDE", "✳", "#f4b48c"],
+      [700, "GROK", "⊘", "#f2f2f2"],
+      [850, "CHATGPT", "✿", "#7fffd4"],
+    ];
+    for (const [x, name, glyph, col] of rigs) {
+      const k = 1.15;
+      const rig = this.img(x, gy, "c7_ai_rig", k, -2);
+      const sx = x + (40 + 29 - 64) * k;
+      const sy = gy - (160 - 19 - 17) * k;
+      if (!rig) sc.add.rectangle(x, gy - 90, 110, 180, 0x18181b).setDepth(-2).setStrokeStyle(3, 0x000000);
+      const label = name === "CHATGPT" ? "🎁 KREDDLE\nEXCHANGE (E)" : `${glyph}\n${name}`;
+      sc.add.text(sx, sy, label, { fontFamily: FONT, fontSize: "9px", color: col, align: "center", fontStyle: "bold" }).setOrigin(0.5).setDepth(-1.9);
+      if (name === "CLAUDE" || name === "CHATGPT") sc.add.text(x, gy - 200 * k, "RESTORED FROM BACKUP", { fontFamily: FONT, fontSize: "8px", color: "#fca5a5", backgroundColor: "#000000aa" }).setOrigin(0.5).setDepth(-1.9);
+    }
+    this.img(480, 150, "c7_calendar", 1.1, -3, 0.5);
+    // the cauldron in the middle, the two bottles of gold either side
+    const cx = 480;
+    const caul = this.img(cx, gy + 4, "c7_cauldron", 2.4, -1);
+    if (!caul) {
+      const g = sc.add.graphics().setDepth(-1);
+      g.fillStyle(0x111111, 1).fillEllipse(cx, gy - 50, 170, 110);
+      g.fillStyle(GOLD_C, 0.9).fillEllipse(cx, gy - 92, 140, 22);
+    }
+    const glow = sc.add.ellipse(cx, gy - 100, 150, 40, GOLD_C, 0.25).setDepth(-0.9).setBlendMode(Phaser.BlendModes.ADD);
+    sc.tweens.add({ targets: glow, alpha: 0.5, scaleX: 1.1, yoyo: true, repeat: -1, duration: 700 });
+    sc.time.addEvent({ delay: 180, loop: true, callback: () => this.sparkle(cx + (Math.random() - 0.5) * 110, gy - 110, -60) });
+    const bottles: Phaser.GameObjects.Image[] = [];
+    for (const [i, bx] of [370, 590].entries()) {
+      const key = `c7_bottle_${i}`;
+      const b = sc.textures.exists(key) ? sc.add.image(bx, gy + 2, key).setOrigin(0.5, 1).setScale(2.6).setDepth(-0.8) : sc.add.image(bx, gy - 60, "fx_circle").setScale(2).setTint(GOLD_C).setDepth(-0.8);
+      bottles.push(b);
+      // the gold inside flitters
+      sc.time.addEvent({ delay: 140, loop: true, callback: () => b.visible && b.scale > 1.5 && this.sparkle(bx + (Math.random() - 0.5) * 50, gy - 30 - Math.random() * 110, -12) });
+    }
+    this.officeObj = { cauldron: { x: cx, y: gy - 60 }, bottles };
+  }
+
+  /** A gold sparkle that drifts and fades. */
+  private sparkle(x: number, y: number, rise: number) {
+    const sc = this.sc;
+    const c = sc.add.circle(x, y, 1.5 + Math.random() * 2, Math.random() < 0.5 ? GOLD_C : 0xfff7c2, 1).setDepth(-0.7).setBlendMode(Phaser.BlendModes.ADD);
+    sc.tweens.add({ targets: c, y: y + rise + (Math.random() - 0.5) * 20, x: x + (Math.random() - 0.5) * 20, alpha: 0, duration: 900 + Math.random() * 600, onComplete: () => c.destroy() });
+  }
+
+  /** The scene's boss is up: tell him where the cauldron and the bottles are. */
+  onBoss(b: unknown) {
+    const o = this.officeObj;
+    const d = b as { cauldron?: { x: number; y: number }; bottles?: Phaser.GameObjects.Image[] };
+    if (o && d && "cauldron" in d) {
+      d.cauldron = o.cauldron;
+      d.bottles = o.bottles;
+    }
+  }
+
+  /** After he's gone through the roof: silence, footsteps, supplies, the gift shop terminal, the cauldron. */
+  private officeAfter() {
+    const sc = this.sc;
+    const gy = this.gy;
+    this.afterFight = true;
+    synth.stopMusic();
+    this.hooks.hideDoor();
+    for (const [x, k, v] of [[200, "heal", 30], [300, "ammo", 3], [640, "heal", 30], [760, "ammo", 3], [420, "bottle", 1]] as [number, "heal" | "ammo" | "bottle", number][]) this.sc.dropPickup(x, gy - 20, k, v);
+    sc.toast("QUIET", "Health and ammo on the floor. The ChatGPT rig is running the Kreddle Exchange (E). When you're ready: the cauldron (E).");
+    this.hooks.interact({ x: 850, y: gy - 30, r: 90, label: "Use the Kreddle Exchange", use: () => this.giftShop() });
+    let jumped = false;
+    this.hooks.interact({
+      x: 480,
+      y: gy - 30,
+      r: 110,
+      label: "Jump into the cauldron",
+      enabled: () => !jumped,
+      use: async () => {
+        jumped = true;
+        await this.hooks.talk(CAULDRON_JUMP);
+        const p = sc.player.spr;
+        this.hooks.setBusy(true);
+        sc.tweens.add({ targets: p, y: gy - 220, x: 480, duration: 420, ease: "Quad.out", onComplete: () => sc.tweens.add({ targets: p, y: gy - 80, duration: 300, ease: "Quad.in" }) });
+        sc.time.delayedCall(760, () => {
+          synth.play("splash");
+          p.setVisible(false);
+          for (let i = 0; i < 20; i++) this.sparkle(480 + (Math.random() - 0.5) * 100, gy - 100, -80);
+        });
+        sc.time.delayedCall(1500, () => {
+          synth.play("jet");
+          sc.cameras.main.shake(600, 0.02);
+          sc.cameras.main.flash(500, 255, 220, 120);
+        });
+        sc.time.delayedCall(2100, () => this.hooks.next());
+      },
+    });
+  }
+
+  /** The Kreddle Exchange, on a computer: the Krezzcoin counter, or the Prize Counter for Krokens. */
+  private giftShop() {
+    const sc = this.sc;
+    this.hooks.setBusy(true);
+    const root = sc.add.container(0, 0).setScrollFactor(0).setDepth(3000);
+    const close = () => {
+      root.destroy(true);
+      this.hooks.setBusy(false);
+    };
+    root.add(sc.add.rectangle(480, 270, 960, 540, 0x000000, 0.75));
+    root.add(sc.add.rectangle(480, 302, 860, 456, 0x0b2a23).setStrokeStyle(4, 0x7fffd4));
+    root.add(sc.add.text(480, 98, "🎁 THE KREDDLE EXCHANGE (via ChatGPT, restored from backup)", { fontFamily: FONT, fontSize: "15px", color: "#7fffd4", fontStyle: "bold" }).setOrigin(0.5));
+    const info = sc.add.text(480, 448, "Certainly! Here are today's prizes. 😊", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", align: "center", wordWrap: { width: 700 } }).setOrigin(0.5);
+    root.add(info);
+    const header = sc.add.text(480, 122, "", { fontFamily: FONT, fontSize: "13px", color: "#38bdf8" }).setOrigin(0.5);
+    root.add(header);
+    const btn = (x: number, y: number, w: number, label: string, col: number, fn: () => void) => {
+      const r = sc.add.rectangle(x, y, w, 30, col).setStrokeStyle(2, 0x000000).setInteractive({ useHandCursor: true });
+      const t = sc.add.text(x, y, label, { fontFamily: FONT, fontSize: "11px", color: "#ffffff", align: "center", wordWrap: { width: w - 8 } }).setOrigin(0.5);
+      r.on("pointerdown", (_p: unknown, _x: unknown, _y: unknown, ev: { stopPropagation?: () => void }) => {
+        ev?.stopPropagation?.();
+        fn();
+      });
+      root.add([r, t]);
+      return t;
+    };
+    const rows: Phaser.GameObjects.Text[] = [];
+    const draw = () => {
+      header.setText(`🎟 ${krokens(G.s)} Krokens · 💰 ${G.s.coins} Krezzcoin`);
+      PRIZES.forEach((p, i) => {
+        const price = krokenPrice(G.s, p);
+        const open = prizeOpen(G.s, p);
+        const label = `${p.icon} ${p.name} · ${open ? `${price} 🎟` : "MAXED"}`;
+        if (rows[i]) rows[i].setText(label);
+        else
+          rows[i] = btn(205 + (i % 3) * 275, 156 + Math.floor(i / 3) * 36, 262, label, 0x3b0764, () => {
+            const pr = krokenPrice(G.s, p);
+            if (!prizeOpen(G.s, p)) return void info.setText(`${p.name}: you've maxed it out.`).setColor("#ef4444");
+            if (krokens(G.s) < pr) return void (info.setText(`${p.name} costs ${pr} Krokens. You have ${krokens(G.s)}.`).setColor("#ef4444"), synth.play("tap_fail"));
+            addKrokens(G.s, -pr);
+            info.setText(awardPrize(G.s, p.id)).setColor("#facc15");
+            synth.play("cheer");
+            G.save();
+            draw();
+          });
+      });
+    };
+    draw();
+    btn(330, 494, 260, "💰 KREZZCOIN COUNTER (guns, ammo, upgrades)", 0x166534, () => {
+      close();
+      this.hooks.bank();
+    });
+    btn(640, 494, 160, "LEAVE", 0x7f1d1d, close);
+    const esc = sc.input.keyboard?.addKey("ESC");
+    esc?.once("down", () => root.active && close());
+  }
+
+  /** Footsteps in an empty stone room: a thud and its echoes. */
+  private updateOffice() {
+    if (!this.afterFight) {
+      if (this.hooks.door().texture.key === "p_door") this.officeAfter();
+      return;
+    }
+    const p = this.sc.player;
+    const b = p.spr.body as Phaser.Physics.Arcade.Body;
+    const now = this.sc.time.now;
+    if ((b.blocked.down || b.touching.down) && Math.abs(b.velocity.x) > 40 && now - this.lastStep > 360) {
+      this.lastStep = now;
+      synth.play("step_echo");
+    }
   }
 
   destroy() {

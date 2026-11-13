@@ -67,7 +67,7 @@ export class KrexBoss extends Boss {
 
   constructor(w: CombatWorld, x: number, y: number) {
     fallback(w.sc);
-    super(w, "krex", x, y, 2300, "boss_krex", 48, 0x6b7280, SRC, SRC);
+    super(w, "krex", x, y, 1800, "boss_krex", 48, 0x6b7280, SRC, SRC);
     this.sc = w.sc;
     this.setScale(2.5);
     this.thresholds = [...THRESH];

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ARCS, arcsFor } from "../src/content/arcs";
 import { DUNGEONS } from "../src/data/dungeons";
 import { BOSS_TEXT } from "../src/content/bosses";
+import { ENEMIES } from "../src/data/enemies";
 import { newGameState } from "../src/game/systems/state";
 import { arcDue, currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
 
@@ -102,6 +103,20 @@ describe("Kreltower plot", () => {
   });
   it("Drongus's office plays the anthem", () => {
     expect(DUNGEONS.citadel.rooms.some((r) => r.event === "anthem")).toBe(true);
+  });
+  it("Da Drongus Dungeon: real enemies and bosses, and it still ends with the Drongus fight", () => {
+    const rooms = DUNGEONS.citadel.rooms;
+    expect(rooms[rooms.length - 1].boss).toBe("drongus");
+    for (const r of rooms) {
+      for (const w of r.waves ?? []) for (const [id] of w) expect(ENEMIES[id], `${r.name}: ${id}`).toBeTruthy();
+      for (const [, w] of r.triggers ?? []) for (const [id] of w) expect(ENEMIES[id], `${r.name}: ${id}`).toBeTruthy();
+      for (const b of [r.boss, r.miniBoss?.id]) if (b) expect(BOSS_TEXT[b], `${r.name}: ${b}`).toBeTruthy();
+    }
+    // the IDF and Hamas grunts are the same cartoon soldier with a different name plate
+    const { plate: p1, name: n1, id: i1, ...idf } = ENEMIES.idf;
+    const { plate: p2, name: n2, id: i2, ...hamas } = ENEMIES.hamas;
+    expect([p1, p2]).toEqual(["IDF", "HAMAS"]);
+    expect(idf).toEqual(hamas);
   });
 });
 
