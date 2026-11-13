@@ -18,7 +18,7 @@ for (const [f, m] of Object.entries(mods)) if ((m as any).CANON) CANON = (m as a
 const SILENT = new Set(["NARRATOR", "ARCHIVE", "TAP"]);
 function add(s: unknown, t: unknown, file: string, mood?: unknown) {
   if (typeof s !== "string" || typeof t !== "string" || !t.trim() || SILENT.has(s.toUpperCase())) return;
-  if (!speakable(t)) return;
+  if (!/[\p{L}\p{N}]/u.test(speakable(t))) return; // nothing to say ("...", emoji)
   const k = voiceKey(s, t);
   const m = typeof mood === "string" ? mood.trim() : "";
   const prev = out.get(k);
@@ -47,7 +47,7 @@ for (const [f, m] of Object.entries(mods)) walk(m, f.replace("../src/content/", 
 
 // Scene code: say("SPEAKER", "text" [, { mood: "..." }]) with literal strings only.
 const DYNAMIC: Record<string, string[]> = { "this.dancerName()": ["DESTINY", "CRYSTAL"] };
-const CALL = /\b(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
+const CALL = /(?<![.\w])(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
 function unquote(lit: string) {
   const q = lit[0], body = lit.slice(1, -1);
   return body.replace(/\\(u\{?[0-9a-fA-F]+\}?|.)/g, (_m, e: string) =>

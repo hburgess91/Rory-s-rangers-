@@ -19,3 +19,25 @@ describe("chunkSpeech", () => {
     expect(c.join(" ")).toBe(s);
   });
 });
+
+import { displayText, inlineMoods, speakable, voiceKey } from "../src/game/audio/voiceKey";
+import { say, ping } from "../src/content/dsl";
+
+describe("voice moods", () => {
+  it("hides delivery tags on screen but keeps real brackets", () => {
+    expect(displayText("Fine. [sighs] Fine.")).toBe("Fine. Fine.");
+    expect(displayText("[angry] They took my BONGO!")).toBe("They took my BONGO!");
+    expect(displayText("[CITATION NEEDED]")).toBe("[CITATION NEEDED]");
+    expect(displayText("[dead person] was SO amazing")).toBe("[dead person] was SO amazing");
+  });
+  it("never reads tags out, and tags don't change the recording key", () => {
+    expect(speakable("[whispers] It's behind you.")).toBe("It's behind you.");
+    expect(speakable("[whispers] It's behind you.", true)).toBe("[whispers] It's behind you.");
+    expect(voiceKey("MIKEY", "[angry] They took my BONGO!")).toBe(voiceKey("MIKEY", "They took my BONGO!"));
+    expect(inlineMoods("Oh. [laughs] Oh no. [crying]")).toEqual(["laughs", "crying"]);
+  });
+  it("lets the DSL carry a mood", () => {
+    expect(say("MIKEY", "They took my BONGO!", { mood: "angry" }).mood).toBe("angry");
+    expect(ping("KREBLIS", "Breaking news", { mood: "deadpan" }).mood).toBe("deadpan");
+  });
+});

@@ -562,7 +562,9 @@ export class HubScene extends Phaser.Scene {
   private drawWorld() {
     // Chapter 7: what's left of Krelford after the Krunch Protocol
     this.ruined = G.s.chapter >= 7 && !!G.s.flags.krelworld_bombed;
-    const scorched = (t: Phaser.GameObjects.TileSprite, tint: number) => (this.ruined ? t.setTint(tint) : t);
+    // (the morning after the finale: the same ruins, in daylight)
+    const day = (tint: number) => (G.s.flags.finale_dawn ? ({ 0x3b2f27: 0x857560, 0x5a4c48: 0x9a8c84 } as Record<number, number>)[tint] ?? tint : tint);
+    const scorched = (t: Phaser.GameObjects.TileSprite, tint: number) => (this.ruined ? t.setTint(day(tint)) : t);
     scorched(this.add.tileSprite(0, 0, WORLD_W, WORLD_H, "tile_grass").setOrigin(0).setDepth(0), 0x3b2f27);
     this.drawSky();
     // roads
@@ -3036,7 +3038,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       },
     });
     // daylight, at last
-    if (dawn) this.add.rectangle(480, 270, 960, 540, 0xcfe3ff, 1).setAlpha(0.13).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
+    if (dawn) this.add.rectangle(480, 270, 960, 540, 0xdcecff, 1).setAlpha(0.16).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
     // the glow of the fires over everything
     if (!dawn) this.add.rectangle(480, 270, 960, 540, 0xff6a2a, 1).setAlpha(0.07).setScrollFactor(0).setDepth(4904).setBlendMode(Phaser.BlendModes.ADD);
   }

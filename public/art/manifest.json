@@ -6650,6 +6650,24 @@
   },
   "fr_debris_1": {
    "file": "props/fr_debris_1.png"
+  },
+  "fb_dragon_side": {
+   "file": "finale/fb_dragon_side.png"
+  },
+  "fb_wizard": {
+   "file": "finale/fb_wizard.png"
+  },
+  "fb_wreck": {
+   "file": "finale/fb_wreck.png"
+  },
+  "fb_logs": {
+   "file": "finale/fb_logs.png"
+  },
+  "fb_goku_charge": {
+   "file": "finale/fb_goku_charge.png"
+  },
+  "fb_drongus_undies": {
+   "file": "finale/fb_drongus_undies.png"
   }
  },
  "sheets": {
@@ -7499,6 +7517,26 @@
    "file": "combat/c7_drongus_xf.png",
    "frameWidth": 128,
    "frameHeight": 128
+  },
+  "fb_dragon_top": {
+   "file": "finale/fb_dragon_top.png",
+   "frameWidth": 256,
+   "frameHeight": 256
+  },
+  "fb_aura": {
+   "file": "finale/fb_aura.png",
+   "frameWidth": 96,
+   "frameHeight": 112
+  },
+  "fb_lightning": {
+   "file": "finale/fb_lightning.png",
+   "frameWidth": 96,
+   "frameHeight": 128
+  },
+  "fb_horror": {
+   "file": "finale/fb_horror.png",
+   "frameWidth": 48,
+   "frameHeight": 48
   }
  },
  "vfx": {

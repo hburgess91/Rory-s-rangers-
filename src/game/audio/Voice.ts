@@ -5,9 +5,9 @@ import { speakable, voiceKey } from "./voiceKey";
 import { synth } from "./Synth";
 
 // ------------------------------------------------------------------ recorded lines (ElevenLabs, pre-generated)
-// public/audio/voice/index.json maps a line's key to [bundle, offset, length, voice]; bundles are mp3 clips
+// public/audio/voice/index.json maps a line's key to [bundle, offset, length, voice, signature]; bundles are mp3 clips
 // concatenated together, so a scene's lines arrive in one download. Lines without a recording fall back to TTS.
-type RecEntry = [string, number, number, string];
+type RecEntry = [string, number, number, string, string?]; // bundle, offset, length, voice, render signature
 let recIndex: Record<string, RecEntry> | null = null;
 let recIndexP: Promise<void> | null = null;
 const recBundles: Record<string, Promise<ArrayBuffer | null>> = {};

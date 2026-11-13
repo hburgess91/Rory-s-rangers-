@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import * as Juice from "../gfx/Juice";
 import type { Line } from "../../data/types";
 import { G } from "../G";
 import { DialogueBox } from "../ui/DialogueBox";
@@ -589,6 +590,9 @@ export class LairScene extends Phaser.Scene {
     const m0 = this.muzzle();
     const charge = this.add.circle(m0.x, m0.y, 16, 0x7dff8a, 0.9).setDepth(80).setBlendMode(Phaser.BlendModes.ADD).setScale(0.1);
     synth.play("zap");
+    Juice.riser(560, 0.3);
+    // the room leans in on the gun while it charges
+    this.cameras.main.zoomTo(this.cameras.main.zoom + 0.06, 520, "Quad.easeIn");
     await new Promise<void>((res) => this.tweens.add({ targets: charge, scale: 1.4, duration: 520, ease: "Quad.in", onComplete: () => res() }));
     if (this.dead) return never();
     charge.destroy();
@@ -617,11 +621,18 @@ export class LairScene extends Phaser.Scene {
     trail.remove();
     bolt.destroy();
     if (this.dead) return never();
-    // impact
+    // impact: a held frame, then the blast
+    this.tweens.timeScale = 0.05;
     this.cameras.main.flash(220, 120, 255, 140);
+    await Juice.realWait(90);
+    this.tweens.timeScale = 1;
+    this.cameras.main.zoomTo(1, 500, "Cubic.easeOut");
     this.cameras.main.shake(600, 0.022);
     synth.play("explode_1");
     synth.play("boom");
+    Juice.subDrop(0.9, 1.3);
+    Juice.shockRing(this, tx, ty, { color: 0x7dff8a, to: 360, rings: 3, depth: 93 });
+    Juice.debris(this, tx, ty, 14, { colors: [0x1f2937, 0x4b5563, 0x7dff8a, 0x111827], depth: 93, speed: 360, floor: ty + 120 });
     vfx(this, "vfx_shock", tx, ty, { scale: 2.6, depth: 90, tint: 0x7dff8a, add: true });
     const big = vfx(this, hasVfx(this, "vfx_bigboom") ? "vfx_bigboom" : "vfx_boom", tx, ty + 20, { scale: 2.4, depth: 91 });
     if (!big) {
@@ -742,16 +753,26 @@ export class LairScene extends Phaser.Scene {
       });
     }
     await this.wait(2200);
-    // lightning
+    // lightning: for a split second he's a black silhouette against the white
     synth.play("thunder");
+    Juice.subDrop(1, 2);
+    const sil = [d, ...(this.gun ? [this.gun] : [])];
+    const dd = sil.map((o) => o.depth);
+    sil.forEach((o) => o.setTintFill(0x000000).setDepth(501));
     this.flashRect?.setFillStyle(0xffffff, 1).setDepth(500);
     this.cameras.main.shake(500, 0.012);
+    this.cameras.main.zoomTo(1.22, 300, "Quad.easeOut");
     await this.wait(90);
     this.flashRect?.setAlpha(0);
+    sil.forEach((o, k) => o.clearTint().setDepth(dd[k]));
+    this.setRage(this.rage);
     await this.wait(80);
     this.flashRect?.setAlpha(1);
+    sil.forEach((o) => o.setTintFill(0x000000).setDepth(501));
     await this.wait(140);
     this.flashRect?.setAlpha(0);
+    sil.forEach((o, k) => o.clearTint().setDepth(dd[k]));
+    this.setRage(this.rage);
     await this.wait(250);
     this.cameras.main.fadeOut(1400, 0, 0, 0);
     await this.wait(1600);

@@ -3998,9 +3998,10 @@ export class VignetteScene extends Phaser.Scene {
     synth.play("ding");
     await this.wait(900);
     // the last breath: the screen pulls away and we're in close on him, his heart giving out
-    this.tween({ targets: scr, alpha: 0.35, scale: 0.8, y: 120, duration: 500 });
+    this.tween({ targets: scr, alpha: 0, scale: 0.8, y: 120, duration: 500 });
     const cam = this.cameras.main;
-    cam.pan(kl.x - 20, kl.y - 70, 900, "Sine.easeInOut");
+    // (framed so he sits above the dialogue box)
+    cam.pan(kl.x - 30, kl.y - 8, 900, "Sine.easeInOut");
     cam.zoomTo(1.7, 900, "Sine.easeInOut");
     let beatN = 0;
     const beat = this.time.addEvent({ delay: 1000, loop: true, callback: () => {

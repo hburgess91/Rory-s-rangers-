@@ -412,7 +412,7 @@ export class FinaleScene extends Phaser.Scene {
   private async spirit() {
     synth.music("c7_spirit", true);
     const dragon = this.makeDragon(250, FLOOR + 40, 1.45);
-    this.placeLads([420, 480, 540, 600, 660, 450, 510, 570, 630], "west", 3.6, FLOOR - 4);
+    this.placeLads([300, 354, 408, 462, 516, 570, 624, 678, 732], "west", 3.4, FLOOR - 4);
     for (const [i, l] of this.lads.entries()) {
       if (this.textures.exists("fb_aura")) {
         l.aura = this.add.sprite(l.spr.x, l.spr.y + 6, "fb_aura", 0).setOrigin(0.5, 0.875).setScale(1.1, 1.4).setDepth(l.spr.depth - 1).setBlendMode(Phaser.BlendModes.ADD).setTint(0xfff27a).setAlpha(0.5);

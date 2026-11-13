@@ -1792,16 +1792,23 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     Juice.duckMusic(900, 500, 0.15);
     Juice.riser(520, 0.3);
     await new Promise<void>((r) => this.time.delayedCall(260, () => r()));
-    b.setAlpha(1).setTint(0x000000);
-    b.y = y0 - 260;
-    b.setScale(sx * 0.82, sy * 1.25);
-    const body = b.body as Phaser.Physics.Arcade.Body | null;
-    const wasOn = body?.enable ?? false;
-    if (body) body.enable = false;
-    await new Promise<void>((r) => this.tweens.add({ targets: b, y: y0, duration: 420, ease: "Quad.in", onComplete: () => r() }));
-    if (body && wasOn) {
-      body.enable = true;
-      body.reset(b.x, b.y);
+    // Drongus (phase one) is already standing there from the meeting: he powers up where he is instead of dropping in
+    const drop = b.bossId !== "drongus1";
+    if (drop) {
+      b.setAlpha(1).setTint(0x000000);
+      b.y = y0 - 260;
+      b.setScale(sx * 0.82, sy * 1.25);
+      const body = b.body as Phaser.Physics.Arcade.Body | null;
+      const wasOn = body?.enable ?? false;
+      if (body) body.enable = false;
+      await new Promise<void>((r) => this.tweens.add({ targets: b, y: y0, duration: 420, ease: "Quad.in", onComplete: () => r() }));
+      if (body && wasOn) {
+        body.enable = true;
+        body.reset(b.x, b.y);
+      }
+    } else {
+      b.setAlpha(1).setTintFill(0xff2a2a);
+      await new Promise<void>((r) => this.tweens.add({ targets: b, scaleX: sx * 0.9, scaleY: sy * 1.12, duration: 420, ease: "Quad.in", onComplete: () => r() }));
     }
     if (!b.active) return close;
     b.clearTint();

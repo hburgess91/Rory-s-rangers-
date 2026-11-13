@@ -256,7 +256,7 @@ export class KrelfordFinale {
         const y = y0 + rnd.between(-20, 20);
         prop(keys[(i + rnd.between(0, 5)) % keys.length], x, y, 1.5 + rnd.frac() * 0.6);
       }
-      if (hasVfx(sc, "vfx_fire")) vfx(sc, "vfx_fire", x0 + rnd.between(-40, 40), y0, { scale: 1.4 + rnd.frac(), depth: y0 + 12, delay: rnd.between(0, 800) });
+      if (hasVfx(sc, "vfx_fire")) vfx(sc, "vfx_fire", x0 + rnd.between(-40, 40), y0, { scale: 1.4 + rnd.frac(), depth: fight.contains(x0, y0) ? 6 : y0 + 12, delay: rnd.between(0, 800) });
     }
     for (let i = 0; i < 30; i++) {
       const x = rnd.between(60, W - 60);

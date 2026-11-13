@@ -10,6 +10,7 @@ import { CAULDRON_JUMP } from "../../../content/citadel";
 import { PRIZES } from "../../../content/kreddle";
 import { addKrokens, awardPrize, krokenPrice, krokens, prizeOpen } from "../../systems/kreddle";
 import { G } from "../../G";
+import * as Juice from "../../gfx/Juice";
 
 /**
  * DA DRONGUS DUNGEON (Chapter 7): the gothic-cyber look (stone, stained glass, server racks, cables, red and purple
@@ -710,6 +711,10 @@ export class Citadel {
     // frame the two of you
     const cam = sc.cameras.main;
     cam.stopFollow();
+    const bars = Juice.letterbox(sc, 48, 700);
+    Juice.vignette(sc, 0x2a0008, 0.55, 4890).setName("meetVig");
+    // he's been waiting: a slow push in on him first
+    Juice.squash(sc, d, 0.12, 600);
     // you walk up the carpet to him
     sc.tweens.add({ targets: sc.player.spr, x, y: y + 230, duration: 900, ease: "Sine.inOut" });
     this.meetMid = { x, y: y + 120 };
@@ -718,6 +723,9 @@ export class Citadel {
     await this.hooks.talk(DRONGUS1_MEET);
     await this.animeNever();
     await this.hooks.talk(DRONGUS1_LOGS);
+    bars(400);
+    const vig = Juice.layer(sc, 4890).getByName("meetVig");
+    if (vig) sc.tweens.add({ targets: vig, alpha: 0, duration: 500, onComplete: () => vig.destroy() });
     cam.startFollow(sc.player.spr, true, 0.12, 0.12);
     if (gun) sc.tweens.add({ targets: gun, angle: -10, duration: 300, ease: "Back.out" });
     sc.time.delayedCall(700, () => {
@@ -736,6 +744,7 @@ export class Citadel {
     const objs: Phaser.GameObjects.GameObject[] = [];
     synth.play("roar");
     synth.play("cheer");
+    Juice.subDrop(1, 1.4);
     cam.flash(250, 255, 255, 255);
     cam.shake(900, 0.02);
     const z0 = cam.zoom;
