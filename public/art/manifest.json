@@ -6374,6 +6374,14 @@
   },
   "c6_klerble_crawl": {
    "file": "props/c6_klerble_crawl.png"
+  },
+  "p_plane_hd": {
+   "file": "props/p_plane_hd.png",
+   "hd": 0.1905
+  },
+  "p_plane_hd_l": {
+   "file": "props/p_plane_hd_l.png",
+   "hd": 0.1905
   }
  },
  "sheets": {

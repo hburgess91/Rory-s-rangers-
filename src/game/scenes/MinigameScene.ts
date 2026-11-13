@@ -1976,8 +1976,8 @@ export class MinigameScene extends Phaser.Scene {
     const hd = this.textures.exists("p_plane_hd");
     const plane = this.add.image(-200, 360, hd ? "p_plane_hd" : "p_plane").setDepth(10);
     if (hd) {
-      plane.displayWidth = 260;
-      plane.displayHeight = (260 * plane.height) / plane.width;
+      plane.displayWidth = 240;
+      plane.displayHeight = (240 * plane.height) / plane.width;
     } else plane.setScale(2);
     const barrel = this.add.rectangle(110, 440, 90, 26, 0x1f2937).setOrigin(0.1, 0.5).setStrokeStyle(3, 0x000000).setDepth(20);
     this.add.circle(110, 450, 26, 0x374151).setStrokeStyle(3, 0x000000).setDepth(21);
@@ -2095,7 +2095,7 @@ export class MinigameScene extends Phaser.Scene {
           hero.setPosition(px, py).setAngle(hero.angle + 14);
           // the fuselage (not the empty sky around the tail); a little more forgiving after a few goes
           const slack = 1 + Math.min(0.4, Math.max(0, tries - 3) * 0.05);
-          if (Math.abs(px - plane.x) < plane.displayWidth * 0.42 * slack && Math.abs(py - plane.y) < plane.displayHeight * (hd ? 0.28 : 0.32) * slack) {
+          if (Math.abs(px - plane.x) < plane.displayWidth * (hd ? 0.34 : 0.42) * slack && Math.abs(py - plane.y) < plane.displayHeight * (hd ? 0.22 : 0.32) * slack) {
             phase = "done";
             synth.play("punch_big");
             this.pop(px, py - 40, "ON BOARD", "#22c55e", 26);
