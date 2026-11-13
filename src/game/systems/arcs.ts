@@ -79,7 +79,7 @@ const DUE: Record<string, number> = {
   arc_hotel_chaz: 4,
   arc_kreblis_news: 4,
   arc_flenky_sigma: 4,
-  arc_klerble: 5,
+  arc_klerble: 6,
   arc_50p: 6,
 };
 export function arcDue(a: Arc): number | null {

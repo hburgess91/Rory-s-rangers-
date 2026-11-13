@@ -22,7 +22,7 @@ export const DRONGUS_SEQUENCES: DrongusSequence[] = [
   { id: "d_machine", trigger: "boss_defeated", cond: { chapter: 3 }, messages: ["RIP the Mk II", "Scrombus is going to be devastated", "Did anyone say anything nice about it before they killed it", "No ? Welcome to my world"] },
   { id: "d_hub4", trigger: "hub", cond: { chapter: 4 }, messages: ["New rule", "Anyone who doesn't react within 24 hours will be deported or sent to Krentonville Prison", "The rules aren't arbitrary. They're LORE"] },
   { id: "d_hub5", trigger: "hub", cond: { chapter: 5 }, messages: ["Who the fuck is Krebon", "Genuinely", "Two years and nobody's told me", "Whatever. No big deal. What the fuck ever"] },
-  { id: "d_hub6", trigger: "hub", cond: { chapter: 6 }, messages: ["Come on then", "I'm in the Citadel", "I've made the place nice. Every page is a room now. Took me a while. Not that anyone asked", "Bring your thumbs"] },
+  { id: "d_hub6", trigger: "hub", cond: { chapter: 7 }, messages: ["Come on then", "I'm in the Citadel", "I've made the place nice. Every page is a room now. Took me a while. Not that anyone asked", "Bring your thumbs"] },
   { id: "d_pub", trigger: "pub", messages: ["Are you in the pub ??", "Wish I could send you a box of crobleys", "Have one for me. And react to the song while you're there. Oh wait. You can't. Because you didn't."] },
   { id: "d_tv", trigger: "tv", messages: ["Are you watching KrelTV ?", "Which show", "If it's mine, react to it", "If it isn't mine, why"] },
   { id: "d_tcc", trigger: "tv_tcc", messages: ["Thick Cumming Cock", "Episode 7", "That one took me two hours. Ten page script. Made me laugh so very hard", "Had to WhatsApp call my brother", "Did you laugh ?", "Hello ?"] },

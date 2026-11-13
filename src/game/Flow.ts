@@ -117,8 +117,8 @@ export function townHallAction(): TownHallAction {
   }
   if (n === 3 && !f.cronster_briefed) return { kind: "meeting", id: "cronster_briefing" };
   if (n === 5 && !f.krebon_question) return { kind: "meeting", id: "krebon_question" };
-  if (n === 6 && !f.final_reading) return { kind: "meeting", id: "final_reading" };
-  if (n >= 2 && n <= 5 && f[`ch${n}_clear`] && !f[`ch${n}_fact`]) return f[`ch${n}_outro`] ? { kind: "fact" } : { kind: "outro" };
+  if (n === 7 && !f.final_reading) return { kind: "meeting", id: "final_reading" };
+  if (n >= 2 && n <= 6 && f[`ch${n}_clear`] && !f[`ch${n}_fact`]) return f[`ch${n}_outro`] ? { kind: "fact" } : { kind: "outro" };
   return { kind: "none" };
 }
 
@@ -163,7 +163,7 @@ export function endChapter() {
 export function advanceChapter() {
   const s = G.s;
   s.flags[`ch${s.chapter}_fact`] = true;
-  s.chapter = Math.min(6, s.chapter + 1);
+  s.chapter = Math.min(7, s.chapter + 1);
   s.phase = "hub";
   s.hp = maxHp(s);
   s.banRisk = 0;

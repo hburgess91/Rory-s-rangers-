@@ -21,7 +21,7 @@ export interface ChapterDef {
   intro: Line[];
   /** Short per-player altered scene, played straight after the intro. */
   playerScene: Record<PlayableId, Line[]>;
-  /** Plays after the boss, back in Town Hall (chapters 2-5; chapter 1 uses the Krazy Fact meeting). */
+  /** Plays after the boss, back in Town Hall (chapters 2-6; chapter 1 uses the Krazy Fact meeting). */
   outro: Line[];
 }
 
@@ -243,21 +243,62 @@ export const CHAPTERS: ChapterDef[] = [
       ping("DRONGUS", "FINE."),
       ping("DRONGUS", "Come up then. All of you. Bring your crystals. Bring your thumbs."),
       dir("In the wreckage: another scrap of map. 'TEMPLE OF THE LOGS — PIECE 5 OF 5'."),
-      say("KREZWONK", "All five. The Temple of the Logs is at the very top. Behind the song."),
+      say("KREZWONK", "All five. The Temple of the Logs is at the very top. Behind the song. We go tomorrow."),
+      dir("Tomorrow, as it turns out, has other plans."),
     ],
   },
   {
     n: 6,
+    title: "THE KREDDLE EXPRESS",
+    subtitle: "President Klerble · A Train · Flight KR-069",
+    dungeon: "airport",
+    dungeonDoor: "AIRPORT",
+    steps: [
+      { id: "s_brief", text: "KRELMERGENCY: the lads are glued to the telly in the FGM War Room (under the Archive). Something's on GB Krews.", done: { flag: "arcstep_arc_klerble_brief" }, target: "ARCHIVE" },
+      { id: "s_dungeon", text: "Get to Krelford International, get on Flight KR-069 and fly it into the Kreddle Express before it reaches the Krel Tower", done: { flag: "kreltower_resolved" }, target: "AIRPORT" },
+      { id: "s_report", text: "Report to the Town Hall", done: { flag: "ch6_fact" }, target: "TOWN_HALL" },
+    ],
+    intro: [
+      dir("CHAPTER SIX. You were on your way up to Da Drongus Dungeon. Crystals in your pocket. Thumbs ready. Then every telly in Krelford switched itself on at once."),
+      dir("It's Kreddle. It's President Klerble. He's smiling. That's never good."),
+      ping("DRONGUS", "Oh for fuck's sake"),
+      ping("DRONGUS", "I was READY. I'd done my hair"),
+      ping("MIKEY", "War Room. Now. It's on GB Krews"),
+    ],
+    playerScene: {
+      FLENKY: [say("FLENKY", "Mollor works on the top floor of the Krel Tower. If Kreddle so much as looks at it, I'm going dark again."), dir("You check you've still got the mask. You've still got the mask.")],
+      KREZMAR: [say("KREZMAR", "Kreddle. Their entire economy is betting. I respect it. I hate it. I respect it."), dir("Krelfund exposure to Kreddle: considerable.")],
+      KREBLIS: [say("KREBLIS", "Krelmergency…"), say("KREBLIS", "Kreddle is on the telly 👀"), dir("The Kreddle Krunchers took Mikey's bongo. This is personal now.")],
+      KREZWONK: [say("KREZWONK", "I have foreseen a train. I don't know why. I've never foreseen a train before."), dir("The vision is very loud. It goes 'YES! YES! YESSS!'")],
+      SCROMBUS: [say("SCROMBUS", "Whatever Kreddle's doing, we do it bigger. That's the policy. I just made it the policy."), dir("Minister for Policy, apparently.")],
+      KREBON: [say("KREBON", "Kreddle. Seven Krez Years in a casino, their lot. Voluntarily. You can't reason with people like that."), dir("You could turn the power off, though. Nobody will let you.")],
+      CRONGUS: [say("CRONGUS", "Lil' Krungus said he's littler than me. I'm not having that. I'm the littlest. I've always been the littlest."), dir("A grudge, in miniature.")],
+      GRONNY: [say("GRONNY", "Grenny copy me. Grenny say waa waa wee waa. That MY waa waa wee waa."), dir("Somewhere over the bridge, Grenny is saying it wrong.")],
+      MIKEY: [say("MIKEY", "They took my bongo. Then they took my dignity. Now they want the Tower."), dir("FGM Operation: Get The Bongo Back. Classification: deeply personal.")],
+    },
+    outro: [
+      dir("Town Hall. Somebody has stuck a Kreddle Express ticket to the noticeboard. It's a one-way. It's been punched."),
+      say("KREZMAR", "Well. The train's stopped. The Kreddle Krunchers are going to hear about this."),
+      say("MIKEY", "Good. Tell them I want my bongo back."),
+      say("KREZWONK", "Six crystals. All six. The vision's gone quiet. It's never quiet.", { role: true, proctus: "Six crystals! The vision's gone quiet! I've never heard it quiet! I don't like it!" }),
+      ping("DRONGUS", "Right"),
+      ping("DRONGUS", "Done with your little train?"),
+      ping("DRONGUS", "Come up then. All of you. Bring your crystals. Bring your thumbs."),
+      say("KREZWONK", "Da Drongus Dungeon. The Temple of the Logs is at the very top. Behind the song."),
+    ],
+  },
+  {
+    n: 7,
     title: "DA DRONGUS DUNGEON",
     subtitle: "Six Crystals · The Great Wiki Citadel Within · The Reaction Network Terminal",
     dungeon: "citadel",
     dungeonDoor: "CITADEL",
     steps: [
       { id: "s_final", text: "Attend the Final Reading (Town Hall)", done: { flag: "final_reading" }, target: "TOWN_HALL" },
-      { id: "s_dungeon", text: "Six cum crystals, six slots. Open Da Drongus Dungeon and climb the Great Wiki Citadel inside it. React to the song.", done: { flag: "ch6_clear" }, target: "CITADEL" },
+      { id: "s_dungeon", text: "Six cum crystals, six slots. Open Da Drongus Dungeon and climb the Great Wiki Citadel inside it. React to the song.", done: { flag: "ch7_clear" }, target: "CITADEL" },
     ],
     intro: [
-      dir("CHAPTER SIX. The Citadel gates are open. Through them you can see corridors made of wiki pages. One of the walls is the 'Krezzsplosion' article. It is very long. It is still being edited."),
+      dir("CHAPTER SEVEN. The Citadel gates are open. Through them you can see corridors made of wiki pages. One of the walls is the 'Krezzsplosion' article. It is very long. It is still being edited."),
       ping("DRONGUS", "There's a new sheriff in town boys…"),
     ],
     playerScene: {

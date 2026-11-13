@@ -504,8 +504,8 @@ export class HomeScene extends Phaser.Scene {
   private laptopPanel(justReacted = false) {
     const s = G.s;
     const { root, close } = this.panel("KRELWORLD GROUP CHAT", "#7fb3ff");
-    const cleared = [1, 2, 3, 4, 5].filter((n) => s.flags[`ch${n}_clear`]).length;
-    const blocks = [0, 1, 2, 3, 4, 5, 6].filter((n) => n <= Math.max(cleared, 0) || (n === 6 && s.chapter >= 6)).slice(-2);
+    const cleared = [1, 2, 3, 4, 5, 6].filter((n) => s.flags[`ch${n}_clear`]).length;
+    const blocks = [0, 1, 2, 3, 4, 5, 6, 7].filter((n) => n <= Math.max(cleared, 0) || (n === 7 && s.chapter >= 7)).slice(-2);
     const msgs: { s: string; t: string }[] = [];
     for (const b of blocks) msgs.push(...(CHAT_AFTER[b] ?? []));
     const st = DRONGUS_STATUSES.length ? DRONGUS_STATUSES[Math.floor(Math.random() * DRONGUS_STATUSES.length)] : null;

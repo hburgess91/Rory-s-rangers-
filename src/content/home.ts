@@ -107,6 +107,11 @@ export const CHAT_AFTER: Record<number, { s: string; t: string }[]> = {
     { s: "KREBON", t: "I was in there for six Krez Years once. Not Rik. Prison. Similar smell." },
   ],
   6: [
+    { s: "MIKEY", t: "we stopped a train with a plane" },
+    { s: "KREBLIS", t: "Breaking news… we stopped a train with a plane 👍" },
+    { s: "KREBON", t: "We could have turned the power off." },
+  ],
+  7: [
     { s: "DRONGUS", t: "Come on then" },
     { s: "DRONGUS", t: "I'm in the Citadel" },
     { s: "DRONGUS", t: "Bring your thumbs" },

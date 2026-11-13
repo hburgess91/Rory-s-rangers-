@@ -216,7 +216,7 @@ export const CHATTER: Chatter[] = [
     ["KREBLIS", "Don't."],
     ["KREZMAR", "Just saying."],
     ["KREBLIS", "DON'T."],
-  ], { chapter: 6 }),
+  ], { chapter: 7 }),
   X("polson_door", [
     ["POLSON", "*slams the front door* Just checking it's locked."],
     ["POLSON", "*slams it again*"],

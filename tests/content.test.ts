@@ -65,7 +65,7 @@ describe("content integrity", () => {
   });
 
   it("every chapter has an altered scene for every playable character", () => {
-    expect(CHAPTERS).toHaveLength(6);
+    expect(CHAPTERS).toHaveLength(7);
     for (const c of CHAPTERS) for (const p of PLAYABLE_IDS) expect(c.playerScene[p]?.length, `${c.n}/${p}`).toBeGreaterThan(0);
   });
 

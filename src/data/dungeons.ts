@@ -412,7 +412,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
   },
   citadel: {
     id: "citadel",
-    chapter: 6,
+    chapter: 7,
     name: "DA DRONGUS DUNGEON",
     music: "wiki",
     rooms: [
@@ -466,7 +466,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
 
   airport: {
     id: "airport",
-    chapter: 4,
+    chapter: 6,
     name: "FLIGHT KR-069: OPERATION PLANE INTO TRAIN",
     music: "krel_tower_rap",
     returnAt: "AIRPORT",
