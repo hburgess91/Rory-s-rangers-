@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { synth } from "../audio/Synth";
 import { G } from "../G";
+import { hdFactor } from "./HD";
 
 /**
  * Game-feel helpers for the big moments: letterbox bars, punch-in zooms, white flashes, shockwave rings, boss title
@@ -135,8 +136,10 @@ export function vignette(sc: Phaser.Scene, color = 0x000000, alpha = 0.7, depth 
 
 /** Squash on landing / stretch on rising: an object arrives with weight. Keeps its current scale as the rest pose. */
 export function squash(sc: Phaser.Scene, o: Phaser.GameObjects.Components.Transform & Phaser.GameObjects.GameObject, k = 0.25, ms = 320) {
-  const sx = o.scaleX;
-  const sy = o.scaleY;
+  // scale reads are real but writes apply the HD factor (gfx/HD.ts), so tween in logical scale
+  const hd = hdFactor(o as { texture?: Phaser.Textures.Texture });
+  const sx = o.scaleX / hd;
+  const sy = o.scaleY / hd;
   sc.tweens.add({
     targets: o,
     scaleX: { from: sx * (1 + k), to: sx },

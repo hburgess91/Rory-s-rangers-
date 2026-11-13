@@ -15,6 +15,8 @@ const SUMMONS: { ask: string; ai: string; reply: string; col: string; spawn: [st
   { ask: "CLAUDE! GENERATE A DEEPFAKE!", ai: "CLAUDE", reply: "Okay, but I'm adding a watermark.", col: "#f4b48c", spawn: [["deepfake_anchor", 1], ["ai_pitbull_spider", 1]] },
 ];
 const PLASMA = 0x39ff5a;
+/** Gun height relative to his centre: held at the waist, below the (big) head and beard. */
+const GUN_Y = 5;
 
 /**
  * DRONGUS B. DRIPPIN', PHASE ONE: the inner sanctum, top-down. He has the DRONGUS GUN (the plasma cannon from the
@@ -58,7 +60,7 @@ export class DrongusPhaseOneBoss extends Boss {
   private muzzle(): [number, number] {
     const g = this.gun;
     const len = g ? g.displayWidth * 0.55 : 50;
-    return [this.x + Math.cos(this.aim) * len, this.y - 10 + Math.sin(this.aim) * len];
+    return [this.x + Math.cos(this.aim) * len, this.y + GUN_Y + Math.sin(this.aim) * len];
   }
 
   /** Keep the gun in his hands, pointing where he's aiming. */
@@ -66,7 +68,7 @@ export class DrongusPhaseOneBoss extends Boss {
     const g = this.gun;
     if (!g) return;
     const left = Math.cos(this.aim) < 0;
-    g.setPosition(this.x + Math.cos(this.aim) * 14, this.y - 10 + Math.sin(this.aim) * 6).setRotation(this.aim).setFlipY(left).setDepth(this.depth + 1).setVisible(this.visible).setAlpha(this.alpha);
+    g.setPosition(this.x + Math.cos(this.aim) * 14, this.y + GUN_Y + Math.sin(this.aim) * 6).setRotation(this.aim).setFlipY(left).setDepth(this.depth + 1).setVisible(this.visible).setAlpha(this.alpha);
     if (this.world.now() < this.flashUntil) g.setTintFill(0xffffff);
     else if (this.world.now() < this.vulnerableUntil) g.setTint(0xff9b9b);
     else g.clearTint();

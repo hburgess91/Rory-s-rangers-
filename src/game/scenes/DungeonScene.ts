@@ -28,7 +28,7 @@ import { addBanRisk, BAN_RULES, type BanRule, coolBanRisk } from "../systems/ban
 import { pickupsInDungeon, collectPickup } from "../systems/quests";
 import { Spice } from "../combat/Spice";
 import { equipBest, fitTo, giveAmmo, ownedGuns, rollCrate, GUNS, gunMax } from "../combat/Guns";
-import { charMeta, leadCamera } from "../gfx/HD";
+import { charMeta, hdFactor, leadCamera } from "../gfx/HD";
 import { addFart } from "../combat/Farts";
 import { Companion } from "../combat/Companion";
 import { KrelfordFinale } from "./finale/KrelfordFinale";
@@ -1783,8 +1783,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const close = Juice.letterbox(this, 50, 420);
     const vig = Juice.vignette(this, 0x000000, 0.55, 4890);
     this.events.once("epic-vig-off", () => this.tweens.add({ targets: vig, alpha: 0, duration: 600, onComplete: () => vig.destroy() }));
-    const sx = b.scaleX;
-    const sy = b.scaleY;
+    // scaleX reads the real scale but writes apply the HD factor, so work in logical scale
+    const sx = b.scaleX / hdFactor(b);
+    const sy = b.scaleY / hdFactor(b);
     const y0 = b.y;
     b.setAlpha(0);
     if (fresh) {
