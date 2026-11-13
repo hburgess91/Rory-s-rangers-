@@ -6476,6 +6476,123 @@
   },
   "r_fireheap": {
    "file": "props/r_fireheap.png"
+  },
+  "tile_citadel": {
+   "file": "tiles/tile_citadel.png"
+  },
+  "dec_citadel_0": {
+   "file": "props/dec_citadel_0.png"
+  },
+  "dec_citadel_1": {
+   "file": "props/dec_citadel_1.png"
+  },
+  "dec_citadel_2": {
+   "file": "props/dec_citadel_2.png"
+  },
+  "pillar_citadel": {
+   "file": "props/pillar_citadel.png"
+  },
+  "c7d_window": {
+   "file": "props/c7d_window.png"
+  },
+  "c7d_tannoy": {
+   "file": "props/c7d_tannoy.png"
+  },
+  "c7d_cables": {
+   "file": "props/c7d_cables.png"
+  },
+  "c7d_frame": {
+   "file": "props/c7d_frame.png"
+  },
+  "c7d_skulls": {
+   "file": "props/c7d_skulls.png"
+  },
+  "c7d_crt": {
+   "file": "props/c7d_crt.png"
+  },
+  "c7d_banner": {
+   "file": "props/c7d_banner.png"
+  },
+  "c7d_chain": {
+   "file": "props/c7d_chain.png"
+  },
+  "c7d_crate": {
+   "file": "props/c7d_crate.png"
+  },
+  "c7d_altar": {
+   "file": "props/c7d_altar.png"
+  },
+  "c7d_neon": {
+   "file": "props/c7d_neon.png"
+  },
+  "c7d_coffin": {
+   "file": "props/c7d_coffin.png"
+  },
+  "c7d_bg_corridor": {
+   "file": "backdrops/c7d_bg_corridor.png"
+  },
+  "c7d_bg_arches": {
+   "file": "backdrops/c7d_bg_arches.png"
+  },
+  "c7d_bg_tower": {
+   "file": "backdrops/c7d_bg_tower.png"
+  },
+  "c7d_bg_gallery": {
+   "file": "backdrops/c7d_bg_gallery.png"
+  },
+  "c7_krex_gun": {
+   "file": "combat/c7_krex_gun.png"
+  },
+  "c7_krex_arm": {
+   "file": "combat/c7_krex_arm.png"
+  },
+  "c7_krex_tail": {
+   "file": "combat/c7_krex_tail.png"
+  },
+  "c7_krex_legb": {
+   "file": "combat/c7_krex_legb.png"
+  },
+  "c7_krex_legf": {
+   "file": "combat/c7_krex_legf.png"
+  },
+  "c7_krex_head": {
+   "file": "combat/c7_krex_head.png"
+  },
+  "c7_cybertruck": {
+   "file": "combat/c7_cybertruck.png"
+  },
+  "c7_rocket": {
+   "file": "combat/c7_rocket.png"
+  },
+  "c7_cauldron": {
+   "file": "props/c7_cauldron.png"
+  },
+  "c7_bottle_0": {
+   "file": "props/c7_bottle_0.png"
+  },
+  "c7_bottle_1": {
+   "file": "props/c7_bottle_1.png"
+  },
+  "c7_armour_0": {
+   "file": "combat/c7_armour_0.png"
+  },
+  "c7_armour_1": {
+   "file": "combat/c7_armour_1.png"
+  },
+  "c7_armour_2": {
+   "file": "combat/c7_armour_2.png"
+  },
+  "c7_armour_3": {
+   "file": "combat/c7_armour_3.png"
+  },
+  "c7_armour_4": {
+   "file": "combat/c7_armour_4.png"
+  },
+  "c7_rubble": {
+   "file": "props/c7_rubble.png"
+  },
+  "c7_drongus_skinny": {
+   "file": "combat/c7_drongus_skinny.png"
   }
  },
  "sheets": {
@@ -7205,6 +7322,110 @@
    "frameWidth": 64,
    "frameHeight": 64,
    "hd": 0.5
+  },
+  "en_ai_pitbull": {
+   "file": "combat/en_ai_pitbull.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.62
+  },
+  "en_ai_pitbull_twin": {
+   "file": "combat/en_ai_pitbull_twin.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.66
+  },
+  "en_ai_pitbull_spider": {
+   "file": "combat/en_ai_pitbull_spider.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.62
+  },
+  "en_nonce": {
+   "file": "combat/en_nonce.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.66
+  },
+  "en_nonce_fat": {
+   "file": "combat/en_nonce_fat.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.7
+  },
+  "en_nonce_tall": {
+   "file": "combat/en_nonce_tall.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.72
+  },
+  "en_idf": {
+   "file": "combat/en_idf.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.58
+  },
+  "en_hamas": {
+   "file": "combat/en_hamas.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.58
+  },
+  "en_kamikaze": {
+   "file": "combat/en_kamikaze.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.58
+  },
+  "en_deepfake_anchor": {
+   "file": "combat/en_deepfake_anchor.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.6
+  },
+  "en_crypto_bro": {
+   "file": "combat/en_crypto_bro.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.58
+  },
+  "en_news_drone": {
+   "file": "combat/en_news_drone.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.55
+  },
+  "en_x_logo": {
+   "file": "combat/en_x_logo.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.32
+  },
+  "en_honour_guard": {
+   "file": "combat/en_honour_guard.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.6
+  },
+  "boss_krex": {
+   "file": "combat/boss_krex.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "boss_elon": {
+   "file": "combat/boss_elon.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "boss_drongus2": {
+   "file": "combat/boss_drongus2.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "c7d_door": {
+   "file": "props/c7d_door.png",
+   "frameWidth": 128,
+   "frameHeight": 128
   }
  },
  "vfx": {
