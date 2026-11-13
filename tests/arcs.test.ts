@@ -6,7 +6,7 @@ import { newGameState } from "../src/game/systems/state";
 import { arcDue, currentArcStep, currentArcSteps, completeStep, maybeFinishArc, arcStepAt, spotFlag } from "../src/game/systems/arcs";
 
 const HUB_SPOTS = ["UNIVERSITY", "GYM", "FIXER_UPPER", "BOOTH", "ABANDONED", "OLD_FLAT", "PUB", "BANK", "TOWN_HALL", "HOME", "ARCHIVE", "POLICE", "POLSON_ROAD", "FIELD", "BOGGOR_HOUSE", "PORTAL", "CROBLEY_FACTORY", "AIRPORT"];
-const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv", "polson_gym2", "polson_mouth", "wahooga", "pudding_spy", "pudding_raid", "sanmik_lampe", "sanmik_nation", "sanmik_finale", "crobley_news", "crobley_presser", "crobley_boom"];
+const VIGNETTES = ["kreltower_fall", "kreltower_saved", "pudding", "flatmate", "rival", "press_conference", "polson_gym", "polson_cctv", "polson_gym2", "polson_mouth", "wahooga", "pudding_spy", "pudding_raid", "sanmik_lampe", "sanmik_nation", "sanmik_finale", "crobley_news", "crobley_presser", "crobley_boom", "kruncher_invasion"];
 const MINIGAMES = ["bully", "deadlift", "girlfriends", "renovate", "runescape", "burpees", "facebook", "gig", "modulator", "crocodile", "norwich", "cam2cam", "cannon"];
 
 describe("character side stories", () => {
@@ -90,7 +90,7 @@ describe("shared side quests", () => {
     const shared = () => currentArcSteps(s).filter((c) => c.arc.player === "ALL");
     expect(shared().length).toBe(0);
     s.chapter = 3;
-    expect(shared().map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_crocodile", "arc_hotel_chaz", "arc_polson_fit", "arc_pudding_spy"]);
+    expect(shared().map((c) => c.arc.id).sort()).toEqual(["arc_boggor", "arc_crocodile", "arc_hotel_chaz", "arc_krunchers", "arc_polson_fit", "arc_pudding_spy"]);
   });
   it("collect steps finish when every token is picked up", () => {
     const s = newGameState("MIKEY");

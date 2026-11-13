@@ -24,6 +24,8 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
+import * as KR from "../../content/krunchers";
+import type { Arc, ArcStep } from "../../content/arcs";
 import { CRYSTAL_BOSSES, CRYSTALS_NEEDED, crystalCount, hasCrystal } from "../systems/crystals";
 
 const WORLD_W = 2560;
@@ -1655,6 +1657,7 @@ export class HubScene extends Phaser.Scene {
     }
     this.interactables.push({ x: 1450, y: 780, r: 60, label: () => "Watch KrelTV", use: () => this.openTV() });
     this.spawnCollectibles();
+    this.spawnBrawl();
     // Kreblis quest: strange occurrences
     for (const { quest, spot, anchor } of pickupsInHub(G.s)) {
       const a = ANCHORS[anchor];
@@ -2347,6 +2350,7 @@ You are required by law to sign the Sex Offenders Register.`, {
 
   private arcPayout() {
     this.spawnCollectibles();
+    this.spawnBrawl();
     const r = maybeFinishArc(G.s);
     if (r) {
       synth.play("cheer");
@@ -2681,7 +2685,8 @@ You are required by law to sign the Sex Offenders Register.`, {
     this.updatePlayground(time, dt);
     this.updateRegister();
     this.beatup?.update(time, dt);
-    if (!this.busy && this.controls.attackHeld()) {
+    if (this.brawl?.running && this.controls.attackHeld()) this.playerShove(time);
+    if (!this.busy && !this.brawl?.running && this.controls.attackHeld()) {
       const m = this.npcs.find((n) => n.follower);
       if (m && Phaser.Math.Distance.Between(m.spr.x, m.spr.y, this.av.x, this.av.y) < 70) this.hitMikey(m, true);
     }
@@ -2709,7 +2714,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     // objective arrow
     const st = currentStep();
-    const target = this.beatup?.target() ?? (st?.target ? this.targetPos(st.target) : null);
+    const target = this.beatup?.target() ?? (st?.target ? this.targetPos(st.target) : null) ?? (this.brawl && !this.brawl.running ? this.brawl.spot : null);
     if (target && !this.busy) {
       const d = Phaser.Math.Distance.Between(this.av.x, this.av.y, target.x, target.y);
       if (d > 120) {
@@ -2717,6 +2722,155 @@ You are required by law to sign the Sex Offenders Register.`, {
         this.arrow.setVisible(true).setPosition(this.av.x + Math.cos(a) * 60, this.av.y + Math.sin(a) * 60).setRotation(a);
       } else this.arrow.setVisible(false);
     } else this.arrow.setVisible(false);
+  }
+
+  // ---------------------------------------------------------------- THE KREDDLE KRUNCHERS: the shoving match
+
+  private brawl: {
+    spot: { x: number; y: number };
+    ks: Phaser.GameObjects.Sprite[];
+    krew: Phaser.GameObjects.Sprite[];
+    running: boolean;
+    shoves: number;
+    nextShove: number;
+    heckle?: Phaser.Time.TimerEvent;
+  } | null = null;
+
+  /** If the Krunchers step is open, they're loitering by the bridge, heckling. */
+  private spawnBrawl() {
+    if (this.brawl) return;
+    const c = currentArcSteps(G.s).find((x) => x.step.step.kind === "shove");
+    if (!c) return;
+    const k = c.step.step as Extract<ArcStep["step"], { kind: "shove" }>;
+    const { x, y } = k.spot;
+    const ks = KR.KRUNCHERS.filter((kr) => this.textures.exists(`spr_${kr.of}`)).map((kr, i) => {
+      const sx = x - 60 + (i % 5) * 46;
+      const sy = y - 50 + Math.floor(i / 5) * 56 + (i % 2) * 8;
+      const sp = this.add.sprite(sx, sy, `spr_${kr.of}`, 0).setScale(2).setDepth(sy).setTint(i % 2 ? 0xff9de6 : 0x9be7ff);
+      sp.setData("name", kr.name);
+      return sp;
+    });
+    const tag = this.add.text(x + 30, y - 120, "THE KREDDLE KRUNCHERS", { fontFamily: "Impact, sans-serif", fontSize: "16px", color: "#ff4fd8", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(5000);
+    this.brawl = { spot: { x, y }, ks, krew: [], running: false, shoves: 0, nextShove: 0 };
+    this.brawl.heckle = this.time.addEvent({
+      delay: 1700,
+      loop: true,
+      callback: () => {
+        if (!this.brawl || this.brawl.running) return;
+        const sp = Phaser.Utils.Array.GetRandom(ks) as Phaser.GameObjects.Sprite;
+        if (sp?.active) this.floatShout(sp, Phaser.Utils.Array.GetRandom(KR.KR_SHOUTS), "#ffd1f3");
+      },
+    });
+    this.interactables.push({
+      x,
+      y,
+      r: 150,
+      label: () => "Make the Kreddle Krunchers SCRAM",
+      enabled: () => !!this.brawl && !this.brawl.running,
+      use: () => {
+        tag.destroy();
+        void this.runBrawl(c.arc, c.step, k);
+      },
+    });
+  }
+
+  private floatShout(spr: Phaser.GameObjects.Sprite, text: string, bg: string) {
+    const t = this.add.text(spr.x, spr.y - 56, text, { fontFamily: FONT, fontSize: "12px", color: "#111", backgroundColor: bg, padding: { x: 5, y: 2 }, fontStyle: "bold" }).setOrigin(0.5).setDepth(6000);
+    this.tweens.add({ targets: t, y: t.y - 14, alpha: 0, delay: 700, duration: 450, onComplete: () => t.destroy() });
+  }
+
+  /** Shove a sprite away from (fx, fy). */
+  private knock(spr: Phaser.GameObjects.Sprite, fx: number, fy: number, dist = 46) {
+    const a = Math.atan2(spr.y - fy, spr.x - fx) + (Math.random() - 0.5) * 0.6;
+    this.tweens.killTweensOf(spr);
+    this.tweens.add({ targets: spr, x: spr.x + Math.cos(a) * dist, y: spr.y + Math.sin(a) * dist * 0.7, angle: { from: (Math.random() - 0.5) * 30, to: 0 }, duration: 260, ease: "Quad.out", onUpdate: () => spr.setDepth(spr.y) });
+    vfx(this, "vfx_dust", spr.x, spr.y + 10, { scale: 1, depth: spr.y + 1 });
+  }
+
+  /** You press attack in the scrum: the nearest Kruncher gets it. */
+  private playerShove(now: number) {
+    const b = this.brawl;
+    if (!b || now < b.nextShove) return;
+    b.nextShove = now + 320;
+    const near = b.ks.filter((k) => k.active).sort((p, q) => Phaser.Math.Distance.Between(p.x, p.y, this.av.x, this.av.y) - Phaser.Math.Distance.Between(q.x, q.y, this.av.x, this.av.y))[0];
+    if (!near || Phaser.Math.Distance.Between(near.x, near.y, this.av.x, this.av.y) > 80) return;
+    this.knock(near, this.av.x, this.av.y, 70);
+    synth.play("punch");
+    b.shoves++;
+    vfx(this, "vfx_hit", near.x, near.y - 30, { scale: 1.2, depth: 6000 });
+    this.floatShout(this.av as unknown as Phaser.GameObjects.Sprite, Phaser.Utils.Array.GetRandom(["SHOVE!", "SCRAM!", ...KR.KREW_SHOUTS]), "#bde0fe");
+    if (Math.random() < 0.6) this.time.delayedCall(250, () => near.active && this.floatShout(near, Phaser.Utils.Array.GetRandom(KR.KR_SHOUTS), "#ffd1f3"));
+  }
+
+  private async runBrawl(arc: Arc, step: ArcStep, k: Extract<ArcStep["step"], { kind: "shove" }>) {
+    const b = this.brawl!;
+    const s = G.s;
+    const { x, y } = b.spot;
+    // the krew turn up
+    b.krew = PLAYABLE_ORDER.filter((p) => p !== s.player && this.textures.exists(`spr_${p}`)).map((p, i) => {
+      const sp = this.add.sprite(x + 260 + (i % 4) * 40, y - 40 + Math.floor(i / 4) * 50, `spr_${p}`, 0).setScale(2).setDepth(y);
+      return sp;
+    });
+    this.busy = true;
+    await this.talk(k.intro);
+    this.busy = false;
+    b.running = true;
+    synth.play("crowd_boo");
+    G.emit("toast", { title: "SHOVING MATCH", text: "Attack to shove a Kruncher. Or don't. It's chaos either way." });
+    // everyone piles into the middle
+    const all = [...b.ks, ...b.krew];
+    all.forEach((sp) => this.tweens.add({ targets: sp, x: x + 40 + (Math.random() - 0.5) * 220, y: y + (Math.random() - 0.5) * 120, duration: 600, onUpdate: () => sp.setDepth(sp.y) }));
+    const counter = this.add.text(480, 90, "", { fontFamily: FONT, fontSize: "18px", color: "#ff4fd8", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(9000);
+    const end = this.time.now + k.seconds * 1000;
+    const chaos = this.time.addEvent({
+      delay: 260,
+      loop: true,
+      callback: () => {
+        counter.setText(`SHOVES: ${b.shoves}   ·   ${Math.max(0, Math.ceil((end - this.time.now) / 1000))}s`);
+        // a random scuffle: someone from one side shoves someone from the other
+        const kr = Phaser.Utils.Array.GetRandom(b.ks) as Phaser.GameObjects.Sprite;
+        const kw = Phaser.Utils.Array.GetRandom(b.krew) as Phaser.GameObjects.Sprite;
+        if (!kr || !kw) return;
+        const [a, v] = Math.random() < 0.5 ? [kr, kw] : [kw, kr];
+        this.tweens.add({ targets: a, x: a.x + (v.x - a.x) * 0.5, y: a.y + (v.y - a.y) * 0.5, duration: 120, yoyo: true, onUpdate: () => a.setDepth(a.y) });
+        this.time.delayedCall(120, () => this.knock(v, a.x, a.y));
+        if (Math.random() < 0.5) synth.play("punch");
+        if (Math.random() < 0.55) this.floatShout(a, Phaser.Utils.Array.GetRandom(a === kr ? KR.KR_SHOUTS : KR.KREW_SHOUTS), a === kr ? "#ffd1f3" : "#bde0fe");
+        // stragglers drift back into the scrum
+        for (const sp of all) if (Phaser.Math.Distance.Between(sp.x, sp.y, x + 40, y) > 200) this.tweens.add({ targets: sp, x: x + 40 + (Math.random() - 0.5) * 160, y: y + (Math.random() - 0.5) * 100, duration: 700, onUpdate: () => sp.setDepth(sp.y) });
+        // and now and then one of them shoves YOU
+        const near = b.ks.find((q) => Phaser.Math.Distance.Between(q.x, q.y, this.av.x, this.av.y) < 60);
+        if (near && Math.random() < 0.18) {
+          this.tweens.add({ targets: this.av, x: this.av.x + Math.sign(this.av.x - near.x || 1) * 34, duration: 160 });
+          this.floatShout(near, Phaser.Utils.Array.GetRandom(KR.KR_SHOUTS), "#ffd1f3");
+          this.cameras.main.shake(90, 0.004);
+        }
+      },
+    });
+    await new Promise<void>((res) => this.time.delayedCall(k.seconds * 1000, () => res()));
+    chaos.remove();
+    counter.destroy();
+    b.running = false;
+    this.busy = true;
+    // they regroup, gloat, and take your wallets on the way out
+    b.ks.forEach((sp, i) => this.tweens.add({ targets: sp, x: x - 80 + (i % 5) * 40, y: y - 30 + Math.floor(i / 5) * 50, duration: 500, onUpdate: () => sp.setDepth(sp.y) }));
+    await this.talk(k.leave);
+    const lost = Math.min(s.coins, Math.max(25, Math.round(s.coins * 0.4)));
+    s.coins -= lost;
+    synth.play("coin");
+    vfx(this, "vfx_coins", this.av.x, this.av.y - 30, { scale: 1.4, depth: 6000 });
+    G.emit("toast", { title: "PICKPOCKETED", text: lost ? `The Krunchers nicked ${lost} Krezzcoin off you on the way out.` : "They went through your pockets. You had nothing. They looked at you with pity." });
+    for (const sp of b.ks) this.tweens.add({ targets: sp, x: 40, duration: 1600 + Math.random() * 600, onComplete: () => sp.destroy() });
+    await new Promise<void>((res) => this.time.delayedCall(900, () => res()));
+    await this.talk(k.after);
+    for (const sp of b.krew) this.tweens.add({ targets: sp, alpha: 0, duration: 800, onComplete: () => sp.destroy() });
+    b.heckle?.remove();
+    s.flags.krunchers_shoved = b.shoves;
+    completeStep(s, arc, step);
+    this.brawl = null;
+    this.busy = false;
+    G.save();
+    this.arcPayout();
   }
 
   private targetPos(id: string) {

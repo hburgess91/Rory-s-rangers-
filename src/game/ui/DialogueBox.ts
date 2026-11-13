@@ -364,7 +364,9 @@ export class DialogueBox {
       if (i >= 0) queue.splice(i, 0, { s: queue[i].s, t: REGISTER_JIBES[Math.floor(Math.random() * REGISTER_JIBES.length)], tag: "new" });
     }
     while (queue.length && !this.destroyed) {
-      const raw = queue.shift()!;
+      const raw0 = queue.shift()!;
+      // "YOU" = whoever you're playing as
+      const raw = raw0.s === "YOU" ? { ...raw0, s: s.player } : raw0;
       if (!evalCond(raw.cond, s)) continue;
       if (raw.set) Object.assign(s.flags, raw.set);
       if (raw.react) {

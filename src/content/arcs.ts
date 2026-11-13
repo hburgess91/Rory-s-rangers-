@@ -1,5 +1,6 @@
 import type { Line, PlayableId } from "../data/types";
 import { canon, dir, ping, say } from "./dsl";
+import { KR_AFTER, KR_BRAWL_INTRO, KR_LEAVE } from "./krunchers";
 
 // Character arcs: extra side-quest chains for specific playable characters.
 // Steps happen at hub locations, in order. Every antagonist here is fictional.
@@ -12,7 +13,9 @@ export type ArcStepKind =
   | { kind: "vignette"; intro: Line[]; id: string }
   | { kind: "pay"; intro: Line[]; cost: number; success: Line[] }
   /** Pick up glowing items around Krelford. Not tied to a building (use at: "FIELD"). */
-  | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[]; guard?: "playground" };
+  | { kind: "collect"; label: string; spots: { x: number; y: number; name: string }[]; pickup: Line[]; guard?: "playground" }
+  /** A free-for-all shoving match in town (at: "FIELD"): the Krunchers and the krew at `spot`. */
+  | { kind: "shove"; spot: { x: number; y: number }; intro: Line[]; leave: Line[]; after: Line[]; seconds: number };
 
 export interface ArcStep {
   id: string;
@@ -39,6 +42,32 @@ export interface Arc {
 }
 
 export const ARCS: Arc[] = [
+  {
+    id: "arc_krunchers",
+    player: "ALL",
+    minChapter: 3,
+    title: "The Kreddle Krunchers",
+    blurb: "Kreddle's answer to the lads have come over the bridge. They've pissed on the Kreltower and battered Mikey. Nobody gets to batter Mikey but us.",
+    reward: { coins: 60, desc: "Drongus felt sorry for you and sent you 60 Krezzcoin. 'Don't spend it all at once. Also react to my song.'" },
+    steps: [
+      {
+        id: "invasion",
+        text: "KRELMERGENCY: the group chat's going mental about something at the Kreddle Bridge. Get home and check your phone.",
+        at: "HOME",
+        step: {
+          kind: "vignette",
+          id: "kruncher_invasion",
+          intro: [ping("KREBLIS", "Breaking news… something's coming over the Kreddle Bridge 👀"), ping("MIKEY", "lads??"), dir("You get in. You look at your phone. Then you look at it again.")],
+        },
+      },
+      {
+        id: "shove",
+        text: "The Kreddle Krunchers are hanging about by the Kreddle Bridge (far west). Get over there with the krew and make them SCRAM.",
+        at: "FIELD",
+        step: { kind: "shove", spot: { x: 330, y: 825 }, intro: KR_BRAWL_INTRO, leave: KR_LEAVE, after: KR_AFTER, seconds: 20 },
+      },
+    ],
+  },
   {
     id: "arc_klerble",
     player: "ALL",
