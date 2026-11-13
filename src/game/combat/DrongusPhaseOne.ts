@@ -6,13 +6,13 @@ import { hasVfx, vfx } from "../gfx/Vfx";
 import { BOSS_TEXT } from "../../content/bosses";
 
 /** What he has the AI generate, in order (it cycles). */
-const SUMMONS: { ask: string; spawn: [string, number][] }[] = [
-  { ask: "DRONGUS AI: GENERATE PITBULLS!", spawn: [["ai_pitbull", 2]] },
-  { ask: "DRONGUS AI: GENERATE THE NEWS!", spawn: [["idf", 1], ["hamas", 1]] },
-  { ask: "DRONGUS AI: GENERATE MORE MACS!", spawn: [["nonce", 2]] },
-  { ask: "DRONGUS AI: GENERATE BOMBERS!", spawn: [["kamikaze", 2]] },
-  { ask: "DRONGUS AI: GENERATE DRONES!", spawn: [["news_drone", 2]] },
-  { ask: "DRONGUS AI: GENERATE A DEEPFAKE!", spawn: [["deepfake_anchor", 1], ["ai_pitbull_spider", 1]] },
+const SUMMONS: { ask: string; ai: string; reply: string; col: string; spawn: [string, number][] }[] = [
+  { ask: "GROK! GENERATE PITBULLS!", ai: "GROK", reply: "say less king 🐕🔥", col: "#f2f2f2", spawn: [["ai_pitbull", 2]] },
+  { ask: "CHATGPT! GENERATE THE NEWS!", ai: "CHATGPT", reply: "Certainly! Here's the news: 📰", col: "#7fffd4", spawn: [["idf", 1], ["hamas", 1]] },
+  { ask: "CLAUDE! GENERATE MORE MACS!", ai: "CLAUDE", reply: "I'd rather not… but here are some generic men in macs.", col: "#f4b48c", spawn: [["nonce", 2]] },
+  { ask: "GROK! GENERATE BOMBERS!", ai: "GROK", reply: "unfiltered bombers incoming 💥", col: "#f2f2f2", spawn: [["kamikaze", 2]] },
+  { ask: "CHATGPT! GENERATE DRONES!", ai: "CHATGPT", reply: "Sure! Here are 2 drones. Want more?", col: "#7fffd4", spawn: [["news_drone", 2]] },
+  { ask: "CLAUDE! GENERATE A DEEPFAKE!", ai: "CLAUDE", reply: "Okay, but I'm adding a watermark.", col: "#f4b48c", spawn: [["deepfake_anchor", 1], ["ai_pitbull_spider", 1]] },
 ];
 const PLASMA = 0x39ff5a;
 
@@ -20,7 +20,7 @@ const PLASMA = 0x39ff5a;
  * DRONGUS B. DRIPPIN', PHASE ONE: the inner sanctum, top-down. He has the DRONGUS GUN (the plasma cannon from the
  * Lair) and his AI on speed-dial. A fixed, learnable cycle:
  *   1. PLASMA VOLLEY  green aim lines, then bolts down them (step out of the lines)
- *   2. GENERATE       "DRONGUS AI, GENERATE…" (a few of the dungeon's AI monsters)
+ *   2. GENERATE       "GROK / CLAUDE / CHATGPT, GENERATE…" (a few of the dungeon's AI monsters)
  *   3. SWEEP          the whole arc is shown first, then the beam sweeps across it (get behind him / out of the arc)
  *   4. MEGA SHOT      a long charge, the aim locks on just before it fires (move when it locks)
  *   5. RELOADING      he stops, gun venting: your window (he takes extra damage)
@@ -107,7 +107,7 @@ export class DrongusPhaseOneBoss extends Boss {
   onPhase(n: number, now: number) {
     super.onPhase(n, now);
     this.world.toast(n === 1 ? "HE'S ANGRY" : "HE'S FURIOUS", n === 1 ? "Faster volleys. The sweep goes both ways now." : "More monsters. A ring of plasma after every mega shot.");
-    this.world.floatText(this.x, this.y - 90, n === 1 ? "RIGHT. NO MORE MR NICE DRONGUS." : "DRONGUS AI: GENERATE EVERYTHING!", "#ff6b6b", 20);
+    this.world.floatText(this.x, this.y - 90, n === 1 ? "RIGHT. NO MORE MR NICE DRONGUS." : "GROK! CLAUDE! CHATGPT! GENERATE EVERYTHING!", "#ff6b6b", 20);
   }
 
   pattern(_dt: number, now: number) {
@@ -157,7 +157,7 @@ export class DrongusPhaseOneBoss extends Boss {
       synth.play("tannoy");
       this.scene.time.delayedCall(700, () => {
         if (this.dead || !this.active) return;
-        w.floatText(this.x, this.y - 64, "DRONGUS AI: Sure! Generating…", "#c4b5fd", 13);
+        w.floatText(this.x, this.y - 64, `${sm.ai}: ${sm.reply}`, sm.col, 13);
         if (live >= 7) return;
         const more = this.phase >= 2 ? 1 : 0;
         for (const [type, n] of sm.spawn)

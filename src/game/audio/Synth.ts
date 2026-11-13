@@ -893,6 +893,18 @@ export class Synth {
         this.tone(523, 0.7, "triangle", 0.28, 0.42);
         this.burst(0.5, 0.06, 0.9, 2400);
         break;
+      case "thunder":
+        // distant thunder: a long low rumble
+        this.burst(2.4, 0.5, 0, 180, undefined, 0.5);
+        this.burst(1.6, 0.35, 0.3, 320, undefined, 0.5);
+        this.tone(48, 2.2, "sine", 0.25, 0.1, 0.7);
+        break;
+      case "drone":
+        // a low, ominous drone (the final stairs)
+        this.tone(55, 7.5, "sawtooth", 0.06, 0, 0.98);
+        this.tone(82.4, 7.5, "sine", 0.1, 0, 1);
+        this.tone(58.3, 7.5, "triangle", 0.07, 0.5, 1);
+        break;
       case "ai_deny":
         // the AI says NO: a harsh double buzzer
         this.tone(130, 0.28, "sawtooth", 0.4);

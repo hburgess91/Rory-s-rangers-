@@ -499,7 +499,7 @@ export const BOSS_TEXT: Record<string, BossText> = {
     name: "DRONGUS B. DRIPPIN'",
     title: "Supreme Leader · Holding The Drongus Gun",
     intro: [
-      say("DRONGUS", "DRONGUS AI: stand by to generate. Drongus Gun: ARMED."),
+      say("DRONGUS", "Grok. Claude. ChatGPT. Stand by to generate. Drongus Gun: ARMED."),
       dir("TIP: Learn the gun. Green lines are aimed plasma (step out of them). The sweep shows its whole arc first (get behind him). The MEGA SHOT charges for ages and locks on just before it fires (move as it locks). When he says RELOADING, unload on him. He gets nastier at two-thirds and a third."),
     ],
     outro: DRONGUS1_FLEE,
@@ -513,8 +513,8 @@ export const BOSS_TEXT: Record<string, BossText> = {
     intro: [
       say("METAL GEAR KREX", "TARGET ACQUIRED. SYSTEMS: ONLINE. NUCLEAR PAYLOAD: ARMED."),
       say("METAL GEAR KREX", "ALSO: I AM SO HORNY."),
-      say("DRONGUS", "(over the tannoy) …AI, why is the tank horny."),
-      say("DRONGUS AI", "Sorry! It seems to have been trained on a very specific part of the internet."),
+      say("DRONGUS", "(over the tannoy) …Grok, why is the tank horny."),
+      say("GROK", "it's based. it was trained on a very specific part of the internet. you're welcome king"),
       say("METAL GEAR KREX", "I AM A FORTY-TONNE WALKING BATTLE STATION AND ALL I CAN THINK ABOUT IS PUSSY JUICE."),
       say("METAL GEAR KREX", "STAND STILL, HUMAN. I MUST CRUSH YOU, AND THEN LOOK FOR PUSSY JUICE."),
       dir("TIP: Shoot the bits off. The rail gun, the arm, the tail, the legs: every chunk of armour that falls off changes what it can do. Jump the stomp shockwaves. Get out of the red line before the rail gun fires."),

@@ -4,7 +4,8 @@ import type { Line } from "../../../data/types";
 import { synth } from "../../audio/Synth";
 import { FONT } from "../../ui/theme";
 import { BOSS_TEXT } from "../../../content/bosses";
-import { ANTHEM_DOOR, ANTHEM_PA, ANTHEM_SCOLDS } from "../../../content/citadel";
+import { ANTHEM_DOOR, ANTHEM_PA, ANTHEM_SCOLDS, DRONGUS1_DEFY, DRONGUS1_LOGS, DRONGUS1_MEET, DRONGUS1_NEVER, STAIRS_DOOR, STAIRS_ECHOES, STAIRS_OPEN } from "../../../content/citadel";
+import { voice } from "../../audio/Voice";
 
 /**
  * DA DRONGUS DUNGEON (Chapter 7): the gothic-cyber look (stone, stained glass, server racks, cables, red and purple
@@ -36,7 +37,6 @@ export const CITADEL_SHEETS: Record<string, SheetDef> = {
 };
 export const CITADEL_IMAGES: Record<string, string> = {
   tile_citadel: "tiles/tile_citadel.png",
-  wall_citadel: "props/wall_citadel.png",
   dec_citadel_0: "props/dec_citadel_0.png",
   dec_citadel_1: "props/dec_citadel_1.png",
   dec_citadel_2: "props/dec_citadel_2.png",
@@ -65,6 +65,8 @@ export const CITADEL_IMAGES: Record<string, string> = {
   c7_krex_head: "combat/c7_krex_head.png",
   c7_cybertruck: "combat/c7_cybertruck.png",
   c7_rocket: "combat/c7_rocket.png",
+  // the Drongus Gun (from the Lair cutscene's own art)
+  c7_drongus_gun: "props/c7_drongus_gun.png",
 };
 
 /** A texture that is only the procedural stand-in made at boot (so the real art should replace it). */
@@ -125,6 +127,8 @@ export interface CitadelHooks {
   openExit(): void;
   inGap(x: number, pad?: number): boolean;
   door(): Phaser.GameObjects.Image;
+  /** Add an E-to-use spot. */
+  interact(it: { x: number; y: number; r: number; label: string; use: () => void | Promise<void>; enabled?: () => boolean }): void;
 }
 
 const NEON = 0xff2d95;
@@ -189,7 +193,10 @@ export class Citadel {
     const fl = sc.add.ellipse(x, y, 5 * size, 9 * size, 0xfbbf24).setDepth(depth + 0.1);
     const glow = sc.add.circle(x, y, 16 * size, 0xf97316, 0.16).setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
     sc.tweens.add({ targets: [fl, glow], scaleY: { from: 0.85, to: 1.2 }, alpha: { from: 0.7, to: 1 }, yoyo: true, repeat: -1, duration: 150 + Math.floor(Math.random() * 130) });
+    this.flames.push({ fl, glow, y, lit: true });
   }
+
+  private flames: { fl: Phaser.GameObjects.Ellipse; glow: Phaser.GameObjects.Arc; y: number; lit: boolean }[] = [];
 
   /** A candelabra (art, or drawn) with its flames. */
   private candelabra(x: number, y: number, scale: number, depth: number) {
@@ -216,6 +223,7 @@ export class Citadel {
   private bolt() {
     const l = this.lightning;
     if (!l) return;
+    if (this.onStairs) this.sc.time.delayedCall(300 + Math.random() * 900, () => synth.play("thunder"));
     this.sc.tweens.chain({
       targets: l,
       tweens: [
@@ -554,6 +562,7 @@ export class Citadel {
       this.nextBolt = sc.time.now + 4500 + Math.random() * 6000;
       this.bolt();
     }
+    if (this.onStairs) this.updateStairs();
     if (!this.anthemOn) return;
     const p = sc.player;
     const now = sc.time.now;
@@ -606,7 +615,180 @@ export class Citadel {
     sc.toast("THE RED DOOR IS OPEN", "Walk through it. He's waiting.");
   }
 
+  // ---------------------------------------------------------------- DRONGUS, PHASE ONE: the meeting
+
+  /** Before the fight: the talk, the anime-style NO!! NEVER!!!, the chat logs. */
+  async drongusMeet(x: number, y: number) {
+    const sc = this.sc;
+    const d = sc.add.sprite(x, y, sc.textures.exists("boss_drongus") ? "boss_drongus" : "spr_DRONGUS", 0).setDepth(450).setScale(3);
+    const gun = sc.textures.exists("c7_drongus_gun") ? sc.add.image(x + 18, y - 8, "c7_drongus_gun").setScale(0.9).setDepth(451).setAngle(15) : null;
+    await this.hooks.talk(DRONGUS1_MEET);
+    await this.animeNever();
+    await this.hooks.talk(DRONGUS1_LOGS);
+    if (gun) sc.tweens.add({ targets: gun, angle: -10, duration: 300, ease: "Back.out" });
+    sc.time.delayedCall(700, () => {
+      d.destroy();
+      gun?.destroy();
+    });
+  }
+
+  /** Big anime shout: zoom in, speed lines, a huge caption, the screen shakes. */
+  private async animeNever() {
+    const sc = this.sc;
+    const cam = sc.cameras.main;
+    const p = sc.player;
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    synth.play("roar");
+    synth.play("cheer");
+    cam.flash(250, 255, 255, 255);
+    cam.shake(900, 0.02);
+    const z0 = cam.zoom;
+    sc.tweens.addCounter({ from: z0, to: 1.6, duration: 260, ease: "Cubic.out", onUpdate: (t) => cam.setZoom(t.getValue() ?? 1) });
+    cam.pan(p.x, p.y - 20, 260, "Cubic.out");
+    // speed lines, redrawn every few frames so they crackle
+    const lines = sc.add.graphics().setScrollFactor(0).setDepth(1980);
+    objs.push(lines);
+    const draw = () => {
+      lines.clear();
+      lines.fillStyle(0x0b0410, 0.35).fillRect(0, 0, 960, 540);
+      for (let i = 0; i < 70; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r0 = 120 + Math.random() * 140;
+        const r1 = 700;
+        const w = 0.012 + Math.random() * 0.02;
+        lines.fillStyle(i % 5 ? 0xffffff : 0xff2d95, 0.85);
+        lines.fillTriangle(480 + Math.cos(a) * r0, 270 + Math.sin(a) * r0, 480 + Math.cos(a - w) * r1, 270 + Math.sin(a - w) * r1, 480 + Math.cos(a + w) * r1, 270 + Math.sin(a + w) * r1);
+      }
+    };
+    draw();
+    const tick = sc.time.addEvent({ delay: 70, loop: true, callback: draw });
+    const cap = sc.add.text(480, 120, DRONGUS1_NEVER, { fontFamily: "Impact, sans-serif", fontSize: "86px", color: "#ffffff", stroke: "#b0003a", strokeThickness: 14 }).setOrigin(0.5).setScrollFactor(0).setDepth(1990).setScale(3).setAngle(-6);
+    cap.setShadow(6, 6, "#000000", 0, true, true);
+    objs.push(cap);
+    sc.tweens.add({ targets: cap, scale: 1, duration: 220, ease: "Back.out" });
+    sc.tweens.add({ targets: cap, x: { from: 476, to: 484 }, yoyo: true, repeat: -1, duration: 40 });
+    await new Promise<void>((res) => sc.time.delayedCall(1300, () => res()));
+    await this.hooks.talk(DRONGUS1_DEFY);
+    tick.remove();
+    sc.tweens.add({ targets: objs, alpha: 0, duration: 300, onComplete: () => objs.forEach((o) => o.destroy()) });
+    sc.tweens.addCounter({ from: 1.6, to: z0, duration: 400, ease: "Cubic.inOut", onUpdate: (t) => cam.setZoom(t.getValue() ?? 1) });
+    cam.pan(p.x, p.y, 400, "Cubic.inOut");
+    await new Promise<void>((res) => sc.time.delayedCall(420, () => res()));
+    cam.startFollow(p.spr, true, 0.12, 0.12);
+  }
+
+  // ---------------------------------------------------------------- THE FINAL STAIRS
+
+  private onStairs = false;
+  private echoes: { at: number; done: boolean; line: Line }[] = [];
+  private sawDoor = false;
+
+  /** No enemies. Near silence, a low drone, thunder, candles going out behind you, his voice from above. */
+  stairs() {
+    const sc = this.sc;
+    const r = this.room;
+    this.onStairs = true;
+    synth.stopMusic();
+    synth.play("drone");
+    sc.time.addEvent({ delay: 7000, loop: true, callback: () => synth.play("drone") });
+    const climb = r.exitAt ? r.exitAt[1] : r.h - 200;
+    this.echoes = STAIRS_ECHOES.map((line, i) => ({ at: this.gy - climb * (0.22 + i * 0.3), done: false, line }));
+    // the stone staircase itself, flight after flight, behind the landings you jump between
+    const plats = r.platforms ?? [];
+    const g = sc.add.graphics().setDepth(-4);
+    for (let i = 0; i + 1 < plats.length; i++) {
+      const [ax, ah] = plats[i];
+      const [bx, bh] = plats[i + 1];
+      if (bh <= ah) continue;
+      const x0 = r.w * ax;
+      const x1 = r.w * bx;
+      const y0 = this.gy - ah;
+      const y1 = this.gy - bh;
+      const n = 6;
+      for (let k = 0; k < n; k++) {
+        const sx = Phaser.Math.Linear(x0, x1, k / n);
+        const sy = Phaser.Math.Linear(y0, y1, (k + 1) / n);
+        const w = Math.abs(x1 - x0) / n + 4;
+        g.fillStyle(0x221830, 1).fillRect(sx - w / 2, sy, w, y0 - sy + 10);
+        g.fillStyle(0x3a2c4a, 1).fillRect(sx - w / 2, sy, w, 4);
+      }
+    }
+    // the door at the top: black iron, light leaking under it
+    const d = this.hooks.door();
+    d.setAlpha(0);
+    const door = sc.textures.exists("c7d_door") ? sc.add.sprite(d.x, d.y + 30 + 7, "c7d_door", 0).setOrigin(0.5, 1).setScale(2.2).setDepth(5).setTint(0x8a7a9a) : null;
+    const leak = sc.add.rectangle(d.x, d.y + 32, 150, 6, 0xff3b30, 0.6).setDepth(5.5).setBlendMode(Phaser.BlendModes.ADD);
+    sc.tweens.add({ targets: leak, alpha: 0.25, yoyo: true, repeat: -1, duration: 900 });
+    let opened = false;
+    this.hooks.interact({
+      x: d.x,
+      y: d.y,
+      r: 110,
+      label: "Open the door",
+      enabled: () => !opened,
+      use: async () => {
+        opened = true;
+        await this.hooks.talk(STAIRS_OPEN);
+        synth.play("door");
+        synth.play("mork");
+        sc.cameras.main.shake(1600, 0.004);
+        if (door) {
+          door.clearTint();
+          const n = door.texture.frameTotal - 1;
+          if (!sc.anims.exists("c7d_door_slow")) sc.anims.create({ key: "c7d_door_slow", frames: sc.anims.generateFrameNumbers("c7d_door", { start: 0, end: Math.max(0, n - 1) }), frameRate: 3, repeat: 0 });
+          door.play("c7d_door_slow");
+        }
+        const rays = sc.add.graphics().setDepth(5.6).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
+        rays.fillStyle(0xffb347, 0.22).fillTriangle(d.x, d.y - 40, d.x - 420, this.gy + 400, d.x + 420, this.gy + 400);
+        rays.fillStyle(0xff3b30, 0.16).fillTriangle(d.x, d.y - 60, d.x - 260, this.gy + 400, d.x + 260, this.gy + 400);
+        sc.tweens.add({ targets: rays, alpha: 1, duration: 2800 });
+        await new Promise<void>((res) => sc.time.delayedCall(2800, () => res()));
+        sc.cameras.main.flash(600, 255, 200, 160);
+        this.hooks.openExit();
+        sc.toast("THE DOOR IS OPEN", "Walk in. He's waiting.");
+      },
+    });
+  }
+
+  private updateStairs() {
+    const sc = this.sc;
+    const p = sc.player;
+    // the candles go out as you pass them
+    for (const f of this.flames)
+      if (f.lit && f.y > p.y + 200) {
+        f.lit = false;
+        sc.tweens.killTweensOf([f.fl, f.glow]);
+        sc.tweens.add({ targets: [f.fl, f.glow], alpha: 0, scaleY: 0.2, duration: 500 });
+        const puff = sc.add.circle(f.fl.x, f.fl.y - 4, 3, 0x9ca3af, 0.6).setDepth(f.fl.depth);
+        sc.tweens.add({ targets: puff, y: puff.y - 30, radius: 8, alpha: 0, duration: 1400, onComplete: () => puff.destroy() });
+      }
+    // his voice, echoing down
+    for (const e of this.echoes)
+      if (!e.done && p.y < e.at) {
+        e.done = true;
+        this.subtitle(String(e.line.s), e.line.t);
+      }
+    if (!this.sawDoor) {
+      const d = this.hooks.door();
+      if (p.y < d.y + 120) {
+        this.sawDoor = true;
+        void this.hooks.talk(STAIRS_DOOR);
+      }
+    }
+  }
+
+  /** A line said off-screen: a subtitle at the bottom, and the recorded voice if there is one. */
+  private subtitle(who: string, text: string) {
+    const sc = this.sc;
+    voice.say(who, text);
+    const t = sc.add.text(480, 470, `${who}: ${text}`, { fontFamily: "Georgia, serif", fontSize: "16px", color: "#fca5a5", fontStyle: "italic", align: "center", wordWrap: { width: 760 }, backgroundColor: "#000000aa", padding: { x: 10, y: 6 } }).setOrigin(0.5).setScrollFactor(0).setDepth(1900).setAlpha(0);
+    sc.tweens.add({ targets: t, alpha: 1, duration: 600 });
+    sc.tweens.add({ targets: t, alpha: 0, delay: 5200, duration: 900, onComplete: () => t.destroy() });
+  }
+
   destroy() {
+    this.onStairs = false;
+    this.flames = [];
     this.layers = [];
     this.guards = [];
     this.anthemOn = false;

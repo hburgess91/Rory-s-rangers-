@@ -13,6 +13,7 @@ import { Boss, createBoss, DrongusBoss, OverWonkedMachine } from "../combat/Boss
 import { PuddingDemonBoss } from "../combat/MindBoss";
 import { KrexBoss } from "../combat/KrexBoss";
 import { ElonBoss } from "../combat/ElonBoss";
+import { DrongusPhaseOneBoss } from "../combat/DrongusPhaseOne";
 import { Citadel, citadelPreload, citadelReady } from "./citadel/Citadel";
 import { synth, MUSIC_FILES } from "../audio/Synth";
 import { runDialogue } from "./DialogueScene";
@@ -251,6 +252,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
         },
         inGap: (x, pad) => !!this.sideLevel?.inGap(x, pad),
         door: () => this.door,
+        interact: (it) => this.interactables.push(it),
       });
     this.buildRoom();
     this.controls = new Controls(this);
@@ -1119,6 +1121,12 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     }
     if (r.theme === "mind" && this.roomIdx === 0) this.mindArrive();
     if (r.event === "anthem") await this.anthemEvent();
+    if (r.event === "drongus1" && this.citadel && !G.s.flags.c7_drongus_met) {
+      await this.citadel.drongusMeet(r.w / 2, r.h / 2 - 100);
+      G.s.flags.c7_drongus_met = true;
+      G.save();
+    }
+    if (r.event === "stairs") this.citadel?.stairs();
     if (r.rule) this.setRule(BAN_RULES.find((b) => b.id === r.rule) ?? null, false);
     if (this.roomIdx === 0) G.drongus("enter_dungeon");
     this.busy = false;
@@ -1149,7 +1157,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     else if (r.triggers?.length) {
       // run and gun: enemies turn up as you push right
       if (this.roomIdx > 0 || r.triggers.length) this.toast(r.tower ? "CLIMB" : "RUN AND GUN", r.tower ? `Jump from platform to platform. ${r.goal ?? "The Squeezing Room"} is at the very top.` : "Push right. They'll come to you.");
-    } else if (r.event === "anthem") {
+    } else if (r.event === "anthem" || r.event === "stairs") {
       // no fighting: the red door at the end opens itself when you get there
     } else {
       this.roomCleared = true;
@@ -1262,7 +1270,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private checkExit() {
     const r = this.room;
     if (!this.roomCleared) return;
-    if (r.event === "anthem" && !this.exitOpen()) return;
+    if ((r.event === "anthem" || r.event === "stairs") && !this.exitOpen()) return;
     if (r.exitFlag && !G.s.flags[r.exitFlag]) {
       this.toast("EXIT LOCKED", r.exitHint ? r.exitHint : r.event === "cheesegate" ? "Solve Cheesegate first." : r.event === "mork" ? "Interpret the Mork Voice first." : r.event === "valves" ? "Open all three valves." : "Restore the Reaction Network first.");
       return;
@@ -1664,7 +1672,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     this.busy = true;
     const bx = at?.x ?? r.w / 2;
     const by = at?.y ?? r.h / 2 - 100;
-    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : createBoss(id, this, bx, by);
+    const b = id === "pudding_demon" ? new PuddingDemonBoss(this, bx, by) : id === "krex" ? new KrexBoss(this, bx, by) : id === "elon" ? new ElonBoss(this, bx, by) : id === "drongus1" ? new DrongusPhaseOneBoss(this, bx, by) : createBoss(id, this, bx, by);
     // bosses toughen up as the story goes on (the bank is how you keep up)
     const bossMult = (1 + Math.max(0, G.s.chapter - 2) * 0.18) * hpMult;
     if (hpMult < 1) b.dmgMult = (b.dmgMult ?? 1) * 0.8;
@@ -1783,7 +1791,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   /** "FUCKING KILL THEM!!" — optional, after the boss's last words. */
   private async maybeKreltality(b: Boss) {
-    if (["drongus", "cronster", "reinhardt", "krozno", "rik", "krex"].includes(b.bossId) || !this.krelTarget) {
+    if (["drongus", "cronster", "reinhardt", "krozno", "rik", "krex", "drongus1"].includes(b.bossId) || !this.krelTarget) {
       await this.bossFall();
       return;
     }
@@ -1842,9 +1850,11 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     if (this.roomIdx < this.dungeon.rooms.length - 1) {
       // a boss half way through: beat it and the door opens
       G.emit("boss", null);
-      synth.play("boom");
-      this.boomFx(b.x, b.y, 1.4);
-      this.shake(600, 0.025);
+      if (!(b as unknown as { quietDefeat?: boolean }).quietDefeat) {
+        synth.play("boom");
+        this.boomFx(b.x, b.y, 1.4);
+        this.shake(600, 0.025);
+      }
       for (const e of [...this.enemies]) if (e !== b && !e.dead) this.damageEnemy(e, 99999, { noWonk: true, label: "" });
       for (const sh of [...this.shots]) this.killShot(sh);
       // the ones with a big death of their own (METAL GEAR KREX falls to bits)
@@ -1852,6 +1862,9 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       if (seq) await seq.call(b);
       await this.talk(BOSS_TEXT[b.bossId].outro);
       await this.maybeKreltality(b);
+      // the ones who get away (Drongus, phase one: out the back door and up the stairs)
+      const flee = (b as unknown as { runAway?: (x: number, y: number) => Promise<void> }).runAway;
+      if (flee) await flee.call(b, this.door.x, this.door.y - 10);
       await this.crystalGet(b);
       this.boss = null;
       this.roomCleared = true;
@@ -1868,7 +1881,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       }
       s.hp = Math.min(maxHp(s), s.hp + maxHp(s) * 0.5);
       this.door.setTexture("p_door");
-      this.toast("EXIT OPEN", this.room.tower ? "Keep climbing: the way on is at the very top." : this.side ? "The way on is to the far right →." : "The exit is open.");
+      this.toast("EXIT OPEN", this.room.goal && !this.room.tower ? this.room.goal : this.room.tower ? "Keep climbing: the way on is at the very top." : this.side ? "The way on is to the far right →." : "The exit is open.");
       this.busy = false;
       return;
     }

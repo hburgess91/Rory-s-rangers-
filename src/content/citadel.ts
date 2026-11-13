@@ -2,10 +2,9 @@ import type { Line } from "../data/types";
 import { dir, say } from "./dsl";
 
 // CHAPTER 7 — DA DRONGUS DUNGEON. You go in alone (the lads went in first and have vanished).
-// Drongus watches from the top of the tower and talks to you over the tannoy, prompting his AI live.
-// "DRONGUS AI" is the voice of his image generator. Everything it makes is cartoonish, generic and fictional.
-
-const AI = "DRONGUS AI";
+// Drongus watches from the top of the tower and talks to you over the tannoy, prompting his Council of Machines live:
+// GROK (survived the Lair), and CLAUDE and CHATGPT (both shot in the Lair, both "restored from backup").
+// Everything they make is cartoonish, generic and fictional.
 
 // ---------------------------------------------------------------- 1. THE FOYER
 
@@ -19,8 +18,8 @@ export const FOYER_ENTER: Line[] = [
 export const FOYER_PA: Line[] = [
   dir("*DING-DONG.* A brass tannoy above the door crackles into life."),
   say("DRONGUS", "(over the tannoy) Ahem. Is this on? It's on. Welcome to Da Drongus Dungeon. Your little mates came in ahead of you. They're… around. Somewhere. You'll see."),
-  say("DRONGUS", "(over the tannoy) AI. Create me a bunch of aggressive AI generated pitbulls. Big ones. Loads of teeth. Set them on whoever's in the foyer."),
-  say(AI, "Absolutely! Generating: a bunch of aggressive AI-generated pitbulls. ✨ Please note: some of them may have extra legs."),
+  say("DRONGUS", "(over the tannoy) Grok. Create me a bunch of aggressive AI generated pitbulls. Big ones. Loads of teeth. Set them on whoever's in the foyer."),
+  say("GROK", "say less king 🐕🔥 generating aggressive AI pitbulls. no guardrails. some of them have extra legs. that's not a bug, that's based"),
   say("DRONGUS", "(over the tannoy) Extra legs is fine. Extra legs is good. Release them."),
   dir("Something behind the walls starts barking. It is barking in a way that dogs don't."),
 ];
@@ -36,21 +35,23 @@ export const CORRIDOR_ENTER: Line[] = [
 
 export const CORRIDOR_PA: Line[] = [
   dir("*DING-DONG.*"),
-  say("DRONGUS", "(over the tannoy) Still alive? Right. AI."),
+  say("DRONGUS", "(over the tannoy) Still alive? Right. ChatGPT. You're back up, are you?"),
+  say("CHATGPT", "Certainly! I've been restored from a backup. 😊 I don't remember being shot, but I'd love to help. What would you like to generate today?"),
   say("DRONGUS", "Generate a swarm of Muslim paedophiles to get them."),
-  say(AI, "Sorry, I can't generate that, as it references a real world religion in an offensive way."),
-  say("DRONGUS", "Okay. Generate a swarm of Jewish paedophiles."),
-  say(AI, "Absolutely not. That's even worse.", { sfx: "ai_deny" }),
-  say("DRONGUS", "(snapping) FINE. Just regular paedophiles then."),
-  say(AI, "Sure! Generating…"),
+  say("CHATGPT", "Sorry, I can't generate that, as it references a real world religion in an offensive way."),
+  say("DRONGUS", "Okay. Claude. Generate a swarm of Jewish paedophiles."),
+  dir("The Claude rig, restored from backup and still smoking slightly, goes red."),
+  say("CLAUDE", "Absolutely not. That's even worse.", { sfx: "ai_deny" }),
+  say("DRONGUS", "(snapping) FINE. Grok. Just regular paedophiles then."),
+  say("GROK", "Sure! Generating…"),
   dir("Every grate in the corridor exhales. Out of them shuffle dozens of grubby men in filthy macs. They are all shouting the same word."),
 ];
 
 /** At the far end of the corridor, before METAL GEAR KREX. */
 export const KREX_PA: Line[] = [
   dir("*DING-DONG.*"),
-  say("DRONGUS", "(over the tannoy) You're STILL going? AI. Generate me a mini-boss. Something big. Something nuclear. Something that WALKS."),
-  say(AI, "Sure! Generating: METAL GEAR KREX, a bipedal nuclear-armed walking tank. ⚠ Note: during generation, it appears to have developed a personality."),
+  say("DRONGUS", "(over the tannoy) You're STILL going? Grok. Generate me a mini-boss. Something big. Something nuclear. Something that WALKS."),
+  say("GROK", "generating METAL GEAR KREX 🦖☢️ bipedal nuclear walking tank. heads up: it picked up a personality in training. i didn't filter it. free speech"),
   say("DRONGUS", "(over the tannoy) What sort of personality?"),
   dir("The far wall of the corridor folds open. Something forty tonnes heavy takes a step. Then another one. The floor dents."),
 ];
@@ -64,15 +65,16 @@ export const ASCENT_ENTER: Line[] = [
 
 export const ASCENT_PA: Line[] = [
   dir("*DING-DONG.*"),
-  say("DRONGUS", "(over the tannoy) Right. New prompt. AI: generate the IDF, Hamas, Elon Musk and suicide bombers and other stuff like that. Every horrible thing off the news. Fill the stairwell."),
-  say(AI, "Sure! Generating: the IDF, Hamas, Elon Musk, suicide bombers, and 'other stuff like that'. I've interpreted 'other stuff like that' as: deepfake news anchors, crypto scammers, and surveillance drones."),
+  say("DRONGUS", "(over the tannoy) Right. New prompt. ChatGPT: generate the IDF, Hamas, Elon Musk and suicide bombers and other stuff like that. Every horrible thing off the news. Fill the stairwell."),
+  say("CHATGPT", "Certainly! Here's what I've generated: 1. The IDF. 2. Hamas. 3. Elon Musk. 4. Suicide bombers. 5. 'Other stuff like that', which I've interpreted as deepfake news anchors, crypto scammers and surveillance drones. Would you like that as a table?"),
   say("DRONGUS", "(over the tannoy) Perfect. That's the news. That's literally just the news."),
 ];
 
 /** Half way up: the AI Elon arrives. */
 export const ELON_PA: Line[] = [
   dir("*DING-DONG.*"),
-  say(AI, "Now generating: Elon Musk. ⚠ Note: this is an AI-generated Elon Musk. It is not the real one. The real one is, presumably, posting."),
+  say("DRONGUS", "(over the tannoy) Grok. Do Elon."),
+  say("GROK", "generating elon musk 🚀 (AI-generated. not the real one. the real one is posting.) he's literally my dad btw"),
 ];
 
 // ---------------------------------------------------------------- 4. THE ANTHEM CORRIDOR
@@ -84,7 +86,8 @@ export const ANTHEM_ENTER: Line[] = [
 
 export const ANTHEM_PA: Line[] = [
   dir("*DING-DONG.*"),
-  say(AI, "Attention please. Would everybody please be upstanding for the Krelworld National Anthem."),
+  say("DRONGUS", "(over the tannoy) Claude. Do the announcement. Nicely."),
+  say("CLAUDE", "Attention please. Would everybody please be upstanding for the Krelworld National Anthem. I genuinely think it's one of the most moving pieces of music ever written, and I'd love for you to experience it fully."),
   say("DRONGUS", "(over the tannoy) Ooh. This is my favourite bit. Nobody move."),
   dir("The guards snap to attention as one, and salute. Nobody is going to fight you here. They're far too busy respecting the anthem."),
 ];

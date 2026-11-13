@@ -326,6 +326,13 @@ export class KrexBoss extends Boss {
     }
   }
 
+  /** Beaten: the scene plays deathSequence, so it doesn't spin away and vanish like a normal enemy. */
+  kill() {
+    this.dead = true;
+    this.hpBar?.destroy();
+    this.disableBody(true, false);
+  }
+
   /** The big finish: an explosion chain across the hull, debris everywhere, the cockpit flies off. Called by the scene. */
   deathSequence(): Promise<void> {
     const sc = this.sc;
@@ -372,7 +379,10 @@ export class KrexBoss extends Boss {
         }
         this.parts.clear();
         sc.tweens.add({ targets: this, alpha: 0, duration: 250 });
-        sc.time.delayedCall(1300, () => resolve());
+        sc.time.delayedCall(1300, () => {
+          resolve();
+          this.destroy();
+        });
       });
     });
   }
