@@ -34,6 +34,10 @@ const DANCERS = [
 const ALLY_LINES = ["hi", "hey", "u there?", "hello?", "hiya", "hey x", "hi x", "u up?", "hey hey", "??", "hello???", "wyd", "hi again", "hey. it's me", "did u get my last one", "u around?", "hey stranger", "ok", "hi", "hey", "u there?", "helloooo", "hi hi", "hey :)", "?"];
 const ALLY_REPLIES = ["No.", "Security.", "…", "Not again.", "I can see you, Alistair.", "I'm working.", "Please stop.", "Seen."];
 
+/** A lad in the front row, back to the room, having a quiet one. */
+const WONK_LINES = ["mm", "mm fuck", "I love wonking", "this is so dirty mm", "mmmm", "oh yeah. oh yeah.", "mm. don't look.", "nobody look at me", "mm fuck yeah", "this is the life"];
+const WONK_DONE = ["...ahh.", "sorry.", "phew.", "that's better.", "anyone got a tissue", "oh no. oh no."];
+
 const LEER = [
   "I'm horny!",
   "I'm turned on.",
@@ -91,6 +95,8 @@ export class ClubScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.Text;
   private busy = false;
   private nextLeer = 0;
+  private nextWonk = 0;
+  private wonking = new Set<Phaser.GameObjects.Sprite>();
   private ally: Phaser.GameObjects.Sprite | null = null;
   private allyLabel: Phaser.GameObjects.Text | null = null;
   private allyNext = 0;
@@ -267,6 +273,50 @@ export class ClubScene extends Phaser.Scene {
     this.time.delayedCall(ms, () => t.destroy());
   }
 
+  /**
+   * One of the lads, facing the stage (back to us, so nothing to see), starts going at it: a rhythmic jiggle of the
+   * shoulders, some noises, and when he's done, a krezz splat on the floor in front of him.
+   */
+  private frontRowWonk() {
+    const up = this.patrons.filter((q) => !this.ko.has(q.spr) && !this.wonking.has(q.spr) && q.spr.active);
+    if (!up.length) return;
+    const p = up[Math.floor(Math.random() * up.length)];
+    const spr = p.spr;
+    this.wonking.add(spr);
+    const x0 = spr.x;
+    const y0 = spr.y;
+    const dur = 3600 + Math.random() * 1800;
+    const pump = this.tweens.add({ targets: spr, x: { from: x0 - 1.5, to: x0 + 1.5 }, y: { from: y0, to: y0 - 1.2 }, yoyo: true, repeat: -1, duration: 85, ease: "Sine.inOut" });
+    const say = () => spr.active && this.bubble(spr, WONK_LINES[Math.floor(Math.random() * WONK_LINES.length)], 1300, "#ffe4f1");
+    say();
+    this.time.delayedCall(dur * 0.5, say);
+    // faster towards the end
+    this.time.delayedCall(dur * 0.7, () => pump.isPlaying() && (pump.timeScale = 1.8));
+    this.time.delayedCall(dur, () => {
+      pump.stop();
+      if (!spr.active) return;
+      spr.x = x0;
+      spr.y = y0;
+      this.wonking.delete(spr);
+      if (this.ko.has(spr)) return;
+      // the finish: a little shudder, then splats on the floor in front of him (towards the stage)
+      this.tweens.add({ targets: spr, y: spr.y - 3, yoyo: true, duration: 90, repeat: 2 });
+      synth.play("splat");
+      const tex = this.textures.exists("fx_splat_white") ? "fx_splat_white" : null;
+      for (let i = 0; i < 3 + Math.floor(Math.random() * 3); i++) {
+        this.time.delayedCall(i * 90, () => {
+          const x = x0 + (Math.random() - 0.5) * 34;
+          const y = spr.y - 18 - Math.random() * 26;
+          const s2 = tex ? this.add.image(x, y, tex).setDisplaySize(14 + Math.random() * 10, 14 + Math.random() * 10) : this.add.circle(x, y, 5, 0xf8f8f2);
+          s2.setDepth(spr.depth - 1).setAlpha(0.9).setRotation(Math.random() * 6);
+          this.tweens.add({ targets: s2, alpha: 0, delay: 6000, duration: 2500, onComplete: () => s2.destroy() });
+          if (i % 2 === 0) synth.play("splat");
+        });
+      }
+      this.time.delayedCall(500, () => spr.active && this.bubble(spr, WONK_DONE[Math.floor(Math.random() * WONK_DONE.length)], 1400));
+    });
+  }
+
   /** Alistair shuffles along the front of the stage after the dancer (to the bar on her break), saying hi. Again. */
   private updateAlly(time: number) {
     const a = this.ally;
@@ -349,6 +399,10 @@ export class ClubScene extends Phaser.Scene {
       this.leer(1);
     }
     this.updateAlly(time);
+    if (time > this.nextWonk && !this.busy && !this.onBreak && !this.dancerDown && !this.angry) {
+      this.nextWonk = time + 7000 + Math.random() * 7000;
+      this.frontRowWonk();
+    }
     if (this.busy) {
       this.prompt.setVisible(false);
       return;

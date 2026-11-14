@@ -6794,6 +6794,10 @@
   },
   "fb_drongus_undies": {
    "file": "finale/fb_drongus_undies.png"
+  },
+  "tap_off": {
+   "file": "props/tap_off.png",
+   "hd": 0.5517
   }
  },
  "sheets": {
@@ -7791,6 +7795,12 @@
    "frameWidth": 123,
    "frameHeight": 105,
    "hd": 0.4571
+  },
+  "tap_flow": {
+   "file": "props/tap_flow.png",
+   "frameWidth": 87,
+   "frameHeight": 111,
+   "hd": 0.5517
   }
  },
  "vfx": {

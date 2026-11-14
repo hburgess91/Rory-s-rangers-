@@ -625,10 +625,20 @@ export class HubScene extends Phaser.Scene {
       this.ruinProp("r_crater", 1280, 830, 2.4);
       this.ruinProp("r_pipe", 1280, 815, 1.6);
       this.add.text(1280, 860, "WHERE THE GREAT TAP WAS", { fontFamily: FONT, fontSize: "11px", color: "#ff9a9a", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5, 0).setDepth(861);
-    } else if (this.hd && this.textures.exists("hd_tap")) {
-      this.add.image(1280, 790, "hd_tap").setDepth(850);
-      this.neonGlow(1280, 790, 110, 0xff6bb0);
-    } else this.add.image(1280, 800, "p_tap").setScale(3).setDepth(800);
+    } else {
+      // dry until Chapter 2 (the Great Silence), then it pours
+      const flowing = G.s.chapter >= 2;
+      const key = flowing ? (this.textures.exists("tap_flow") ? "tap_flow" : "hd_tap") : this.textures.exists("tap_off") ? "tap_off" : "hd_tap";
+      if (flowing && key === "tap_flow" && !this.anims.exists("tap_flow")) this.anims.create({ key: "tap_flow", frames: this.anims.generateFrameNumbers("tap_flow", { start: 0, end: 7 }), frameRate: 9, repeat: -1 });
+      if (this.hd && this.textures.exists(key)) {
+        const t = this.add.sprite(1280, 790, key, 0).setDepth(850);
+        if (key === "tap_flow") t.play("tap_flow");
+        if (flowing) this.neonGlow(1280, 790, 110, 0xff6bb0);
+      } else {
+        const t = this.add.sprite(1280, 800, this.textures.exists(key) ? key : "p_tap", 0).setScale(3).setDepth(800);
+        if (key === "tap_flow") t.play("tap_flow");
+      }
+    }
     if (!this.ruined) this.add.text(1280, 690, "THE GREAT PUSSY JUICE TAP", { fontFamily: FONT, fontSize: "11px", color: "#ffb6c1", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(801);
     this.colliders.add(this.add.rectangle(1280, 840, 120, 60, 0, 0));
     // The Kreltower
