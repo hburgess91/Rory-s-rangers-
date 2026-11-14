@@ -7629,6 +7629,18 @@
    "file": "talk/talk_POLSON_HURT.png",
    "frameWidth": 64,
    "frameHeight": 64
+  },
+  "bossanim_rival": {
+   "file": "combat/bossanim_rival.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "bossanim_troll": {
+   "file": "combat/bossanim_troll.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
   }
  },
  "vfx": {

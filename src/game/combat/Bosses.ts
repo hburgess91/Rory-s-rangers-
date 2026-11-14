@@ -56,8 +56,8 @@ export abstract class Boss extends Enemy {
   private animRows = new Set<string>();
   /** A one-shot (attack, hurt, special) owns the sprite until then. */
   private animUntil = 0;
-  private lastAttackAnim = 0;
-  private lastHurtAnim = 0;
+  private lastAttackAnim = -1e9;
+  private lastHurtAnim = -1e9;
   private nextLeap = 0;
   /** Mid signature leap: its own pattern waits. */
   protected leaping = false;
