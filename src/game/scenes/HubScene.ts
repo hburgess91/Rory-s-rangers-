@@ -30,7 +30,7 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
-import { POLSON_CHATS, polsonVisit } from "../../content/polsonChats";
+import { POLSON_CHATS } from "../../content/polsonChats";
 import { takeDrugs, tripInto } from "./hub/drugs";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
@@ -2327,8 +2327,7 @@ You are required by law to sign the Sex Offenders Register.`, {
     }
     // after Chapter 3, Polson Towers is open for a chat (straight out of the real Messenger logs)
     if (b.id === "POLSON_ROAD" && s.flags.ch3_clear && POLSON_CHATS.length && chapterDef(s.chapter).dungeonDoor !== "POLSON_ROAD") {
-      await this.talk(polsonVisit(s));
-      G.save();
+      this.go("PolsonHome", {});
       return;
     }
     if (b.id === "TOWN_HALL" && s.chapter === 6 && (await this.chapter6TownHall())) return;

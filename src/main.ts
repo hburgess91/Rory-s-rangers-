@@ -1,4 +1,5 @@
 import { TutorialScene } from "./game/scenes/TutorialScene";
+import { PolsonHomeScene } from "./game/scenes/PolsonHomeScene";
 import Phaser from "phaser";
 import { BootScene } from "./game/scenes/BootScene";
 import { TitleScene } from "./game/scenes/TitleScene";
@@ -77,6 +78,7 @@ const game = new Phaser.Game({
     MenuScene,
     TutorialScene,
     EndingScene,
+    PolsonHomeScene,
   ],
 });
 
