@@ -103,6 +103,11 @@ export class HomeScene extends Phaser.Scene {
       this.busy = false;
       this.controls.swallow();
       // back from Klerble's broadcast: now you can go
+      if (!this.mustWatchBeep() && G.s.flags.beep_tv_pending) {
+        delete G.s.flags.beep_tv_pending;
+        G.save();
+        void this.talk([say(G.s.player, "…Right. Well. That was relaxing."), dir("Back to Chapter 4. Out of the door when you're ready.")]);
+      }
       if (this.mustWatch() === false && G.s.flags.klerble_tv_pending) {
         delete G.s.flags.klerble_tv_pending;
         G.save();
@@ -127,6 +132,10 @@ export class HomeScene extends Phaser.Scene {
       synth.music("home", true);
       this.busy = false;
       G.save();
+      return;
+    }
+    if (this.mustWatchBeep() && !s.flags.beep_tv_pending) {
+      await this.talk([dir("A night in. A relaxing episode of Beep Show is about to start. (The telly's on the left: walk up and press E.)")]);
       return;
     }
     const q = canTurnIn(s, "HOME");
@@ -214,11 +223,24 @@ export class HomeScene extends Phaser.Scene {
     return !f.prologue_done && !f.tv_klerble_welcome;
   }
 
+  /** Chapter 4 opens with a relaxing episode of Beep Show, and you're not leaving till you've watched it. */
+  private mustWatchBeep() {
+    return G.s.chapter === 4 && !G.s.flags.tv_beep_show;
+  }
+
   private watchTV() {
     if (this.mustWatch()) {
       G.s.flags.klerble_tv_pending = true;
       this.busy = true;
       this.scene.launch("TV", { overlay: true, caller: "Home", episode: "klerble_welcome", once: true });
+      this.scene.bringToTop("TV");
+      this.scene.pause();
+      return;
+    }
+    if (this.mustWatchBeep()) {
+      G.s.flags.beep_tv_pending = true;
+      this.busy = true;
+      this.scene.launch("TV", { overlay: true, caller: "Home", episode: "beep_show", once: true });
       this.scene.bringToTop("TV");
       this.scene.pause();
       return;
@@ -567,6 +589,10 @@ export class HomeScene extends Phaser.Scene {
     if (this.busy) return;
     if (this.mustWatch()) {
       void this.talk([dir("No, watch some relaxing TV first.")]);
+      return;
+    }
+    if (this.mustWatchBeep()) {
+      void this.talk([dir("No. You're having a night in. Watch a relaxing episode of Beep Show first. (The telly, on the left.)")]);
       return;
     }
     const s = G.s;
