@@ -21,8 +21,8 @@ import { GUNS } from "../combat/Guns";
 import { ensureCh6Art } from "../gfx/ch6Art";
 import * as Juice from "../gfx/Juice";
 import {
-  KP_KLERBLE, KP_LAST, KP_PARTY, KP_PROTOCOL, KP_RUINS, KT_AFTER, KT_ARRIVE, KT_DEPART, KT_DRIVER, KT_KRUNCHERS, KT_OPEN, PE_RAIN,
-  RM_ACTUALLY, RM_ARMS, RM_CAUTION, RM_CHEM, RM_END, RM_GOT_GUN, RM_HANDS, RM_JENKO, RM_KREBLIS, RM_LUKE, RM_NUKE, RM_OPEN, RM_PISS,
+  KB_ORDER, KB_QUEUE, KB_SHOT, KP_KLERBLE, KP_LAST, KP_PARTY, KP_PROTOCOL, KP_RUINS, KT_AFTER, KT_ARRIVE, KT_DEPART, KT_DRIVER, KT_KRUNCHERS, KT_OPEN, PE_RAIN,
+  RM_ACTUALLY, RM_ARMS, RM_CAUTION, RM_CHEM, RM_END, RM_GOT_GUN, RM_HANDS, RM_JENKO, RM_KREBLIS, RM_LUKE, RM_NUKE, RM_OPEN, RM_PISS, RM_POLSON,
   RM_REVENGE, RM_SHOVE, RM_SHOWOFF, RM_THROW, RM_UNITE, TP_DANCE, TP_DOOM, TP_END, TP_OPEN,
 } from "../../content/ch6";
 
@@ -2699,10 +2699,10 @@ export class VignetteScene extends Phaser.Scene {
       say("KREBLIS", "By a burger", { cond: { notPlayer: "KREBLIS" } }),
       say("KREBON", "We could have turned the power off.", { cond: { notPlayer: "KREBON" } }),
       say("KREZMAR", "Krebon. Not today.", { cond: { notPlayer: "KREZMAR" } }),
-      dir("THE KREL TOWER: DESTROYED (AGAIN). The Kreddle Express is parked outside Krelburger with its engine running. President Klerble has ordered a twelfth burger."),
+      dir("THE KREL TOWER: DESTROYED (AGAIN). The Kreddle Express is parked outside Krelburger with its engine running. President Klerble is on his twelfth burger. They were Polson's."),
     ]);
     synth.stopMusic();
-    Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true });
+    Object.assign(G.s.flags, { kreltower_resolved: true, kreltower_fell: true, arcstep_arc_klerble_hijack: true, polson_dead: true });
   }
 
   /**
@@ -3092,10 +3092,107 @@ export class VignetteScene extends Phaser.Scene {
     await this.tween({ targets: walker, x: shop.x, duration: 1100, ease: "Linear" });
     synth.play("door");
     walker.destroy();
+    await this.krelburgerQueue();
     await this.talk([
-      dir("He goes in. He does not come out. The Kreddle Express sits outside Krelburger with its engine running, three hundred metres short of nothing in particular."),
+      dir("The Kreddle Express sits outside Krelburger with its engine running, three hundred metres short of nothing in particular."),
       dir("Somewhere in the sky above Krelford, a plane is still on its way to the Krel Tower."),
     ]);
+  }
+
+  /**
+   * Inside Krelburger: fat Polson is at the front of the queue, and President Klerble does not queue.
+   * Drawn over the street scene (depth 300+) and cleared away after, so the street carries on behind it.
+   */
+  private async krelburgerQueue() {
+    // above the street scene (≤ 30), under captions (500) and the dialogue box (1000)
+    const D = 300;
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const keep = <T extends Phaser.GameObjects.GameObject>(o: T) => (objs.push(o), o);
+    this.cameras.main.fadeOut(300);
+    await this.wait(320);
+    keep(this.add.rectangle(480, 270, 960, 540, 0x2a1810).setDepth(D).setScrollFactor(0));
+    const bg = backdrop(this, "bg_krelburger", { depth: D + 1 });
+    if (bg) keep(bg);
+    const FLOOR = 375;
+    // sprite sheets carry an hd factor, so size them by the height they end up on screen
+    const sizeTo = (sp: Phaser.GameObjects.Sprite, px: number) => {
+      sp.setScale(1);
+      sp.setScale(px / sp.frame.height / sp.scaleX);
+      return sp;
+    };
+    // Polson, at his biggest, first in the queue
+    const fat = this.textures.exists("spr_POLSON_FAT");
+    const pol = keep(sizeTo(this.add.sprite(610, FLOOR, fat ? "spr_POLSON_FAT" : "spr_POLSON", fat ? 11 : 0).setOrigin(0.5, 1).setDepth(D + 10), 135));
+    const polSX = pol.scaleX;
+    this.cameras.main.fadeIn(300);
+    this.caption("KRELBURGER", "#ffd23f", 30);
+    await this.wait(900);
+    this.dropCaption();
+    await this.talk(KB_QUEUE.slice(0, 4));
+    // in he comes
+    const kl = keep(sizeTo(this.add.sprite(-60, FLOOR, "spr_TV_PRESIDENT_KLERBLE", 4).setOrigin(0.5, 1).setDepth(D + 11), 135));
+    synth.play("door");
+    await this.tween({ targets: kl, x: 340, duration: 1200, ease: "Linear" });
+    const bob = this.tweens.add({ targets: kl, y: FLOOR - 4, yoyo: true, repeat: -1, duration: 180 });
+    await this.talk(KB_QUEUE.slice(4, 6));
+    bob.remove();
+    kl.y = FLOOR;
+    // Polson turns round. It takes a while.
+    await this.talk(KB_QUEUE.slice(6, 7));
+    await this.tween({ targets: pol, scaleX: polSX * 0.15, duration: 700, ease: "Sine.in" });
+    pol.setFlipX(true);
+    await this.tween({ targets: pol, scaleX: polSX, duration: 700, ease: "Sine.out" });
+    await this.talk(KB_QUEUE.slice(7, 10));
+    synth.stopMusic();
+    this.cameras.main.shake(200, 0.004);
+    await this.talk(KB_QUEUE.slice(10, 12));
+    // the gold revolver
+    const handY = kl.y - kl.displayHeight * 0.45;
+    const gun = keep(this.add.rectangle(kl.x + 46, handY, 34, 10, 0xffd23f).setStrokeStyle(2, 0x7c5a00).setDepth(D + 12));
+    const wheel = keep(this.add.circle(kl.x + 36, handY, 9, 0xb91c1c).setStrokeStyle(2, 0x111111).setDepth(D + 13));
+    const spin = this.tweens.add({ targets: wheel, angle: 720, duration: 900, repeat: -1 });
+    synth.play("coin");
+    await this.talk(KB_QUEUE.slice(12));
+    spin.remove();
+    await this.wait(500);
+    // BANG
+    synth.play("gun_pistol");
+    synth.play("boom");
+    const flash = keep(this.add.rectangle(480, 270, 960, 540, 0xffffff).setDepth(D + 50).setScrollFactor(0));
+    this.tweens.add({ targets: flash, alpha: 0, duration: 260 });
+    this.cameras.main.shake(400, 0.02);
+    const gore = G.meta.settings.gore !== false;
+    if (gore) {
+      vfx(this, "vfx_bloodspray", pol.x - 20, pol.y - 95, { scale: 2, depth: D + 30 });
+      vfx(this, "vfx_blood", pol.x + 10, pol.y - 70, { scale: 1.8, depth: D + 31 });
+    } else {
+      for (let i = 0; i < 6; i++) {
+        const st = keep(this.add.text(pol.x + (Math.random() - 0.5) * 120, pol.y - 140, "★", { fontSize: "26px", color: "#ffd23f", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(D + 30));
+        this.tweens.add({ targets: st, y: st.y - 50, alpha: 0, duration: 900, delay: i * 60 });
+      }
+    }
+    // he goes over like a wardrobe
+    await this.wait(400);
+    await this.tween({ targets: pol, angle: 90, x: pol.x + 40, y: FLOOR - 20, duration: 900, ease: "Quad.in" });
+    synth.play("punch_big");
+    this.cameras.main.shake(500, 0.025);
+    if (gore) vfx(this, "vfx_bloodpool", pol.x + 60, FLOOR - 10, { scale: 3, depth: D + 9 });
+    await this.wait(700);
+    await this.talk(KB_SHOT);
+    gun.destroy();
+    wheel.destroy();
+    // the President steps over him to the till
+    kl.setTexture("spr_TV_PRESIDENT_KLERBLE", 0);
+    await this.talk(KB_ORDER.slice(0, 3));
+    synth.play("cheer");
+    const jump = this.tweens.add({ targets: kl, y: FLOOR - 22, yoyo: true, repeat: 3, duration: 160, ease: "Quad.out" });
+    await this.talk(KB_ORDER.slice(3));
+    jump.remove();
+    G.s.flags.polson_dead = true;
+    this.cameras.main.fadeOut(400);
+    await this.wait(420);
+    for (const o of objs) o.destroy();
+    this.cameras.main.fadeIn(400);
   }
 
   /** Stuff Polson's face. Food slides down the table: shove it in as it reaches his mouth. Skip the salad. */
@@ -3623,6 +3720,46 @@ export class VignetteScene extends Phaser.Scene {
     jen.clearTint();
     photo.destroy();
     await this.goHome([jen], 700);
+
+    // ---- Polson: the Krelburger CCTV on the Town Hall telly
+    if (G.s.flags.polson_dead) {
+      const tv = this.add.container(480, 150).setDepth(500);
+      tv.add(this.add.rectangle(0, 0, 230, 140, 0x111111).setStrokeStyle(4, 0x3f3f46));
+      tv.add(this.add.rectangle(0, -4, 210, 112, 0x3a3f36));
+      tv.add(this.add.rectangle(0, 30, 210, 40, 0x6b6b5a));
+      if (this.textures.exists("spr_POLSON_FAT")) tv.add(this.add.sprite(40, 46, "spr_POLSON_FAT", 11).setOrigin(0.5, 1).setScale(0.9));
+      const tk = this.add.sprite(-55, 46, "spr_TV_PRESIDENT_KLERBLE", 4).setOrigin(0.5, 1).setScale(0.8);
+      tv.add(tk);
+      tv.add(this.add.text(-100, -56, "● REC  KRELBURGER CAM 2", { fontFamily: FONT, fontSize: "9px", color: "#ff4d4d" }));
+      tv.add(this.add.text(0, 76, "GB KREWS", { fontFamily: "Impact, sans-serif", fontSize: "13px", color: "#ffd23f" }).setOrigin(0.5));
+      const scan = this.add.rectangle(0, -60, 210, 4, 0xffffff, 0.15);
+      tv.add(scan);
+      this.tweens.add({ targets: scan, y: 50, duration: 1400, repeat: -1 });
+      // the loop: flash, and he goes over
+      const loop = this.time.addEvent({ delay: 2600, loop: true, callback: () => {
+        const f = this.add.rectangle(0, -4, 210, 112, 0xffffff, 0.8);
+        tv.add(f);
+        this.tweens.add({ targets: f, alpha: 0, duration: 250, onComplete: () => f.destroy() });
+      } });
+      synth.stopMusic();
+      await this.talk(RM_POLSON.slice(0, 2));
+      for (const sp of all) this.face(sp, "north");
+      await this.talk(RM_POLSON.slice(2, 6));
+      // everyone's gutted
+      const sob = this.time.addEvent({ delay: 260, loop: true, callback: () => {
+        const sp = all[Math.floor(Math.random() * all.length)];
+        const tear = this.add.circle(sp.x + (Math.random() < 0.5 ? -7 : 7), sp.y - 20, 3, 0x60a5fa).setDepth(402);
+        this.tweens.add({ targets: tear, y: tear.y + 34, alpha: 0, duration: 600, onComplete: () => tear.destroy() });
+      } });
+      await this.talk(RM_POLSON.slice(6, RM_POLSON.length - 3));
+      await this.talk(RM_POLSON.slice(RM_POLSON.length - 3, RM_POLSON.length - 1));
+      loop.remove();
+      tv.destroy();
+      await this.talk(RM_POLSON.slice(RM_POLSON.length - 1));
+      sob.remove();
+      for (const sp of all) this.face(sp, "south");
+      synth.music("ominous");
+    }
 
     // ---- revenge!
     const scr = S("SCROMBUS");

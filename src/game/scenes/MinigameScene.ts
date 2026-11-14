@@ -1330,7 +1330,7 @@ export class MinigameScene extends Phaser.Scene {
     if (this.textures.exists("hd_bassist")) this.add.image(720, 296, "hd_bassist").setDepth(4);
     const benn = this.add.sprite(480, 310, "spr_KREBON", 0).setScale(3).setDepth(10);
     // the crowd: everyone came
-    const crowdIds = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "KREBON", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1", "FOLK2"];
+    const crowdIds = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "KREBON", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1", "FOLK2"].filter((id) => id !== "POLSON" || !G.s.flags.polson_dead);
     const crowd = crowdIds
       .filter((id) => this.textures.exists(`spr_${id}`))
       .map((id, i) => {
@@ -1463,7 +1463,7 @@ export class MinigameScene extends Phaser.Scene {
     if (this.textures.exists("hd_drummer")) this.add.image(250, 300, "hd_drummer").setDepth(4);
     if (this.textures.exists("hd_bassist")) this.add.image(720, 296, "hd_bassist").setDepth(4);
     const krebon = this.add.sprite(480, 310, "spr_KREBON", 0).setScale(3).setDepth(10);
-    const others = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1"].filter((id) => id !== G.s.player && this.textures.exists(`spr_${id}`));
+    const others = ["FLENKY", "KREZMAR", "KREBLIS", "KREZWONK", "SCROMBUS", "CRONGUS", "GRONNY", "MIKEY", "POLSON", "EDEN", "PROCTUS", "BOGGOR", "FOLK0", "FOLK1"].filter((id) => id !== G.s.player && (id !== "POLSON" || !G.s.flags.polson_dead) && this.textures.exists(`spr_${id}`));
     const crowd = others.map((id, i) => this.add.sprite(40 + i * 64, 478 + (i % 2) * 20, `spr_${id}`, 0).setScale(2).setDepth(20 + (i % 2)));
     const me = this.add.sprite(480, 440, playerKey(this), 0).setScale(2.4).setDepth(40);
     this.add.text(480, 404, "YOU", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(41);
@@ -1523,7 +1523,7 @@ export class MinigameScene extends Phaser.Scene {
       if (this.ended) return;
       if (!invader) {
         invaders++;
-        const id = Math.random() < 0.35 && this.textures.exists("spr_POLSON") ? "POLSON" : ids[Math.floor(Math.random() * ids.length)];
+        const id = Math.random() < 0.35 && this.textures.exists("spr_POLSON") && !G.s.flags.polson_dead ? "POLSON" : ids[Math.floor(Math.random() * ids.length)];
         invader = this.add.sprite(80 + Math.random() * 800, 310, `spr_${id}`, 0).setScale(2.8).setDepth(11);
         this.tweens.add({ targets: invader, y: 296, duration: 220, yoyo: true, repeat: -1 });
         shout(krebon.x, 230, ["GET OFF MY STAGE", "Security? We don't have security.", "This is Reprieve. It's a REPRIEVE.", "Mate. Mate. MATE."][Math.floor(Math.random() * 4)], "#ffd23f");
@@ -1693,7 +1693,7 @@ export class MinigameScene extends Phaser.Scene {
     this.add.text(480, 46, "SanMik ft. the entire cabinet · ← / A = LEFT HAND · → / D = RIGHT HAND · ↑ / W / SPACE = CHOMP", { fontFamily: FONT, fontSize: "11px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(200);
     // ---- the dancers: everyone, in a line, extremely serious
     const me = G.s.player;
-    const crew = [...LADS.filter((id) => id !== me), "POLSON", "PROCTUS"].filter((id) => this.textures.exists(`spr_${id}`));
+    const crew = [...LADS.filter((id) => id !== me), ...(G.s.flags.polson_dead ? [] : ["POLSON"]), "PROCTUS"].filter((id) => this.textures.exists(`spr_${id}`));
     type Dancer = { spr: Phaser.GameObjects.Sprite; skin: number; l: number; r: number; you: boolean };
     const dancers: Dancer[] = [];
     const back = crew.slice(0, 10);

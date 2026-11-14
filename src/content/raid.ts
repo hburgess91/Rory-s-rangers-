@@ -12,6 +12,8 @@ export const RAID_ARRIVE: Line[] = [
   say("KREBON", "Should we turn the power off first?"),
   say("SCROMBUS", "We're going to turn EVERYTHING off, Krebon. Permanently."),
   say("FLENKY", "This is for Mollor. My sweet flirtkitten. LIGHT 'EM UP!"),
+  say("GRONNY", "And for Polson."),
+  say("SCROMBUS", "And for Polson. Nobody queue-jumps in Krelworld."),
   dir("HOLD the attack button (mouse / Space / the fire button) to spray CHEMICAL FIRE. Walk EAST along the Strip. Burn the barricades to get through."),
 ];
 
@@ -35,12 +37,18 @@ export const RAID_SHOUTS: Line[] = [
   say("CRONGUS", "…oh fuck it. BURN!"),
   say("GRONNY", "Me no like Kreddle! Me make Kreddle HOT!"),
   say("GRONNY", "FIRE! Fire good! Kreddle bad!"),
-  say("MIKEY", "For my bongo!! FOR MY FIZZY BONGO!!", { variants: { MIKEY: "For Polson's shake!! FOR POLSON'S PROTEIN SHAKE!!" } }),
+  say("MIKEY", "For my bongo!! And for POLSON!!", { variants: { MIKEY: "For Polson's shake!! FOR POLSON!!" } }),
+  // Klerble shot Polson in the Krelburger queue
+  say("GRONNY", "This for Polson! Polson big friend!"),
+  say("CRONGUS", "That's for Polson, you queue-jumping CUNTS!"),
+  say("SCROMBUS", "FOR POLSON!! He was nearly at the front!!"),
+  say("KREZMAR", "Polson never hurt nobody! Except the buffet!"),
   say("MIKEY", "Fragmar was worse than this. Not much worse."),
   say("MIKEY", "FGM ops never sleep, Kreddle!"),
   say("KREZMAR", "We hate you!"),
   say("GRONNY", "We hate you!"),
   say("FLENKY", "Your president's NEXT!"),
+  say("FLENKY", "Klerble! You owe us a POLSON!"),
   say("SCROMBUS", "Krelworld Krew UNITE!"),
   say("KREBLIS", "Breaking news… you lot should've let us drink the juice 👍"),
   // Kreblis has said "we should invade Kreddle" at every meeting since Chapter One and been told to shut up every time

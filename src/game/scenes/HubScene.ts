@@ -31,6 +31,7 @@ import { MEETINGS } from "../../content/meetings";
 import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
 import { POLSON_CHATS } from "../../content/polsonChats";
+import { POLSON_GONE } from "../../content/ch6";
 import { takeDrugs, tripInto } from "./hub/drugs";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
@@ -1546,6 +1547,8 @@ export class HubScene extends Phaser.Scene {
     for (const id of [...LADS, "POLSON"]) {
       if (id === s.player || id === "MIKEY" || id === chaser) continue;
       if ((id === "POLSON" || id === "EDEN") && s.chapter < 3) continue;
+      // shot in the Krelburger queue by President Klerble (Chapter 6)
+      if (id === "POLSON" && s.flags.polson_dead) continue;
       if (id === "KREBON" && s.flags.krebon_gone) continue;
       // from chapter 2 the others are out doing their own side stories
       this.addNpc(id, (s.chapter >= 2 && ARC_SPOTS[id]) || NPC_SPOTS[id]);
@@ -2306,6 +2309,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       case "CITADEL":
         return `DA DRONGUS DUNGEON (sealed: ${crystalCount(s)}/${CRYSTALS_NEEDED} cum crystals)`;
       case "POLSON_ROAD":
+        if (s.flags.polson_dead) return "Polson Towers (the lights are off)";
         return s.flags.ch3_clear && POLSON_CHATS.length ? "Polson Towers (pop round for a chat)" : `${b.name} (not this chapter)`;
       case "WILDERN":
       case "MINISTRY":
@@ -2342,6 +2346,10 @@ You are required by law to sign the Sex Offenders Register.`, {
       return;
     }
     // after Chapter 3, Polson Towers is open for a chat (straight out of the real Messenger logs)
+    if (b.id === "POLSON_ROAD" && s.flags.polson_dead) {
+      await this.talk(POLSON_GONE);
+      return;
+    }
     if (b.id === "POLSON_ROAD" && s.flags.ch3_clear && POLSON_CHATS.length && chapterDef(s.chapter).dungeonDoor !== "POLSON_ROAD") {
       this.go("PolsonHome", {});
       return;

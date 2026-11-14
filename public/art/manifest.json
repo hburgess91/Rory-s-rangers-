@@ -6855,6 +6855,9 @@
   },
   "wall_lounge": {
    "file": "props/wall_lounge.png"
+  },
+  "bg_krelburger": {
+   "file": "backdrops/bg_krelburger.png"
   }
  },
  "sheets": {

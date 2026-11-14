@@ -84,14 +84,70 @@ export const RM_JENKO: Line[] = [
 ];
 
 export const RM_REVENGE: Line[] = [
-  say("SCROMBUS", "We need to take revenge on Kreddle!!!! They destroyed the Krel Tower!!!"),
-  say("KREZMAR", "YES!!"),
+  say("SCROMBUS", "We need to take revenge on Kreddle!!!! They destroyed the Krel Tower!!! They killed POLSON!!!"),
+  say("KREZMAR", "YES!! FOR POLSON!!"),
   say("MIKEY", "YES. Revenge. FGM rules of engagement: there are none."),
   say("GRONNY", "Me want revenge. Revenge good."),
   say("KREBLIS", "Breaking news…"),
   say("KREBLIS", "Revenge 👍"),
   say("KREZWONK", "I have foreseen it. A great vengeance. With loads of fire in it."),
-  say("CRONGUS", "Yeah! Revenge!! …On Kreddle! For the tower!"),
+  say("CRONGUS", "Yeah! Revenge!! …On Kreddle! For the tower! For Polson!"),
+  say("GRONNY", "Polson would want revenge. Polson would want snack first. Then revenge."),
+  say("SCROMBUS", "We avenge Polson. We find Klerble. And we make him wait in a queue. FOREVER."),
+];
+
+/** Inside Krelburger, while you're flying the plane: President Klerble does not queue. */
+export const KB_QUEUE: Line[] = [
+  dir("Inside Krelburger. One till open. One customer in the queue. It is Polson. He has been 'bulking'. He takes up most of the queue, and some of the next one."),
+  say("KRELBURGER STAFF", "…so that's forty Krelburgers, nine large fries, a bucket of nuggets…"),
+  say("POLSON", "And a Diet Krel 😅 Cutting."),
+  say("POLSON", "Actually, can I see the dessert menu? Bulking day!! Gym tomorrow. For real this time 😅"),
+  say("PRESIDENT KLERBLE", "Mmmm!! Want Krelburger!!"),
+  say("KRELBURGER STAFF", "Sorry sir, there's a queue. The gentleman's about… halfway through his order."),
+  dir("Polson turns round. It takes a while."),
+  say("POLSON", "Yeeegh. Won't be long buddy!! What you having? Wbu? 😊"),
+  say("PRESIDENT KLERBLE", "…"),
+  say("PRESIDENT KLERBLE", "Queue?"),
+  say("PRESIDENT KLERBLE", "NO. NO. NOOOO."),
+  dir("It is the first time President Klerble has ever said no. He produces a solid gold revolver. The cylinder is a little roulette wheel. He spins it."),
+  say("PRESIDENT KLERBLE", "Red."),
+];
+
+export const KB_SHOT: Line[] = [
+  dir("It lands on red."),
+  say("POLSON", "(on the floor) …No worries buddy 😊"),
+  say("POLSON", "…wbu…"),
+  dir("Polson is dead."),
+];
+
+export const KB_ORDER: Line[] = [
+  say("PRESIDENT KLERBLE", "YES!"),
+  say("PRESIDENT KLERBLE", "Whatever he was having!!"),
+  say("KRELBURGER STAFF", "…That's forty Krelburgers, nine large fries, a bucket of nuggets and a Diet Krel."),
+  say("PRESIDENT KLERBLE", "YES! YES! YESSS!!"),
+];
+
+/** GB Krews has the Krelburger CCTV. The lads find out about Polson. */
+export const RM_POLSON: Line[] = [
+  say("SCROMBUS", "Item two. It gets worse. GB Krews has got the CCTV from Krelburger. They're playing it on a loop."),
+  dir("Grainy footage on the Town Hall telly. A queue. A very large man at the front of it. A President behind him. A gold revolver. A flash."),
+  say("KREZMAR", "Is that… is that Polson?"),
+  say("CRONGUS", "He shot him. He shot him in the QUEUE."),
+  say("KREBON", "He was nearly at the front."),
+  say("GRONNY", "Polson… Polson big friend. Biggest friend. Me sad."),
+  ping("DRONGUS", "Polson's dead"),
+  ping("DRONGUS", "He messaged me 'wbu' an hour ago"),
+  ping("DRONGUS", "I never replied"),
+  say("KREBLIS", "Breaking news…"),
+  say("KREBLIS", "Polson 😭"),
+  say("KREZWONK", "I foresaw it. I didn't say anything. It felt rude."),
+  say("MIKEY", "He owed me a tenner.", { cond: { notPlayer: "MIKEY" } }),
+  say("MIKEY", "…I'd give a hundred tenners to have him back. A HUNDRED.", { cond: { notPlayer: "MIKEY" } }),
+  say("FLENKY", "First Mollor. Now Polson. Klerble's taking EVERYTHING."),
+  dir("On the telly, President Klerble eats Polson's fortieth burger. He gives the camera a thumbs up."),
+  say("SCROMBUS", "Somebody turn it off."),
+  say("KREBON", "I'll turn it off."),
+  dir("Nobody laughs. Not even at Krebon."),
 ];
 
 /** Kreblis has been saying "we should just invade Kreddle" in every briefing since the first one. */
@@ -306,4 +362,12 @@ export const TP_END: Line[] = [
   ping("DRONGUS", "Hello ?"),
   ping("DRONGUS", "Anyone ??"),
   ping("DRONGUS", "Lads ?"),
+];
+
+/** Polson Towers after Chapter 6's Krelburger shooting. */
+export const POLSON_GONE: Line[] = [
+  dir("Polson Towers. The lights are off. There's a pile of Krelburger flyers behind the door, and a protein shake on the step that nobody's going to drink."),
+  dir("Someone has left flowers. And a bucket of nuggets. He'd have liked the nuggets."),
+  ping("DRONGUS", "Wbu Polson"),
+  dir("Delivered. Not read."),
 ];

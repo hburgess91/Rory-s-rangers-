@@ -30,6 +30,17 @@ updated). To list every dialogue line added or changed since the export:
   (POLSON_GTA: "I've been wanking over the strip clubs in GTA 5").
 - **Golden juice squeeze** is now a button game; her "…is that it? Never mind, love." on a fail (src/game/systems/squeeze.ts).
 - **First-dungeon tutorial** text (src/game/scenes/TutorialScene.ts).
+- **Front-row wonking at the Wonky Pole** (src/game/scenes/ClubScene.ts, WONK_LINES / WONK_DONE): "mm",
+  "mm fuck", "I love wonking", "this is so dirty mm".
+- **Salem witch museum flashback** in the Fragmar briefing (src/content/meetings/laterMeetings.ts, fx salem_on … salem_off).
+- **Beep Show re-edit** (src/content/television/extra/beepShow.ts, src/game/scenes/TVPov.ts): POV staging,
+  voiced inner monologues; the "relaxing episode of Beep Show" you must watch at home at the start of Chapter 4 (HomeScene).
+- **Wildern staff** (src/data/enemies.ts): Supply Teacher, PE Teacher and head of year Mr. Port E. Us, with their shouts.
+- **Polson is killed in Krelburger** (Chapter 6, src/content/ch6.ts): KB_QUEUE / KB_SHOT / KB_ORDER (President
+  Klerble won't queue behind fat Polson, shoots him with a roulette-wheel revolver and orders "whatever he was
+  having"); RM_POLSON (the lads watch the CCTV at the revenge meeting and grieve: "He was nearly at the front");
+  "For Polson!" added to RM_REVENGE and the raid shouts (src/content/raid.ts); POLSON_GONE (his house afterwards).
+  From then on Polson no longer appears in town, at his house, or in crowds.
 
 ## Every dialogue line added or changed since the export (snapshot)
 

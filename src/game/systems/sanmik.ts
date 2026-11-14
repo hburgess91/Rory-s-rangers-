@@ -42,7 +42,7 @@ export function playerFace(s: GameState): string {
  */
 export function pursuerId(s: GameState): "MIKEY" | "POLSON" | null {
   if (!isMikey(s)) return "MIKEY";
-  if (s.chapter === 2 || s.chapter === 5) return null;
+  if (s.chapter === 2 || s.chapter === 5 || s.flags.polson_dead) return null;
   return "POLSON";
 }
 
