@@ -1,0 +1,603 @@
+import Phaser from "phaser";
+import type { RoomDef } from "../../../data/dungeons";
+import { ENEMIES } from "../../../data/enemies";
+import { synth } from "../../audio/Synth";
+
+/**
+ * Platforming extras for side-scrolling rooms: pits in the floor, moving platforms, crushers, steam vents,
+ * conveyor belts, run-and-gun enemy triggers, and the Nu Warehouse trip.
+ * Lives alongside a DungeonScene; everything it needs from the scene is passed in.
+ */
+export interface SideHost extends Phaser.Scene {
+  player: any;
+  groundY: number;
+  enemies: any[];
+  now(): number;
+  damagePlayer(amount: number, from?: { x: number; y: number }, opts?: { unblockable?: boolean; label?: string }): void;
+  damageEnemy(e: any, amount: number, opts?: any): void;
+  spawnEnemy(type: string, x: number, y: number, opts?: { noDrops?: boolean; minion?: boolean }): any;
+  floatText(x: number, y: number, text: string, color?: string, size?: number): void;
+  toast(title: string, text: string): void;
+}
+
+type Mover = { rect: Phaser.GameObjects.Rectangle; deco: Phaser.GameObjects.GameObject[]; bx: number; by: number; dx: number; dy: number; period: number; lastX: number; lastY: number };
+type Crusher = { x: number; w: number; period: number; offset: number; block: Phaser.GameObjects.Container; shadow: Phaser.GameObjects.Ellipse; state: string; hitAt: number };
+type Vent = { x: number; period: number; offset: number; puff: Phaser.GameObjects.Rectangle; nextTick: number };
+type Belt = { x0: number; x1: number; dir: number; strip: Phaser.GameObjects.TileSprite };
+
+export class SideLevel {
+  floor: Phaser.Physics.Arcade.StaticGroup | null = null;
+  private gaps: [number, number][] = [];
+  private movers: Mover[] = [];
+  private crushers: Crusher[] = [];
+  private vents: Vent[] = [];
+  private belts: Belt[] = [];
+  private triggers: { x: number; wave: [string, number][]; fired: boolean }[] = [];
+  private lastSafeX = 90;
+  private pendingSpawns = 0;
+  private pitCd = 0;
+  private trip: { reef?: Phaser.GameObjects.TileSprite; fx?: any; t: number } | null = null;
+  /** LOCKDOWN: the screen locks until this lot is dead. */
+  private lock: { l: number; r: number; spawned: any[]; pending: number; banner: Phaser.GameObjects.Text } | null = null;
+  private trigCount = 0;
+  /** The chase: something big rolls in from the left and you run. */
+  private chase: { x: number; wall: Phaser.GameObjects.Container; hitAt: number; started: boolean; done: boolean } | null = null;
+  private go: Phaser.GameObjects.Text | null = null;
+
+  constructor(private sc: SideHost, private room: RoomDef) {}
+
+  get hasGaps() {
+    return !!this.room.floorGaps?.length;
+  }
+
+  get hasTriggers() {
+    return !!this.room.triggers?.length;
+  }
+
+  /** Draw and set everything up. Platforms (one-way) are the scene's group so moving ones share its colliders. */
+  build(platforms: Phaser.Physics.Arcade.StaticGroup) {
+    const r = this.room;
+    const sc = this.sc;
+    const gy = sc.groundY;
+    const tile = `tile_${r.theme}`;
+    // the floor, with holes in it
+    if (this.hasGaps) {
+      this.gaps = (r.floorGaps ?? []).map(([fx, w]) => [r.w * fx, r.w * fx + w]);
+      this.floor = sc.physics.add.staticGroup();
+      let x = 0;
+      const segs: [number, number][] = [];
+      for (const [a, b] of [...this.gaps].sort((p, q) => p[0] - q[0])) {
+        if (a > x) segs.push([x, a]);
+        x = b;
+      }
+      if (x < r.w) segs.push([x, r.w]);
+      for (const [a, b] of segs) {
+        sc.add.tileSprite(a, gy, b - a, r.h - gy, tile).setOrigin(0).setDepth(2).setTint(0x8a8a9a);
+        sc.add.rectangle(a, gy, b - a, 4, 0x000000, 0.6).setOrigin(0).setDepth(3);
+        const f = sc.add.rectangle((a + b) / 2, gy + (r.h - gy) / 2, b - a, r.h - gy, 0, 0);
+        this.floor.add(f);
+      }
+      // what's in the holes
+      const col = r.pitColor ?? 0x5b3416;
+      for (const [a, b] of this.gaps) {
+        const pit = sc.add.rectangle(a, gy + 18, b - a, r.h - gy, col).setOrigin(0).setDepth(1);
+        const sheen = sc.add.rectangle(a, gy + 18, b - a, 6, 0xffffff, 0.25).setOrigin(0).setDepth(1);
+        sc.tweens.add({ targets: [pit, sheen], y: "+=6", yoyo: true, repeat: -1, duration: 700, ease: "Sine.inOut" });
+        if (r.pitName) sc.add.text((a + b) / 2, gy + 40, r.pitName, { fontFamily: "sans-serif", fontSize: "11px", color: "#ffffff", stroke: "#000", strokeThickness: 3 }).setOrigin(0.5).setDepth(2).setAlpha(0.85);
+      }
+    }
+    // moving platforms
+    for (const [fx, h, w, dx, dy, period] of r.movers ?? []) {
+      const x = r.w * fx;
+      const y = gy - h;
+      const rect = sc.add.rectangle(x, y, w, 14, 0, 0);
+      platforms.add(rect);
+      const cit = r.theme === "citadel";
+      const top = sc.add.tileSprite(x, y, w, 14, tile).setDepth(4).setTint(cit ? 0x9a86b0 : 0xffd6a5);
+      const edge = sc.add.rectangle(x, y - 7, w, 3, cit ? 0xff2d95 : 0x22d3ee, 0.9).setDepth(5);
+      const under = sc.add.rectangle(x, y + 9, w * 0.6, 4, 0x000000, 0.5).setDepth(5);
+      this.movers.push({ rect, deco: [top, edge, under], bx: x, by: y, dx, dy, period, lastX: x, lastY: y });
+    }
+    // hazards
+    for (const hz of r.hazards ?? []) {
+      const x = r.w * hz.x;
+      if (hz.kind === "crusher") {
+        const w = hz.w ?? 120;
+        const block = sc.add.container(x, 70).setDepth(8);
+        block.add(sc.add.rectangle(0, -200, 16, 400, 0x52525b));
+        block.add(sc.add.rectangle(0, 0, w, 60, 0x9f1239).setStrokeStyle(4, 0x111827));
+        const stripes = sc.add.graphics();
+        for (let i = -w / 2; i < w / 2; i += 20) stripes.fillStyle(i % 40 ? 0xfacc15 : 0x111827, 1).fillRect(i, 22, 10, 8);
+        block.add(stripes);
+        block.add(sc.add.text(0, -6, r.crusherLabel ?? "PRESS", { fontFamily: "Impact, sans-serif", fontSize: "14px", color: "#fff" }).setOrigin(0.5));
+        const shadow = sc.add.ellipse(x, gy - 2, w, 12, 0x000000, 0).setDepth(3);
+        this.crushers.push({ x, w, period: hz.period ?? 2600, offset: hz.offset ?? Math.random() * 2000, block, shadow, state: "up", hitAt: 0 });
+      } else if (hz.kind === "steam") {
+        const puff = sc.add.rectangle(x, gy, 54, 280, 0xe5e7eb, 0).setOrigin(0.5, 1).setDepth(7);
+        sc.add.rectangle(x, gy - 4, 70, 10, 0x374151).setDepth(6).setStrokeStyle(2, 0x111827);
+        this.vents.push({ x, period: hz.period ?? 3000, offset: hz.offset ?? Math.random() * 2000, puff, nextTick: 0 });
+      } else if (hz.kind === "conveyor") {
+        const w = hz.w ?? 300;
+        const strip = sc.add.tileSprite(x, gy - 6, w, 12, "tile_industrial").setOrigin(0, 0.5).setDepth(4).setTint(0x9ca3af);
+        sc.add.text(x + w / 2, gy - 22, (hz.dir ?? 1) > 0 ? "▶ ▶ ▶" : "◀ ◀ ◀", { fontFamily: "sans-serif", fontSize: "12px", color: "#facc15" }).setOrigin(0.5).setDepth(5).setAlpha(0.8);
+        this.belts.push({ x0: x, x1: x + w, dir: hz.dir ?? 1, strip });
+      }
+    }
+    // in a tower, a trigger's position is how high you've climbed (stored as the y you have to get above)
+    const climb = r.exitAt ? r.exitAt[1] : r.h - 200;
+    this.triggers = (r.triggers ?? []).map(([fx, wave]) => ({ x: r.tower ? gy - fx * climb : r.w * fx, wave, fired: false }));
+    if (r.chase) {
+      const wall = sc.add.container(-400, 0).setDepth(30);
+      const col = r.chase.color ?? 0x991b1b;
+      wall.add(sc.add.rectangle(-150, gy / 2, 300, gy + 200, col, 1));
+      for (let y = 20; y < gy; y += 46) wall.add(sc.add.triangle(6, y, 0, 0, 34, 18, 0, 36, 0xd4d4d8).setStrokeStyle(2, 0x111827));
+      wall.add(sc.add.text(-40, gy / 2, r.chase.label, { fontFamily: "Impact, sans-serif", fontSize: "34px", color: "#ffffff", stroke: "#000", strokeThickness: 6, align: "center", wordWrap: { width: 260 } }).setOrigin(0.5).setAngle(-90));
+      this.chase = { x: -400, wall, hitAt: 0, started: false, done: false };
+    }
+    if (r.trip) this.startTrip();
+  }
+
+  /** Floor colliders (solid, not one-way). */
+  attach(player: Phaser.GameObjects.GameObject, enemyGroup: Phaser.Physics.Arcade.Group) {
+    if (!this.floor) return;
+    this.sc.physics.add.collider(player, this.floor);
+    this.sc.physics.add.collider(enemyGroup, this.floor);
+  }
+
+  /** Run-and-gun rooms: done when every trigger has fired and nothing's left alive. */
+  triggersDone() {
+    // a tower opens as soon as you reach the top landing
+    if (this.room.tower && this.room.exitAt && this.sc.player && this.sc.player.y < this.sc.groundY - this.room.exitAt[1] + 20) return true;
+    // the trip: no need to kill anyone, just get to the far end
+    if (this.room.trip && this.sc.player && this.sc.player.x > this.room.w - 420) return true;
+    return this.hasTriggers && !this.lock && this.pendingSpawns === 0 && this.triggers.every((t) => t.fired) && this.sc.enemies.every((e) => e.dead);
+  }
+
+  /** A platform top near x (for perching turrets), or null. */
+  private perchNear(x: number): { x: number; y: number } | null {
+    const r = this.room;
+    const gy = this.sc.groundY;
+    const py = this.sc.player.y;
+    const opts = (r.platforms ?? []).map(([fx, h, w]) => ({ x: r.w * fx, y: gy - h - 26, w })).filter((p) => (r.tower ? Math.abs(p.y - py) < 320 && p.y < py + 60 : Math.abs(p.x - x) < 520) && !this.inGap(p.x));
+    if (!opts.length) return null;
+    const p = opts[Math.floor(Math.random() * opts.length)];
+    return { x: p.x + (Math.random() - 0.5) * (p.w * 0.5), y: p.y };
+  }
+
+  private releaseLock() {
+    const sc = this.sc;
+    const lk = this.lock!;
+    this.lock = null;
+    sc.cameras.main.setBounds(0, 0, this.room.w, this.room.h);
+    lk.banner.destroy();
+    synth.play("ding");
+    this.go?.destroy();
+    this.go = sc.add.text(880, 250, "GO →", { fontFamily: "Impact, sans-serif", fontSize: "44px", color: "#ffd23f", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(960);
+    sc.tweens.add({ targets: this.go, x: 900, yoyo: true, repeat: 3, duration: 220, onComplete: () => { this.go?.destroy(); this.go = null; } });
+  }
+
+  /** Starting part way along (a checkpoint): everything behind you counts as done. */
+  skipTo(x: number, y: number) {
+    for (const t of this.triggers) if (this.room.tower ? y <= t.x : x >= t.x) t.fired = true;
+    this.lastSafeX = x;
+    if (this.chase && x > this.room.w * this.room.chase!.at) this.chase.done = true;
+  }
+
+  inGap(x: number, pad = 0) {
+    return this.gaps.some(([a, b]) => x > a - pad && x < b + pad);
+  }
+
+  private nextCull = 0;
+  private nextPod = 0;
+
+  update(dt: number, busy: boolean) {
+    const sc = this.sc;
+    const now = sc.now();
+    const p = sc.player;
+    const pb = p.spr.body as Phaser.Physics.Arcade.Body;
+    const gy = sc.groundY;
+    const grounded = pb.blocked.down || pb.touching.down;
+    // moving platforms, and anyone standing on them
+    for (const m of this.movers) {
+      const k = Math.sin((now / m.period) * Math.PI * 2);
+      const nx = m.bx + m.dx * k;
+      const ny = m.by + m.dy * k;
+      const ddx = nx - m.lastX;
+      const ddy = ny - m.lastY;
+      m.rect.setPosition(nx, ny);
+      (m.rect.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+      (m.deco as any[]).forEach((d, i) => d.setPosition(nx, ny + (i === 1 ? -7 : i === 2 ? 9 : 0)));
+      const onIt = grounded && Math.abs(pb.bottom - (ny - 7)) < 8 && p.x > nx - m.rect.width / 2 - 6 && p.x < nx + m.rect.width / 2 + 6;
+      if (onIt) {
+        p.spr.x += ddx;
+        p.spr.y += ddy;
+      }
+      m.lastX = nx;
+      m.lastY = ny;
+    }
+    if (busy) return;
+    // crushers: rise, wait, warn, SLAM
+    for (const c of this.crushers) {
+      const t = (now + c.offset) % c.period;
+      const warnAt = c.period - 900;
+      const slamAt = c.period - 250;
+      const downY = gy - 30;
+      let y: number;
+      if (t < 500) y = downY;
+      else if (t < 1400) y = Phaser.Math.Linear(downY, 70, (t - 500) / 900);
+      else if (t < slamAt) y = 70;
+      else y = Phaser.Math.Linear(70, downY, (t - slamAt) / 250);
+      c.block.setY(y);
+      c.shadow.setFillStyle(0x000000, t >= warnAt ? 0.5 : 0);
+      if (t >= warnAt && t < slamAt) c.block.setX(c.x + Math.sin(now / 30) * 2);
+      else c.block.setX(c.x);
+      const slamming = t >= slamAt || t < 120;
+      if (slamming && now > c.hitAt && Math.abs(p.x - c.x) < c.w / 2 + 6 && p.y > y - 10) {
+        c.hitAt = now + 900;
+        sc.damagePlayer(20, { x: c.x, y: gy }, { unblockable: true, label: "-20 (SQUASHED)" });
+        pb.setVelocityX((p.x < c.x ? -1 : 1) * 400);
+        sc.cameras.main.shake(150, 0.012);
+      }
+      if (t < 30) synth.play("hit");
+    }
+    // steam vents: puff, then BLAST
+    for (const v of this.vents) {
+      const t = (now + v.offset) % v.period;
+      const blastAt = v.period - 1100;
+      const warnAt = blastAt - 700;
+      if (t >= blastAt) {
+        v.puff.setFillStyle(0xf1f5f9, 0.75).setScale(1, 1);
+        if (Math.abs(p.x - v.x) < 30 && p.y > gy - 280 && now > v.nextTick) {
+          v.nextTick = now + 380;
+          sc.damagePlayer(9, { x: v.x, y: gy }, { unblockable: true, label: "-9 (STEAM)" });
+        }
+      } else if (t >= warnAt) v.puff.setFillStyle(0xf1f5f9, 0.25).setScale(0.6, 0.2);
+      else v.puff.setFillStyle(0xffffff, 0);
+    }
+    // hazards don't care who they hit
+    for (const c of this.crushers) {
+      const t = (now + c.offset) % c.period;
+      if (t >= c.period - 250 || t < 120) for (const e of sc.enemies) if (!e.dead && !e.isBoss && Math.abs(e.x - c.x) < c.w / 2 && e.y > c.block.y) sc.damageEnemy(e, 60, { label: "SQUASHED", knock: 200 });
+    }
+    for (const v of this.vents) {
+      const t = (now + v.offset) % v.period;
+      if (t >= v.period - 1100 && Math.random() < dt / 300) for (const e of sc.enemies) if (!e.dead && !e.isBoss && Math.abs(e.x - v.x) < 30) sc.damageEnemy(e, 10, { noWonk: true, label: "" });
+    }
+    // conveyor belts push you (and everything else) along
+    for (const b of this.belts) {
+      b.strip.tilePositionX -= b.dir * dt * 0.12;
+      if (grounded && p.x > b.x0 && p.x < b.x1 && Math.abs(pb.bottom - gy) < 6) p.spr.x += b.dir * dt * 0.14;
+      for (const e of sc.enemies) if (!e.dead && e.walker && e.x > b.x0 && e.x < b.x1) e.x += b.dir * dt * 0.1;
+    }
+    // pits: fall in and you're dragged back out, slightly worse off
+    if (this.hasGaps) {
+      if (grounded && !this.inGap(p.x, 50)) this.lastSafeX = p.x;
+      if (p.y > gy + 70 && now > this.pitCd) {
+        this.pitCd = now + 600;
+        sc.damagePlayer(15, undefined, { unblockable: true, label: `-15 (${this.room.pitName ?? "PIT"})` });
+        p.spr.setPosition(this.lastSafeX, gy - 70);
+        pb.setVelocity(0, 0);
+        p.iframesUntil = now + 1200;
+        synth.play("splash");
+      }
+      for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.y > gy + 90) sc.damageEnemy(e, 99999, { noWonk: true, label: "" });
+    }
+    // the chase
+    if (this.chase && !this.chase.done) {
+      const ch = this.chase;
+      const cfg = this.room.chase!;
+      if (!ch.started && p.x > this.room.w * cfg.at) {
+        ch.started = true;
+        ch.x = sc.cameras.main.scrollX - 120;
+        sc.toast(`RUN!`, `${cfg.label} is coming. Don't stop.`);
+        synth.play("roar");
+        sc.cameras.main.shake(400, 0.01);
+      }
+      // it waits while you're krezzing (you can't run mid-wonk)
+      const holding = now < ((sc as unknown as { wonkUntil?: number }).wonkUntil ?? 0);
+      if (ch.started && !holding) {
+        // never too far behind, never faster than a sprint
+        ch.x = Math.max(ch.x + (cfg.speed * dt) / 1000, sc.cameras.main.scrollX - 260);
+        ch.wall.setX(ch.x);
+        if (Math.random() < dt / 400) sc.cameras.main.shake(80, 0.003);
+        if (p.x < ch.x + 20 && now > ch.hitAt) {
+          ch.hitAt = now + 500;
+          sc.damagePlayer(12, { x: ch.x, y: p.y }, { unblockable: true, label: `-12 (${cfg.label})` });
+          // spat out in FRONT of it, never left stuck behind it
+          if (p.x < ch.x + 20) p.spr.x = ch.x + 90;
+          pb.setVelocity(520, -380);
+          p.iframesUntil = Math.max(p.iframesUntil, now + 600);
+        }
+        for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.x < ch.x + 10) sc.damageEnemy(e, 99999, { noWonk: true, label: "MINCED" });
+        if (p.x > this.room.w * 0.9) {
+          ch.done = true;
+          sc.tweens.add({ targets: ch.wall, x: ch.x - 600, duration: 1200 });
+          sc.toast("PHEW", "It's stopped. Probably jammed on a Crobley.");
+        }
+      }
+    }
+    // LOCKDOWN: hold the screen until they're dead
+    if (this.lock) {
+      const lk = this.lock;
+      if (p.x < lk.l + 30) p.spr.x = lk.l + 30;
+      if (p.x > lk.r - 30) p.spr.x = lk.r - 30;
+      if (lk.pending === 0 && lk.spawned.every((e) => !e || e.dead)) this.releaseLock();
+    }
+    // a weapon pod every so often (shoot it for SPREAD / MACHINE GUN / BARRIER / HEALTH)
+    if (this.hasTriggers && !this.room.boss && !busy && now > this.nextPod) {
+      if (this.nextPod) {
+        const v = sc.cameras.main.worldView;
+        sc.spawnEnemy("weapon_pod", v.right + 40, this.room.tower ? p.y - 200 : v.y + 110 + Math.random() * 120, { noDrops: true });
+      }
+      this.nextPod = now + 13000 + Math.random() * 5000;
+    }
+    // towers: anything left well below you gives up the chase (no rewards), so the climb doesn't snowball
+    if (this.room.tower && now > this.nextCull) {
+      this.nextCull = now + 500;
+      for (const e of sc.enemies) if (!e.dead && !e.isBoss && e.y > p.y + 560) e.kill();
+    }
+    // run and gun: push forward, more turn up
+    for (const tr of this.triggers) {
+      if (tr.fired || this.lock || (this.room.tower ? p.y > tr.x : p.x < tr.x)) continue;
+      tr.fired = true;
+      this.trigCount++;
+      // every other wave locks the screen (not during a chase)
+      const locking = !this.room.tower && !this.room.trip && this.trigCount % 2 === 0 && !(this.chase?.started && !this.chase.done);
+      if (locking) {
+        const cam = sc.cameras.main;
+        const l = Math.max(0, cam.scrollX);
+        const rr = Math.min(this.room.w, l + 960);
+        cam.setBounds(l, 0, rr - l, this.room.h);
+        const banner = sc.add.text(480, 110, "LOCKDOWN", { fontFamily: "Impact, sans-serif", fontSize: "40px", color: "#ef4444", stroke: "#000", strokeThickness: 7 }).setOrigin(0.5).setScrollFactor(0).setDepth(960);
+        sc.tweens.add({ targets: banner, alpha: 0.35, yoyo: true, repeat: -1, duration: 380 });
+        this.lock = { l, r: rr, spawned: [], pending: 0, banner };
+        synth.play("decree");
+      }
+      // towers keep the crowd small: a wave only tops the room up to a handful
+      // keep the crowd to a readable handful (towers and run'n'gun alike)
+      const room = Math.max(this.room.tower ? 0 : 2, (this.room.tower ? 11 : 8) - sc.enemies.filter((e) => !e.dead && !e.isBoss).length);
+      let budget = room;
+      for (const [type, n0] of tr.wave) {
+        const n = Math.min(budget, Math.max(1, Math.round(n0 * 0.8)));
+        budget -= n;
+        for (let i = 0; i < n; i++) {
+          const d = ENEMIES[type];
+          const flyer = !!d && d.behavior !== "leaper" && d.behavior !== "turret" && (d.behavior === "orbiter" || d.behavior === "blinker" || ["bubble", "ghost", "drone", "page"].includes(d.shape));
+          const ahead = Math.random() < 0.8;
+          let x = Phaser.Math.Clamp(p.x + (ahead ? 1 : -1) * Phaser.Math.Between(320, 640), 60, this.room.w - 60);
+          if (this.inGap(x, 30)) x = Phaser.Math.Clamp(x + 160, 60, this.room.w - 60);
+          let y = flyer ? Phaser.Math.Between(120, gy - 200) : gy - 60;
+          const lk = this.lock;
+          if (locking && lk) {
+            // inside the locked screen, not on top of you
+            x = Phaser.Math.Clamp(Math.random() < 0.5 ? lk.l + 60 + Math.random() * 200 : lk.r - 60 - Math.random() * 200, lk.l + 40, lk.r - 40);
+            if (this.inGap(x, 30)) x = lk.l + (lk.r - lk.l) / 2;
+          }
+          let sx = x + (i % 3) * 30;
+          if (this.room.tower) {
+            // up here: on a ledge near your height (walkers), or in the air around you (flyers)
+            const near = (this.room.platforms ?? []).map(([fx, h, w]) => ({ x: this.room.w * fx, y: gy - h - 30, w })).filter((pl) => Math.abs(pl.y - p.y) < 300 && Math.abs(pl.x - p.x) > 120);
+            if (flyer) {
+              sx = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * Phaser.Math.Between(220, 380), 60, this.room.w - 60);
+              y = p.y - Phaser.Math.Between(80, 240);
+            } else if (near.length) {
+              const pl = near[Math.floor(Math.random() * near.length)];
+              sx = pl.x + (Math.random() - 0.5) * pl.w * 0.6;
+              y = pl.y;
+            } else {
+              sx = Phaser.Math.Clamp(p.x + (Math.random() < 0.5 ? -1 : 1) * 250, 60, this.room.w - 60);
+              y = p.y - 200;
+            }
+          }
+          if (d?.behavior === "turret") {
+            const perch = this.perchNear(x);
+            if (perch) {
+              sx = perch.x;
+              y = perch.y;
+            } else y = this.room.tower ? p.y - 150 : gy - 30;
+          }
+          this.pendingSpawns++;
+          if (locking && lk) lk.pending++;
+          this.sc.time.delayedCall(i * 140, () => {
+            this.pendingSpawns--;
+            const e = this.sc.spawnEnemy(type, sx, y);
+            if (locking && lk) {
+              lk.pending--;
+              lk.spawned.push(e);
+            }
+          });
+        }
+      }
+    }
+    if (this.trip) this.updateTrip(dt);
+  }
+
+  // ---------------------------------------------------------------- the magic pill
+
+  private startTrip() {
+    const sc = this.sc;
+    const cam = sc.cameras.main;
+    const trip: { reef?: Phaser.GameObjects.TileSprite; fx?: any; t: number } = { t: 0 };
+    if (sc.textures.exists("nu_reef")) {
+      const src = sc.textures.get("nu_reef").getSourceImage();
+      trip.reef = sc.add.tileSprite(0, 0, 960, 540, "nu_reef").setOrigin(0).setScrollFactor(0).setDepth(-9).setAlpha(0);
+      trip.reef.setTileScale(540 / src.height);
+    }
+    // colour shift on the whole picture (WebGL only)
+    trip.fx = (cam as any).postFX?.addColorMatrix?.() ?? null;
+    // sea creatures drifting through the rave
+    const critters = ["🐠", "🐟", "🐡", "🪼", "🐙", "🦑", "🐢", "🐬", "🦀", "🐚", "🌈", "✨"];
+    sc.time.addEvent({
+      delay: 420,
+      loop: true,
+      callback: () => {
+        const left = Math.random() < 0.5;
+        const t = sc.add.text(left ? -40 : 1000, 60 + Math.random() * 360, critters[Math.floor(Math.random() * critters.length)], { fontSize: `${22 + Math.floor(Math.random() * 30)}px` }).setScrollFactor(0).setDepth(900).setAlpha(0.85);
+        if (!left) t.setFlipX(true);
+        sc.tweens.add({ targets: t, x: left ? 1000 : -40, y: t.y + (Math.random() - 0.5) * 160, duration: 5000 + Math.random() * 4000, onComplete: () => t.destroy() });
+        sc.tweens.add({ targets: t, angle: { from: -12, to: 12 }, yoyo: true, repeat: -1, duration: 600 });
+      },
+    });
+    // bubbles, slowly rising
+    sc.time.addEvent({
+      delay: 160,
+      loop: true,
+      callback: () => {
+        const b = sc.add.circle(Math.random() * 960, 560, 3 + Math.random() * 7, 0xffffff, 0).setStrokeStyle(1.5, 0xbae6fd, 0.8).setScrollFactor(0).setDepth(890);
+        sc.tweens.add({ targets: b, y: -20, x: b.x + (Math.random() - 0.5) * 80, duration: 4000 + Math.random() * 2000, onComplete: () => b.destroy() });
+      },
+    });
+    // slow sweeping lasers (gentle: no strobing)
+    for (let i = 0; i < 4; i++) {
+      const beam = sc.add.rectangle(200 + i * 190, -20, 6, 900, [0x22d3ee, 0xe879f9, 0xa3e635, 0xfacc15][i], 0.35).setOrigin(0.5, 0).setScrollFactor(0).setDepth(880).setBlendMode(Phaser.BlendModes.ADD);
+      sc.tweens.add({ targets: beam, angle: { from: -35, to: 35 }, yoyo: true, repeat: -1, duration: 2600 + i * 500, ease: "Sine.inOut" });
+    }
+    this.trip = trip;
+    this.wonderFlowers();
+    sc.time.delayedCall(2500, () => this.wonder());
+  }
+
+  // ---------------------------------------------------------------- wonder: talking flowers and big surreal moments
+
+  private flowerLines = [
+    "Yee!", "WOW!", "You're doing amazing!", "I can taste the bass!", "Love you, mate!", "Everything is music!", "Is SanChz a dolphin now?",
+    "MDMAZING!", "It gets weirder!", "Keep going!", "Have you got any water?", "I'm a flower!", "The walls are breathing!", "Big up the goat!",
+    "Hug a bouncer!", "Your aura is purple!", "I've had four as well!", "Who's on the decks? It's a goat.", "Don't look at the floor!", "Wonderful!",
+  ];
+
+  /** Talking flowers along the floor: bob to the beat, chat when you pass. */
+  private wonderFlowers() {
+    const sc = this.sc;
+    const gy = sc.groundY;
+    const kinds = ["🌸", "🌼", "🌷", "🌻", "🍄", "🌺"];
+    const flowers: { t: Phaser.GameObjects.Text; said: number }[] = [];
+    for (let x = 260; x < this.room.w - 200; x += 300 + Math.random() * 120) {
+      if (this.inGap(x, 40)) continue;
+      const t = sc.add.text(x, gy + 2, kinds[Math.floor(Math.random() * kinds.length)], { fontSize: "34px" }).setOrigin(0.5, 1).setDepth(7);
+      // bounce on the beat (MDMAzing is roughly 128bpm)
+      sc.tweens.add({ targets: t, scaleY: { from: 1, to: 1.25 }, scaleX: { from: 1, to: 0.9 }, yoyo: true, repeat: -1, duration: 234, ease: "Sine.inOut" });
+      sc.tweens.add({ targets: t, angle: { from: -10, to: 10 }, yoyo: true, repeat: -1, duration: 468, ease: "Sine.inOut" });
+      flowers.push({ t, said: 0 });
+    }
+    sc.time.addEvent({
+      delay: 250,
+      loop: true,
+      callback: () => {
+        const p = sc.player;
+        if (!p) return;
+        const now = sc.now();
+        for (const f of flowers) {
+          if (now - f.said < 6000 || Math.abs(f.t.x - p.x) > 140) continue;
+          f.said = now;
+          this.flowerSay(f.t.x, f.t.y - 44, this.flowerLines[Math.floor(Math.random() * this.flowerLines.length)]);
+        }
+      },
+    });
+  }
+
+  private flowerSay(x: number, y: number, line: string) {
+    const sc = this.sc;
+    const b = sc.add.text(x, y, line, { fontFamily: "Arial Rounded MT Bold, Arial, sans-serif", fontSize: "14px", color: "#111827", backgroundColor: "#ffffff", padding: { x: 8, y: 4 }, fontStyle: "bold" }).setOrigin(0.5, 1).setDepth(905).setScale(0);
+    sc.tweens.add({ targets: b, scale: 1, duration: 180, ease: "Back.out" });
+    sc.tweens.add({ targets: b, alpha: 0, y: y - 20, delay: 1700, duration: 400, onComplete: () => b.destroy() });
+  }
+
+  private wonderIdx = 0;
+
+  /** Every so often the trip goes up a level: a WONDER! moment. */
+  private wonder() {
+    const sc = this.sc;
+    if (!this.trip || !sc.scene.isActive()) return;
+    const cam = sc.cameras.main;
+    const kinds = ["stampede", "starfall", "dance", "sing", "bloom"];
+    const kind = kinds[this.wonderIdx++ % kinds.length];
+    const titles: Record<string, string> = { stampede: "GOAT STAMPEDE!", starfall: "IT'S RAINING STARS!", dance: "EVERYBODY DANCE!", sing: "THE FLOWERS ARE SINGING!", bloom: "THE WAREHOUSE IS BLOOMING!" };
+    // a rainbow burst and the title, like the world just changed the rules
+    const burst = sc.add.graphics().setScrollFactor(0).setDepth(940).setBlendMode(Phaser.BlendModes.ADD);
+    const cols = [0xf87171, 0xfb923c, 0xfacc15, 0x4ade80, 0x22d3ee, 0x818cf8, 0xe879f9];
+    cols.forEach((c, i) => burst.lineStyle(10, c, 0.6).strokeCircle(0, 0, 40 + i * 12));
+    burst.setPosition(480, 270);
+    sc.tweens.add({ targets: burst, scale: 6, alpha: 0, duration: 900, ease: "Cubic.out", onComplete: () => burst.destroy() });
+    const w = sc.add.text(480, 150, "✨ WONDER! ✨", { fontFamily: "Impact, sans-serif", fontSize: "54px", color: "#fde047", stroke: "#7c3aed", strokeThickness: 9 }).setOrigin(0.5).setScrollFactor(0).setDepth(960).setScale(0);
+    const sub = sc.add.text(480, 205, titles[kind], { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#ffffff", stroke: "#db2777", strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(960).setAlpha(0);
+    sc.tweens.add({ targets: w, scale: 1, angle: { from: -15, to: 0 }, duration: 380, ease: "Back.out" });
+    sc.tweens.add({ targets: sub, alpha: 1, delay: 250, duration: 250 });
+    sc.tweens.add({ targets: [w, sub], alpha: 0, delay: 2000, duration: 500, onComplete: () => { w.destroy(); sub.destroy(); } });
+    synth.play("ding");
+    const dur = 6000;
+    if (kind === "stampede") {
+      // a herd of giant YEE goats charges across the back of the rave
+      for (let i = 0; i < 14; i++) {
+        const g = sc.add.text(-120 - i * 90 - Math.random() * 60, 300 + Math.random() * 150, Math.random() < 0.8 ? "🐐" : "🦄", { fontSize: `${60 + Math.floor(Math.random() * 50)}px` }).setScrollFactor(0).setDepth(-5).setFlipX(true).setAlpha(0.9);
+        sc.tweens.add({ targets: g, x: 1200, duration: 3200 + Math.random() * 800, delay: i * 120, onComplete: () => g.destroy() });
+        sc.tweens.add({ targets: g, y: g.y - 26, yoyo: true, repeat: -1, duration: 160 });
+      }
+      cam.shake(2600, 0.003);
+    } else if (kind === "starfall") {
+      sc.time.addEvent({ delay: 70, repeat: Math.floor(dur / 70), callback: () => {
+        const st = sc.add.text(Math.random() * 980, -30, Math.random() < 0.6 ? "⭐" : "✨", { fontSize: `${18 + Math.floor(Math.random() * 26)}px` }).setScrollFactor(0).setDepth(895);
+        sc.tweens.add({ targets: st, y: 580, x: st.x - 80, angle: 360, duration: 1800 + Math.random() * 1200, onComplete: () => st.destroy() });
+      } });
+    } else if (kind === "dance") {
+      // the whole rave (enemies included) stops fighting and dances for a bit
+      sc.events.emit("prophecy", dur);
+      for (const e of sc.enemies) if (!e.dead && e.active) sc.tweens.add({ targets: e, angle: { from: -20, to: 20 }, yoyo: true, repeat: Math.floor(dur / 468), duration: 234, onComplete: () => { if (e.active) e.setAngle(0); } });
+      const disco = sc.add.text(480, 40, "🪩", { fontSize: "70px" }).setOrigin(0.5).setScrollFactor(0).setDepth(899);
+      sc.tweens.add({ targets: disco, angle: 360, repeat: Math.floor(dur / 1500), duration: 1500, onComplete: () => disco.destroy() });
+      for (let i = 0; i < 6; i++) {
+        const sp = sc.add.circle(480, 70, 10, cols[i], 0.35).setScrollFactor(0).setDepth(898).setBlendMode(Phaser.BlendModes.ADD);
+        sc.tweens.add({ targets: sp, x: { from: 100 + i * 150, to: 860 - i * 150 }, y: { from: 120 + (i % 3) * 120, to: 480 - (i % 3) * 100 }, scale: 4, yoyo: true, repeat: 3, duration: 900 + i * 120, onComplete: () => sp.destroy() });
+      }
+    } else if (kind === "sing") {
+      const p = sc.player;
+      const words = ["M", "D", "M", "A", "ZING!", "YEEEE!"];
+      words.forEach((wd, i) => sc.time.delayedCall(i * 469, () => {
+        for (let k = -2; k <= 2; k++) this.flowerSay(p.x + k * 190, sc.groundY - 50 - Math.abs(k) * 6, wd);
+      }));
+      for (let i = 0; i < 18; i++) {
+        const n = sc.add.text(Math.random() * 960, 540, ["♪", "♫", "♬"][i % 3], { fontSize: "34px", color: "#" + cols[i % cols.length].toString(16).padStart(6, "0") }).setScrollFactor(0).setDepth(896);
+        sc.tweens.add({ targets: n, y: -30, x: n.x + Math.sin(i) * 120, duration: 3000 + Math.random() * 1500, delay: i * 150, onComplete: () => n.destroy() });
+      }
+    } else if (kind === "bloom") {
+      // giant flowers grow up out of the floor behind you and sway, then wilt
+      for (let i = 0; i < 9; i++) {
+        const f = sc.add.text(60 + i * 110, 560, ["🌻", "🌸", "🌺", "🌷", "🍄"][i % 5], { fontSize: `${110 + Math.floor(Math.random() * 60)}px` }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(-4).setAlpha(0.85);
+        sc.tweens.add({ targets: f, y: 470 + Math.random() * 40, duration: 700, delay: i * 90, ease: "Back.out" });
+        sc.tweens.add({ targets: f, angle: { from: -8, to: 8 }, yoyo: true, repeat: 6, duration: 469, delay: 700 });
+        sc.tweens.add({ targets: f, y: 700, delay: dur, duration: 600, onComplete: () => f.destroy() });
+      }
+      if (this.trip.reef) sc.tweens.add({ targets: this.trip.reef, alpha: 0.85, yoyo: true, duration: 1500, hold: 2500 });
+    }
+    sc.time.delayedCall(dur + 4000, () => this.wonder());
+  }
+
+  private updateTrip(dt: number) {
+    const tr = this.trip!;
+    tr.t += dt;
+    const cam = this.sc.cameras.main;
+    // the room breathes
+    cam.setRotation(Math.sin(tr.t / 1900) * 0.025);
+    cam.setZoom(1.08 + Math.sin(tr.t / 470) * 0.015);
+    // the reef fades in and out of the warehouse
+    if (tr.reef) {
+      tr.reef.setAlpha(0.25 + 0.35 * (0.5 + 0.5 * Math.sin(tr.t / 2600)));
+      tr.reef.tilePositionX = cam.scrollX * 0.2;
+      tr.reef.tilePositionY = Math.sin(tr.t / 1500) * 6;
+    }
+    if (tr.fx) {
+      tr.fx.reset();
+      tr.fx.hue((tr.t / 25) % 360);
+      tr.fx.saturate(0.35);
+    }
+  }
+
+  destroy() {
+    const cam = this.sc.cameras.main;
+    this.go?.destroy();
+    if (this.trip) {
+      cam.setRotation(0);
+      cam.setZoom(1);
+      (cam as any).postFX?.clear?.();
+    }
+  }
+}
