@@ -22,6 +22,26 @@ const bossDef = (id: string, hp: number, size: number, color: number, speed = 60
   krezz: 40,
 });
 
+/** Rows of a boss animation sheet (bossanim_<id>): [first frame, count], 8 frames per row. */
+const ANIM_ROWS: Record<string, [number, number]> = { idle: [0, 8], move: [8, 8], attack: [16, 8], hurt: [24, 4], special: [32, 8] };
+const ANIM_RATE: Record<string, number> = { idle: 7, move: 10, attack: 14, hurt: 12, special: 11 };
+/** Main story bosses: they also get a signature leap-and-slam (top-down fights only). */
+const SIGNATURE_LEAP = new Set(["krandall", "hoard", "cronster", "drongus1", "drongus2", "krozno", "rik", "jam", "reinhardt"]);
+
+/** Make the animations for a boss sheet once per game. Returns the rows it has. */
+function bossAnims(scene: Phaser.Scene, key: string): Set<string> {
+  const have = new Set<string>();
+  const n = scene.textures.get(key).frameTotal - 1;
+  for (const [row, [start, count]] of Object.entries(ANIM_ROWS)) {
+    if (start + count > n) continue;
+    have.add(row);
+    const ak = `${key}:${row}`;
+    if (scene.anims.exists(ak)) continue;
+    scene.anims.create({ key: ak, frames: scene.anims.generateFrameNumbers(key, { start, end: start + count - 1 }), frameRate: ANIM_RATE[row], repeat: row === "idle" || row === "move" ? -1 : 0 });
+  }
+  return have;
+}
+
 export abstract class Boss extends Enemy {
   bossId: string;
   phase = 0;
@@ -31,6 +51,16 @@ export abstract class Boss extends Enemy {
   patternIdx = 0;
   started = false;
   protected anim = 0;
+  /** Its PixelLab animation sheet (bossanim_<id>), when it has one: idle/move/attack/hurt(/special). */
+  protected animKey: string | null = null;
+  private animRows = new Set<string>();
+  /** A one-shot (attack, hurt, special) owns the sprite until then. */
+  private animUntil = 0;
+  private lastAttackAnim = 0;
+  private lastHurtAnim = 0;
+  private nextLeap = 0;
+  /** Mid signature leap: its own pattern waits. */
+  protected leaping = false;
 
   constructor(world: CombatWorld, id: string, x: number, y: number, hp: number, texture: string, size: number, color: number, w: number, h: number) {
     super(world, id, x, y, G.s.ngPlus > 0 ? 1.4 : 1, bossDef(id, hp, size, color), texture);
@@ -44,6 +74,124 @@ export abstract class Boss extends Enemy {
     body.pushable = false;
     this.setDepth(450);
     this.nextPattern = world.now() + 1500;
+    this.nextLeap = world.now() + 9000 + Math.random() * 5000;
+    this.setupAnim();
+  }
+
+  /** Swap to the animation sheet if there is one, and watch for its attacks (anything it shoots or slams). */
+  private setupAnim() {
+    const ak = `bossanim_${this.texture.key.replace(/^boss_/, "")}`;
+    const sc = this.scene;
+    if (!sc.textures.exists(ak)) return;
+    this.animRows = bossAnims(sc, ak);
+    if (!this.animRows.has("idle")) return;
+    this.animKey = ak;
+    const sx = this.scaleX;
+    const sy = this.scaleY;
+    this.setTexture(ak, 0);
+    this.setScale(sx, sy);
+    this.play(`${ak}:idle`);
+    this.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => (this.animUntil = 0));
+    const real = this.world;
+    const hooks = new Set(["shoot", "enemyAoe", "enemyLine"]);
+    this.world = new Proxy(real, {
+      get: (t, p) => {
+        const v = Reflect.get(t, p, t);
+        if (typeof v !== "function") return v;
+        const f = (v as (...a: unknown[]) => unknown).bind(t);
+        if (!hooks.has(p as string)) return f;
+        return (...a: unknown[]) => {
+          this.attackAnim();
+          return f(...a);
+        };
+      },
+    });
+  }
+
+  /** Play a one-shot row (attack, hurt, special). */
+  protected oneShot(row: string): boolean {
+    if (!this.animKey || !this.animRows.has(row) || this.dead) return false;
+    const [, count] = ANIM_ROWS[row];
+    this.play(`${this.animKey}:${row}`);
+    this.animUntil = this.world.now() + (count / ANIM_RATE[row]) * 1000 + 50;
+    return true;
+  }
+
+  /** It just attacked: swing (not on every bullet of a spray). */
+  attackAnim() {
+    const now = this.world.now();
+    if (now < this.animUntil || now - this.lastAttackAnim < 700) return;
+    this.lastAttackAnim = now;
+    this.oneShot("attack");
+  }
+
+  /** Old code that steps through frames by hand: only while it has no animation sheet. */
+  protected legacyFrame(f: number) {
+    if (!this.animKey) this.setFrame(f);
+  }
+
+  /** Idle or on the move, unless a one-shot is playing; recoil when it's hit. */
+  private driveAnim(now: number) {
+    if (!this.animKey || this.dead) return;
+    if (now < this.flashUntil && now >= this.animUntil && now - this.lastHurtAnim > 1600) {
+      this.lastHurtAnim = now;
+      if (this.oneShot("hurt")) return;
+    }
+    if (now < this.animUntil) return;
+    const b = this.body as Phaser.Physics.Arcade.Body | null;
+    const moving = !!b && Math.hypot(b.velocity.x, b.velocity.y) > 25 && this.animRows.has("move");
+    this.play(`${this.animKey}:${moving ? "move" : "idle"}`, true);
+  }
+
+  /**
+   * Main bosses' signature move (top-down fights): the special animation, then a leap that lands where you're
+   * standing (marked on the floor first, so you can roll out), with a shockwave.
+   */
+  private signatureLeap(now: number): boolean {
+    if (this.leaping) return true;
+    if (!SIGNATURE_LEAP.has(this.bossId) || this.world.side || now < this.nextLeap || this.shielded) return false;
+    this.nextLeap = now + 14000 + Math.random() * 7000;
+    const p = this.world.player;
+    const sc = this.scene;
+    const b = this.body as Phaser.Physics.Arcade.Body;
+    const wb = sc.physics.world.bounds;
+    const tx = Phaser.Math.Clamp(p.x, wb.x + 60, wb.right - 60);
+    const ty = Phaser.Math.Clamp(p.y, wb.y + 80, wb.bottom - 40);
+    if (Math.hypot(tx - this.x, ty - this.y) < 90) return false;
+    this.leaping = true;
+    this.halt();
+    const windup = this.oneShot("special") ? 650 : 350;
+    this.taunt();
+    const air = 650;
+    const dmg = Math.round((this.def.damage ?? 18) * 1.2);
+    this.world.enemyAoe(tx, ty, 78, dmg, windup + air, 0xff4444);
+    sc.time.delayedCall(windup, () => {
+      if (this.dead || !this.active) return void (this.leaping = false);
+      b.enable = false;
+      const shadow = sc.add.ellipse(this.x, this.y + this.displayHeight * 0.4, this.displayWidth * 0.6, 16, 0x000000, 0.35).setDepth(this.depth - 1);
+      sc.tweens.add({ targets: shadow, x: tx, y: ty + this.displayHeight * 0.4, duration: air, ease: "Sine.inOut", onComplete: () => shadow.destroy() });
+      const x0 = this.x;
+      const y0 = this.y;
+      const hop = { t: 0 };
+      sc.tweens.add({
+        targets: hop,
+        t: 1,
+        duration: air,
+        ease: "Sine.inOut",
+        onUpdate: () => this.setPosition(x0 + (tx - x0) * hop.t, y0 + (ty - y0) * hop.t - Math.sin(hop.t * Math.PI) * 90),
+        onComplete: () => {
+          if (!this.active) return;
+          this.setPosition(tx, ty);
+          b.enable = true;
+          b.reset(tx, ty);
+          this.world.shake(350, 0.02);
+          synth.play("smash");
+          this.leaping = false;
+        },
+      });
+      synth.play("swing");
+    });
+    return true;
   }
 
   get radius() {
@@ -58,7 +206,8 @@ export abstract class Boss extends Enemy {
   tick(dt: number, now: number) {
     if (this.dead || !this.started) return;
     this.anim += dt;
-    if (this.anim > 300) {
+    if (this.animKey) this.driveAnim(now);
+    else if (this.anim > 300) {
       this.anim = 0;
       this.setFrame(String(this.frame.name) === "0" ? 1 : 0);
     }
@@ -68,9 +217,10 @@ export abstract class Boss extends Enemy {
     const frac = this.hp / this.maxHp;
     while (this.phase < this.thresholds.length && frac < this.thresholds[this.phase]) {
       this.phase++;
+      this.oneShot("special");
       this.onPhase(this.phase, now);
     }
-    this.pattern(dt, now);
+    if (!this.signatureLeap(now)) this.pattern(dt, now);
     G.emit("boss", { name: BOSS_TEXT[this.bossId]?.name ?? this.bossId, hp: this.hp, max: this.maxHp, shielded: this.shielded, phase: this.phase });
   }
 
@@ -179,7 +329,7 @@ export class KrandallBoss extends Boss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
-    this.setFrame(Math.floor(now / 170) % 4);
+    this.legacyFrame(Math.floor(now / 170) % 4);
     if (now < this.slurpUntil) {
       this.halt();
       return;
@@ -762,7 +912,7 @@ export class Krozno extends Boss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     this.moveToward(p.x + Math.cos(now / 900) * 160, p.y - 140, 80 * this.world.enemyTimeScale);
-    this.setFrame(Math.floor(now / 200) % 3);
+    this.legacyFrame(Math.floor(now / 200) % 3);
     if (now > this.nextTurb) {
       this.nextTurb = now + (this.phase ? 5000 : 7000);
       this.world.toast("TURBULENCE", "Please return to your seats.");
@@ -800,7 +950,7 @@ export class BrandBoss extends Boss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
-    this.setFrame(Math.floor(now / 160) % 3);
+    this.legacyFrame(Math.floor(now / 160) % 3);
     if (now < this.lungeUntil) {
       this.moveToward(this.x + Math.cos(this.lungeAngle) * 100, this.y + Math.sin(this.lungeAngle) * 100, 520 * ts);
       if (Phaser.Math.Distance.Between(this.x, this.y, p.x, p.y) < 50 && now > p.grappledUntil && !p.invulnerable(now)) {
@@ -892,7 +1042,7 @@ export class CronsterBoss extends Boss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
-    this.setFrame(Math.floor(now / 180) % 3);
+    this.legacyFrame(Math.floor(now / 180) % 3);
     // first grab comes a few seconds into the fight
     if (!this.nextGrab) this.nextGrab = now + 9000;
     // going for one of his cuddle collection
@@ -995,7 +1145,7 @@ export class TrollBoss extends Boss {
   }
   pattern(dt: number, now: number) {
     const p = this.world.player;
-    this.setFrame(Math.floor(now / 250) % 3);
+    this.legacyFrame(Math.floor(now / 250) % 3);
     if (!this.staggered && this.hp <= this.maxHp * 0.12 + 1) {
       this.staggered = true;
       this.world.toast("STAGGERED", "Alistair is dazed. Get close and HEADBUTT him (F / right click)!");
@@ -1035,7 +1185,7 @@ export class FlatmateBoss extends Boss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const b = this.world.bounds;
-    this.setFrame(Math.floor(now / 140) % 3);
+    this.legacyFrame(Math.floor(now / 140) % 3);
     // He runs away. Always. It's what he does.
     const away = Math.atan2(this.y - p.y, this.x - p.x);
     let tx = this.x + Math.cos(away) * 200;
@@ -1076,7 +1226,7 @@ export class RivalBoss extends Boss {
   }
   pattern(dt: number, now: number) {
     const p = this.world.player;
-    this.setFrame(Math.floor(now / 200) % 3);
+    this.legacyFrame(Math.floor(now / 200) % 3);
     if (now < this.flexUntil) {
       this.halt();
       this.setTint(0xffaa66);
@@ -1184,7 +1334,7 @@ export class JamQueenBoss extends Boss {
     const p = this.world.player;
     const ts = this.world.enemyTimeScale;
     const body = this.body as Phaser.Physics.Arcade.Body;
-    this.setFrame(Math.floor(now / 240) % 3);
+    this.legacyFrame(Math.floor(now / 240) % 3);
     if (now < this.rollUntil) {
       this.run(this.rollDir * 560 * ts);
       this.angle += this.rollDir * 22;
@@ -1334,7 +1484,7 @@ export class FlirtCrobleyBoss extends CrobleyBoss {
   }
   pattern(dt: number, now: number) {
     const p = this.world.player;
-    this.setFrame(Math.floor(now / 230) % 3);
+    this.legacyFrame(Math.floor(now / 230) % 3);
     if (now < this.dashUntil) {
       (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.dashDir * 520);
       return;
@@ -1383,7 +1533,7 @@ export class ChineseCrobleyBoss extends CrobleyBoss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const gy = this.world.groundY ?? this.world.bounds.bottom;
-    this.setFrame(Math.floor(now / 260) % 3);
+    this.legacyFrame(Math.floor(now / 260) % 3);
     this.walk(this.phase ? 80 : 60, 220);
     if (now < this.nextPattern) return;
     const pick = this.patternIdx++ % 4;
@@ -1430,7 +1580,7 @@ export class FruityCrobleyBoss extends CrobleyBoss {
   }
   pattern(dt: number, now: number) {
     const p = this.world.player;
-    this.setFrame(Math.floor(now / 200) % 3);
+    this.legacyFrame(Math.floor(now / 200) % 3);
     if (now < this.posingUntil) {
       (this.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
       this.setTint(0xfde68a);
@@ -1490,7 +1640,7 @@ export class TankCrobleyBoss extends CrobleyBoss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const gy = this.world.groundY ?? this.world.bounds.bottom;
-    this.setFrame(Math.floor(now / 150) % 3);
+    this.legacyFrame(Math.floor(now / 150) % 3);
     if (now < this.rollUntil) {
       (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.rollDir * 600);
       return;
@@ -1537,7 +1687,7 @@ export class ReinhardtBoss extends CrobleyBoss {
   pattern(dt: number, now: number) {
     const p = this.world.player;
     const gy = this.world.groundY ?? this.world.bounds.bottom;
-    this.setFrame(Math.floor(now / 220) % 3);
+    this.legacyFrame(Math.floor(now / 220) % 3);
     this.walk(this.phase === 2 ? 120 : this.phase ? 95 : 75, 240);
     if (this.phase === 2) this.setTint(0xffaaaa);
     if (now < this.nextPattern) return;

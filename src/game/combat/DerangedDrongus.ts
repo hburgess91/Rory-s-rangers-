@@ -103,7 +103,7 @@ export class DerangedDrongusBoss extends Boss {
     this.shakeT += dt;
     if (this.art) {
       const n = this.texture.frameTotal - 1;
-      if (n > 2) this.setFrame(Math.floor(now / 120) % n);
+      if (n > 2) this.legacyFrame(Math.floor(now / 120) % n);
     }
     const jx = Math.sin(this.shakeT / 23) * 1.5;
     const g = this.gun;

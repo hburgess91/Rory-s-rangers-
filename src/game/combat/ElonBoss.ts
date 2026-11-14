@@ -55,7 +55,7 @@ export class ElonBoss extends Boss {
     super.tick(dt, now);
     if (!this.started) return;
     const n = this.texture.frameTotal - 1;
-    if (n > 2) this.setFrame(Math.floor(now / 110) % n);
+    if (n > 2) this.legacyFrame(Math.floor(now / 110) % n);
   }
 
   pattern(_dt: number, now: number) {

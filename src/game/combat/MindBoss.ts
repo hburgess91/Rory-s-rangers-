@@ -61,7 +61,7 @@ export class PuddingDemonBoss extends Boss {
     if (this.dead || !this.started) return;
     // the animated PixelLab sheet plays all its frames
     const n = this.texture.frameTotal - 1;
-    if (n > 2) this.setFrame(Math.floor(now / 110) % n);
+    if (n > 2) this.legacyFrame(Math.floor(now / 110) % n);
   }
 
   pattern(_dt: number, now: number) {
