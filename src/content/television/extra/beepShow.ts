@@ -8,9 +8,6 @@ export const BEEP_SHOW: TVEpisode = {
   show: "Beep Show",
   title: "Beep Show: Oil Be Seeing You",
   episodeNumber: 1,
-  // shot like the real thing: through the characters' eyes (TVPov.ts)
-  style: "pov",
-  sets: { "SANA'A": "sanaa", HOTEL: "sanaa", INTERROGATION: "interrogation", "TRANSPORT PLANE": "plane_hold" },
   beats: parseScreenplay(`
 # BEEP SHOW
 # "OIL BE SEEING YOU"
