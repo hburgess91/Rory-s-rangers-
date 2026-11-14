@@ -2761,7 +2761,8 @@ You are required by law to sign the Sex Offenders Register.`, {
           delete s.flags.mq_pick;
         } else if (st === "ready") {
           const coins = completeMinistry(s, mq);
-          await this.talk([say(n.id, `${mq.title}: done. The ministry is grateful. Mildly. Here's ${coins} Krezzcoin.`)]);
+          await this.talk([say(n.id, `${mq.title}: done. The ministry is grateful. Mildly. Here's your Krezzcoin.`)]);
+          G.emit("toast", { title: "MINISTRY QUEST", text: `${mq.title}: +${coins} Krezzcoin` });
           synth.play("ding");
         } else if (st === "active") {
           G.emit("toast", { title: "MINISTRY QUEST", text: `${mq.title}: ${ministryProgress(s, mq)}/${mq.target}` });

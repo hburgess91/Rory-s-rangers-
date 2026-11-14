@@ -181,6 +181,16 @@ export function chunkSpeech(text: string, max = 160): string[] {
   return out.length ? out : [text];
 }
 
+/** SanMik is Mikey in a wig: same man, same voice, so either one's recording of a line will do for the other. */
+const SAME_VOICE: Record<string, string> = { SANMIK: "MIKEY", MIKEY: "SANMIK" };
+
+/** The recording of a line said by `speaker` (index entry), if there is one. */
+export function recordingFor(speaker: string, text: string): RecEntry | undefined {
+  const up = speaker.toUpperCase();
+  const alt = SAME_VOICE[up];
+  return recIndex?.[voiceKey(up, text)] ?? (alt ? recIndex?.[voiceKey(alt, text)] : undefined);
+}
+
 /** The utterances being spoken right now (kept so the browser doesn't drop them). */
 let live: SpeechSynthesisUtterance[] = [];
 
@@ -211,7 +221,7 @@ export const voice = {
   prefetch(lines: { s: string; t: string }[]) {
     void loadRecIndex().then(() => {
       for (const l of lines) {
-        const e = recIndex?.[voiceKey(l.s, l.t)];
+        const e = recordingFor(l.s, l.t);
         if (e) void recBundle(e[0]);
       }
     });
@@ -221,10 +231,9 @@ export const voice = {
     if (!this.enabled()) return;
     this.stop();
     const my = recToken;
-    const key = voiceKey(speaker, text);
     const go = () => {
       if (my !== recToken) return;
-      const e = recIndex?.[key];
+      const e = recordingFor(speaker, text);
       const ctx = synth.ctx;
       if (!e || !ctx) return this.tts(speaker, text);
       recPending = true;

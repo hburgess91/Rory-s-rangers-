@@ -171,7 +171,8 @@ export class BeepBeepScene extends Phaser.Scene {
     synth.stopMusic();
     const lines = win
       ? [
-          say("SANMIK", `YEEEEE! ${this.hits}! That's a Catford record! Better than GTA!`),
+          dir(`${this.hits} pedestrians.`),
+          say("SANMIK", "YEEEEE! That's a Catford record! Better than GTA!"),
           say("SANCHZ", "YEGHHH. There's a bloke still on the bonnet."),
           dir("There is. He waves. He's fine. Everyone in the SanMikverse is somehow fine. They get up, dust themselves off, and leave one-star reviews of SanMik's driving."),
           say("SANMIK", "And here's the bank. Balaclavas on, lads. Like Jason Statham in Crank."),

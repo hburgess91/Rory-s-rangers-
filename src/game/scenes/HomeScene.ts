@@ -267,7 +267,7 @@ export class HomeScene extends Phaser.Scene {
   private dream(): Line[] {
     const r = Math.random();
     const st = currentStep();
-    if (r < 0.34 && st) return [dir("You dream about Krezwonk. He's floating. He's glowing. He's holding a clipboard."), say("KREZWONK", `I've seen it in a vision. Your next move: ${st.text}`), dir("You wake up. It's the most useful dream you've ever had.")];
+    if (r < 0.34 && st) return [dir("You dream about Krezwonk. He's floating. He's glowing. He's holding a clipboard."), say("KREZWONK", "I've seen it in a vision. Your next move…"), dir(`The vision: ${st.text}.`), dir("You wake up. It's the most useful dream you've ever had.")];
     if (r < 0.67 && DRONGUS_STATUSES.length) {
       const d = DRONGUS_STATUSES[Math.floor(Math.random() * DRONGUS_STATUSES.length)];
       return [dir(`You dream Drongus is standing at the end of your bed, reading out an old Facebook status of his. From ${d.y}.`), say("DRONGUS", d.t), dir("He waits for a reaction. You wake up before you can give one.")];

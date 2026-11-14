@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { speakable, voiceKey } from "../src/game/audio/voiceKey";
 import { CHARACTERS } from "../src/data/characters";
 import { goat } from "../src/content/dsl";
+import { extractCode } from "./voice-extract-code";
 
 const PLAYABLE = Object.values(CHARACTERS).filter((c: any) => c.playable).map((c: any) => c.id as string);
 
@@ -45,15 +46,66 @@ function walk(o: unknown, file: string) {
   for (const v of Object.values(r)) walk(v, file);
 }
 for (const [f, m] of Object.entries(mods)) walk(m, f.replace("../src/content/", ""));
+// data tables with dialogue in them (dungeon entry lines and PA announcements, etc.)
+const data = import.meta.glob("../src/data/**/*.ts", { eager: true }) as Record<string, Record<string, unknown>>;
+for (const [f, m] of Object.entries(data)) walk(m, f.replace("../src/", ""));
 
-// Scene code: say("SPEAKER", "text" [, { mood: "..." }]) with literal strings only.
-// speakers picked at run time: Night of Freedom's driver (SanMik, or Gabor when you're Mikey), the SanMikverse radio
-const DYNAMIC: Record<string, string[]> = { "this.dancerName()": ["DESTINY", "CRYSTAL"], "this.driver": ["SANMIK", "GABOR THE GOAT"], "sanRadio()": ["SANMIK", "SANCHZ"] };
-const CALL = /(?<![.\w])(?:say|adapt|ping)\(\s*("[A-Z0-9][A-Z0-9 .,'’!-]*"|this\.dancerName\(\)|this\.driver|sanRadio\(\))\s*,\s*("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*(,\s*\{[^}]*\})?\s*\)/g;
-function unquote(lit: string) {
-  const q = lit[0], body = lit.slice(1, -1);
-  return body.replace(/\\(u\{?[0-9a-fA-F]+\}?|.)/g, (_m, e: string) =>
-    e[0] === "u" ? String.fromCodePoint(parseInt(e.replace(/[u{}]/g, ""), 16)) : e === "n" ? "\n" : e === "t" ? "\t" : e === q ? q : e);
+// Game code (src/game): say/adapt/ping(speaker, text) calls, voice.say(...) and { s, t } literals, with speakers and
+// texts chosen at run time expanded to every value they can take (scripts/voice-extract-code.ts).
+const LADS = PLAYABLE.filter((id) => id !== "MIKEY");
+const ROOT = new URL("..", import.meta.url).pathname;
+const CAST = JSON.parse(readFileSync(join(ROOT, "scripts/voice-cast.json"), "utf8"));
+const HELD = new Set<string>([...CAST.hold, ...Object.entries(CAST.doubles ?? {}).filter(([k, v]) => k !== "_doc" && CAST.hold.includes(v)).map(([k]) => k)]);
+const C = (rel: string) => mods[`../src/content/${rel}`] as any;
+const { BARKS } = C("dialogue/ambient.ts");
+const { MINISTRY_QUESTS } = C("quests.ts");
+const { KRUNCHERS, KRUNCHER_BOAST } = C("kreddle.ts");
+const name = (id: string) => (CHARACTERS as any)[id]?.name ?? id;
+const SQUEEZERS = ["SHEZLEIGH", "BIG SUE", "DESTINY", "CRYSTAL"]; // HubScene setupSqueezers + the Club dancers (Mollor: DungeonScene)
+const code = extractCode(
+  ROOT,
+  {
+    PLAYABLE,
+    LADS,
+    extra: {
+      "squeeze.ts:who.name": [...SQUEEZERS, "MOLLOR"],
+      "Beatup.ts:lead.id": ["KREZMAR", "SCROMBUS", "KREBON", "KREZWONK"], // INSTIGATORS
+      "Beatup.ts:m.id": ["KREZMAR", "SCROMBUS", "KREBON", "KREZWONK"],
+      "Beatup.ts:this.mates[0].id": ["KREZMAR", "SCROMBUS", "KREBON", "KREZWONK"],
+      "Beatup.ts:v.id": ["MIKEY", "CRONGUS", "FLENKY"], // VICTIMS
+      "PubScene.ts:crowdIds[0]": LADS, // a shuffle of the lads who aren't you
+      "PubScene.ts:crowdIds[1]": LADS,
+      "KreddleScene.ts:n.name": KRUNCHERS.map((k: any) => k.name),
+    },
+    pairs: {
+      // the minister gives his own quest; Proctus covers the player's ministry
+      "HubScene.ts:n.id|`Ministry business. ${mq.title}: ${mq.desc}`": MINISTRY_QUESTS.flatMap((q: any) => [q.ministry, "PROCTUS"].map((g) => [g, `Ministry business. ${q.title}: ${q.desc}`])),
+      "HubScene.ts:n.id|`${mq.title}: done. The ministry is grateful. Mildly. Here's your Krezzcoin.`": MINISTRY_QUESTS.flatMap((q: any) => [q.ministry, "PROCTUS"].map((g) => [g, `${q.title}: done. The ministry is grateful. Mildly. Here's your Krezzcoin.`])),
+      // talking to a townsperson with nothing to say: one of his barks
+      "HubScene.ts:n.id|b[Math.floor(Math.random() * b.length)].t": Object.entries(BARKS as Record<string, { t: string }[]>).flatMap(([id, bs]) => bs.map((b) => [id, b.t] as [string, string])),
+      "KreddleScene.ts:n.name|n.jab ?? \"We hate you!\"": KRUNCHERS.map((k: any) => [k.name, k.jab]),
+      "squeeze.ts:who.name|offer": [...SQUEEZERS.map((w) => [w, "Fancy a squeeze, love?"] as [string, string]), ["MOLLOR", "Want a cuddle?"]],
+    },
+    ignore: new Set([
+      "Beatup.ts:this.victim!.id|line", // the whines: content/beatup.ts (each victim's own)
+      "DungeonScene.ts:l.s|l.t", // dungeon talkers: src/data/dungeons.ts
+      "Citadel.ts:who|text", // STAIRS_ECHOES (content/citadel)
+      "RoofArena.ts:b.id|line.t", // FREED (content/finaleRoof)
+      "TVScene.ts:b.character|b.text", // TV episodes (content/television)
+      "narrative.ts:speaker|text",
+      "DialogueBox.ts:String(l.s === \"YOU\" ? s.player : l.s)|l.t",
+      "DialogueBox.ts:queue[i].s|REGISTER_JIBES[Math.floor(Math.random() * REGISTER_JIBES.length)]",
+      "DialogueBox.ts:String(rl.s)|rl.t",
+    ]),
+    quiet: new Set([...SILENT, ...HELD]),
+  },
+  // texts known only at run time but from a small set
+  { "Beatup.ts:v.name": ["Mikey", "Luke", "Jenko"], "VignetteScene.ts:leaker": PLAYABLE.filter((p) => p !== "CRONGUS").map(name) },
+);
+for (const l of code.lines) add(l.s, l.t, l.file, l.mood);
+if (code.unresolved.length) {
+  console.log(`${code.unresolved.length} game-code lines can't be pre-recorded (speaker or text only known at run time):`);
+  for (const u of code.unresolved) console.log(`  ${u.file}:${u.line} ${u.what}: ${u.expr}`);
 }
 function* files(dir: string): Generator<string> {
   for (const f of readdirSync(dir)) {
@@ -62,16 +114,12 @@ function* files(dir: string): Generator<string> {
     else if (p.endsWith(".ts")) yield p;
   }
 }
-const gameDir = new URL("../src/game", import.meta.url).pathname;
-for (const p of files(gameDir)) {
-  const src = readFileSync(p, "utf8");
-  for (const m of src.matchAll(CALL)) {
-    const who = m[1].startsWith('"') ? [m[1].slice(1, -1)] : DYNAMIC[m[1]] ?? [];
-    const text = unquote(m[2]);
-    const mood = m[3]?.match(/mood:\s*["']([^"']+)["']/)?.[1];
-    for (const sp of who.flatMap((w) => (w === "YOU" ? PLAYABLE : [w]))) add(sp, text, "game/" + p.slice(gameDir.length + 1), mood);
-  }
+function unquote(lit: string) {
+  const q = lit[0], body = lit.slice(1, -1);
+  return body.replace(/\\(u\{?[0-9a-fA-F]+\}?|.)/g, (_m, e: string) =>
+    e[0] === "u" ? String.fromCodePoint(parseInt(e.replace(/[u{}]/g, ""), 16)) : e === "n" ? "\n" : e === "t" ? "\t" : e === q ? q : e);
 }
+const gameDir = new URL("../src/game", import.meta.url).pathname;
 // Gabor the Goat in scene code: gabor("literal") is said in goat-speak (content/dsl.ts goat()).
 const GABOR = /(?<![.\w])gabor\(\s*("(?:[^"\\\n]|\\.)*")\s*(,\s*\{[^}]*\})?\s*\)/g;
 for (const p of files(gameDir)) {

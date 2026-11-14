@@ -110,7 +110,7 @@ export class PubScene extends Phaser.Scene {
   // ------------------------------------------------------------- menu
 
   private barred(left: number) {
-    this.box.play([say("BIG DEREK", `You lot are barred. ${Math.ceil(left / 60000)} more minute${left > 60000 ? "s" : ""}. And wash your hands.`)]).then(() => this.showMenu());
+    this.box.play([dir(`Barred from the Wonky Pole: ${Math.ceil(left / 60000)} more minute${left > 60000 ? "s" : ""}.`), say("BIG DEREK", "You lot are barred. Come back later. And wash your hands.")]).then(() => this.showMenu());
   }
 
   private showMenu() {

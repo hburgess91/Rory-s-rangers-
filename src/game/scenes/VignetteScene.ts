@@ -1554,8 +1554,9 @@ export class VignetteScene extends Phaser.Scene {
     this.caption(res.reps >= 12 ? "CAKE: DESTROYED" : res.reps >= 6 ? "SOLID JAW SESSION" : "WARM-UP SET", "#ffd23f", 30);
     await this.wait(900);
     await this.talk([
-      say("POLSON", `${res.reps} reps. ${res.burned.toFixed(1)} calories burned. That's a deficit!! YES YES YES`),
-      say(G.s.player, `You ate ${res.ate.toLocaleString()} calories.`),
+      dir(`${res.reps} reps. ${res.burned.toFixed(1)} calories burned. ${res.ate.toLocaleString()} calories eaten.`),
+      say("POLSON", "That's a deficit!! YES YES YES"),
+      say(G.s.player, "You ate a LOT more than that."),
       say("POLSON", "Of resistance mr bee!! That's all resistance. You don't count the equipment"),
       say("POLSON", "Feel this jaw!! Go on. Rock solid. Strong oral muscles. Thoughts?"),
       dir("You do not feel his jaw."),
@@ -2513,7 +2514,8 @@ export class VignetteScene extends Phaser.Scene {
       ping("DRONGUS", "Krebon's leaving ?? He was barely here"),
       ping("DRONGUS", "Did he react to my song before he went"),
       say("KREBON", "Die fearless. What other option is there."),
-      say("KREBON", `Look after the ${pts} rockstar points. And the underwear. Especially the underwear.`),
+      say("KREBON", "Look after the rockstar points. And the underwear. Especially the underwear."),
+      dir(`Rockstar points in your care: ${pts}.`),
     ]);
     const walk2 = this.time.addEvent({ delay: 90, loop: true, callback: () => animateWalker(benn, 1, 0, true, this.time.now) });
     await this.tween({ targets: benn, x: 640, y: 390, duration: 1400 });

@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { G } from "./G";
 import { synth } from "./audio/Synth";
+import { recordingFor, voice } from "./audio/Voice";
 import { switchTo } from "./Flow";
 import type { PlayableId } from "../data/types";
 import { maxHp } from "./systems/stats";
@@ -17,6 +18,9 @@ export function installDebug(game: Phaser.Game) {
     G,
     synth,
     game,
+    /** the voice player, and the recording (index entry) a line would play: for checking voices in tests */
+    voice,
+    recordingFor,
     active: () => game.scene.getScenes(true).map((s) => s.scene.key),
     newRun: (p: PlayableId = "FLENKY", ngPlus = 0) => G.newRun(p, ngPlus),
     go: (key: string, data?: any) => {
