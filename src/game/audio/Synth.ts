@@ -37,6 +37,7 @@ export const MUSIC_FILES: Record<string, string> = {
   c7_spirit: "audio/c7_spirit.mp3",
   c7_transform: "audio/c7_transform.mp3",
   hub: "audio/hub.mp3",
+  hub_night: "audio/hub_night.mp3",
   klerble: "audio/klerble.mp3",
   home: "audio/home.mp3",
   pub: "audio/pub.mp3",
@@ -1062,7 +1063,16 @@ export class Synth {
     requestAnimationFrame(step);
   }
 
+  /** Set by the town: true while it's night in Krelford (the town theme then plays its night version). */
+  isNight: () => boolean = () => false;
+
+  /** The town theme follows Krelford's clock: if it's playing, swap to the day or night version as needed. */
+  refreshTown() {
+    if (this.elId === "hub" || this.elId === "hub_night") this.music("hub");
+  }
+
   music(id: string, force = false, startFrac = 0) {
+    if (id === "hub" && this.isNight()) id = "hub_night";
     if (MUSIC_FILES[id]) {
       this.trackId = "";
       this.track = null;

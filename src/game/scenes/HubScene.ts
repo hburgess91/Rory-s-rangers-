@@ -329,6 +329,8 @@ export class HubScene extends Phaser.Scene {
     else this.scene.get("UI").events.emit("mode", "hub");
     G.emit("boss", null);
     G.emit("rule", null);
+    // after dark (and not on the finale's blue morning) the town plays its night theme
+    synth.isNight = () => !G.s.flags.finale_dawn && clock().dark >= 0.5;
     synth.music("hub");
     synth.ambience("town");
     this.weather();
@@ -373,6 +375,8 @@ export class HubScene extends Phaser.Scene {
     };
     apply();
     this.time.addEvent({ delay: 250, loop: true, callback: apply });
+    // day ⇄ night music, as dusk deepens and dawn breaks
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => synth.refreshTown() });
     if (!kind) return;
     synth.weatherSound(kind);
     const wet = kind !== "snow";
