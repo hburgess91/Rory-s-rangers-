@@ -11,6 +11,7 @@ import { synth } from "../audio/Synth";
 import { CHARACTERS } from "../../data/characters";
 import { FONT, UI, uiFrame } from "./theme";
 import { kruncherVictim, sanmikActive } from "../systems/sanmik";
+import { sanmikify } from "../systems/sanmikify";
 
 /** SanMik isn't in CHARACTERS (he's Mikey in a wig): his name colour. */
 const SANMIK_COLOR = 0xb0c4ff;
@@ -252,7 +253,7 @@ export class DialogueBox {
   }
 
   /** Messenger-style notification bubble at the top. */
-  private showNotify(line: ResolvedLine) {
+  private showNotify(line: ResolvedLine, text = displayText(line.t)) {
     this.clearOverlay();
     this.drawBox("notify");
     this.nameText.setText("");
@@ -275,10 +276,10 @@ export class DialogueBox {
     if (key) items.push(this.scene.add.image(x + 38, 172, key).setDisplaySize(36, 36));
     items.push(this.scene.add.text(x + 64, 162, (face !== line.s ? "SANMIK" : line.speakerName) || "Messenger", { fontFamily: FONT, fontSize: "15px", color: "#050505", fontStyle: "bold" }));
     items.push(this.scene.add.text(x + bubbleW - 20, 164, "now", { fontFamily: FONT, fontSize: "12px", color: "#65676b" }).setOrigin(1, 0));
-    const body = this.scene.add.text(x + 32, 208, displayText(line.t), { fontFamily: FONT, fontSize: "17px", color: "#ffffff", wordWrap: { width: bubbleW - 64, useAdvancedWrap: true } });
+    const body = this.scene.add.text(x + 32, 208, text, { fontFamily: FONT, fontSize: "17px", color: "#ffffff", wordWrap: { width: bubbleW - 64, useAdvancedWrap: true } });
     items.push(body);
     this.overlay.add(items);
-    this.fullText = line.t;
+    this.fullText = text;
     this.typing = false;
     synth.play("notify");
   }
@@ -437,13 +438,57 @@ export class DialogueBox {
     if (!this.destroyed) this.root.setVisible(false);
   }
 
+  /** Bumped on every line, so a late YEE from an old line stays quiet. */
+  private lineNo = 0;
+
+  /** What's shown for a line: Mikey's lines get SanMik-ified while he's SanMik. */
+  private shownText(rl: ResolvedLine): { text: string; leadYees: number; tailYees: number } {
+    const text = displayText(rl.t);
+    if (rl.dir || rl.s === "NARRATOR" || faceOf(rl.s) !== "SANMIK" || rl.s === "SANMIK") return { text, leadYees: 0, tailYees: 0 };
+    return sanmikify(text);
+  }
+
+  /** Read the line out; SanMik's YEEs go before it (the voice waits) and/or after it (once the voice stops). */
+  private speakLine(rl: ResolvedLine, lead: number, tail: number) {
+    const my = ++this.lineNo;
+    if (rl.dir || rl.s === "NARRATOR" || !rl.t) {
+      voice.stop();
+      return;
+    }
+    const yees = (n: number, then?: () => void) => {
+      for (let i = 0; i < n; i++) this.scene.time.delayedCall(i * 330, () => my === this.lineNo && synth.shout("yee", 0.85, n > 1 ? 1 + i * 0.07 : undefined));
+      if (then) this.scene.time.delayedCall(n * 330 + 450, () => my === this.lineNo && then());
+    };
+    const sayIt = () => {
+      voice.say(String(rl.s), rl.t);
+      if (!tail) return;
+      // wait for the voice to finish (with a little grace for it to start), then YEE
+      let waited = 0;
+      const ev = this.scene.time.addEvent({
+        delay: 150,
+        loop: true,
+        callback: () => {
+          waited += 150;
+          if (my !== this.lineNo) return ev.remove();
+          if (waited < 600 || voice.busy()) return;
+          ev.remove();
+          yees(tail);
+        },
+      });
+    };
+    if (lead) {
+      voice.stop();
+      yees(lead, sayIt);
+    } else sayIt();
+  }
+
   private renderLine(rl: ResolvedLine, opts: PlayOptions) {
     opts.onLine?.(rl);
-    if (!rl.dir && rl.s !== "NARRATOR" && rl.t) voice.say(String(rl.s), rl.t);
-    else voice.stop();
+    const shown = this.shownText(rl);
+    this.speakLine(rl, shown.leadYees, shown.tailYees);
     if (rl.notify) {
       opts.onSpeaker?.(rl.s, rl);
-      this.showNotify(rl);
+      this.showNotify(rl, shown.text);
       return;
     }
     if (rl.dir || rl.s === "NARRATOR") {
@@ -452,7 +497,7 @@ export class DialogueBox {
       this.nameText.setText("");
       this.titleText.setText("");
       this.bodyText.setPosition(40, 384).setWordWrapWidth(W - 80).setFontStyle("italic").setColor("#d6d8e4");
-      this.typeOut(displayText(rl.t));
+      this.typeOut(shown.text);
       return;
     }
     opts.onSpeaker?.(rl.s, rl);
@@ -471,6 +516,6 @@ export class DialogueBox {
       .setWordWrapWidth(W - tx - 40)
       .setFontStyle("normal")
       .setColor("#ffffff");
-    this.typeOut(displayText(rl.t));
+    this.typeOut(shown.text);
   }
 }
