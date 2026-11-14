@@ -30,6 +30,10 @@ const DANCERS = [
   { id: "CRYSTAL", tex: "spr_TV_DANCER2" },
 ];
 
+/** Alistair Swamp, most nights: hovering by the stage, messaging the dancer to her face. */
+const ALLY_LINES = ["hi", "hey", "u there?", "hello?", "hiya", "hey x", "hi x", "u up?", "hey hey", "??", "hello???", "wyd", "hi again", "hey. it's me", "did u get my last one", "u around?", "hey stranger", "ok", "hi", "hey", "u there?", "helloooo", "hi hi", "hey :)", "?"];
+const ALLY_REPLIES = ["No.", "Security.", "…", "Not again.", "I can see you, Alistair.", "I'm working.", "Please stop.", "Seen."];
+
 const LEER = [
   "I'm horny!",
   "I'm turned on.",
@@ -87,6 +91,9 @@ export class ClubScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.Text;
   private busy = false;
   private nextLeer = 0;
+  private ally: Phaser.GameObjects.Sprite | null = null;
+  private allyLabel: Phaser.GameObjects.Text | null = null;
+  private allyNext = 0;
   private nextSwap = 0;
   private onBreak = false;
   private spots: Phaser.GameObjects.Arc[] = [];
@@ -152,6 +159,15 @@ export class ClubScene extends Phaser.Scene {
       this.patrons.push({ id, spr });
       this.add.text(x, y + 30, CHARACTERS[id]?.name ?? id, { fontFamily: FONT, fontSize: "9px", color: "#ffd1e8", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setDepth(y + 1);
     });
+    // Alistair Swamp: in most nights, pestering whoever's dancing
+    this.ally = null;
+    this.allyLabel = null;
+    if (this.textures.exists("spr_ALISTAIR") && Math.random() < 0.75) {
+      this.ally = this.add.sprite(300, 400, "spr_ALISTAIR", 0).setScale(2).setDepth(400);
+      this.ally.setData("facing", "north");
+      this.allyLabel = this.add.text(300, 430, "ALISTAIR SWAMP", { fontFamily: FONT, fontSize: "9px", color: "#ffd1e8", stroke: "#000", strokeThickness: 2 }).setOrigin(0.5).setDepth(401);
+      this.allyNext = this.time.now + 2500;
+    }
     // stations
     this.add.text(870, 330, "🍸 BAR", { fontFamily: FONT, fontSize: "12px", color: "#ffffff", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
     this.add.text(70, 400, "🏆 WONK-OFF\nTABLE", { fontFamily: FONT, fontSize: "11px", color: "#ffd23f", align: "center", backgroundColor: "#00000099", padding: { x: 4, y: 2 } }).setOrigin(0.5).setDepth(300);
@@ -251,6 +267,30 @@ export class ClubScene extends Phaser.Scene {
     this.time.delayedCall(ms, () => t.destroy());
   }
 
+  /** Alistair shuffles along the front of the stage after the dancer (to the bar on her break), saying hi. Again. */
+  private updateAlly(time: number) {
+    const a = this.ally;
+    if (!a?.active || this.ko.has(a)) return;
+    const tx = this.onBreak || this.dancerDown ? 840 : Phaser.Math.Clamp(this.dancer.x + 40, 180, 780);
+    const ty = this.onBreak || this.dancerDown ? 370 : 400;
+    const dx = tx - a.x;
+    const dy = ty - a.y;
+    const d = Math.hypot(dx, dy);
+    const moving = d > 12 && !this.busy;
+    if (moving) {
+      a.x += (dx / d) * 1.1;
+      a.y += (dy / d) * 1.1;
+    }
+    animateWalker(a, moving ? dx / d : 0, moving ? dy / d : -1, moving, time);
+    a.setDepth(a.y);
+    this.allyLabel?.setPosition(a.x, a.y + 30).setDepth(a.y + 1);
+    if (time > this.allyNext && !this.busy) {
+      this.allyNext = time + 2600 + Math.random() * 2800;
+      this.bubble(a, ALLY_LINES[Math.floor(Math.random() * ALLY_LINES.length)], 1500, "#dcf8c6");
+      if (!this.onBreak && !this.dancerDown && Math.random() < 0.18) this.time.delayedCall(1000, () => this.bubble(this.dancer, ALLY_REPLIES[Math.floor(Math.random() * ALLY_REPLIES.length)], 1500, "#ffe4f1"));
+    }
+  }
+
   private leer(n = 1) {
     for (let i = 0; i < n && this.patrons.length; i++) {
       const up = this.patrons.filter((q) => !this.ko.has(q.spr));
@@ -308,6 +348,7 @@ export class ClubScene extends Phaser.Scene {
       this.nextLeer = time + 1600 + Math.random() * 1800;
       this.leer(1);
     }
+    this.updateAlly(time);
     if (this.busy) {
       this.prompt.setVisible(false);
       return;
