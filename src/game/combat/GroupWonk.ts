@@ -4,6 +4,7 @@ import { synth } from "../audio/Synth";
 import { TOUCH } from "../ui/TouchControls";
 import { playPerf } from "../gfx/HD";
 import { addCensorBar } from "../gfx/Censor";
+import { playerKey, sanmikYee } from "../gfx/sanmikForm";
 import { WONK_MOANS, WONK_SHOUTS } from "../../content/finaleRoof";
 
 /**
@@ -86,7 +87,7 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
       const x = CX + Math.cos(a) * RX;
       const y = CY + 10 + Math.sin(a) * RY;
       const light = sc.add.ellipse(x, y + (y < CY ? 40 : 46), 84, 26, 0xff4fa3, 0.12);
-      const key = sc.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
+      const key = i === 0 ? playerKey(sc) : sc.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
       const spr = sc.add.sprite(x, y, key, 0).setScale(y < CY ? 4.2 : 4.9);
       const h = spr.displayHeight;
       // the bar sits on his crotch (per lad), and his hand is under it once he joins in
@@ -284,6 +285,7 @@ export function runGroupWonk(sc: Phaser.Scene, opts: { lads: PlayableId[]; playe
         .setScale(0.3);
       ui.add(big);
       sc.tweens.add({ targets: big, scale: 1, duration: 300, ease: "Back.out" });
+      if (ok) sanmikYee(sc, lads[0].x, lads[0].y - lads[0].spr.displayHeight * 0.5 - 20, { times: 3, screen: true, size: 22, depth: 3600 });
       if (ok) {
         for (let i = 0; i < 6; i++) synth.voice(i % 2 ? "oh" : "grunt", 0.7, 0.7 + i * 0.12, i * 0.12);
         sc.cameras.main.flash(400, 255, 255, 255);

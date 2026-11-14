@@ -8,6 +8,7 @@ import { synth } from "../../audio/Synth";
 import { FONT, title } from "../../ui/theme";
 import { animateWalker, playPerf } from "../../gfx/HD";
 import { censorRect } from "../../gfx/Censor";
+import { playerKey, sanmikYee } from "../../gfx/sanmikForm";
 import { hasVfx, vfx } from "../../gfx/Vfx";
 import * as FR from "../../../content/finaleRoof";
 import { FINALE_BOTTLE_AT, FINALE_LOGS_AT, roofPreload, roofReady } from "./RoofArena";
@@ -151,7 +152,7 @@ export class RoofCutscene extends Phaser.Scene {
 
   /** The other lads, side on (east-facing idle). */
   private lad(id: string, x: number, y: number, scale = 3, facing: "east" | "west" | "south" = "east") {
-    const key = this.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
+    const key = id === G.s.player ? playerKey(this) : this.textures.exists(`spr_${id}`) ? `spr_${id}` : "spr_FLENKY";
     const s = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1).setScale(scale);
     s.setData("facing", facing);
     animateWalker(s, 0, 0, false, 0);
@@ -423,6 +424,8 @@ export class RoofCutscene extends Phaser.Scene {
     synth.music("c7_spirit", true);
     this.caption(FR.KZ_FINISH[0], "#ffffff", 46, 1.4);
     for (let i = 0; i < 8; i++) synth.voice(i % 2 ? "oh" : "grunt", 0.5 + i * 0.05, 0.6 + i * 0.1, i * 0.12);
+    // SanMik krezzes with a YEE YEE YEE
+    sanmikYee(this, lads[0].x, lads[0].y - lads[0].displayHeight - 10, { times: 3, size: 22, depth: 1000 });
     const charge = this.add.ellipse(bar.x, barY, bar.width, 40, 0xffffff, 0.2).setDepth(62).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: charge, scaleY: 3, alpha: 0.9, duration: 1400, ease: "Quad.in" });
     this.cameras.main.shake(1400, 0.008);

@@ -494,7 +494,7 @@ export class Synth {
 
   /** Play part of a loaded recording with a fade-out. */
   /** One YEE (or YEGH), picked at random. */
-  shout(id: "yee" | "yegh", vol = 0.9) {
+  shout(id: "yee" | "yegh", vol = 0.9, rate?: number) {
     const buf = this.files[id];
     const segs = SHOUTS[id];
     if (!this.ctx || !buf || !segs) return false;
@@ -503,11 +503,14 @@ export class Synth {
     const src = this.ctx.createBufferSource();
     const g = this.ctx.createGain();
     src.buffer = buf;
-    src.playbackRate.value = 0.95 + Math.random() * 0.1;
+    const r = rate ?? 0.95 + Math.random() * 0.1;
+    src.playbackRate.value = r;
+    // the segment plays faster (or slower) at another rate, so the fade lands where it ends
+    const dur = len / r;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
-    g.gain.setValueAtTime(vol, t + Math.max(0.03, len - 0.08));
-    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    g.gain.setValueAtTime(vol, t + Math.max(0.03, dur - 0.08));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(g);
     g.connect(this.sfxGain);
     src.start(t, off, len + 0.05);

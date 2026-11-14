@@ -6,6 +6,7 @@ import { G } from "../G";
 import { addWrist, wristLook } from "../gfx/Wrist";
 import { perfCycle } from "../gfx/HD";
 import { addCensorBar, censorRect } from "../gfx/Censor";
+import { playerKey, sanmikYee } from "../gfx/sanmikForm";
 import { CHARACTERS } from "../../data/characters";
 import type { Player } from "./Player";
 import { kd } from "../systems/kreddle";
@@ -80,7 +81,7 @@ export function startWonk(p: Player, now: number) {
   }
   // a SUPER_ sheet has no wonk row: wonk in his normal sheet instead (the real arm beats a stand-in wrist)
   const own = p.spr.texture.key;
-  const base = `spr_${p.id}`;
+  const base = playerKey(sc);
   const heroKey = sc.textures.exists(base) && !(sc.textures.get(own).customData as { char?: { wonk?: unknown } })?.char?.wonk ? base : own;
   const hero = sc.add.sprite(320, 300, heroKey, 0).setScale(5.5);
   ui.add(hero);
@@ -213,6 +214,8 @@ export function startWonk(p: Player, now: number) {
     ui.add(big);
     sc.tweens.add({ targets: big, scale: 1, duration: 260, ease: "Back.out" });
     if (result !== "perfect") synth.play("trombone");
+    // SanMik krezzes with a YEE YEE YEE
+    if (result !== "under") sanmikYee(sc, 320, 190, { times: 3, screen: true, size: 26, depth: 3600 });
     if (result === "perfect") {
       // the big finish
       synth.voice("oh", 0.8, pitch * 1.3);

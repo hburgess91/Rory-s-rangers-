@@ -1,4 +1,4 @@
-import { playerKey } from "../gfx/sanmikForm";
+import { playerKey, sanmikYee } from "../gfx/sanmikForm";
 import Phaser from "phaser";
 import { cumehameha, goSuper, megaMelee, superTick } from "./Super";
 import { charMeta, facingFrom, feetBody, steer } from "../gfx/HD";
@@ -227,6 +227,8 @@ export class Player {
         this.jumps = first ? 1 : 0;
         this.coyoteUntil = 0;
         synth.play(first ? "dodge" : "select");
+        // SanMik says YEE when he jumps (once a jump: the cooldown keeps a double-jump to one)
+        sanmikYee(this.world.sc, this.spr.x, this.spr.getTopCenter().y - 14, { cooldown: 650, size: 15, depth: 2000, follow: this.spr });
         if (!first) this.world.burst(this.x, this.y + 14, 0xffffff, 6);
       }
       if (mv.y > 0.6) this.dropUntil = now + 220;

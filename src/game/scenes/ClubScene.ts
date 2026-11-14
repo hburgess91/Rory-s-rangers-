@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { bindSanmikToggle, playerKey, swapSheet } from "../gfx/sanmikForm";
+import { bindSanmikToggle, playerKey, sanmikYee, swapSheet } from "../gfx/sanmikForm";
 import { SANMIK_FLAG } from "../systems/sanmik";
 import { vfx } from "../gfx/Vfx";
 import { squeeze } from "../systems/squeeze";
@@ -705,7 +705,7 @@ export class ClubScene extends Phaser.Scene {
       const gap = Math.min(170, 840 / n);
       const x0 = 480 - ((n - 1) * gap) / 2;
       const all: Rival[] = ids.map((id, i) => {
-        const spr = this.add.sprite(x0 + i * gap, 250, `spr_${id}`, 0).setScale(3.2);
+        const spr = this.add.sprite(x0 + i * gap, 250, id === s.player ? playerKey(this) : `spr_${id}`, 0).setScale(3.2);
         spr.setData("x0", spr.x);
         const pump = perfCycle(spr, "wonk");
         spr.setData("pump", pump);
@@ -767,7 +767,11 @@ export class ClubScene extends Phaser.Scene {
       const finishOne = (r: Rival, res: "perfect" | "over" | "under") => {
         r.result = res;
         r.finishedAt = t;
-        if (r.spr.getData("pump")) r.spr.setFrame(0);
+        // done: the hand stays where it was (under the bar) rather than snapping back to the idle frame
+        const pumpDone = r.spr.getData("pump") as number[] | null;
+        if (pumpDone) r.spr.setFrame(pumpDone[0]);
+        // SanMik krezzes with a YEE YEE YEE
+        if (r === you && res !== "under") sanmikYee(this, r.spr.x, 150, { times: 3, size: 20, depth: 3100 });
         const txt = res === "perfect" ? "KREZZED!" : res === "over" ? "TOO EARLY" : "NOTHING";
         r.label = this.add.text(r.spr.x, 190, txt, { fontFamily: "Impact, sans-serif", fontSize: "20px", color: res === "perfect" ? "#ffffff" : "#f9a8d4", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5).setScale(0.3);
         ui.add(r.label);

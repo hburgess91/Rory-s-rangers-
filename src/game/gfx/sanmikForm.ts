@@ -13,6 +13,58 @@ export function playerKey(scene: Phaser.Scene): string {
   return scene.textures.exists(k) ? k : `spr_${G.s.player}`;
 }
 
+let lastYee = 0;
+
+/**
+ * SanMik's YEE, with a floating "YEE!" over him (only while the player is SanMik; returns false otherwise).
+ * `times` YEEs `gap` ms apart, each a little higher (his krezz: YEE YEE YEE). `cooldown` stops it spamming
+ * (one per jump, not one per double-jump). `screen` puts the text in screen space (cutscene overlays).
+ */
+export function sanmikYee(scene: Phaser.Scene, x: number, y: number, o: { times?: number; gap?: number; cooldown?: number; screen?: boolean; size?: number; depth?: number; follow?: { x: number; y: number } } = {}): boolean {
+  if (!sanmikActive(G.s)) return false;
+  const now = scene.time.now;
+  if (o.cooldown && now - lastYee < o.cooldown) return false;
+  lastYee = now;
+  const times = o.times ?? 1;
+  const gap = o.gap ?? 330;
+  for (let i = 0; i < times; i++) {
+    const go = () => {
+      if (!scene.sys?.isActive()) return;
+      synth.shout("yee", 0.9, times > 1 ? 1 + i * 0.07 : undefined);
+      const size = (o.size ?? 18) + (times > 1 ? i * 5 : 0);
+      const t = scene.add
+        .text(x + (times > 1 ? (i - (times - 1) / 2) * 72 : 0), y - i * 10, "YEE!", { fontFamily: FONT, fontSize: `${size}px`, color: "#b0c4ff", fontStyle: "bold", stroke: "#000", strokeThickness: 5 })
+        .setOrigin(0.5)
+        .setDepth(o.depth ?? 9000)
+        .setScale(0.4);
+      if (o.screen) t.setScrollFactor(0);
+      scene.tweens.add({ targets: t, scale: 1, duration: 140, ease: "Back.out" });
+      // `follow`: ride along with him (a jump carries him up past where it started)
+      const rise = { dy: 0 };
+      const f = o.follow;
+      const dx = f ? x - f.x : 0;
+      const dy0 = f ? y - f.y : 0;
+      const track = () => f && t.active && t.setPosition(f.x + dx, f.y + dy0 + rise.dy);
+      if (f) scene.events.on("update", track);
+      scene.tweens.add({ targets: [rise], dy: -34, delay: 420, duration: 520 });
+      scene.tweens.add({
+        targets: t,
+        alpha: 0,
+        delay: 420,
+        duration: 520,
+        onUpdate: () => !f && t.setY(y - i * 10 + rise.dy),
+        onComplete: () => {
+          scene.events.off("update", track);
+          t.destroy();
+        },
+      });
+    };
+    if (i === 0) go();
+    else scene.time.delayedCall(i * gap, go);
+  }
+  return true;
+}
+
 /** Swap a sprite's sheet but keep its size (scale setters fold each sheet's own height factor in). */
 export function swapSheet(spr: Phaser.GameObjects.Sprite, key: string) {
   if (!spr.scene?.textures.exists(key) || spr.texture.key === key) return;
