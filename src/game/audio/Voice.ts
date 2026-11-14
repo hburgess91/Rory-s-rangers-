@@ -12,14 +12,14 @@ let recIndex: Record<string, RecEntry> | null = null;
 let recIndexP: Promise<void> | null = null;
 const recBundles: Record<string, Promise<ArrayBuffer | null>> = {};
 function loadRecIndex() {
-  recIndexP ??= fetch("audio/voice/index.json")
+  recIndexP ??= fetch("audio/voice/index.json", { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : {}))
     .then((j) => void (recIndex = j as Record<string, RecEntry>))
     .catch(() => void (recIndex = {}));
   return recIndexP;
 }
 function recBundle(b: string) {
-  return (recBundles[b] ??= fetch(`audio/voice/${b}.mp3`)
+  return (recBundles[b] ??= fetch(`audio/voice/${b}.mp3`, { cache: "no-cache" }) // revalidate: bundles keep their names when re-recorded, and a stale copy against a new index decodes as garbage (then falls back to an American robot voice)
     .then((r) => (r.ok ? r.arrayBuffer() : null))
     .catch(() => null));
 }
@@ -151,7 +151,10 @@ function pickVoice(speaker: string, female: boolean) {
   const vs = voices();
   if (!vs.length) return null;
   const pool = vs.filter((v) => (female ? FEMALE_HINT.test(v.name) : !FEMALE_HINT.test(v.name) || MALE_HINT.test(v.name)));
-  const list = pool.length ? pool : vs;
+  const base = pool.length ? pool : vs;
+  // the cast are British: use a British voice whenever the device has one
+  const gb = base.filter((v) => /GB|UK|British/i.test(v.lang + v.name));
+  const list = gb.length ? gb : base;
   return list[hash(speaker) % list.length];
 }
 
