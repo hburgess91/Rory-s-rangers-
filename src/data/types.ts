@@ -112,6 +112,8 @@ export interface Line {
   mood?: string;
   /** Play this KrelTV episode on the telly right here, then carry on. */
   tv?: string;
+  /** A staged moment in the room as this line shows (e.g. "robbo_enter"): see TownMeetingScene.fx. */
+  fx?: string;
 }
 
 export interface MeetingScript {

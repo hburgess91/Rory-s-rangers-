@@ -29,7 +29,7 @@ const ANIM_RATE: Record<string, number> = { idle: 7, move: 10, attack: 14, hurt:
 const SIGNATURE_LEAP = new Set(["krandall", "hoard", "cronster", "drongus1", "drongus2", "krozno", "rik", "jam", "reinhardt"]);
 
 /** Make the animations for a boss sheet once per game. Returns the rows it has. */
-function bossAnims(scene: Phaser.Scene, key: string): Set<string> {
+export function bossAnims(scene: Phaser.Scene, key: string): Set<string> {
   const have = new Set<string>();
   const n = scene.textures.get(key).frameTotal - 1;
   for (const [row, [start, count]] of Object.entries(ANIM_ROWS)) {

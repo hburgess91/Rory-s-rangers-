@@ -5014,6 +5014,50 @@
      16
     ]
    }
+  },
+  "spr_ALISTAIR": {
+   "file": "chars/ALISTAIR.png",
+   "frame": 64,
+   "idle": {
+    "south": 0,
+    "east": 4,
+    "north": 5,
+    "west": 6
+   },
+   "walk": {
+    "south": [
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ],
+    "east": [
+     16,
+     17,
+     18,
+     19,
+     20,
+     21
+    ],
+    "north": [
+     24,
+     25,
+     26,
+     27,
+     28,
+     29
+    ],
+    "west": [
+     32,
+     33,
+     34,
+     35,
+     36,
+     37
+    ]
+   }
   }
  },
  "images": {
@@ -6785,9 +6829,9 @@
   },
   "boss_flatmate": {
    "file": "combat/boss_flatmate.png",
-   "frameWidth": 80,
-   "frameHeight": 120,
-   "hd": 0.4167
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "boss_hoard": {
    "file": "combat/boss_hoard.png",
@@ -6834,8 +6878,8 @@
   "boss_troll": {
    "file": "combat/boss_troll.png",
    "frameWidth": 96,
-   "frameHeight": 144,
-   "hd": 0.3333
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "en_ai_portrait": {
    "file": "combat/en_ai_portrait.png",
@@ -7639,8 +7683,8 @@
   "bossanim_troll": {
    "file": "combat/bossanim_troll.png",
    "frameWidth": 96,
-   "frameHeight": 144,
-   "hd": 0.3333
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "bossanim_brand": {
    "file": "combat/bossanim_brand.png",
@@ -7650,9 +7694,9 @@
   },
   "bossanim_flatmate": {
    "file": "combat/bossanim_flatmate.png",
-   "frameWidth": 80,
-   "frameHeight": 120,
-   "hd": 0.4167
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "bossanim_krozno": {
    "file": "combat/bossanim_krozno.png",

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { bossAnims } from "../combat/Bosses";
 import { playerKey } from "../gfx/sanmikForm";
 import { sanmikActive } from "../systems/sanmik";
 import { backdrop } from "../gfx/HD";
@@ -63,7 +64,10 @@ export class TownMeetingScene extends Phaser.Scene {
         .play(G.s.flags.krebon_gone && G.s.player !== "KREBON" && !m.historical && m.beats.some((b) => b.s === "KREBON") ? [{ s: "NARRATOR", t: "Krebon has popped back from Wahooga for this meeting. He will be gone again by the end of it. Fairweather.", dir: true }, ...m.beats] : m.beats, {
           historical: m.historical,
           onSpeaker: (sp) => this.highlight(sp),
-          onLine: (l) => this.onLine(l.t, l.notify, l.s),
+          onLine: (l) => {
+            this.onLine(l.t, l.notify, l.s);
+            if (l.fx) this.fx(l.fx);
+          },
           onReact: (_c, ch) => {
             this.reactCounts[ch] = (this.reactCounts[ch] ?? 0) + 1;
             this.updateReactDisplay();
@@ -196,6 +200,75 @@ export class TownMeetingScene extends Phaser.Scene {
     }
     if (notify && speaker === "DRONGUS") {
       this.screenText.setText(text.length > 60 ? text.slice(0, 57) + "…" : text).setWordWrapWidth(210);
+    }
+  }
+
+  private robbo: Phaser.GameObjects.Sprite | null = null;
+
+  /** Staged moments in the room, cued by a line's `fx`. */
+  private fx(id: string) {
+    const W = this.scale.width;
+    const cx = W / 2;
+    const cy = 262;
+    if (id === "robbo_enter") {
+      const key = this.textures.exists("boss_flatmate") ? "boss_flatmate" : "spr_FOLK0";
+      const r = this.add.sprite(W + 60, cy, key, 0).setDepth(400);
+      // (setScale folds the sheet's hd factor in, so undo it: ~84px tall like the seated lads)
+      r.setScale(1);
+      r.setScale(84 / r.frame.height / r.scaleX);
+      this.robbo = r;
+      const ak = this.textures.exists("bossanim_flatmate") ? "bossanim_flatmate" : null;
+      const rows = ak ? bossAnims(this, ak) : new Set<string>();
+      if (ak && rows.has("move")) r.play(`${ak}:move`);
+      r.setFlipX(true);
+      this.tweens.add({
+        targets: r,
+        x: cx,
+        duration: 1600,
+        ease: "Sine.out",
+        onComplete: () => {
+          if (ak && rows.has("idle")) r.play(`${ak}:idle`);
+          r.setFlipX(false);
+        },
+      });
+      synth.play("door");
+      return;
+    }
+    const r = this.robbo;
+    if (!r?.active) return;
+    if (id === "robbo_beatup") {
+      const lads = Object.values(this.seats).filter((s) => s.id !== "DRONGUS" && s.id !== G.s.player);
+      lads.forEach((s, i) => {
+        const a = (i / Math.max(1, lads.length)) * Math.PI * 2;
+        this.tweens.add({ targets: s.sprite, x: r.x + Math.cos(a) * 46, y: r.y + Math.sin(a) * 26, duration: 380, delay: i * 60, ease: "Quad.out" });
+      });
+      const ak = "bossanim_flatmate";
+      if (this.anims.exists(`${ak}:hurt`)) r.play({ key: `${ak}:hurt`, repeat: -1 });
+      const cloud = this.add.ellipse(r.x, r.y, 170, 110, 0xe5e7eb, 0.85).setDepth(450).setAlpha(0);
+      this.tweens.add({ targets: cloud, alpha: 0.9, scaleX: { from: 0.6, to: 1.05 }, yoyo: true, repeat: 5, duration: 220, delay: 350 });
+      const words = ["POW!", "WHAM!", "BIFF!", "NONCE!", "THWACK!", "BOSH!", "SMACK!", "CRAVAT!"];
+      for (let k = 0; k < 14; k++)
+        this.time.delayedCall(400 + k * 190, () => {
+          const t = this.add.text(r.x + (Math.random() - 0.5) * 150, r.y + (Math.random() - 0.5) * 80, words[k % words.length], { fontFamily: FONT, fontSize: "18px", color: "#ffd23f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }).setOrigin(0.5).setDepth(460);
+          this.tweens.add({ targets: t, scale: { from: 0.4, to: 1.2 }, alpha: 0, duration: 520, onComplete: () => t.destroy() });
+          synth.play(k % 3 === 0 ? "punch_big" : "hit");
+          if (k % 4 === 0) this.cameras.main.shake(120, 0.008);
+        });
+      this.time.delayedCall(3300, () => {
+        cloud.destroy();
+        lads.forEach((s) => this.tweens.add({ targets: s.sprite, x: s.x, y: s.y, duration: 420, ease: "Quad.inOut" }));
+        r.stop();
+        r.setFrame(0);
+        this.tweens.add({ targets: r, angle: 84, y: r.y + 18, duration: 260, ease: "Quad.in" });
+        synth.play("smash");
+      });
+      return;
+    }
+    if (id === "robbo_leave") {
+      // he crawls out the way he came, on his belly
+      this.tweens.add({ targets: r, x: W + 90, duration: 2600, delay: 600, ease: "Sine.in", onComplete: () => r.destroy() });
+      this.tweens.add({ targets: r, y: r.y - 3, yoyo: true, repeat: 10, duration: 120, delay: 600 });
+      this.time.delayedCall(3100, () => synth.play("door"));
     }
   }
 
