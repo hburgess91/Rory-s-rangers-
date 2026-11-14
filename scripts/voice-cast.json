@@ -222,7 +222,10 @@
     "GARY": "ePxpmeHswUPNtFRhR0W1",
     "BIG BERTHA": "wq6eEEWYItG09B83tR59",
     "KRELBERT AND RONSON": "yO0oj6A2TnMNtkikM8bo",
-    "REPORTER": "xD8lupiQnLDZLji2DQSG"
+    "REPORTER": "xD8lupiQnLDZLji2DQSG",
+    "YEMENI EXECUTIVE": "VVEqovKM9QqLAjYChsnb",
+    "YEMENI OFFICIAL": "2wb9pEZH234u5GrpHirf",
+    "YEMENI OFFICER": "tbJG5asX7XM4ReHRAdJ9"
   },
   "designed_desc": {
     "KRANKY KRANDALL": "A reedy, squeaky, frail old British man in his nineties. Thin, high, wavering, slightly wheezy voice, rambling and forgetful, trailing off mid-sentence.",
@@ -340,7 +343,10 @@
     "~everywoman_f": "An ordinary middle-aged English woman with an Estuary accent. Plain and everyday, a bit flustered.",
     "~everywoman_f2": "An ordinary young English woman with a West Midlands accent. Bright and chatty.",
     "~official_m_welsh": "A stern British police officer with a Welsh accent. Formal and officious.",
-    "~scientist_m": "An over-enthusiastic scientist with a German accent. Fast, excitable and precise."
+    "~scientist_m": "An over-enthusiastic scientist with a German accent. Fast, excitable and precise.",
+    "YEMENI EXECUTIVE": "A Yemeni man in his fifties speaking English with a Middle Eastern Arabic accent, a senior oil company executive. Deep, measured and dignified, courteous but with an edge of authority; when provoked he becomes incredulous and exasperated.",
+    "YEMENI OFFICIAL": "A Yemeni man in his sixties speaking English with a Middle Eastern Arabic accent, a government official conducting an interrogation. Dry, cold and unhurried, gravelly, unimpressed and precise.",
+    "YEMENI OFFICER": "A Yemeni man in his forties speaking English with a Middle Eastern Arabic accent, a police officer. Firm, formal and businesslike, a crisp authoritative baritone."
   },
   "stock": {
     "KREBLIS": "fLQ4kCrWQGVDIt5kYfSi",
