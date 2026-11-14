@@ -71,6 +71,7 @@ export const MUSIC_FILES: Record<string, string> = {
   cronny: "audio/cronny.mp3",
   boss_arena: "audio/boss3.mp3",
   final: "audio/final.mp3",
+  kreddle_raid: "audio/kreddle_raid.mp3",
   ending: "audio/ending.mp3",
   anthem: "audio/anthem.mp3",
   crazy: "audio/crazy_for_krelworld.mp3",

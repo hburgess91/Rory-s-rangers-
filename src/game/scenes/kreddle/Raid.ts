@@ -232,7 +232,7 @@ export class KreddleRaid {
     const planted = !!s.flags.nuke_planted;
     synth.ambience(null);
     synth.weatherSound("storm");
-    synth.music(planted ? "boss_krozno" : "final", true);
+    synth.music("kreddle_raid", true);
     sc.cameras.main.fadeIn(600);
     sc.cameras.main.setBounds(0, 0, RW, H);
     sc.cameras.main.setBackgroundColor(0x05030c);
@@ -783,7 +783,7 @@ export class KreddleRaid {
     this.countdown.setVisible(true);
     // the lads run in a pack around you, westward
     this.lads.forEach((l, i) => (l.off = { x: 50 + (i % 4) * 45, y: -70 + (i % 4) * 45 + (i > 3 ? 20 : 0) }));
-    synth.music("boss_krozno", true);
+    synth.music("kreddle_raid", true);
     synth.play("alarm");
     if (fresh) {
       this.bigTitle("RUN!!!", "#ff3b3b", 80);
