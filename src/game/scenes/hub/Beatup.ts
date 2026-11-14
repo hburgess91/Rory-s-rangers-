@@ -16,6 +16,7 @@ import type { Line } from "../../../data/types";
  */
 
 type Move = "shove" | "punch" | "kick";
+import { WHINES_ALL, WHINES } from "../../../content/beatup";
 const MOVES: Move[] = ["shove", "punch", "kick"];
 const KEY: Record<Move, string> = { shove: "E", punch: "J", kick: "SPACE" };
 const WORDS: Record<Move, string[]> = {
@@ -32,26 +33,6 @@ const VICTIMS: { id: string; name: string; full: string; where?: string }[] = [
   { id: "FLENKY", name: "Jenko", full: "Jenko (Flenky)" },
 ];
 
-const WHINES_ALL = [
-  "That's not fair!",
-  "That's NOT FAIR!",
-  "Three on one?!",
-  "What did I even do?!",
-  "I'm telling Drongus!",
-  "This is bullying! This is literally bullying!",
-  "Not the face! NOT THE FACE!",
-  "Stop it! I mean it!",
-  "MUUUUUM!",
-  "I'm the nicest one in the chat!",
-  "Ow! Ow! That's my bad arm!",
-  "I'll ban you all! ...I can't ban anyone.",
-  "Why is it always me?!",
-];
-const WHINES: Record<string, string[]> = {
-  MIKEY: ["I paid for the bongos! Last time!", "Can I still come to the pub after?", "Old times, lads! OLD TIMES!", "Is this the initiation? Am I in?"],
-  CRONGUS: ["My little arms can't block!", "I'm Lil'! I'm LIL'!", "I'll make you all a pudding! Please!", "I'm getting Boggor!"],
-  FLENKY: ["My parents are still together! Isn't that enough?!", "I know Brazilian jiu-jitsu! ...I don't.", "Is this because I'm banned?!", "Jenko didn't deserve this!"],
-};
 const CHEERS = ["GET IN!", "AGAIN!", "Do the kick! DO THE KICK!", "Wahey!", "Have some of that!", "He's had that coming for YEARS", "Ohhhh! Did you see that?!", "Bang!", "Wallop!"];
 const CHEERS_BY: Record<string, string[]> = {
   KREBON: ["🤘 ROCK AND ROLL", "That's a Reprieve, that is"],
