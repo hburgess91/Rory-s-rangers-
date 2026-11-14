@@ -25,6 +25,10 @@ updated). To list every dialogue line added or changed since the export:
 - **Alistair Swamp at the Wonky Pole** (src/game/scenes/ClubScene.ts, ALLY_LINES / ALLY_REPLIES): "hi",
   "hey", "u there?" … and the dancers' replies ("No.", "Security.", "I can see you, Alistair.").
 - **The Concept of Paedophilia's wizard** says "Yeeeee…" captions (src/game/combat/ConceptBoss.ts).
+- **Popping round Polson Towers** (src/content/polsonChats.ts, generated from Harry's real Messenger chats with
+  Polson: 33 conversations, verbatim, names swapped) plus the arrival lines and Polson's GTA 5 confessions
+  (POLSON_GTA: "I've been wanking over the strip clubs in GTA 5").
+- **Golden juice squeeze** is now a button game; her "…is that it? Never mind, love." on a fail (src/game/systems/squeeze.ts).
 - **First-dungeon tutorial** text (src/game/scenes/TutorialScene.ts).
 
 ## Every dialogue line added or changed since the export (snapshot)

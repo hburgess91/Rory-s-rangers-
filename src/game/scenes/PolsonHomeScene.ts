@@ -21,8 +21,8 @@ export class PolsonHomeScene extends Phaser.Scene {
     if (!backdrop(this, "bg_polson_home", { depth: -10, dim: 0.05 })) this.add.rectangle(480, 270, 960, 540, 0x3b1f22).setDepth(-10);
     synth.music("hub");
     // you by the door, Polson by the sofa bed
-    const me = this.add.sprite(330, 300, playerKey(this), 0).setScale(2.6).setDepth(300);
-    const pol = this.add.sprite(560, 292, this.textures.exists("spr_POLSON") ? "spr_POLSON" : "spr_FOLK0", 0).setScale(2.6).setDepth(400);
+    const me = this.add.sprite(320, 352, playerKey(this), 0).setOrigin(0.5, 1).setScale(4.4).setDepth(300);
+    const pol = this.add.sprite(590, 352, this.textures.exists("spr_POLSON") ? "spr_POLSON" : "spr_FOLK0", 0).setOrigin(0.5, 1).setScale(4.4).setDepth(400);
     pol.setFlipX(true);
     this.tweens.add({ targets: pol, y: pol.y - 3, yoyo: true, repeat: -1, duration: 900, ease: "Sine.inOut" });
     me.setData("facing", "east");
@@ -30,7 +30,7 @@ export class PolsonHomeScene extends Phaser.Scene {
     const lines = polsonVisit(G.s);
     G.save();
     this.time.delayedCall(400, () =>
-      box.play(lines, { onSpeaker: (sp) => this.tweens.add({ targets: sp === "POLSON" ? pol : me, y: (sp === "POLSON" ? 292 : 300) - 8, yoyo: true, duration: 110 }) }).then(() => {
+      box.play(lines, { onSpeaker: (sp) => this.tweens.add({ targets: sp === "POLSON" ? pol : me, y: 352 - 10, yoyo: true, duration: 110 }) }).then(() => {
         this.cameras.main.fadeOut(300);
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => switchTo(this, "Hub", { at: "POLSON_ROAD" }));
       }),

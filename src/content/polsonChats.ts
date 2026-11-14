@@ -360,6 +360,15 @@ const ARRIVALS: Line[][] = [
   [dir("Polson Towers. Polson is sat on the end of the sofa bed scrolling back through your old messages. 'Remember this?' he says.")],
 ];
 
+/** Some visits he's been at GTA 5 again, and he'll tell you about it. */
+export const POLSON_GTA: Line[][] = [
+  [say("POLSON", "Yeeeghh!! Sorry. I've been wanking over the strip clubs in GTA 5. Thoughts?")],
+  [say("POLSON", "Hold on let me pause it. I was in the strip club in GTA 5. Wanking over it, if I'm honest 😅"), say("POLSON", "Wbu?")],
+  [dir("The telly's on. It's GTA 5. It's paused in the strip club."), say("POLSON", "Don't look at that. Actually do. I've been wanking over it all morning.")],
+  [say("POLSON", "Big news!! I've done every lap dance in GTA 5. Wanked over all of them. Is that an achievement? It should be an achievement 😅")],
+  [say("POLSON", "I'm not saying I've been wanking over the strip clubs in GTA 5. But I'm not not saying it. Lmao")],
+];
+
 /** One visit: an arrival, then the next conversation you haven't had (they cycle once you've had them all). */
 export function polsonVisit(s: GameState): Line[] {
   const unseen = POLSON_CHATS.filter((c) => !s.flags[`pchat_${c.id}`]);
@@ -368,5 +377,6 @@ export function polsonVisit(s: GameState): Line[] {
   const c = pool[Math.floor(Math.random() * pool.length)];
   s.flags[`pchat_${c.id}`] = true;
   const arrive = ARRIVALS[Math.floor(Math.random() * ARRIVALS.length)];
-  return [...arrive, ...c.lines, dir("You leave Polson Towers. Polson waves from the window. He will message you about it later. He'll ask what you thought.")];
+  const gta = Math.random() < 0.4 ? POLSON_GTA[Math.floor(Math.random() * POLSON_GTA.length)] : [];
+  return [...arrive, ...gta, ...c.lines, dir("You leave Polson Towers. Polson waves from the window. He will message you about it later. He'll ask what you thought.")];
 }

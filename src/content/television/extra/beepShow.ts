@@ -205,10 +205,10 @@ MARC: You told Super Hans I had piles.
 JEZ: He asked why you were standing funny.
 INT. YEMENI BOARDROOM - DAY
 (The deal is going brilliantly.)
-EXECUTIVE: Then we are substantially agreed.
+YEMENI EXECUTIVE: Then we are substantially agreed.
 MARC (V.O.): Yes. Yes! Millionaire. Corrigan the oil baron. I'll have one of those waxed jackets and complain about inheritance tax.
 (The executive looks at Simon.)
-EXECUTIVE: And this is your colleague?
+YEMENI EXECUTIVE: And this is your colleague?
 (Marc hesitates.)
 MARC: My—
 (He glances at Simon. Simon gives him a look. Marc swallows.)
@@ -217,7 +217,7 @@ MARC: My husband.
 MARC (V.O.): There. Courage. Beautiful, pointless courage.
 (One executive whispers to another. Two SECURITY MEN enter.)
 MARC: What's happening?
-EXECUTIVE: You are under arrest for homosexuality m.
+YEMENI EXECUTIVE: You are under arrest for homosexuality m.
 MARC: What?!
 SIMON: Marc—
 MARC (V.O.): Oh fuck. They do care. They care enormously.
@@ -228,14 +228,14 @@ MARC: I mean—I am in a homosexual relationship, obviously, but historically—
 SIMON: Marc!
 MARC: This is making it worse, isn't it?
 (Suddenly everyone's phones start vibrating. The executive checks his. His expression changes.)
-EXECUTIVE: Britain has declared war on Yemen because of 9/11.
+YEMENI EXECUTIVE: Britain has declared war on Yemen because of 9/11.
 (Silence. Everyone turns to the four Britons. Jez's RAF phone goes off.)
 (THE DAMBUSTERS MARCH.)
 (Marc closes his eyes.)
 MARC (V.O.): There it is. The worst noise anybody has ever heard.
-EXECUTIVE: What is that?
+YEMENI EXECUTIVE: What is that?
 JEZ: Nothing.
-EXECUTIVE: Are you military?
+YEMENI EXECUTIVE: Are you military?
 JEZ: No.
 (His phone announces electronically:)
 PHONE: ROYAL AIR FORCE MOBILISATION ALERT.
@@ -247,7 +247,7 @@ JEZ: I hate Britain!
 MARC: You cried during the Queen's funeral!
 JEZ: Propaganda tears!
 (The Yemenis stare suspiciously.)
-EXECUTIVE: Prove it.
+YEMENI EXECUTIVE: Prove it.
 (Jez panics.)
 JEZ (V.O.): Prove it? How? Burn my passport? Say I prefer coffee? Fuck.
 (Madison grabs his arm.)
@@ -275,17 +275,17 @@ MARC (V.O.): Jez has murdered his girlfriend at an oil meeting.
 (Beat.)
 MARC (V.O.): That's going to affect the deposit.
 (The chief executive looks utterly disgusted.)
-EXECUTIVE: You murdered that woman.
+YEMENI EXECUTIVE: You murdered that woman.
 JEZ: For Yemen.
-EXECUTIVE: We did not ask you to murder anybody!
+YEMENI EXECUTIVE: We did not ask you to murder anybody!
 JEZ: You literally said prove it!
-EXECUTIVE: I meant show us your messages!
+YEMENI EXECUTIVE: I meant show us your messages!
 JEZ: Well, you should've been more specific!
 MARC: You fucking idiot!
 JEZ: I PANICKED!
 (Security tackles Jez.)
 JEZ: So I'm arrested as an ally, though, right?
-EXECUTIVE: No!
+YEMENI EXECUTIVE: No!
 JEZ: Because politically I think that's important.
 # ACT FOUR
 INT. YEMENI POLICE CELL - NIGHT
@@ -315,27 +315,27 @@ MARC: You're dating someone who drinks Capri-Sun!
 JEZ: She was very mature for her age!
 (A beat.)
 (An OFFICER enters.)
-OFFICER: Mr Usborne. Because Britain and Yemen are now formally at war, you are considered enemy military personnel.
+YEMENI OFFICER: Mr Usborne. Because Britain and Yemen are now formally at war, you are considered enemy military personnel.
 (Jez brightens slightly.)
 JEZ: Prisoner of war?
-OFFICER: Yes.
+YEMENI OFFICER: Yes.
 JEZ: Nice.
 JEZ (V.O.): Madison would've loved this.
 (His face falls.)
 JEZ (V.O.): Oh, Madison.
 INT. INTERROGATION ROOM - LATER
 (Marc sits opposite a Yemeni official.)
-OFFICIAL: Your oil agreement is cancelled.
+YEMENI OFFICIAL: Your oil agreement is cancelled.
 MARC: Obviously.
-OFFICIAL: Your associate murdered a British civilian.
+YEMENI OFFICIAL: Your associate murdered a British civilian.
 MARC: He's not really my associate.
-OFFICIAL: You travelled here together.
+YEMENI OFFICIAL: You travelled here together.
 MARC: EasyJet wouldn't accept "person I know socially."
-OFFICIAL: And you admit to conducting an illegal homosexual relationship.
+YEMENI OFFICIAL: And you admit to conducting an illegal homosexual relationship.
 MARC: I wouldn't say conducting. That sounds organised.
-OFFICIAL: You called him your husband.
+YEMENI OFFICIAL: You called him your husband.
 MARC: Under considerable social pressure.
-OFFICIAL: Is he your husband or not?
+YEMENI OFFICIAL: Is he your husband or not?
 (Marc thinks.)
 MARC (V.O.): Come on, Marc. Simple question.
 (He looks through the glass at Simon.)
