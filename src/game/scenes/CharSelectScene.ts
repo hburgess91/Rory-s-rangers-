@@ -50,11 +50,15 @@ export class CharSelectScene extends Phaser.Scene {
       const pk = portraitKey(this, id);
       if (pk) this.add.image(x + 55, y + 38, pk).setDisplaySize(60, 60);
       this.add.sprite(x + 92, y + 76, `spr_${id}`, 0).setScale(1.2);
-      this.add.text(x + 55, y + 90, def.name, { fontFamily: FONT, fontSize: "11px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 104 } }).setOrigin(0.5, 0);
-      this.add.text(x + 55, y + 117, def.nickname ? `"${def.nickname}"` : def.realName ?? "", { fontFamily: FONT, fontSize: def.nickname ? "10px" : "9px", color: def.nickname ? hexStr(def.color) : "#8a8fa0", fontStyle: def.nickname ? "bold" : "normal" }).setOrigin(0.5, 0);
+      this.add.text(x + 55, y + 90, id === "MIKEY" ? "KREBLAR" : def.name, { fontFamily: FONT, fontSize: "11px", color: hexStr(def.color), fontStyle: "bold", align: "center", wordWrap: { width: 104 } }).setOrigin(0.5, 0);
+      this.add.text(x + 55, y + 117, id === "MIKEY" ? "" : def.nickname ? `"${def.nickname}"` : def.realName ?? "", { fontFamily: FONT, fontSize: def.nickname ? "10px" : "9px", color: def.nickname ? hexStr(def.color) : "#8a8fa0", fontStyle: def.nickname ? "bold" : "normal" }).setOrigin(0.5, 0);
       if (done) this.add.text(x + 4, y + 3, "✓", { fontFamily: FONT, fontSize: "11px", color: "#5ad35a" });
       card.on("pointerover", () => this.select(i));
-      card.on("pointerdown", () => this.select(i));
+      // hover to look, click the face to pick them
+      card.on("pointerdown", () => {
+        this.select(i);
+        if (!gone) this.confirm();
+      });
       this.cards.push(card);
     });
 
@@ -86,7 +90,7 @@ export class CharSelectScene extends Phaser.Scene {
     const X = 488;
     const add = (o: Phaser.GameObjects.GameObject) => this.detail.add(o);
     add(this.add.rectangle(X, 76, 456, 420, UI.panel).setOrigin(0).setStrokeStyle(2, d.color));
-    add(this.add.text(X + 16, 88, d.nickname ? `${d.name.split(" ")[0]} "${d.nickname}"` : d.name, { fontFamily: FONT, fontSize: "24px", color: hexStr(d.color), fontStyle: "bold" }));
+    add(this.add.text(X + 16, 88, id === "MIKEY" ? "KREBLAR" : d.nickname ? `${d.name.split(" ")[0]} "${d.nickname}"` : d.name, { fontFamily: FONT, fontSize: "24px", color: hexStr(d.color), fontStyle: "bold" }));
     add(this.add.text(X + 16, 118, (d.aka ?? "") + (id === "MIKEY" ? `  Press ${prettyKey(keysFor("sanmik")[0] ?? "V")} to become SANMIK whenever you like.` : ""), { fontFamily: FONT, fontSize: "11px", color: "#9aa0b4", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 146, d.combatBlurb ?? "", { fontFamily: FONT, fontSize: "14px", color: "#ffffff", wordWrap: { width: 420 } }));
     const bars: [string, number, number][] = [
@@ -109,7 +113,7 @@ export class CharSelectScene extends Phaser.Scene {
     add(this.add.text(X + 16, 406, `Proctus covers as: ${d.proctusTitle}. ${d.proctusQuirk}`, { fontFamily: FONT, fontSize: "11px", color: "#9aa0a6", fontStyle: "italic", wordWrap: { width: 420 } }));
     add(this.add.text(X + 16, 434, `"${d.selectQuote}"`, { fontFamily: FONT, fontSize: "15px", color: "#ff6fa8", fontStyle: "italic" }));
     const away = this.swap && id === "KREBON";
-    add(button(this, X + 340, 474, away ? "GONE TO WAHOOGA" : this.swap ? "CARRY ON AS " + d.name.split(" ")[0] : "PLAY AS " + d.name.split(" ")[0], () => this.confirm(), { w: 220, h: 34, size: 13, disabled: away }));
+    add(button(this, X + 340, 474, away ? "GONE TO WAHOOGA" : this.swap ? "CARRY ON AS " + (id === "MIKEY" ? "KREBLAR" : d.name.split(" ")[0]) : "PLAY AS " + (id === "MIKEY" ? "KREBLAR" : d.name.split(" ")[0]), () => this.confirm(), { w: 220, h: 34, size: 13, disabled: away }));
   }
 
   private confirm() {

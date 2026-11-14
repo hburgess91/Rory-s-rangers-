@@ -449,7 +449,7 @@ export class HubScene extends Phaser.Scene {
       cap.setAlpha(0).setText(t);
       this.tweens.add({ targets: cap, alpha: 1, duration: 400 });
     };
-    cam.pan(1280, 160, 1, "Linear", true);
+    cam.pan(1280, 640, 1, "Linear", true);
     await wait(300);
     const big = this.add.text(480, 250, "KRELFORD", { fontFamily: "Impact, sans-serif", fontSize: "80px", color: "#ffd23f", stroke: "#2a1400", strokeThickness: 10 }).setOrigin(0.5).setScrollFactor(0).setDepth(9001).setAlpha(0);
     const sub = this.add.text(480, 315, "capital of Krelworld · population: the group chat, and some others", { fontFamily: FONT, fontSize: "15px", color: "#ffe9a8" }).setOrigin(0.5).setScrollFactor(0).setDepth(9001).setAlpha(0);
@@ -458,12 +458,13 @@ export class HubScene extends Phaser.Scene {
     await wait(2200);
     this.tweens.add({ targets: [big, sub], alpha: 0, duration: 600 });
     const stops: [number, number, string][] = [
-      [1280, 60, "Up above the clouds: the Great Wiki Citadel. Drongus B. Drippin' writes the lore up there. You can't see it. It's there."],
+      [1650, 1050, "THE KRELTOWER. The tallest building in Krelford. Nobody's sure what's on the top floor. Nobody's asked."],
       [1280, 440, "KRELFORD TOWN HALL. Where the cabinet meets, argues, and occasionally governs."],
       [1900, 440, "THE HISTORICAL ARCHIVE. Every message ever sent, kept forever. The FGM War Room is in the basement."],
       [1280, 800, "THE GREAT PUSSY JUICE TAP. It heals. It nourishes. It is the national drink. Never let it stop."],
       [560, 840, "THE KREZZ ARMS. Fizzy Bongos on tap. SanMik & SanChz on most nights. You have been warned."],
       [1280, 1300, "WILDERN ACADEMY. The local school. The new headmaster is said to be very… zany."],
+      [2440, 1010, "POLSON TOWERS (down that road). Polson HQ. Home of Polson, a lot of stuff, and every decision he's ever not made. Thoughts? Wbu?"],
       [160, 825, "THE KREDDLE BRIDGE. Over there: Kreddle, the casino universe. They hate us. Their slot machines are excellent."],
     ];
     for (const [x, y, t] of stops) {
