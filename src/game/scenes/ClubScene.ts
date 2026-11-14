@@ -52,7 +52,7 @@ const LEER_BY: Record<string, string[]> = {
 };
 
 const BAND_INTRO = [
-  dir("LIVE TONIGHT: SANMIK & SANCHZ. Afro wig, white sunglasses, drawn-on goatee, gold shell suit. They have been booked as \"atmosphere\"."),
+  dir("LIVE TONIGHT: SANMIK & SANCHZ. Afro wig, white sunglasses, drawn-on goatee, gold shell suit. They have been booked as \"atmosphere\".", { variants: { MIKEY: "LIVE TONIGHT: SANMIK & SANCHZ. That's you. Afro wig, white sunglasses, drawn-on goatee, gold shell suit. You have both been booked as \"atmosphere\"." } }),
   say("SANMIK", "This one's for the ladies. And Gronny."),
 ];
 

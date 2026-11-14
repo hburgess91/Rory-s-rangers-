@@ -1115,7 +1115,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
   private async useTalker(p: PropDef) {
     const key = p.label ?? "";
     const n = (this.talkerVisits[key] = (this.talkerVisits[key] ?? 0) + 1);
-    const lines = (p.lines ?? []).map((l) => (l.dir ? dir(l.t) : say(l.s, l.t)));
+    const lines = (p.lines ?? []).map((l) => (l.dir ? dir(l.t, { cond: l.cond, variants: l.variants }) : say(l.s, l.t, { cond: l.cond, variants: l.variants })));
     const s = G.s;
     switch (p.action) {
       case "hottub":

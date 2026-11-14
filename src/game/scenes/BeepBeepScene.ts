@@ -174,7 +174,7 @@ export class BeepBeepScene extends Phaser.Scene {
           dir(`${this.hits} pedestrians.`),
           say("SANMIK", "YEEEEE! That's a Catford record! Better than GTA!"),
           say("SANCHZ", "YEGHHH. There's a bloke still on the bonnet."),
-          dir("There is. He waves. He's fine. Everyone in the SanMikverse is somehow fine. They get up, dust themselves off, and leave one-star reviews of SanMik's driving."),
+          dir("There is. He waves. He's fine. Everyone in the SanMikverse is somehow fine. They get up, dust themselves off, and leave one-star reviews of SanMik's driving.", { variants: { MIKEY: "There is. He waves. He's fine. Everyone in the SanMikverse is somehow fine. They get up, dust themselves off, and leave one-star reviews of your driving." } }),
           say("SANMIK", "And here's the bank. Balaclavas on, lads. Like Jason Statham in Crank."),
         ]
       : [say("SANMIK", "That's not enough people, blud. That's barely a crowd."), say("SANCHZ", "Go round again. They've all got back up."), dir("Everyone you hit has got back up. They are queuing to be hit again. It's the SanMikverse. Try again.")];

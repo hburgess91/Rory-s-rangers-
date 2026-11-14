@@ -48,7 +48,7 @@ const PROCTUS_BARKS = [
 const NORWICH_AFTER: Line[] = [
   say("SANMIK", "YEEE! Champions of Europe! Better than Messi! Better than Pele! Better than Heskey!"),
   say("SANMIK", "Pundit one, you're a cunt. Pundit two, you're a cunt. Pundit three… you're alright."),
-  dir("The prize money is presented on a giant cheque for 'A MILLION BILLION POUNDS'. It is made out to 'SANMIK (MANAJER)'. It is written in crayon. SanMik wrote it."),
+  dir("The prize money is presented on a giant cheque for 'A MILLION BILLION POUNDS'. It is made out to 'SANMIK (MANAJER)'. It is written in crayon. SanMik wrote it.", { variants: { MIKEY: "The prize money is presented on a giant cheque for 'A MILLION BILLION POUNDS'. It is made out to 'SANMIK (MANAJER)'. It is written in crayon. You wrote it." } }),
   dir("The Bank of Catford will not cash it."),
   say("SANMIK", "Right. Fine. Plan B. We rob the bank. Like Jason Statham in Crank."),
   say("SANCHZ", "YEGHHH. I'll get the truck."),
@@ -150,7 +150,7 @@ export class MinigameScene extends Phaser.Scene {
     if (this.resume) {
       // part of a level: win to carry on, lose to go again
       if (success && this.mode === "norwich") lines.push(...NORWICH_AFTER);
-      if (!success) lines.push(dir("Again. SanMik has written a new law: the final gets replayed until Norwich win."));
+      if (!success) lines.push(dir("Again. SanMik has written a new law: the final gets replayed until Norwich win.", { variants: { MIKEY: "Again. You have written a new law: the final gets replayed until Norwich win." } }));
       await this.box.play(lines);
       fadeThen(this, 250, () => {
         if (!success) return this.scene.restart(this.startData);
@@ -221,7 +221,7 @@ export class MinigameScene extends Phaser.Scene {
       callback: () => {
         const left = Math.max(0, Math.ceil((end - this.time.now) / 1000));
         this.hud.setText(`TIME ${left}s   HITS ${hits}`);
-        if (left <= 0 && !this.ended) this.finish(false, [dir("Time. You are still frustrated. Mikey looks smug, which somehow makes it worse."), say(target, barks[barks.length - 1])]);
+        if (left <= 0 && !this.ended) this.finish(false, [dir(`Time. You are still frustrated. ${proxy ? "Proctus" : "Mikey"} looks smug, which somehow makes it worse.`), say(target, barks[barks.length - 1])]);
       },
     });
   }
@@ -676,8 +676,8 @@ export class MinigameScene extends Phaser.Scene {
     };
     this.box
       .play([
-        dir("Begour's café caravan has Wi-Fi. SanMik has borrowed the laptop. He is wearing his best afro and a small amount of aftershave on his eyebrows. He's logging into CAM2CAM."),
-        say("SANMIK", "Yee. Give me five minutes, lads. I've got a date. You're me now. Don't fuck it up."),
+        dir("Begour's café caravan has Wi-Fi. SanMik has borrowed the laptop. He is wearing his best afro and a small amount of aftershave on his eyebrows. He's logging into CAM2CAM.", { variants: { MIKEY: "Begour's café caravan has Wi-Fi. You have borrowed the laptop. You are wearing your best afro and a small amount of aftershave on your eyebrows. You're logging into CAM2CAM." } }),
+        say("SANMIK", "Yee. Give me five minutes, lads. I've got a date. You're me now. Don't fuck it up.", { cond: { notPlayer: "MIKEY" } }),
         dir("YOU ARE SANMIK. Pick your chat-up lines. Get her interest up to the line (60%). Then… well. You'll see."),
       ])
       .then(() => round(0));
@@ -784,7 +784,7 @@ export class MinigameScene extends Phaser.Scene {
     this.box
       .play([
         dir("89th minute. Norwich 1 – 2 Real Madrid. The star striker is being carried off on a stretcher. There are no substitutes left."),
-        dir("The Norwich manager is not in the dugout. The Norwich manager is in the stadium toilet."),
+        dir("The Norwich manager is not in the dugout. The Norwich manager is in the stadium toilet.", { variants: { MIKEY: "The Norwich manager is not in the dugout. The Norwich manager is you, and you are in the stadium toilet." } }),
         say("SANMIK", "(running out of the tunnel, doing up his trousers) Yee! I'll do it! Put me on! I'm the manager, I can do what I fucking want, it's the law what I wrote!"),
         dir("HOW TO PLAY: the yellow marker sweeps across the goal. TAP / SPACE to shoot. Don't hit the keeper. Score TWO before the whistle."),
       ])

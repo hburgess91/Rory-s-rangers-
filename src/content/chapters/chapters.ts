@@ -235,7 +235,7 @@ export const CHAPTERS: ChapterDef[] = [
       MIKEY: [say("MIKEY", "I found the lamp. I want that on the record. Mikey found the lamp."), dir("It's on the record. Nobody reacted.")],
     },
     outro: [
-      dir("Town Hall. The lamp sits on the table, cold and dark. SanMik and SanChz have come back with it. Both are wearing sunglasses indoors. Neither will say why."),
+      dir("Town Hall. The lamp sits on the table, cold and dark. SanMik and SanChz have come back with it. Both are wearing sunglasses indoors. Neither will say why.", { variants: { MIKEY: "Town Hall. The lamp sits on the table, cold and dark. You and SanChz have come back with it. You're both wearing sunglasses indoors. Neither of you will say why." } }),
       say("SANMIK", "Yee."),
       say("SANCHZ", "YEGHHH."),
       say("KREZWONK", "Uncle Rik's out of the tub. The crystal's ours. The SanMikverse holds. Which means the canon holds. Which means Da Drongus Dungeon can't keep us out much longer.", { role: true, proctus: "The uncle's out! The crystal's in! The tub's empty! I prophesied that! Just now!" }),

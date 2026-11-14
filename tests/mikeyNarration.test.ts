@@ -73,4 +73,18 @@ describe("playing as Mikey, the narrator says 'you'", () => {
     }
     expect(bad).toEqual([]);
   });
+
+  it("scene code: no literal stage direction names Mikey without a Mikey variant", () => {
+    // the only ones left only ever play when you're NOT Mikey (the Booth: you can't bully yourself; Proctus stands in)
+    const ALLOWED = ["The Booth. Mikey is hanging from the ceiling", "The Booth. Mikey has been strung up", "Krezzcoin found in ${proxy", "frustrated. ${proxy"];
+    const SRC = import.meta.glob("../src/game/**/*.ts", { eager: true, query: "?raw", import: "default" }) as Record<string, string>;
+    const bad: string[] = [];
+    for (const [f, text] of Object.entries(SRC)) {
+      text.split("\n").forEach((line, i) => {
+        if (!/dir\([^)]*\bMikey\b/.test(line) || line.includes("MIKEY:") || ALLOWED.some((a) => line.includes(a))) return;
+        bad.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      });
+    }
+    expect(bad).toEqual([]);
+  });
 });

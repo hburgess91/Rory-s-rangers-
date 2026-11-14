@@ -14,7 +14,7 @@ export interface PropDef {
   cond?: Cond;
   /** talker: sprite/image key to draw, and what they say when you press E. */
   image?: string;
-  lines?: { s: string; t: string; dir?: boolean }[];
+  lines?: { s: string; t: string; dir?: boolean; cond?: Cond; variants?: Line["variants"] }[];
   /** talker extras: heal you, change the song, etc. */
   action?: "hottub" | "jukebox" | "pepsi" | "kick_gabor" | "begour_hug" | "donut";
 }
@@ -348,7 +348,7 @@ const SANMIK_HANGOUT: RoomDef = {
       lines: [
         { s: "BEGOUR THE BEAR", t: "Oh hiya! Come in, come in. I'm Begour. I'm a bear. Don't worry, I'm a nice one. Mind the step." },
         { s: "BEGOUR THE BEAR", t: "You'll want a cuppa. And a hug. Everyone wants a hug when they first get here. It's a lot, Catford." },
-        { s: "BEGOUR THE BEAR", t: "I'm the one who rings SanMik with bad news. Somebody has to. I always say sorry first. Then I fart, because it helps. It's lavender. Honestly. Have a sniff." },
+        { s: "BEGOUR THE BEAR", t: "I'm the one who rings SanMik with bad news. Somebody has to. I always say sorry first. Then I fart, because it helps. It's lavender. Honestly. Have a sniff.", variants: { MIKEY: "I'm the one who rings you with bad news, love. Somebody has to. I always say sorry first. Then I fart, because it helps. It's lavender. Honestly. Have a sniff." } },
         { s: "NARRATOR", t: "It is lavender. It is, against every law of nature, lovely.", dir: true },
         { s: "BEGOUR THE BEAR", t: "Now, that Genie. Ten thousand years in a lamp, love. He just wants a bath. A proper one. He says he'll send you all home if he gets one." },
         { s: "BEGOUR THE BEAR", t: "Only tub big enough is the Giant Hot Tub of Catford, and it's been broken for weeks. Something's blocking the jets. Something… big. Take the lads. Pop back if you need a hug." },
@@ -363,13 +363,13 @@ const SANMIK_HANGOUT: RoomDef = {
       label: "GABOR THE GOAT (kick him?)",
       action: "kick_gabor",
       lines: [
-        { s: "GABOR THE GOAT", t: goat("Oh! Oh god. A person. Hello. Sorry. Hello. I'm Gabor. I'm a goat. I'm SanMik's best friend. He said so. He also said he'd make a curry out of me.") },
-        { s: "GABOR THE GOAT", t: goat("Do you think he meant it? The curry? Please say yes. No. Please say no. I don't know what I want. I never know what I want.") },
+        { s: "GABOR THE GOAT", t: goat("Oh! Oh god. A person. Hello. Sorry. Hello. I'm Gabor. I'm a goat. I'm SanMik's best friend. He said so. He also said he'd make a curry out of me."), variants: { MIKEY: goat("Oh! Oh god. It's you. Hello. Sorry. Hello. It's Gabor. I'm a goat. I'm your best friend. You said so. You also said you'd make a curry out of me.") } },
+        { s: "GABOR THE GOAT", t: goat("Do you think he meant it? The curry? Please say yes. No. Please say no. I don't know what I want. I never know what I want."), variants: { MIKEY: goat("Did you mean it? The curry? Please say yes. No. Please say no. I don't know what I want. I never know what I want.") } },
         { s: "GABOR THE GOAT", t: goat("Could you kick me? Just a little one. On the bum. I don't deserve it. That's why I want it.") },
         { s: "GABOR THE GOAT", t: goat("Ow. OW. Thank you. Again? No. Yes. No. Yes.") },
         { s: "GABOR THE GOAT", t: goat("That one was a bit soft. I'm not complaining. I am complaining. Do it properly.") },
         { s: "GABOR THE GOAT", t: goat("Is this what love feels like? It's what it feels like for me.") },
-        { s: "GABOR THE GOAT", t: goat("SanMik never kicks me. He just threatens. It's worse. It's so much worse. I love it. Help me.") },
+        { s: "GABOR THE GOAT", t: goat("SanMik never kicks me. He just threatens. It's worse. It's so much worse. I love it. Help me."), variants: { MIKEY: goat("You never used to kick me. You just threatened. This is worse. It's so much worse. I love it. Help me.") } },
         { s: "GABOR THE GOAT", t: goat("Sorry. Sorry for asking. Sorry for saying sorry. Kick me for saying sorry.") },
       ],
     },
@@ -385,7 +385,7 @@ const SANMIK_HANGOUT: RoomDef = {
         { s: "SANMIK", t: "And SanMik (in the hot tub)… lots of bubbles (in the hot tub)… lots of trouble (in the hot tub)…" },
         { s: "SANCHZ", t: "No girls are (in the hot tub)…" },
         { s: "SANMIK", t: "Feeling horny (in the hot tub)…" },
-        { s: "NARRATOR", t: "A slice of pizza drifts past. It is very wet. SanMik eats it. 'Wet pizza (in the hot tub)', he says. 'Dreams come true (in the hot tub).' You feel strangely restored.", dir: true },
+        { s: "NARRATOR", t: "A slice of pizza drifts past. It is very wet. SanMik eats it. 'Wet pizza (in the hot tub)', he says. 'Dreams come true (in the hot tub).' You feel strangely restored.", dir: true, variants: { MIKEY: "A slice of pizza drifts past. It is very wet. You eat it. 'Wet pizza (in the hot tub)', you say. 'Dreams come true (in the hot tub).' You feel strangely restored." } },
       ],
     },
     {
