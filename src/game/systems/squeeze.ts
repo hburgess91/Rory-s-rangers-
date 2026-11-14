@@ -34,22 +34,19 @@ export async function squeeze(
   const hx = who.spr.x + (me.x < who.spr.x ? -26 : 26);
   scene.tweens.add({ targets: me, x: hx, y: who.spr.y + 2, duration: 300 });
   hearts(scene, who.spr.x, who.spr.y - 30, 4);
+  await talk([dir("You hug her. Now: SQUEEZE. Hit the buttons as they come up, fast, before she gets bored.")]);
+  const got = await squeezeGame(scene, who.spr, me);
+  if (!got) {
+    await talk([say(who.name, "…is that it? Never mind, love. Maybe next time.")]);
+    return false;
+  }
+  // the release
+  synth.shout("sq_gush", 1);
+  scene.time.delayedCall(120, () => synth.shout("sq_moan", 1));
+  drops(scene, who.spr.x, who.spr.y, 50);
+  scene.cameras.main.shake(400, 0.008);
   await talk([
-    dir("You hug her."),
-    { s: s.player, t: "Mm. That feels kinda good.", choice: [{ label: "Squeeze harder", set: { sq_step: 2 } }, { label: "Let go", set: { sq_step: 1 } }] },
-  ]);
-  if (!step(2)()) return false;
-  scene.tweens.add({ targets: [me, who.spr], angle: { from: -6, to: 6 }, yoyo: true, repeat: 5, duration: 90 });
-  drops(scene, who.spr.x, who.spr.y, 10);
-  await talk([
-    dir("You squeeze harder. And harder. Until golden juice starts coming out."),
-    { s: who.name, t: "Ooh! There it is!", choice: [{ label: "Keep squeezing", set: { sq_step: 3 } }, { label: "That's enough", set: { sq_step: 2 } }] },
-  ]);
-  if (!step(3)()) return false;
-  drops(scene, who.spr.x, who.spr.y, 40);
-  scene.cameras.main.shake(300, 0.006);
-  await talk([
-    dir("So. Much. Golden juice is now coming out."),
+    dir("A great golden gush. So. Much. Golden juice is now coming out."),
     { s: who.name, t: "…blimey.", choice: [{ label: "Drink it", set: { sq_step: 4 } }, { label: "Leave it", set: { sq_step: 3 } }] },
   ]);
   if (!step(4)()) return false;
@@ -70,6 +67,102 @@ export async function squeeze(
       : [dir("⚡ GOLDEN JUICE: ready. Press T in your next dungeon."), say(who.name, "Ta-ra, love.")],
   );
   return true;
+}
+
+const SQ_KEYS: { label: string; codes: string[] }[] = [
+  { label: "E", codes: ["KeyE"] },
+  { label: "J", codes: ["KeyJ"] },
+  { label: "SPACE", codes: ["Space"] },
+  { label: "K", codes: ["KeyK"] },
+];
+
+/**
+ * The squeeze itself: a button prompt pops up (E / J / K / SPACE, or tap it); hit the right one and the meter
+ * climbs with a squelch, miss and it slips back; it drains on its own. Fill it before time's up.
+ */
+function squeezeGame(scene: Phaser.Scene, her: Phaser.GameObjects.Sprite, me: Phaser.GameObjects.Sprite): Promise<boolean> {
+  return new Promise((res) => {
+    const host = scene as unknown as { busy?: boolean };
+    const wasBusy = host.busy;
+    host.busy = true;
+    const D = 6000;
+    const ui = scene.add.container(0, 0).setDepth(D).setScrollFactor(0);
+    const fix = <T extends Phaser.GameObjects.Components.ScrollFactor>(o: T) => (o.setScrollFactor(0), o);
+    ui.add(fix(scene.add.rectangle(480, 92, 520, 112, 0x12001f, 0.85).setStrokeStyle(3, 0xfacc15)));
+    ui.add(fix(scene.add.text(480, 52, "SQUEEZE!", { fontFamily: "Impact, sans-serif", fontSize: "26px", color: "#fde047", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5)));
+    const barBg = fix(scene.add.rectangle(480, 132, 440, 16, 0x3f3f46).setStrokeStyle(2, 0x000000));
+    const bar = fix(scene.add.rectangle(260, 132, 1, 12, 0xfacc15).setOrigin(0, 0.5));
+    const clock = fix(scene.add.text(700, 52, "", { fontFamily: "monospace", fontSize: "16px", color: "#ffffff" }).setOrigin(1, 0.5));
+    ui.add([barBg, bar, clock]);
+    const btn = fix(scene.add.circle(480, 96, 24, 0xfde047).setStrokeStyle(4, 0x000000).setInteractive({ useHandCursor: true }));
+    const btnTxt = fix(scene.add.text(480, 96, "", { fontFamily: "Impact, sans-serif", fontSize: "20px", color: "#000000" }).setOrigin(0.5));
+    ui.add([btn, btnTxt]);
+    let meter = 0;
+    let streak = 0;
+    let want = SQ_KEYS[0];
+    let done = false;
+    const t0 = scene.time.now;
+    const LIMIT = 9000;
+    const next = () => {
+      let k = SQ_KEYS[Math.floor(Math.random() * SQ_KEYS.length)];
+      if (k === want) k = SQ_KEYS[(SQ_KEYS.indexOf(k) + 1) % SQ_KEYS.length];
+      want = k;
+      btnTxt.setText(k.label).setFontSize(k.label.length > 1 ? 13 : 22);
+      btn.setScale(1.3);
+      scene.tweens.add({ targets: btn, scale: 1, duration: 120 });
+    };
+    const hit = (ok: boolean) => {
+      if (done) return;
+      if (ok) {
+        streak++;
+        meter = Math.min(100, meter + 10 + Math.min(6, streak));
+        synth.shout("sq_squelch", 0.8, 0.85 + Math.random() * 0.35);
+        drops(scene, her.x, her.y, 4);
+        scene.tweens.add({ targets: [her, me], angle: { from: -5, to: 5 }, yoyo: true, duration: 70 });
+        if (meter >= 100) return finish(true);
+        next();
+      } else {
+        streak = 0;
+        meter = Math.max(0, meter - 8);
+        synth.play("tap_fail");
+        btn.setFillStyle(0xef4444);
+        scene.time.delayedCall(120, () => btn.active && btn.setFillStyle(0xfde047));
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const known = SQ_KEYS.some((k) => k.codes.includes(e.code));
+      if (!known) return;
+      e.preventDefault?.();
+      hit(want.codes.includes(e.code));
+    };
+    const onTap = () => hit(true);
+    btn.on("pointerdown", onTap);
+    window.addEventListener("keydown", onKey, true);
+    const tick = scene.time.addEvent({
+      delay: 50,
+      loop: true,
+      callback: () => {
+        meter = Math.max(0, meter - 0.3);
+        bar.width = 4.4 * meter;
+        const left = Math.max(0, LIMIT - (scene.time.now - t0));
+        clock.setText((left / 1000).toFixed(1));
+        if (left <= 0) finish(meter >= 100);
+      },
+    });
+    function finish(win: boolean) {
+      if (done) return;
+      done = true;
+      tick.remove();
+      window.removeEventListener("keydown", onKey, true);
+      bar.width = 4.4 * (win ? 100 : meter);
+      scene.time.delayedCall(win ? 250 : 500, () => {
+        ui.destroy();
+        host.busy = wasBusy;
+        res(win);
+      });
+    }
+    next();
+  });
 }
 
 function hearts(scene: Phaser.Scene, x: number, y: number, n: number) {

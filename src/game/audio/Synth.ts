@@ -19,12 +19,19 @@ export const AUDIO_FILES: Record<string, string> = {
   cronster_taunt: "audio/cronster_taunt.mp3",
   /** Robbo (the flatmate), the same way. */
   flatmate_taunt: "audio/flatmate_taunt.mp3",
+  /** The golden juice squeeze: a squelch per good squeeze, the gush and her moan at the release. */
+  sq_squelch: "audio/sq_squelch.mp3",
+  sq_gush: "audio/sq_gush.mp3",
+  sq_moan: "audio/sq_moan.mp3",
 };
 
 /** Where each separate shout sits in those files: [start, length] in seconds. */
 const SHOUTS: Record<string, [number, number][]> = {
   yee: [[0.9, 0.73], [2.25, 0.73], [4.69, 0.81], [6.17, 0.75], [7.44, 0.84], [8.73, 0.77], [9.94, 0.46], [11.06, 0.77], [12.2, 0.82], [13.33, 0.8], [14.62, 0.75], [15.98, 0.72], [17.33, 0.68], [18.59, 0.73]],
   concept_roar: [[0.3, 2.02], [2.82, 2.95], [6.27, 2.15], [8.92, 3.25]],
+  sq_squelch: [[0.4, 0.6]],
+  sq_gush: [[0.4, 0.45]],
+  sq_moan: [[0.4, 2.04], [2.84, 2.2]],
   flatmate_taunt: [[0.4, 1.0], [1.8, 1.39], [3.59, 0.79], [4.79, 1.1], [6.28, 0.5]],
   cronster_taunt: [[0.4, 1.8], [2.6, 2.19], [5.19, 1.42], [7.02, 1.47], [8.89, 1.78], [11.07, 1.82], [13.29, 2.67], [16.36, 2.98]],
   wizard_yee: [[0.3, 1.0], [1.8, 1.03], [3.33, 0.92], [4.74, 4.15]],

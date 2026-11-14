@@ -6798,6 +6798,9 @@
   "tap_off": {
    "file": "props/tap_off.png",
    "hd": 0.5517
+  },
+  "bg_polson_home": {
+   "file": "backdrops/bg_polson_home.png"
   }
  },
  "sheets": {
