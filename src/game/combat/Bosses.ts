@@ -108,6 +108,16 @@ export abstract class Boss extends Enemy {
     });
   }
 
+  /** A scripted change of look (e.g. Drongus going skinny) takes over from the animation sheet for good. */
+  setTexture(key: string, frame?: string | number) {
+    const k = key;
+    if (this.animKey && k !== this.animKey) {
+      this.anims?.stop();
+      this.animKey = null;
+    }
+    return super.setTexture(key, frame);
+  }
+
   /** Play a one-shot row (attack, hurt, special). */
   protected oneShot(row: string): boolean {
     if (!this.animKey || !this.animRows.has(row) || this.dead) return false;

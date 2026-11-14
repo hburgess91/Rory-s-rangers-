@@ -7096,9 +7096,9 @@
   },
   "boss_stanley": {
    "file": "combat/boss_stanley.png",
-   "frameWidth": 88,
-   "frameHeight": 128,
-   "hd": 0.3846
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "en_gerbil": {
    "file": "combat/en_gerbil.png",
@@ -7662,9 +7662,91 @@
   },
   "bossanim_stanley": {
    "file": "combat/bossanim_stanley.png",
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
+  },
+  "bossanim_cronster": {
+   "file": "combat/bossanim_cronster.png",
    "frameWidth": 88,
    "frameHeight": 128,
    "hd": 0.3846
+  },
+  "bossanim_drongus": {
+   "file": "combat/bossanim_drongus.png",
+   "frameWidth": 96,
+   "frameHeight": 144,
+   "hd": 0.3333
+  },
+  "bossanim_drongus2": {
+   "file": "combat/bossanim_drongus2.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "bossanim_elon": {
+   "file": "combat/bossanim_elon.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "bossanim_hoard": {
+   "file": "combat/bossanim_hoard.png",
+   "frameWidth": 112,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "bossanim_krandall": {
+   "file": "combat/bossanim_krandall.png",
+   "frameWidth": 64,
+   "frameHeight": 96,
+   "hd": 0.5
+  },
+  "bossanim_pudding_demon": {
+   "file": "combat/bossanim_pudding_demon.png",
+   "frameWidth": 64,
+   "frameHeight": 64,
+   "hd": 0.5
+  },
+  "bossanim_flirt": {
+   "file": "combat/bossanim_flirt.png",
+   "frameWidth": 126,
+   "frameHeight": 95,
+   "hd": 0.5053
+  },
+  "bossanim_fruity": {
+   "file": "combat/bossanim_fruity.png",
+   "frameWidth": 82,
+   "frameHeight": 121,
+   "hd": 0.3967
+  },
+  "bossanim_jam": {
+   "file": "combat/bossanim_jam.png",
+   "frameWidth": 124,
+   "frameHeight": 127,
+   "hd": 0.378
+  },
+  "bossanim_lantern": {
+   "file": "combat/bossanim_lantern.png",
+   "frameWidth": 108,
+   "frameHeight": 103,
+   "hd": 0.466
+  },
+  "bossanim_reinhardt": {
+   "file": "combat/bossanim_reinhardt.png",
+   "frameWidth": 108,
+   "frameHeight": 128,
+   "hd": 0.375
+  },
+  "bossanim_rik": {
+   "file": "combat/bossanim_rik.png",
+   "frameWidth": 119,
+   "frameHeight": 124,
+   "hd": 0.3871
+  },
+  "bossanim_tankc": {
+   "file": "combat/bossanim_tankc.png",
+   "frameWidth": 123,
+   "frameHeight": 105,
+   "hd": 0.4571
   }
  },
  "vfx": {
