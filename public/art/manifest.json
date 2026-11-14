@@ -7008,6 +7008,24 @@
    "frameHeight": 40,
    "hd": 0.5
   },
+  "en_supply_teacher": {
+   "file": "combat/en_supply_teacher.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_pe_teacher": {
+   "file": "combat/en_pe_teacher.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
+  "en_head_of_year": {
+   "file": "combat/en_head_of_year.png",
+   "frameWidth": 40,
+   "frameHeight": 40,
+   "hd": 0.5
+  },
   "en_friend_crawler": {
    "file": "combat/en_friend_crawler.png",
    "frameWidth": 32,

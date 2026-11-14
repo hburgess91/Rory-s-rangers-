@@ -462,7 +462,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1200,
         h: 720,
         theme: "school",
-        waves: [[["smolt", 6]], [["dinner_lady", 2], ["smolt", 4]]],
+        waves: [[["supply_teacher", 3], ["smolt", 2]], [["dinner_lady", 2], ["pe_teacher", 2], ["smolt", 3]]],
         enterLines: [
           { s: "NARRATOR", t: "Wildern Academy (Krelford branch). They also have a Wildern in Krelford. That was the first lore. The corridors smell of fish fingers and, faintly, pussy juice. Every classroom door has the same thing chalked on it: 'SPELL IT'.", dir: true },
           { s: "NARRATOR", t: "CONTROLS: WASD move · Mouse aim · Left click attack · Right click / F special · Space dodge · Q pussy juice · B fizzy bongo · R Krezz Burst (full Wonk) · E interact · Esc pause", dir: true },
@@ -473,7 +473,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1300,
         h: 780,
         theme: "school",
-        waves: [[["wisp", 3], ["smolt", 5]], [["tray_turret", 2], ["dinner_lady", 2], ["gravy_lobber", 2]]],
+        waves: [[["head_of_year", 2], ["supply_teacher", 3]], [["tray_turret", 2], ["dinner_lady", 2], ["gravy_lobber", 2]]],
         props: [
           { kind: "wonking_machine", x: 0.5, y: 0.22, id: "wm_cafeteria" },
           { kind: "vending", x: 0.12, y: 0.2, id: "v_caf1" },
@@ -487,7 +487,7 @@ export const DUNGEONS: Record<string, DungeonDef> = {
         w: 1200,
         h: 760,
         theme: "school",
-        waves: [[["smolt", 8], ["wisp", 2]], [["dinner_lady", 3], ["tray_turret", 2]], [["gravy_lobber", 2], ["smolt", 6]]],
+        waves: [[["smolt", 6], ["wisp", 2], ["pe_teacher", 2]], [["dinner_lady", 3], ["tray_turret", 2]], [["gravy_lobber", 2], ["head_of_year", 2], ["supply_teacher", 2]]],
         props: [{ kind: "vending", x: 0.88, y: 0.2, id: "v_boiler" }],
       },
       {
