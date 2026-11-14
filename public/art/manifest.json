@@ -6802,6 +6802,24 @@
   "bg_polson_home": {
    "file": "backdrops/bg_polson_home.png"
   },
+  "tv_sanaa": {
+   "file": "backdrops/tv_sanaa.png"
+  },
+  "tv_plane_hold": {
+   "file": "backdrops/tv_plane_hold.png"
+  },
+  "tv_interrogation": {
+   "file": "backdrops/tv_interrogation.png"
+  },
+  "tv_taxi": {
+   "file": "tv/taxi.png"
+  },
+  "tv_transport": {
+   "file": "tv/transport.png"
+  },
+  "bg_salem_museum": {
+   "file": "backdrops/bg_salem_museum.png"
+  },
   "tile_lounge": {
    "file": "tiles/tile_lounge.png"
   },
@@ -6837,9 +6855,6 @@
   },
   "wall_lounge": {
    "file": "props/wall_lounge.png"
-  },
-  "bg_salem_museum": {
-   "file": "backdrops/bg_salem_museum.png"
   }
  },
  "sheets": {
@@ -7843,6 +7858,46 @@
    "frameWidth": 87,
    "frameHeight": 111,
    "hd": 0.5517
+  },
+  "tvface_MARC": {
+   "file": "tv/face_MARC.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_JEZ": {
+   "file": "tv/face_JEZ.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_SIMON": {
+   "file": "tv/face_SIMON.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_MADISON": {
+   "file": "tv/face_MADISON.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_FOSTER": {
+   "file": "tv/face_FOSTER.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_YEMENI_EXECUTIVE": {
+   "file": "tv/face_YEMENI_EXECUTIVE.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_YEMENI_OFFICIAL": {
+   "file": "tv/face_YEMENI_OFFICIAL.png",
+   "frameWidth": 128,
+   "frameHeight": 128
+  },
+  "tvface_YEMENI_OFFICER": {
+   "file": "tv/face_YEMENI_OFFICER.png",
+   "frameWidth": 128,
+   "frameHeight": 128
   }
  },
  "vfx": {

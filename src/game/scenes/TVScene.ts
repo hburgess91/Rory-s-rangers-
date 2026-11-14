@@ -13,6 +13,7 @@ import { bump } from "../systems/stats";
 import { fadeThen, switchTo } from "../Flow";
 import { DUNGEONS } from "../../data/dungeons";
 import { addKrokens } from "../systems/kreddle";
+import { PovDirector } from "./TVPov";
 
 const DUNGEON_MUSIC: Record<string, string> = Object.fromEntries(Object.values(DUNGEONS).map((d) => [d.id, d.music]));
 
@@ -56,6 +57,10 @@ const TV_ALIASES: Record<string, string> = {
   "PUB PATRON": "GROZZ",
   "CONSERVATIVE SUPPORTER": "GROZZ",
   VOTER: "MINTY",
+  // Beep Show's Sana'a scenes
+  "YEMENI EXECUTIVE": "EXECUTIVE",
+  "YEMENI OFFICIAL": "OFFICIAL",
+  "YEMENI OFFICER": "OFFICER",
 };
 
 const EXTRA_CAST_SHOWS = new Set(["creation_myth", "eastenders_krezz", "beep_show"]);
@@ -82,6 +87,10 @@ export class TVScene extends Phaser.Scene {
   private mouthTimer: Phaser.Time.TimerEvent | null = null;
   private keyHandler!: (e: KeyboardEvent) => void;
   private sel = 0;
+  /** POV presentation, for episodes with style "pov" */
+  private pov: PovDirector | null = null;
+  /** how long the current beat's picture wants (an animated sequence) */
+  private beatHold = 0;
   private items: { label: string; action: () => void }[] = [];
 
   constructor() {
@@ -127,6 +136,8 @@ export class TVScene extends Phaser.Scene {
       window.removeEventListener("keydown", this.keyHandler);
       this.beatTimer?.remove();
       this.mouthTimer?.remove();
+      this.pov?.destroy();
+      this.pov = null;
     });
     if (data?.episode) {
       const e = ALL_EPISODES.find((x) => x.id === data.episode);
@@ -328,6 +339,8 @@ export class TVScene extends Phaser.Scene {
     this.setKey = "";
     this.mode = "playing";
     this.ep = e;
+    this.pov?.destroy();
+    this.pov = e.style === "pov" ? new PovDirector(this, { SX, SY, SW, SH }, e.beats, { setTexture: () => this.setTexture(), spriteFor: (n) => this.actorTex(n.toUpperCase()) }) : null;
     voice.prefetch(e.beats.filter((b: any) => b.type === "speaker" && b.text).map((b: any) => ({ s: b.character, t: b.text })));
     this.beat = 0;
     this.pausedPlay = false;
@@ -348,7 +361,7 @@ export class TVScene extends Phaser.Scene {
     if (this.beat >= this.ep.beats.length) return this.finishEpisode();
     const b = this.ep.beats[this.beat];
     this.applyBeat(b);
-    const dur = beatDuration(b) * 1000;
+    const dur = Math.max(beatDuration(b) * 1000, this.beatHold);
     const started = this.time.now;
     const next = () => {
       if (this.pausedPlay) return;
@@ -363,7 +376,8 @@ export class TVScene extends Phaser.Scene {
     this.beatTimer = this.time.delayedCall(dur, next);
   }
 
-  private applyBeat(b: TVBeat) {
+  private applyBeat(b: TVBeat, idx = this.beat) {
+    this.beatHold = 0;
     this.mouthTimer?.remove();
     for (const a of Object.values(this.actors)) if (String(a.spr.frame.name) === "3") a.spr.setFrame(0);
     if (b.type !== "speaker" && b.type !== "direction") this.subs.setText("");
@@ -374,12 +388,16 @@ export class TVScene extends Phaser.Scene {
         break;
       case "shot":
         this.card.setText("");
-        this.drawSet(setKeyFor(b.set), b.framing);
+        this.drawSet(this.setFor(b.set), b.framing);
         break;
       case "speaker": {
         this.card.setText("");
-        const a = this.ensureActor(b.character);
-        this.subs.setText(this.showSubs ? `${b.character}: ${displayText(b.text)}` : "").setVisible(this.showSubs);
+        const a = this.pov ? null : this.ensureActor(b.character);
+        // an inner monologue reads as a thought: italic, pale blue
+        const vo = !!this.pov && /^V\.?\s*O\.?$/i.test(b.emotion ?? "");
+        this.subs.setFontStyle(vo ? "italic" : "normal").setColor(vo ? "#cfe8ff" : "#ffffff");
+        this.subsAt("bottom");
+        this.subs.setText(this.showSubs ? `${b.character}${vo ? " (V.O.)" : ""}: ${displayText(b.text)}` : "").setVisible(this.showSubs);
         voice.say(b.character, b.text);
         if (a) {
           this.mouthTimer = this.time.addEvent({ delay: 130, loop: true, callback: () => a.spr.setFrame(String(a.spr.frame.name) === "3" ? 0 : 3) });
@@ -390,6 +408,9 @@ export class TVScene extends Phaser.Scene {
         break;
       }
       case "direction":
+        this.subs.setFontStyle("normal").setColor("#ffffff");
+        // in POV the action happens at the bottom of the picture: the stage direction goes up top
+        this.subsAt(this.pov ? "top" : "bottom");
         this.subs.setText(this.showSubs ? `(${b.action})` : "").setVisible(this.showSubs);
         break;
       case "audience": {
@@ -417,10 +438,30 @@ export class TVScene extends Phaser.Scene {
         this.block(b.character, b.to, b.pose);
         break;
     }
+    if (this.pov) this.beatHold = this.pov.beat(b, idx);
+  }
+
+  private subsAt(where: "top" | "bottom") {
+    if (where === "top") this.subs.setOrigin(0.5, 0).setY(SY + 10).setFontSize(13);
+    else this.subs.setOrigin(0.5, 1).setY(SY + SH - 16).setFontSize(15);
+  }
+
+  /** The set's art key for a scene heading (an episode's own `sets` first). */
+  private setFor(set: string) {
+    const up = set.toUpperCase();
+    for (const [word, key] of Object.entries(this.ep?.sets ?? {})) if (up.includes(word.toUpperCase())) return key;
+    return setKeyFor(set);
+  }
+
+  private setTexture() {
+    const k = `tv_${this.setKey}`;
+    return this.textures.exists(k) ? k : "tv_default";
   }
 
   private finishEpisode() {
     const e = this.ep!;
+    this.pov?.destroy();
+    this.pov = null;
     if (!this.fromTitle) {
       const fresh = !G.s.tvWatched.includes(e.id);
       G.watched(e.id);
@@ -818,7 +859,7 @@ export class TVScene extends Phaser.Scene {
     this.stage.removeAll(true);
     for (let i = 0; i < target; i++) {
       const b = this.ep.beats[i];
-      if (b.type === "shot" || b.type === "blocking" || b.type === "prop") this.applyBeat(b);
+      if (b.type === "shot" || b.type === "blocking" || b.type === "prop") this.applyBeat(b, i);
     }
     this.beat = target;
     this.pausedPlay = false;
@@ -833,6 +874,8 @@ export class TVScene extends Phaser.Scene {
     }
     if (this.mode === "playing") {
       this.beatTimer?.remove();
+      this.pov?.destroy();
+      this.pov = null;
       this.mode = "episodes";
       this.subs.setText("");
       this.card.setText("");
