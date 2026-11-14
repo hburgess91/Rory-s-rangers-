@@ -158,6 +158,10 @@ export class Synth {
   private files: Record<string, AudioBuffer> = {};
   private el: HTMLAudioElement | null = null;
   private elId = "";
+  /** Music ducking under dialogue: the current factor (1 = full) and where it's heading. */
+  private duckK = 1;
+  private duckTo = 1;
+  private duckRaf = 0;
 
   /** Must be called from a user gesture. Safe to call repeatedly. */
   unlock() {
@@ -265,9 +269,48 @@ export class Synth {
   private applyVolumes() {
     if (!this.ctx) return;
     this.master.gain.value = this.vol.master;
-    this.musicGain.gain.value = this.vol.music * 0.35;
-    if (this.el) this.el.volume = Math.min(1, this.vol.master * this.vol.music);
+    this.musicGain.gain.value = this.vol.music * 0.35 * this.duckK;
+    if (this.el) this.el.volume = this.musicLevel();
     this.sfxGain.gain.value = this.vol.sfx * 0.6;
+  }
+
+  /** The recorded-music element's volume: the sliders, times the dialogue duck. */
+  private musicLevel() {
+    return Math.max(0, Math.min(1, this.vol.master * this.vol.music * this.duckK));
+  }
+
+  /**
+   * Duck the music while someone's talking (recorded line or TTS), so dialogue is never buried: down to DUCK over
+   * ~120 ms, back up over ~400 ms once the line ends. Sound effects and ambience are left alone.
+   */
+  duckMusic(on: boolean) {
+    const to = on ? Synth.DUCK : 1;
+    if (to === this.duckTo) return;
+    this.duckTo = to;
+    const from = this.duckK;
+    const ms = on ? 120 : 400;
+    const t0 = performance.now();
+    cancelAnimationFrame(this.duckRaf);
+    const step = () => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
+      this.duckK = from + (to - from) * k;
+      if (this.ctx) {
+        const g = this.musicGain.gain;
+        g.cancelScheduledValues(this.ctx.currentTime);
+        g.setValueAtTime(this.vol.music * 0.35 * this.duckK, this.ctx.currentTime);
+      }
+      if (this.el && !this.fading.has(this.el)) this.el.volume = this.musicLevel();
+      if (k < 1) this.duckRaf = requestAnimationFrame(step);
+    };
+    this.duckRaf = requestAnimationFrame(step);
+  }
+  /** How far the music drops under dialogue. */
+  static DUCK = 0.4;
+  /** Music elements mid-fade (their fade sets the volume, ducking included). */
+  private fading = new Set<HTMLAudioElement>();
+  /** For tests: the music duck factor right now. */
+  duckLevel() {
+    return this.duckK;
   }
 
   private tone(freq: number, dur: number, type: Wave, vol: number, when = 0, slide = 0, dest?: AudioNode) {
@@ -976,7 +1019,7 @@ export class Synth {
     el.loop = !ONE_SHOT.has(id);
     // fade in (the old track fades out underneath)
     el.volume = 0;
-    this.ramp(el, Math.min(1, this.vol.master * this.vol.music), 450);
+    this.ramp(el, () => this.musicLevel(), 450);
     this.el = el;
     this.elId = id;
     el.play().catch(() => {
@@ -993,7 +1036,7 @@ export class Synth {
     const old = this.el;
     if (old) {
       // a quick fade rather than a hard cut
-      this.ramp(old, 0, 350, () => {
+      this.ramp(old, () => 0, 350, () => {
         old.pause();
         old.src = "";
       });
@@ -1002,17 +1045,19 @@ export class Synth {
     this.elId = "";
   }
 
-  /** Slide an <audio> element's volume to `to` over `ms`. */
-  private ramp(el: HTMLAudioElement, to: number, ms: number, done?: () => void) {
+  /** Slide an <audio> element's volume to `to()` over `ms` (a function, so slider changes and ducking count mid-fade). */
+  private ramp(el: HTMLAudioElement, to: () => number, ms: number, done?: () => void) {
     const from = el.volume;
     const t0 = performance.now();
+    this.fading.add(el);
     const step = () => {
       const k = Math.min(1, (performance.now() - t0) / ms);
-      // a newer volume setting wins over a fade-in in progress
-      if (el === this.el && to > 0 && k >= 1) el.volume = Math.min(1, this.vol.master * this.vol.music);
-      else el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      el.volume = Math.max(0, Math.min(1, from + (to() - from) * k));
       if (k < 1) requestAnimationFrame(step);
-      else done?.();
+      else {
+        this.fading.delete(el);
+        done?.();
+      }
     };
     requestAnimationFrame(step);
   }

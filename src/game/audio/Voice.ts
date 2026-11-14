@@ -191,6 +191,22 @@ export function recordingFor(speaker: string, text: string): RecEntry | undefine
   return recIndex?.[voiceKey(up, text)] ?? (alt ? recIndex?.[voiceKey(alt, text)] : undefined);
 }
 
+/** Keep the music ducked while a line is being said, and let it back up when it's done (or cut off). */
+let duckTimer: ReturnType<typeof setTimeout> | null = null;
+function duckWhileTalking() {
+  synth.duckMusic(true);
+  if (duckTimer) clearTimeout(duckTimer);
+  const check = () => {
+    // TTS can report not-yet-speaking for a moment after speak(): give it a grace period before releasing
+    if (voice.busy()) duckTimer = setTimeout(check, 100);
+    else {
+      duckTimer = null;
+      synth.duckMusic(false);
+    }
+  };
+  duckTimer = setTimeout(check, 250);
+}
+
 /** The utterances being spoken right now (kept so the browser doesn't drop them). */
 let live: SpeechSynthesisUtterance[] = [];
 
@@ -256,7 +272,8 @@ export const voice = {
         // the speed setting was tuned for robot voices (default 1.5x): recordings only nudge a little either way
         src.playbackRate.value = Math.max(0.85, Math.min(1.25, 1 + ((G.meta.settings.voiceSpeed ?? 1.5) - 1.5) * 0.3));
         const g = ctx.createGain();
-        g.gain.value = (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1) * 1.4;
+        // clips are loudness-normalised (-16 LUFS, scripts/voice-gen.py); capped at unity so loud settings don't clip
+        g.gain.value = Math.min(1, (G.meta.settings.voiceVolume ?? 0.8) * (G.meta.settings.master ?? 1) * 1.25);
         src.connect(g).connect(ctx.destination);
         src.onended = () => {
           if (recSrc === src) recSrc = null;
@@ -264,6 +281,7 @@ export const voice = {
         recSrc = src;
         recPending = false;
         src.start();
+        duckWhileTalking();
       });
     };
     if (recIndex) go();
@@ -293,6 +311,7 @@ export const voice = {
       // Chrome sometimes leaves the speech engine stuck "paused" (e.g. after a tab switch)
       ss.resume();
       for (const u of queue) ss.speak(u);
+      duckWhileTalking();
     };
     if (ss.speaking || ss.pending) {
       ss.cancel();

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Pre-record dialogue with ElevenLabs and pack it for the game.
 
-  python3 scripts/voice-gen.py LINES.json [--dry] [--only SPEAKER,...] [--include-held] [--limit N] [--show N]
+  python3 scripts/voice-gen.py LINES.json [--dry] [--only SPEAKER,...] [--include-held] [--limit N] [--show N] [--measure]
+
+--measure prints every speaker's average loudness (LUFS) and exits.
 
 LINES.json comes from `npx vite-node scripts/voice-extract.ts LINES.json`.
 Casting is in scripts/voice-cast.json; moods are explained in docs/VOICE_MOODS.md.
 The API key is injected by the session proxy (header placeholder only).
 
 Output: public/audio/voice/b<NN>.mp3 (concatenated mp3 clips) + public/audio/voice/index.json
-        { key: [bundle, offset, length, voice, signature] }. The game only reads the first three.
+        { key: [bundle, offset, length, voice, signature, loudness] }. The game only reads the first three.
+Every clip is loudness-normalised when it's packed (LOUDNESS below; needs ffmpeg), so all voices play at one level;
+"loudness" marks a clip as done, so cached clips aren't re-encoded again on the next run.
 The signature is a hash of everything that shapes a recording (model, voice, delivery tags, accent, settings, text),
 so changing a line's mood, a character's voice or the model re-records exactly the lines affected. Everything
 else is copied out of the old bundles, and the bundles are rebuilt from the kept clips (no dead bytes).
@@ -27,6 +31,43 @@ SETTINGS = {
     V3: {"stability": 0.5, "similarity_boost": 0.8, "speed": 1.1},
 }
 US = "strong American accent"
+
+# Loudness every clip is packed at: integrated LUFS (EBU R128) and a true-peak ceiling. Changing it re-encodes the
+# packed clips (from the clips already there; nothing is re-requested).
+LOUDNESS = {"lufs": -16.0, "peak": -1.5}
+LTAG = f"L{LOUDNESS['lufs']:g}/{LOUDNESS['peak']:g}"
+ENC = ["-c:a", "libmp3lame", "-b:a", "32k", "-ar", "22050", "-ac", "1", "-map_metadata", "-1", "-id3v2_version", "0", "-write_xing", "0", "-f", "mp3"]
+
+def measure(data):
+    """(integrated LUFS or None if too short to gate, true peak dBTP, mean volume dB) of an mp3 clip."""
+    import subprocess
+    r = subprocess.run(["ffmpeg", "-nostats", "-hide_banner", "-f", "mp3", "-i", "pipe:0", "-af", "ebur128=peak=true,volumedetect", "-f", "null", "-"],
+                       input=data, capture_output=True)
+    err = r.stderr.decode("utf8", "replace")
+    summ = err[err.rfind("Summary:"):] if "Summary:" in err else ""
+    mi = re.search(r"I:\s+(-?[\d.]+|-inf) LUFS", summ)
+    mp = re.search(r"Peak:\s+(-?[\d.]+|-inf) dBFS", summ)
+    mv = re.search(r"mean_volume:\s+(-?[\d.]+) dB", err)
+    i = float(mi.group(1)) if mi and mi.group(1) != "-inf" else None
+    if i is not None and i <= -69:
+        i = None  # under one 400 ms gating block, or silence
+    return i, float(mp.group(1)) if mp and mp.group(1) != "-inf" else -99.0, float(mv.group(1)) if mv else None
+
+def normalise(data):
+    """The clip at LOUDNESS: a fixed gain to the target loudness, then a limiter for the peaks (no dynamic loudnorm,
+    which pumps on short lines). Clips too short to gate are matched by mean level instead (speech: LUFS ~ mean + 2)."""
+    import subprocess
+    i, tp, mean = measure(data)
+    if i is None:
+        if mean is None:
+            return data
+        i = mean + 2.0
+    gain = LOUDNESS["lufs"] - i
+    gain = max(-20.0, min(20.0, gain))
+    lim = 10 ** ((LOUDNESS["peak"] - 0.5) / 20)  # a little headroom: mp3 encoding overshoots peaks slightly
+    r = subprocess.run(["ffmpeg", "-nostats", "-hide_banner", "-f", "mp3", "-i", "pipe:0", "-af", f"volume={gain:.2f}dB,alimiter=limit={lim:.4f}:level=false:attack=2:release=40", *ENC, "pipe:1"],
+                       input=data, capture_output=True)
+    return r.stdout if r.returncode == 0 and len(r.stdout) > 200 else data
 
 args = sys.argv[1:]
 lines = json.load(open(args[0]))
@@ -167,6 +208,23 @@ if limit:
 print(f"{len(keep)} cached, {len(todo)} to generate ({models}), ~{cost} characters", flush=True)
 for x in todo[:show]:
     print(f"  {x[0]['s']:>18} {x[2]:<24} {x[3][:110]}")
+if "--measure" in args:
+    from collections import defaultdict
+    per = defaultdict(list)
+    items = [(v[0]["s"], v[3]) for v in keep.values()]
+    with cf.ThreadPoolExecutor(os.cpu_count() or 4) as ex:
+        for (sp, _), (i, tp, mean) in zip(items, ex.map(lambda x: measure(x[1]), items)):
+            per[sp].append((i if i is not None else (mean + 2.0 if mean is not None else None), tp))
+    rows = []
+    for sp, v in per.items():
+        ls = [x[0] for x in v if x[0] is not None]
+        if ls:
+            rows.append((sum(ls) / len(ls), sp, len(v), max(x[1] for x in v)))
+    for avg, sp, n, pk in sorted(rows):
+        print(f"{sp:>26} {avg:7.1f} LUFS  n={n:<4} max peak {pk:5.1f}")
+    allv = [r[0] for r in rows if r[2] >= 5]
+    print(f"spread (speakers with >=5 lines): {min(allv):.1f} .. {max(allv):.1f} LUFS")
+    sys.exit()
 if dry:
     sys.exit()
 
@@ -194,6 +252,12 @@ def gen(item):
 def pack():
     """Rebuild every bundle from the kept clips: lines grouped by source file, so a scene's lines share a bundle."""
     os.makedirs(OUT, exist_ok=True)
+    raw = [k for k in keep if (old_index.get(k) or [None] * 6)[5:6] != [LTAG] or k in fresh]
+    if raw:
+        print(f"normalising loudness of {len(raw)} clips to {LTAG}", flush=True)
+        with cf.ThreadPoolExecutor(os.cpu_count() or 4) as ex:
+            for k, d in zip(raw, ex.map(lambda k: normalise(keep[k][3]), raw)):
+                keep[k] = keep[k][:3] + (d,)
     order = sorted(keep.values(), key=lambda x: (x[0]["file"], x[0]["k"]))
     index, buf, n, files = {}, bytearray(), 0, []
     def flush():
@@ -207,7 +271,7 @@ def pack():
     for l, label, s, data in order:
         if len(buf) + len(data) > BUNDLE_MAX:
             flush()
-        index[l["k"]] = [f"b{n:02d}", len(buf), len(data), label, s]
+        index[l["k"]] = [f"b{n:02d}", len(buf), len(data), label, s, LTAG]
         buf += data
     flush()
     for f in os.listdir(OUT):
@@ -218,12 +282,14 @@ def pack():
     json.dump(index, open(os.path.join(OUT, "index.json"), "w"), separators=(",", ":"))
     print(f"packed {len(index)} lines into {n} bundles", flush=True)
 
+fresh = set()  # clips just recorded: always normalised
 done = 0
 with cf.ThreadPoolExecutor(int(os.environ.get("VOICE_THREADS", "6"))) as ex:
     for item, data in ex.map(gen, todo):
         done += 1
         if data:
             keep[item[0]["k"]] = (item[0], item[5], item[6], data)
+            fresh.add(item[0]["k"])
         elif old_clip(item[0]):  # failed: keep the previous recording rather than lose the line
             keep[item[0]["k"]] = (item[0], old_index[item[0]["k"]][3], old_sig(item[0]), old_clip(item[0]))
         if done % 100 == 0:
