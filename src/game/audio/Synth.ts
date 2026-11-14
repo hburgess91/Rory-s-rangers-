@@ -15,12 +15,15 @@ export const AUDIO_FILES: Record<string, string> = {
   /** THE CONCEPT OF PAEDOPHILIA's roars, and the withered old wizard behind it doing a YEE. */
   concept_roar: "audio/concept_roar.mp3",
   wizard_yee: "audio/wizard_yee.mp3",
+  /** The Cuddle Cronster's fight cries, in BOSS_TEXT.cronster.taunts order. */
+  cronster_taunt: "audio/cronster_taunt.mp3",
 };
 
 /** Where each separate shout sits in those files: [start, length] in seconds. */
 const SHOUTS: Record<string, [number, number][]> = {
   yee: [[0.9, 0.73], [2.25, 0.73], [4.69, 0.81], [6.17, 0.75], [7.44, 0.84], [8.73, 0.77], [9.94, 0.46], [11.06, 0.77], [12.2, 0.82], [13.33, 0.8], [14.62, 0.75], [15.98, 0.72], [17.33, 0.68], [18.59, 0.73]],
   concept_roar: [[0.3, 2.02], [2.82, 2.95], [6.27, 2.15], [8.92, 3.25]],
+  cronster_taunt: [[0.4, 1.8], [2.6, 2.19], [5.19, 1.42], [7.02, 1.47], [8.89, 1.78], [11.07, 1.82], [13.29, 2.67], [16.36, 2.98]],
   wizard_yee: [[0.3, 1.0], [1.8, 1.03], [3.33, 0.92], [4.74, 4.15]],
   yegh: [[0.7, 0.33], [1.2, 0.53], [2.81, 0.64], [4.32, 1.01], [6.46, 0.71], [8.19, 0.78], [9.99, 1.0], [11.24, 0.94], [12.5, 1.68]],
 };
@@ -544,11 +547,16 @@ export class Synth {
 
   /** Play part of a loaded recording with a fade-out. */
   /** One YEE (or YEGH), picked at random. */
-  shout(id: "yee" | "yegh" | "concept_roar" | "wizard_yee", vol = 0.9, rate?: number) {
+  /** True if there's a recorded bank of shouts called `id` (e.g. "cronster_taunt"). */
+  hasShout(id: string) {
+    return !!SHOUTS[id];
+  }
+
+  shout(id: string, vol = 0.9, rate?: number, index?: number) {
     const buf = this.files[id];
     const segs = SHOUTS[id];
     if (!this.ctx || !buf || !segs) return false;
-    const [off, len] = segs[Math.floor(Math.random() * segs.length)];
+    const [off, len] = segs[index !== undefined && segs[index] ? index : Math.floor(Math.random() * segs.length)];
     const t = this.ctx.currentTime;
     const src = this.ctx.createBufferSource();
     const g = this.ctx.createGain();

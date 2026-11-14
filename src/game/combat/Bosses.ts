@@ -200,7 +200,17 @@ export abstract class Boss extends Enemy {
 
   taunt() {
     const t = BOSS_TEXT[this.bossId]?.taunts ?? [];
-    if (t.length) this.world.floatText(this.x, this.y - this.displayHeight / 2 - 10, t[Math.floor(Math.random() * t.length)], "#ff6666", 16);
+    if (!t.length) return;
+    const i = Math.floor(Math.random() * t.length);
+    this.world.floatText(this.x, this.y - this.displayHeight / 2 - 10, t[i], "#ff6666", 16);
+    // bosses with recorded cries say it out loud (cronster_taunt: the same order as their taunts)
+    this.cry(i);
+  }
+
+  /** Say taunt number `i` out loud, if this boss has recorded cries. */
+  cry(i: number) {
+    const bank = `${this.bossId}_taunt`;
+    if (synth.hasShout(bank)) synth.shout(bank, 1, 1, i);
   }
 
   tick(dt: number, now: number) {
@@ -1070,6 +1080,7 @@ export class CronsterBoss extends Boss {
           const heal = Math.round(this.maxHp * 0.1);
           this.hp = Math.min(this.maxHp, this.hp + heal);
           this.world.floatText(this.x, this.y - 70, `+${heal} SO COSY`, "#86efac", 18);
+          this.cry(5);
           this.grab = null;
           this.nextPattern = now + 900;
         }
@@ -1083,6 +1094,7 @@ export class CronsterBoss extends Boss {
         const h = tied.sort((a, c) => Phaser.Math.Distance.Between(this.x, this.y, a.spr.x, a.spr.y) - Phaser.Math.Distance.Between(this.x, this.y, c.spr.x, c.spr.y))[0];
         this.grab = { h, until: 0 };
         this.world.floatText(this.x, this.y - 60, `${h.name.split(" ")[0]}! COME HERE!`, "#f9a8d4", 16);
+        this.cry(4);
         this.world.toast("HE'S GOING FOR A HOSTAGE", `Get to ${h.name} first and press E, or he'll cuddle them for health.`);
         return;
       }
@@ -1095,6 +1107,7 @@ export class CronsterBoss extends Boss {
         this.lungeUntil = 0;
         this.world.toast("CUDDLED", "He's squeezing out all your lovely juices. MASH ATTACK / DODGE to escape!");
         this.world.floatText(this.x, this.y - 60, "SWEET HUGS, SWEETER SQUEEZES", "#f9a8d4", 16);
+        this.cry(Math.random() < 0.5 ? 0 : 1);
       }
       return;
     }
@@ -1124,6 +1137,7 @@ export class CronsterBoss extends Boss {
     } else {
       for (let i = 0; i < 3; i++) this.world.enemyAoe(p.x + (i - 1) * 90, p.y + ((i % 2) * 2 - 1) * 40, 70, 16, 900, 0xf9a8d4);
       this.world.floatText(p.x, p.y - 70, "GROUP HUG", "#f9a8d4", 14);
+      this.cry(6);
       this.nextPattern = now + 1900;
     }
   }
