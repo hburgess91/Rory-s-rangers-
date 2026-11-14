@@ -172,6 +172,11 @@ export class TownMeetingScene extends Phaser.Scene {
   }
 
   private highlight(sp: SpeakerId) {
+    const fc = this.flashCast[sp as string];
+    if (this.flash && fc) {
+      this.tweens.add({ targets: fc, y: 342, yoyo: true, duration: 120 });
+      return;
+    }
     for (const s of Object.values(this.seats)) {
       s.sprite.clearTint();
       s.sprite.setFrame(0);
@@ -206,8 +211,76 @@ export class TownMeetingScene extends Phaser.Scene {
   private robbo: Phaser.GameObjects.Sprite | null = null;
 
   /** Staged moments in the room, cued by a line's `fx`. */
+  /** The Salem flashback: the museum over the room, and the people who were there. */
+  private flash: Phaser.GameObjects.Container | null = null;
+  private flashCast: Record<string, Phaser.GameObjects.Sprite> = {};
+
+  private salem(id: string): boolean {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    if (id === "salem_on") {
+      this.cameras.main.flash(300, 255, 240, 210);
+      const c = this.add.container(0, 0).setDepth(900);
+      if (this.textures.exists("bg_salem_museum")) {
+        const bg = this.add.image(W / 2, H / 2, "bg_salem_museum");
+        const src = this.textures.get("bg_salem_museum").getSourceImage();
+        bg.setScale(Math.max(W / src.width, H / src.height));
+        c.add(bg);
+      } else c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x2a1d14));
+      c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x5a3a1a, 0.18));
+      c.add(this.add.text(W / 2, 26, "SALEM, MASSACHUSETTS", { fontFamily: FONT, fontSize: "14px", color: "#f5e6c8", backgroundColor: "#00000099", padding: { x: 6, y: 3 } }).setOrigin(0.5));
+      this.flashCast = {};
+      const cast: [string, number][] = [["EDEN", 0.36], ["POLSON", 0.5], ["KREZMAR", 0.72], ["KREBLIS", 0.84]];
+      for (const [id2, fx] of cast) {
+        const key = `spr_${id2}`;
+        if (!this.textures.exists(key)) continue;
+        const spr = this.add.sprite(W * fx, 350, key, 0).setOrigin(0.5, 1);
+        spr.setScale(4.2);
+        c.add(spr);
+        this.flashCast[id2] = spr;
+      }
+      this.flash = c;
+      return true;
+    }
+    if (id === "salem_off") {
+      this.cameras.main.flash(300, 255, 240, 210);
+      this.flash?.destroy();
+      this.flash = null;
+      this.flashCast = {};
+      return true;
+    }
+    const cast = this.flashCast;
+    if (id === "eden_head" && cast.EDEN) {
+      const e = cast.EDEN;
+      this.tweens.add({ targets: e, angle: { from: -7, to: 7 }, yoyo: true, repeat: 4, duration: 120, onComplete: () => e.setAngle(0) });
+      const t = this.add.text(e.x, e.y - e.displayHeight - 6, "💫", { fontSize: "22px" }).setOrigin(0.5).setDepth(950);
+      this.tweens.add({ targets: t, y: t.y - 20, alpha: 0, duration: 1200, onComplete: () => t.destroy() });
+      return true;
+    }
+    if (id === "polson_sorry" && cast.POLSON) {
+      const pz = cast.POLSON;
+      // four little bows, one per sorry
+      this.tweens.add({ targets: pz, angle: 12, y: pz.y + 6, yoyo: true, repeat: 3, duration: 180, hold: 120 });
+      return true;
+    }
+    if (id === "spoons") {
+      for (const k of ["KREZMAR", "KREBLIS"]) {
+        const f = cast[k];
+        if (!f) continue;
+        // swing round to the spoon cabinet, suddenly fascinated
+        if (this.textures.get(f.texture.key).has("5")) f.setFrame(5);
+        this.tweens.add({ targets: f, x: f.x + 40, duration: 500, ease: "Sine.out" });
+        const t = this.add.text(f.x + 40, f.y - f.displayHeight - 4, "🥄", { fontSize: "18px" }).setOrigin(0.5).setDepth(950);
+        this.tweens.add({ targets: t, y: t.y - 16, alpha: 0, delay: 600, duration: 900, onComplete: () => t.destroy() });
+      }
+      return true;
+    }
+    return false;
+  }
+
   private fx(id: string) {
     const W = this.scale.width;
+    if (this.salem(id)) return;
     const cx = W / 2;
     const cy = 262;
     if (id === "robbo_enter") {
