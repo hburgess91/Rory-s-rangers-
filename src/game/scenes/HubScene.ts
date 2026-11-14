@@ -1004,9 +1004,13 @@ export class HubScene extends Phaser.Scene {
     ];
   }
 
+  /** The bombs planted round Wildern (gone when they go off). */
+  private wildernBombs: { x: number; y: number; objs: Phaser.GameObjects.GameObject[] }[] = [];
+
   private drawBomb(x: number, y: number) {
     const bomb = this.add.text(x, y, "💣", { fontSize: "26px" }).setOrigin(0.5).setDepth(y + 5);
     const led = this.add.circle(x + 9, y - 12, 3, 0xef4444).setDepth(y + 6);
+    this.wildernBombs.push({ x, y, objs: [bomb, led] });
     this.tweens.add({ targets: led, alpha: 0.1, yoyo: true, repeat: -1, duration: 260 });
     this.tweens.add({ targets: bomb, scale: 1.08, yoyo: true, repeat: -1, duration: 520 });
     return [bomb, led];
@@ -1014,6 +1018,7 @@ export class HubScene extends Phaser.Scene {
 
   private setupBombs() {
     const s = G.s;
+    this.wildernBombs = [];
     if (!(s.chapter === 1 && s.flags.ch1_clear && !s.flags.wildern_destroyed)) return;
     const b = BUILDINGS.find((x) => x.id === "WILDERN")!;
     this.bombSpots(b).forEach((sp, i) => {
@@ -1105,6 +1110,8 @@ export class HubScene extends Phaser.Scene {
     const spots = this.bombSpots(b);
     for (let i = 0; i < spots.length; i++) {
       boom(spots[i].x, spots[i].y, false);
+      // that bomb's gone now
+      for (const wb of this.wildernBombs.filter((q) => Math.hypot(q.x - spots[i].x, q.y - spots[i].y) < 30)) wb.objs.forEach((o) => o.destroy());
       await new Promise((r) => this.time.delayedCall(260, r));
     }
     for (let i = 0; i < 6; i++) {
@@ -1115,6 +1122,8 @@ export class HubScene extends Phaser.Scene {
     boom(b.x, b.y, true);
     // the school is gone
     s.flags.wildern_destroyed = true;
+    this.wildernBombs.forEach((wb) => wb.objs.forEach((o) => o.destroy()));
+    this.wildernBombs = [];
     const img = this.bImg.WILDERN;
     if (img && this.textures.exists("bld_WILDERN_RUIN")) {
       const bottom = b.y + b.h / 2;

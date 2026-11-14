@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { G } from "../G";
 import { synth } from "../audio/Synth";
+import { vfx } from "../gfx/Vfx";
 import { DialogueBox } from "../ui/DialogueBox";
 import { FONT, title } from "../ui/theme";
 import { runChain, switchTo, fadeThen } from "../Flow";
@@ -315,12 +316,40 @@ export class BeepBeepScene extends Phaser.Scene {
     }
     const pts = t.kind === "warden" ? 2 : 1;
     this.hits += pts;
+    // the thud: a heavy body hit, then a second softer one as they bounce off the roof
+    synth.play("punch_big");
     synth.play("hit");
-    synth.play("crit");
+    this.time.delayedCall(260, () => synth.play("punch"));
+    this.bloodHit(fromX, fromY - img.displayHeight * 0.4);
     // over the bonnet, over the roof, gone
     this.tweens.add({ targets: img, x: W / 2 + (Math.random() - 0.5) * 300, y: -120, angle: (Math.random() < 0.5 ? -1 : 1) * 900, scale: img.scale * 2.4, duration: 650, ease: "Quad.out", onComplete: () => img.setVisible(false) });
     this.pop(fromX, fromY - 120, t.kind === "warden" ? "TRAFFIC WARDEN x2!" : ["BUMP!", "BEEP BEEP!", "GET OUT THE WAY!", "BUMP BUMP!", "SPLAT"][Math.floor(Math.random() * 5)], t.kind === "warden" ? "#22d3ee" : "#f472b6");
     if (Math.random() < 0.55) this.bark(Math.random() < 0.7 ? "SANMIK" : "SANCHZ", t.kind === "warden" ? "DOUBLE POINTS!! YEEE!" : undefined);
+  }
+
+  /** Blood at the point of impact and across the windscreen (comedy dust and stars with gore off). */
+  private bloodHit(x: number, y: number) {
+    const gore = G.meta.settings.gore !== false;
+    if (!gore) {
+      for (let i = 0; i < 6; i++) {
+        const t = this.add.text(x + (Math.random() - 0.5) * 80, y + (Math.random() - 0.5) * 40, Math.random() < 0.5 ? "⭐" : "💫", { fontSize: "18px" }).setOrigin(0.5).setDepth(530);
+        this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+      }
+      return;
+    }
+    if (!vfx(this, "vfx_bloodspray", x, y, { scale: 2.2, depth: 515 })) vfx(this, "vfx_blood", x, y, { scale: 2, depth: 515 });
+    for (let i = 0; i < 14; i++) {
+      const d = this.add.circle(x, y, 3 + Math.random() * 5, Math.random() < 0.6 ? 0xb91c1c : 0x7f1d1d).setDepth(516);
+      this.tweens.add({ targets: d, x: x + (Math.random() - 0.5) * 260, y: y + (Math.random() - 0.4) * 180, alpha: 0, duration: 500 + Math.random() * 400, ease: "Quad.out", onComplete: () => d.destroy() });
+    }
+    // splats on the windscreen that slide down and fade
+    for (let i = 0; i < 2 + Math.floor(Math.random() * 3); i++) {
+      const sx = W * 0.2 + Math.random() * W * 0.6;
+      const sy = 90 + Math.random() * 140;
+      const splat = this.add.ellipse(sx, sy, 30 + Math.random() * 40, 22 + Math.random() * 30, 0xa50f0f, 0.85).setDepth(540).setScale(0.3);
+      this.tweens.add({ targets: splat, scale: 1, duration: 90, ease: "Back.out" });
+      this.tweens.add({ targets: splat, y: sy + 60, alpha: 0, delay: 900, duration: 2200, ease: "Sine.in", onComplete: () => splat.destroy() });
+    }
   }
 
   private pop(x: number, y: number, t: string, color: string) {
