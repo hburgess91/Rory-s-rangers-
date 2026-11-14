@@ -192,7 +192,7 @@ export const CHAPTERS: ChapterDef[] = [
       KREBON: [say("KREBON", "Six Krez Years I dreamed of a Crobley. One Crobley. Now look at it."), dir("You touch the hilt of your cane. Some things are worth fighting for. Sweets, mainly.")],
       CRONGUS: [say("CRONGUS", "Children's Minister. Children's sweets. Children's advert. This is my jurisdiction."), dir("Lil' Crongus, ministering.")],
       GRONNY: [say("GRONNY", "Crobley. Me like Crobley."), dir("It's a whole personality. You respect it.")],
-      MIKEY: [say("MIKEY", "FGM ULTRA. New target. Classification: chewy."), dir("Mikey's already made a lanyard.")],
+      MIKEY: [say("MIKEY", "FGM ULTRA. New target. Classification: chewy."), dir("You've already made a lanyard.")],
     },
     outro: [
       dir("Town Hall. Everyone smells faintly of candy and sausage. Nobody mentions it."),

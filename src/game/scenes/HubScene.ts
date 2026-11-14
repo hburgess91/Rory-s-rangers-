@@ -1038,7 +1038,7 @@ export class HubScene extends Phaser.Scene {
     const cam = this.cameras.main;
     this.busy = true;
     (this.av.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
-    await this.talk([say("MIKEY", "That's all four. Everybody back. BACK. Further than that."), dir("You all retreat behind a bin. Mikey holds up a detonator made out of a Nintendo Wii remote.")]);
+    await this.talk([say("MIKEY", "That's all four. Everybody back. BACK. Further than that."), dir("You all retreat behind a bin. Mikey holds up a detonator made out of a Nintendo Wii remote.", { variants: { MIKEY: "You all retreat behind a bin. You hold up a detonator made out of a Nintendo Wii remote." } })]);
     this.busy = true;
     synth.stopMusic();
     cam.stopFollow();
@@ -2321,7 +2321,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       }
       s.flags.rub_lamp = false;
       await this.talk([
-        dir("The Krezz Arms. In the back room, SanMik's magic lamp is on the bar, still glowing. It smells of corn."),
+        dir("The Krezz Arms. In the back room, SanMik's magic lamp is on the bar, still glowing. It smells of corn.", { variants: { MIKEY: "The Krezz Arms. In the back room, your magic lamp is on the bar, still glowing. It smells of corn." } }),
         { s: "NARRATOR", t: "Rub it?", dir: true, choice: [{ label: "Rub the lamp (into the SanMikverse)", set: { rub_lamp: true } }, { label: "Just go to the pub", set: { rub_lamp: false } }] },
       ]);
       if (s.flags.rub_lamp) {
@@ -2330,7 +2330,7 @@ You are required by law to sign the Sex Offenders Register.`, {
       }
     }
     if (b.id === "WILDERN" && (s.flags.wildern_destroyed || (s.chapter === 1 && s.flags.ch1_clear))) {
-      await this.talk([dir(s.flags.wildern_destroyed ? "A smoking crater. Bits of desk. A gold star, fluttering. Somewhere underneath it all, a bell tinkles." : "The doors are chained shut. Mikey's bombs need planting round the outside: look for the red circles.")]);
+      await this.talk([dir(s.flags.wildern_destroyed ? "A smoking crater. Bits of desk. A gold star, fluttering. Somewhere underneath it all, a bell tinkles." : "The doors are chained shut. Mikey's bombs need planting round the outside: look for the red circles.", s.flags.wildern_destroyed ? {} : { variants: { MIKEY: "The doors are chained shut. Your bombs need planting round the outside: look for the red circles." } })]);
       return;
     }
     // a locked dungeon door doesn't sound like it opened

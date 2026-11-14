@@ -276,7 +276,7 @@ export const KP_PROTOCOL: Line[] = [
 // ---------------------------------------------------------------- townhall_party: WE DID IT
 
 export const TP_OPEN: Line[] = [
-  dir("Krelford Town Hall. The victory party. SanMik and SanChz have been booked. Two strippers have been booked. They've kept their costumes on, because Krelford Council has rules, and the rules are laminated."),
+  dir("Krelford Town Hall. The victory party. SanMik and SanChz have been booked. Two strippers have been booked. They've kept their costumes on, because Krelford Council has rules, and the rules are laminated.", { variants: { MIKEY: "Krelford Town Hall. The victory party. You (as SanMik) and SanChz have been booked. Two strippers have been booked. They've kept their costumes on, because Krelford Council has rules, and the rules are laminated." } }),
   say("SANMIK", "Yee! 'Ello Krelford, you fucking legends! This one's called Gettin Crunk Wiv SanChz! It's about Kreddle being DEAD!"),
   say("SANCHZ", "Mork."),
 ];

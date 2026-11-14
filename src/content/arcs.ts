@@ -8,7 +8,7 @@ import { KR_AFTER, KR_BRAWL_INTRO, KR_LEAVE } from "./krunchers";
 export type ArcStepKind =
   /** pay: a bonus handed over when the conversation ends (Krezzcoin, with a toast). */
   | { kind: "dialogue"; lines: Line[]; pay?: { coins: number; title: string; text: string } }
-  | { kind: "quiz"; intro: Line[]; questions: { q: string; options: string[]; correct: number; wrong: string }[]; need: number; success: Line[]; fail: Line[] }
+  | { kind: "quiz"; intro: Line[]; questions: ArcQuestion[]; need: number; success: Line[]; fail: Line[] }
   /** drugs: after the intro, "Press D to take drugs", and a trip into the arena. */
   | { kind: "arena"; intro: Line[]; dungeon: string; drugs?: boolean }
   | { kind: "minigame"; intro: Line[]; mode: string; success: Line[]; fail: Line[] }
@@ -21,9 +21,20 @@ export type ArcStepKind =
   /** A free-for-all shoving match in town (at: "FIELD"): the Krunchers and the krew at `spot`. */
   | { kind: "shove"; spot: { x: number; y: number }; intro: Line[]; leave: Line[]; after: Line[]; seconds: number };
 
+/** A quiz question. `for` swaps in a player's own wording (playing as Mikey, a question about Mikey is about you). */
+export interface ArcQuestion {
+  q: string;
+  options: string[];
+  correct: number;
+  wrong: string;
+  for?: Partial<Record<PlayableId, Partial<Pick<ArcQuestion, "q" | "options" | "wrong">>>>;
+}
+
 export interface ArcStep {
   id: string;
   text: string;
+  /** The objective in a player's own words (shared quests that name that lad: "Mikey needs…" is "You need…" as Mikey). */
+  textFor?: Partial<Record<PlayableId, string>>;
   at: string;
   step: ArcStepKind;
   /** Plays straight away when you come back from the step before it (a cutscene or an arena) at the same place. */
@@ -44,7 +55,7 @@ export interface Arc {
   blurb: string;
   steps: ArcStep[];
   /** gun: a weapon handed over at the end (a full refill if you already have it). */
-  reward: { coins: number; desc: string; gun?: string };
+  reward: { coins: number; desc: string; gun?: string; descFor?: Partial<Record<PlayableId, string>> };
 }
 
 // ---- After the pudding raid: the demons inside Lulon's mind (a short arena, then the thanks)
@@ -186,7 +197,7 @@ export const ARCS: Arc[] = [
           kind: "vignette",
           id: "klerble_train",
           intro: [
-            dir("The FGM War Room. Everyone is crammed round the telly. Mikey has the remote. Mikey has always got the remote."),
+            dir("The FGM War Room. Everyone is crammed round the telly. Mikey has the remote. Mikey has always got the remote.", { variants: { MIKEY: "The FGM War Room. Everyone is crammed round the telly. You have the remote. You have always got the remote." } }),
             say("MIKEY", "Shh. SHH. Kreddle's doing a press conference."),
             { s: "NARRATOR", t: "", tv: "klerble_presser" },
             dir("The telly clicks off. Somebody's fizzy bongo has gone flat in their hand."),
@@ -771,7 +782,7 @@ export const ARCS: Arc[] = [
         id: "cctv",
         text: "Polson says he's at the gym. Check the FGM War Room surveillance feed (under the Archive).",
         at: "ARCHIVE",
-        step: { kind: "vignette", id: "polson_cctv", intro: [dir("A message from Polson: 'At the gym again 💪 might be a while'."), dir("Mikey's FGM War Room has a camera on everything. You pull up the Polson Towers feed. Just to check.")] },
+        step: { kind: "vignette", id: "polson_cctv", intro: [dir("A message from Polson: 'At the gym again 💪 might be a while'."), dir("Mikey's FGM War Room has a camera on everything. You pull up the Polson Towers feed. Just to check.", { variants: { MIKEY: "Your FGM War Room has a camera on everything. You pull up the Polson Towers feed. Just to check." } })] },
       },
       {
         id: "gym2",
@@ -855,21 +866,21 @@ export const ARCS: Arc[] = [
     player: "MIKEY",
     title: "The Modulator",
     blurb: "Banned for life from SAINTS vs POMPEY BANTER (18+). Again. Get back in, take over, and press the button.",
-    reward: { coins: 300, desc: "Mikey is the Modulator. POWERRRRRR. (New rule: admins are allowed to break rules.)" },
+    reward: { coins: 300, desc: "You are the Modulator. POWERRRRRR. (New rule: admins are allowed to break rules.)" },
     steps: [
       {
         id: "pizza_trial",
-        text: "Mikey's been banned from the banter group. Again. Check the laptop at home.",
+        text: "You've been banned from the banter group. Again. Check the laptop at home.",
         at: "HOME",
         step: {
           kind: "dialogue",
           lines: [
-            dir("Mikey's laptop. Facebrook. A notification: 'You have been removed from SAINTS vs POMPEY BANTER (18+).' Under it, nine more identical notifications, going back years."),
+            dir("Your laptop. Facebrook. A notification: 'You have been removed from SAINTS vs POMPEY BANTER (18+).' Under it, nine more identical notifications, going back years."),
             say("MIKEY", "Mate."),
             say("MIKEY", "Banned for life. Again."),
             say("THE COLONEL", "(group chat) Think carefully before you answer Michael! Did you eat all the pizza??"),
             say("MIKEY", "I did not eat all the pizza."),
-            dir("He ate all the pizza."),
+            dir("You ate all the pizza."),
             say("MIKEY", "The joke is that I fall out with the Colonel. Really nasty fall outs. I get banned for life. We say sorry. Repeat."),
             say("DRONGUS", "(ping) You'll be back in before midday."),
             dir("12 MIDDAY."),
@@ -883,11 +894,11 @@ export const ARCS: Arc[] = [
       },
       {
         id: "lost_property",
-        text: "Mikey has lost everything. Again. Find his stuff around Krelford.",
+        text: "You've lost everything. Again. Find your stuff around Krelford.",
         at: "FIELD",
         step: {
           kind: "collect",
-          label: "Mikey's stuff",
+          label: "Your stuff",
           pickup: [say("MIKEY", "YEEEE. Wot majik. Am a wizard.")],
           spots: [
             { x: 520, y: 1090, name: "passport" },
@@ -901,14 +912,14 @@ export const ARCS: Arc[] = [
       },
       {
         id: "russian_hackers",
-        text: "The Colonel won't let Mikey back in. Phone some 'contacts' from the pub payphone.",
+        text: "The Colonel won't let you back in. Phone some 'contacts' from the pub payphone.",
         at: "PUB",
         step: {
           kind: "dialogue",
           lines: [
-            dir("The Krezz Arms payphone. Mikey dials a number he says he 'got off a forum'."),
+            dir("The Krezz Arms payphone. You dial a number you say you 'got off a forum'."),
             say("MIKEY", "Ello. Is that the Russian hackers?"),
-            dir("Hold music. It's Kero Kero Bonito. Mikey nods along."),
+            dir("Hold music. It's Kero Kero Bonito. You nod along."),
             say("MIKEY", "...yeah. Yeah. Identity fraud. Lovely. Cheers lads."),
             say("MIKEY", "I spoke to the Russian hackers. They've got a document. He definitely ate the pizza. Not me. Him."),
             say("DRONGUS", "(ping, to the Colonel) To be fair I've seen him talk to Russians sometimes."),
@@ -947,12 +958,12 @@ export const ARCS: Arc[] = [
         step: {
           kind: "dialogue",
           lines: [
-            dir("Krelford Town Hall. Mikey has been lent a podium to run for moderator of a Facebook group. Nobody at the Town Hall knows why they agreed to this."),
+            dir("Krelford Town Hall. You have been lent a podium to run for moderator of a Facebook group. Nobody at the Town Hall knows why they agreed to this."),
             say("MIKEY", "Democracy in action. Can't wait to serve you all."),
             say("POLSON", "Mikey's gonna be a modulator."),
             say("MIKEY", "Moderator."),
             say("POLSON", "Modulator."),
-            dir("Votes are counted. Mikey wins. He was the only candidate, but he campaigned like he wasn't."),
+            dir("Votes are counted. You win. You were the only candidate, but you campaigned like you weren't."),
             say("MIKEY", "POWERRRRRR."),
             say("MIKEY", "First rule. NO PISSING OFF OR BADMOUTHING ADMINS. THANKS, ADMIN."),
             say("MIKEY", "New rule: admins are allowed to break rules."),
@@ -968,7 +979,7 @@ export const ARCS: Arc[] = [
           kind: "minigame",
           mode: "modulator",
           intro: [say("MIKEY", "Football banter group admins are the worst admins on Facebook."), say("MIKEY", "Makes it easier for us.")],
-          success: [say("MIKEY", "I've already lasted longer than the last mod."), dir("Mikey has been nominated for WORST ADMIN at the end-of-season awards. He is campaigning to win it.")],
+          success: [say("MIKEY", "I've already lasted longer than the last mod."), dir("You have been nominated for WORST ADMIN at the end-of-season awards. You are campaigning to win it.")],
           fail: [say("MIKEY", "Damage control is needed, Harry."), say("DRONGUS", "(ping) Need to cover tracks.")],
         },
       },
@@ -983,13 +994,13 @@ export const ARCS: Arc[] = [
             say("DRONGUS", "(ping) We need to prepare the nuclear option. Don't do it yet cause it's a nuclear option."),
             say("MIKEY", "Nuclear nuclear option."),
             say("MIKEY", "'Double nuclear option' is now a thing mate."),
-            dir("Mikey deletes three quarters of the group in one go."),
+            dir("You delete three quarters of the group in one go."),
             say("MIKEY", "I would've got the rest if it weren't for my boss walking over and distracting me for 2 mins."),
             dir("And then, one quiet week, the Colonel stops posting. Retired, they say. A caravan somewhere. Nobody knows."),
             say("MIKEY", "It's like your favourite TV show suddenly being cancelled."),
             say("MIKEY", "I miss the colnel."),
             say("MIKEY", "Ffs. Now I got nobody to play word game with."),
-            dir("Mikey leaves the group's cover photo as it is: a skateboarder in kneepads. A monument."),
+            dir("You leave the group's cover photo as it is: a skateboarder in kneepads. A monument."),
             say("MIKEY", "Right. Viral video next. Quarter million views. Then I'll have to stay out of Southampton for a while."),
           ],
         },
@@ -1041,18 +1052,19 @@ export const ARCS: Arc[] = [
     minChapter: 5,
     title: "The 50p Crusade",
     blurb: "The corner shop charged Mikey an illegal 50p card surcharge. He wants justice. He wants his 50p back.",
-    reward: { coins: 250, desc: "Justice for 50p. Mikey got his 50p back. You got 250. +250 Krezzcoin." },
+    reward: { coins: 250, desc: "Justice for 50p. Mikey got his 50p back. You got 250. +250 Krezzcoin.", descFor: { MIKEY: "Justice for 50p. You got your 50p back. And 250 on top. +250 Krezzcoin." } },
     steps: [
       {
         id: "evidence",
         text: "Mikey needs a witness. Meet him outside the Krelford Constabulary.",
+        textFor: { MIKEY: "You need a witness. Take your case to the Krelford Constabulary." },
         at: "POLICE",
         step: {
           kind: "dialogue",
           lines: [
             say("MIKEY", "Mate. They added fifty pence to my card. For using a card. It's illegal. I've checked."),
             say("MIKEY", "I went back and filmed the charge sheet. As evidence."),
-            dir("The desk sergeant looks at Mikey's phone for a long time. It is a video of a laminated sign that says '50p CARD CHARGE UNDER £5'."),
+            dir("The desk sergeant looks at Mikey's phone for a long time. It is a video of a laminated sign that says '50p CARD CHARGE UNDER £5'.", { variants: { MIKEY: "The desk sergeant looks at your phone for a long time. It is a video of a laminated sign that says '50p CARD CHARGE UNDER £5'." } }),
             say("SERGEANT", "Sir, this is a corner shop."),
             say("MIKEY", "I just wanted my 50p back 🤣"),
             say("MIKEY", "I'm reporting it to the Krelford Transport Authority too. They sell Oyster top-ups. It's in their terms."),
@@ -1066,13 +1078,13 @@ export const ARCS: Arc[] = [
         step: {
           kind: "quiz",
           need: 2,
-          intro: [dir("The Town Hall, out of session. Mikey has booked it for the afternoon with a form he designed himself."), say("MIKEY", "Right. Cross-examine me. I'm ready.")],
+          intro: [dir("The Town Hall, out of session. Mikey has booked it for the afternoon with a form he designed himself.", { variants: { MIKEY: "The Town Hall, out of session. You have booked it for the afternoon with a form you designed yourself." } }), say("MIKEY", "Right. Cross-examine me. I'm ready.")],
           questions: [
-            { q: "How much did the corner shop overcharge Mikey?", options: ["£5", "50p", "His dignity"], correct: 1, wrong: "50p. It's always been about the 50p." },
-            { q: "What did Mikey film as evidence?", options: ["The shopkeeper", "The charge sheet", "Himself crying"], correct: 1, wrong: "The charge sheet. Laminated. In landscape." },
-            { q: "Who is making money here?!", options: ["The shop", "Mikey", "Nobody. Who is making money here?!"], correct: 2, wrong: "Nobody. Who is making money here?!" },
+            { q: "How much did the corner shop overcharge Mikey?", options: ["£5", "50p", "His dignity"], correct: 1, wrong: "50p. It's always been about the 50p.", for: { MIKEY: { q: "How much did the corner shop overcharge you?", options: ["£5", "50p", "Your dignity"] } } },
+            { q: "What did Mikey film as evidence?", options: ["The shopkeeper", "The charge sheet", "Himself crying"], correct: 1, wrong: "The charge sheet. Laminated. In landscape.", for: { MIKEY: { q: "What did you film as evidence?", options: ["The shopkeeper", "The charge sheet", "Yourself crying"] } } },
+            { q: "Who is making money here?!", options: ["The shop", "Mikey", "Nobody. Who is making money here?!"], correct: 2, wrong: "Nobody. Who is making money here?!", for: { MIKEY: { options: ["The shop", "You", "Nobody. Who is making money here?!"] } } },
           ],
-          success: [dir("The shop refunds 50p. Mikey holds it up to the light like a medal."), say("MIKEY", "Classic Nevitt. Justice is served. Luv a gud redemshun ark.")],
+          success: [dir("The shop refunds 50p. Mikey holds it up to the light like a medal.", { variants: { MIKEY: "The shop refunds 50p. You hold it up to the light like a medal." } }), say("MIKEY", "Classic Nevitt. Justice is served. Luv a gud redemshun ark.")],
           fail: [say("MIKEY", "Ignorant! Again. From the top.")],
         },
       },
@@ -1089,6 +1101,7 @@ export const ARCS: Arc[] = [
       {
         id: "launch",
         text: "SanMik's single launch. Mikey's at the Town Hall rehearsing the cabinet.",
+        textFor: { MIKEY: "SanMik's single launch. Your single. Get to the Town Hall and rehearse the cabinet." },
         at: "TOWN_HALL",
         step: {
           kind: "dialogue",
@@ -1096,7 +1109,7 @@ export const ARCS: Arc[] = [
             dir("The Town Hall. The horseshoe table has been pushed against the wall. Nine grown men stand in a line, arms by their sides, faces like a funeral."),
             say("MIKEY", "Right. The sixth SanMik album. Two songs. That counts. The lead single: 'Do The Crocodile'."),
             say("MIKEY", "You take your left hand. And go like this."),
-            dir("Mikey raises his left arm above his head and bends it into a jaw. He holds eye contact with you the entire time."),
+            dir("Mikey raises his left arm above his head and bends it into a jaw. He holds eye contact with you the entire time.", { variants: { MIKEY: "You raise your left arm above your head and bend it into a jaw. You hold eye contact with the cabinet the entire time." } }),
             say("SCROMBUS", "Is there a reason we're doing this?"),
             say("MIKEY", "Lots More animal sounds in next SanMik album. What sound does a crocodile make?"),
             say("KREZWONK", "I have foreseen the dance. Something terrible follows it."),
@@ -1134,7 +1147,7 @@ export const ARCS: Arc[] = [
         step: {
           kind: "dialogue",
           lines: [
-            dir("The FGM War Room. Mikey has a CCTV still on the big screen: Lil' Crongus, at night, looking over his shoulder, outside the abandoned building. He is holding a spoon."),
+            dir("The FGM War Room. Mikey has a CCTV still on the big screen: Lil' Crongus, at night, looking over his shoulder, outside the abandoned building. He is holding a spoon.", { variants: { MIKEY: "The FGM War Room. You've got a CCTV still on the big screen: Lil' Crongus, at night, looking over his shoulder, outside the abandoned building. He is holding a spoon." } }),
             say("MIKEY", "Lulon. Three nights in a row. Same building. Comes out walking like he's seen God and didn't like it."),
             say("KREBLIS", "Ministry assessment…"),
             say("KREBLIS", "He is up to some sick shit 👍"),
@@ -1225,7 +1238,29 @@ export function arcFor(player: PlayableId): Arc | undefined {
   return ARCS.find((a) => a.player === player);
 }
 
-/** The player's own story first, then the shared ones. */
+/** An arc as this player sees it: `textFor` / `for` / `descFor` swapped in. Untouched arcs are returned as they are. */
+function arcAs(a: Arc, player: PlayableId): Arc {
+  const hasStep = a.steps.some((st) => st.textFor?.[player] !== undefined || (st.step.kind === "quiz" && st.step.questions.some((q) => q.for?.[player])));
+  if (!hasStep && a.reward.descFor?.[player] === undefined) return a;
+  return {
+    ...a,
+    reward: { ...a.reward, desc: a.reward.descFor?.[player] ?? a.reward.desc },
+    steps: a.steps.map((st) => {
+      const text = st.textFor?.[player] ?? st.text;
+      const k = st.step;
+      if (k.kind !== "quiz") return text === st.text ? st : { ...st, text };
+      return { ...st, text, step: { ...k, questions: k.questions.map((q) => (q.for?.[player] ? { ...q, ...q.for[player] } : q)) } };
+    }),
+  };
+}
+
+const ARCS_FOR = new Map<PlayableId, Arc[]>();
+/** The player's own story first, then the shared ones (cached, so the same step objects come back every call). */
 export function arcsFor(player: PlayableId): Arc[] {
-  return [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)];
+  let out = ARCS_FOR.get(player);
+  if (!out) {
+    out = [...ARCS.filter((a) => a.player === player), ...ARCS.filter((a) => a.player === "ALL" && a.notPlayer !== player)].map((a) => arcAs(a, player));
+    ARCS_FOR.set(player, out);
+  }
+  return out;
 }

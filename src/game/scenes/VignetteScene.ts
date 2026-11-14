@@ -1620,7 +1620,7 @@ export class VignetteScene extends Phaser.Scene {
     lamp.add(this.add.ellipse(0, -14, 22, 12, 0xe8b923));
     synth.music("majek_lampe", true);
     await this.talk([
-      dir("The back room of the Krezz Arms, after the gig. SanMik is lying face-down on the stage 'cooling down'. SanChz is eating the setlist."),
+      dir("The back room of the Krezz Arms, after the gig. SanMik is lying face-down on the stage 'cooling down'. SanChz is eating the setlist.", { variants: { MIKEY: "The back room of the Krezz Arms, after the gig. You are lying face-down on the stage 'cooling down'. SanChz is eating the setlist." } }),
       say("SANMIK", "Yee. 'Ello me dearies. How you all fucking doing, you fucking pricks."),
       say("SANMIK", "Found this in the skip out the back. Magic lamp. Looks like a naughty little dildo and it smells like rank fanny juice. Proper vintage."),
       say("SANCHZ", "Rub it."),
@@ -1707,7 +1707,7 @@ export class VignetteScene extends Phaser.Scene {
     banner(750, "SANCHZ NATION", 0x2563eb);
     const chant = (ps: Phaser.GameObjects.Sprite[], t: string) => this.people(ps, t);
     await this.talk([
-      dir("Krelford Town Hall. On the left steps: SanMik, a megaphone, three confused pensioners and a hand-painted banner. On the right steps: SanChz, a different megaphone, three different confused pensioners and a different banner."),
+      dir("Krelford Town Hall. On the left steps: SanMik, a megaphone, three confused pensioners and a hand-painted banner. On the right steps: SanChz, a different megaphone, three different confused pensioners and a different banner.", { variants: { MIKEY: "Krelford Town Hall. On the left steps: you, a megaphone, three confused pensioners and a hand-painted banner. On the right steps: SanChz, a different megaphone, three different confused pensioners and a different banner." } }),
       dir("In the middle: Gabor the Goat, wearing a rosette from each side."),
       say("KREBLIS", "Krelmergency… there are two nations on my steps and neither of them has filled in the form"),
       say("KREBLIS", "Wot a story eh"),
@@ -1807,7 +1807,7 @@ export class VignetteScene extends Phaser.Scene {
     synth.music("ggg12");
     await this.talk([
       dir("That evening, on the Town Hall steps, the San Brothers hold a joint state ceremony to found the United SanMik & SanChz Nation (population: 2, and a goat)."),
-      dir("To mark the occasion, SanMik removes his tracksuit to reveal a red velvet Santa G-string. It is October. Nobody asked."),
+      dir("To mark the occasion, SanMik removes his tracksuit to reveal a red velvet Santa G-string. It is October. Nobody asked.", { variants: { MIKEY: "To mark the occasion, you remove your tracksuit to reveal a red velvet Santa G-string. It is October. Nobody asked." } }),
     ]);
     this.tweens.add({ targets: [m2, hat], angle: { from: -10, to: 10 }, yoyo: true, repeat: -1, duration: 160 });
     this.tweens.add({ targets: m2, scaleX: 3.7, yoyo: true, repeat: -1, duration: 160 });
@@ -1819,13 +1819,13 @@ export class VignetteScene extends Phaser.Scene {
       say(this.youTo("KREBLIS"), "You're in a G-string."),
       say("SANMIK", "Best dressed, blud."),
       say("SANCHZ", "Everyone knows he's solid. No cunt touches him."),
-      dir("Gabor the Goat headbutts SanMik in the bum. SanMik falls down the Town Hall steps, all of them, one at a time, still twerking."),
+      dir("Gabor the Goat headbutts SanMik in the bum. SanMik falls down the Town Hall steps, all of them, one at a time, still twerking.", { variants: { MIKEY: "Gabor the Goat headbutts you in the bum. You fall down the Town Hall steps, all of them, one at a time, still twerking." } }),
       gabor("Sorry SanMik. Sorry. I love you. You're my best friend. Headbutt me back. Please. PLEASE."),
       ping("DRONGUS", "Who let Mikey start a country"),
       ping("DRONGUS", "And why is there a goat in the group chat"),
       ping("MIKEY", "Can someone react to my message pls"),
       ping("MIKEY", "The nation one"),
-      dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour sends a card. It says 'So proud of you both x'. It smells faintly of lavender."),
+      dir("SanMik and SanChz are friends again. The hot tub has been sealed in concrete. Begour sends a card. It says 'So proud of you both x'. It smells faintly of lavender.", { variants: { MIKEY: "You and SanChz are friends again. The hot tub has been sealed in concrete. Begour sends a card. It says 'So proud of you both x'. It smells faintly of lavender." } }),
     ]);
     G.s.flags.sanmik_nation = true;
     synth.stopMusic();
