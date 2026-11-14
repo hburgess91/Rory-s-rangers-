@@ -21,8 +21,8 @@ export const WONK_ART: Record<string, { frames: number[]; bar: [number, number, 
   spr_KREBLIS: { frames: range(96), bar: [21, 46, 39, 53] },
   // Polson's sheet had no wonk row; it is the 7th row (frames 48-55), registered in BootScene
   spr_POLSON: { frames: range(48), bar: [21, 49, 39, 56] },
-  // SanMik (Mikey's alter ego): an 8th row (frames 56-63) drawn from his south walk pose, registered in BootScene
-  spr_SANMIK: { frames: range(56), bar: [23, 44, 41, 51] },
+  // SanMik (Mikey's alter ego): the 8th row (frames 56-63), drawn from his south idle pose
+  spr_SANMIK: { frames: range(56), bar: [23, 49, 41, 56] },
   // Dark Drongus's boss sheet (128x128 frames): his wonk is the second row (DarkDrongus.ts DD_WONK_F)
   boss_dark_drongus: { frames: range(16), bar: [42, 84, 86, 104] },
 };

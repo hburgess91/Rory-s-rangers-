@@ -133,7 +133,7 @@ export function bindSanmikToggle(scene: Phaser.Scene, opts: SanmikToggleOpts) {
     opts.onSwap?.(on);
     if (on && !G.s.flags.sanmik_tip) {
       G.s.flags.sanmik_tip = true;
-      G.emit("toast", { title: "SANMIK", text: `Afro, shades, gold shell suit. Same Mikey underneath. ${prettyKey(keysFor("sanmik")[0] ?? "V")} to change back.` });
+      G.emit("toast", { title: "SANMIK", text: `Afro, shades, drawn-on goatee, shirt open. Same Mikey underneath. ${prettyKey(keysFor("sanmik")[0] ?? "V")} to change back.` });
     }
   };
   const onKey = (e: KeyboardEvent) => {
