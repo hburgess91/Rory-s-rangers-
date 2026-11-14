@@ -30,6 +30,7 @@ import { DUNGEONS } from "../../data/dungeons";
 import { MEETINGS } from "../../content/meetings";
 import { animateWalker, charMeta, feetBody, leadCamera, steer } from "../gfx/HD";
 import { Beatup } from "./hub/Beatup";
+import { POLSON_CHATS, polsonVisit } from "../../content/polsonChats";
 import { takeDrugs, tripInto } from "./hub/drugs";
 import { clock, weatherFor } from "../systems/clock";
 import * as KR from "../../content/krunchers";
@@ -2278,9 +2279,10 @@ You are required by law to sign the Sex Offenders Register.`, {
         return "Krelford International";
       case "CITADEL":
         return `DA DRONGUS DUNGEON (sealed: ${crystalCount(s)}/${CRYSTALS_NEEDED} cum crystals)`;
+      case "POLSON_ROAD":
+        return s.flags.ch3_clear && POLSON_CHATS.length ? "Polson Towers (pop round for a chat)" : `${b.name} (not this chapter)`;
       case "WILDERN":
       case "MINISTRY":
-      case "POLSON_ROAD":
         return `${b.name} (not this chapter)`;
     }
     return b.name;
@@ -2311,6 +2313,12 @@ You are required by law to sign the Sex Offenders Register.`, {
         return;
       }
       this.go("Kreddle", {});
+      return;
+    }
+    // after Chapter 3, Polson Towers is open for a chat (straight out of the real Messenger logs)
+    if (b.id === "POLSON_ROAD" && s.flags.ch3_clear && POLSON_CHATS.length && chapterDef(s.chapter).dungeonDoor !== "POLSON_ROAD") {
+      await this.talk(polsonVisit(s));
+      G.save();
       return;
     }
     if (b.id === "TOWN_HALL" && s.chapter === 6 && (await this.chapter6TownHall())) return;
