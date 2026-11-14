@@ -279,6 +279,17 @@ export class KrelfordFinale {
       for (let gx = 0; gx < 4; gx++)
         for (let gy = 0; gy < 4; gy++) vfx(sc, "vfx_rain", 0 + gx * 320, -40 + gy * 200, { fixed: true, scale: 2, depth: 955, alpha: 0.55, speed: 1.5, angle: 12 })?.anims.setProgress(Math.random());
     synth.weatherSound("storm");
+    // the storm's own sheet lightning, far off: a flicker over the whole town, then the rumble rolls in
+    const sheet = () => {
+      if (!sc.sys?.isActive() || G.s.flags.finale_dawn) return;
+      const cam = sc.cameras.main;
+      const flick = (d: number, a: number) => sc.time.delayedCall(d, () => cam.flash(90, 170 * a, 160 * a, 230 * a, true));
+      flick(0, 0.7);
+      if (Math.random() < 0.6) flick(150, 0.5);
+      sc.time.delayedCall(400 + Math.random() * 1400, () => synth.play(Math.random() < 0.5 ? "thunder_1" : "thunder_2"));
+      sc.time.delayedCall(6000 + Math.random() * 9000, sheet);
+    };
+    sc.time.delayedCall(4000, sheet);
   }
 
   /** The chat logs, still glowing in a puddle (you never got to pick them up). */

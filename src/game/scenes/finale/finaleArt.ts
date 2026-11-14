@@ -27,6 +27,8 @@ export const bottleKey = (s: Phaser.Scene) => (s.textures.exists("fr_bottle") ? 
 export const syringeKey = (s: Phaser.Scene) => (s.textures.exists("fr_syringe") ? "fr_syringe" : null);
 export const FINALE_SHEETS: Record<string, { file: string; frameWidth: number; frameHeight: number }> = {
   fb_dragon_top: { file: "finale/fb_dragon_top.png", frameWidth: 256, frameHeight: 256 },
+  /** its roar: jaw half open, then gaping (glowing throat) */
+  fb_dragon_roar: { file: "finale/fb_dragon_roar.png", frameWidth: 256, frameHeight: 256 },
   fb_aura: { file: "finale/fb_aura.png", frameWidth: 96, frameHeight: 112 },
   fb_lightning: { file: "finale/fb_lightning.png", frameWidth: 96, frameHeight: 128 },
   fb_horror: { file: "finale/fb_horror.png", frameWidth: 48, frameHeight: 48 },

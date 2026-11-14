@@ -38,6 +38,8 @@ export class ConceptBoss extends Boss {
   private wizard: Phaser.GameObjects.Image;
   private nextBark = 0;
   private nextStrike = 0;
+  private nextCackle = 0;
+  private roaringUntil = 0;
   private home: { x: number; y: number };
   private lastShrug = 0;
   /** Where it may roam. */
@@ -66,6 +68,7 @@ export class ConceptBoss extends Boss {
     this.wizard = w.sc.add.image(x, y, wk, 0).setOrigin(0.5, 1).setScale(wk === "fb_wizard" ? 4.4 : 4.4).setTint(0x8b5cf6).setAlpha(0).setBlendMode(Phaser.BlendModes.SCREEN);
     this.nextBark = w.now() + 6000;
     this.nextStrike = w.now() + 3000;
+    this.nextCackle = w.now() + 9000;
     this.on("destroy", () => this.wizard.destroy());
   }
 
@@ -108,7 +111,7 @@ export class ConceptBoss extends Boss {
     this.healing = true;
     const sc = this.scene;
     synth.play("heal");
-    synth.play("roar");
+    this.roar();
     this.world.shake(ms, 0.01);
     this.world.floatText(this.x, this.y - this.displayHeight * 0.45, CONCEPT_HEAL, "#e9d5ff", 22);
     if (hasVfx(sc, "vfx_heal")) vfx(sc, "vfx_heal", this.x, this.y + 40, { scale: 5, depth: this.depth + 2, tint: 0xa855f7 });
@@ -155,7 +158,13 @@ export class ConceptBoss extends Boss {
     if (now >= this.nextBark) {
       this.nextBark = now + 7000 + Math.random() * 6000;
       this.world.floatText(this.x, this.y - this.displayHeight * 0.48, Phaser.Utils.Array.GetRandom(CONCEPT_BARKS) as string, "#d8b4fe", 16);
-      synth.play("roar");
+      this.roar();
+    }
+    // now and then the wizard behind it shows himself, and YEEs
+    if (now >= this.nextCackle) {
+      this.nextCackle = now + 11000 + Math.random() * 9000;
+      this.revealWizard();
+      this.wizardYee();
     }
     this.pattern(dt, now);
   }
@@ -187,7 +196,45 @@ export class ConceptBoss extends Boss {
       sc.cameras.main.flash(160, 200, 190, 255, true);
       synth.play(Math.random() < 0.5 ? "thunder_1" : "thunder_2");
       this.revealWizard();
+      if (Math.random() < 0.2 && this.world.now() > this.nextCackle - 8000) {
+        this.nextCackle = this.world.now() + 9000 + Math.random() * 6000;
+        sc.time.delayedCall(250, () => this.active && this.wizardYee());
+      }
     });
+  }
+
+  /** A demonic roar: the jaws open wide (glowing throat), the ground shakes, then it shuts its mouth again. */
+  roar() {
+    const sc = this.scene;
+    const now = this.world.now();
+    if (now < this.roaringUntil) return;
+    this.roaringUntil = now + 2200;
+    if (!synth.shout("concept_roar", 1, 0.9 + Math.random() * 0.15)) synth.play("roar");
+    this.world.shake(1300, 0.006);
+    if (!this.art || !sc.textures.exists("fb_dragon_roar")) return;
+    this.anims.stop();
+    this.setTexture("fb_dragon_roar", 0);
+    sc.time.delayedCall(110, () => this.active && !this.dead && this.texture.key === "fb_dragon_roar" && this.setFrame(1));
+    // its head rears: a little swell while it bellows
+    const sx = this.scaleX;
+    const sy = this.scaleY;
+    sc.tweens.add({ targets: this, scaleX: sx * 1.04, scaleY: sy * 1.06, duration: 260, yoyo: true, hold: 1100, ease: "Sine.out" });
+    sc.time.delayedCall(1500, () => this.active && !this.dead && this.texture.key === "fb_dragon_roar" && this.setFrame(0));
+    sc.time.delayedCall(1650, () => {
+      if (!this.active || this.dead) return;
+      this.play("fb_dragon_top");
+    });
+  }
+
+  /** The withered old wizard behind it, doing a SanMik YEE in a voice like a dry reed. */
+  wizardYee() {
+    if (!synth.shout("wizard_yee", 0.95, 0.96 + Math.random() * 0.08)) return;
+    const t = this.scene.add
+      .text(this.x + 90, this.y - this.displayHeight * 0.42, Phaser.Utils.Array.GetRandom(["Yeeeee…", "YEEEEEEE", "yee… yee… yeeeee", "YEE-HEE-HEE"]) as string, { fontFamily: "Georgia, serif", fontSize: "26px", color: "#c4b5fd", fontStyle: "italic", stroke: "#12002a", strokeThickness: 6 })
+      .setOrigin(0.5)
+      .setDepth(this.depth + 5)
+      .setAlpha(0);
+    this.scene.tweens.add({ targets: t, alpha: 0.95, y: t.y - 20, duration: 400, yoyo: true, hold: 900, onComplete: () => t.destroy() });
   }
 
   revealWizard() {
