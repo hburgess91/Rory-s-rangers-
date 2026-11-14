@@ -6761,9 +6761,9 @@
   },
   "boss_brand": {
    "file": "combat/boss_brand.png",
-   "frameWidth": 80,
-   "frameHeight": 120,
-   "hd": 0.4167
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "boss_cronster": {
    "file": "combat/boss_cronster.png",
@@ -6797,9 +6797,9 @@
   },
   "boss_krozno": {
    "file": "combat/boss_krozno.png",
-   "frameWidth": 88,
-   "frameHeight": 128,
-   "hd": 0.3846
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
   },
   "boss_lorelord": {
    "file": "combat/boss_lorelord.png",
@@ -7641,6 +7641,30 @@
    "frameWidth": 96,
    "frameHeight": 144,
    "hd": 0.3333
+  },
+  "bossanim_brand": {
+   "file": "combat/bossanim_brand.png",
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
+  },
+  "bossanim_flatmate": {
+   "file": "combat/bossanim_flatmate.png",
+   "frameWidth": 80,
+   "frameHeight": 120,
+   "hd": 0.4167
+  },
+  "bossanim_krozno": {
+   "file": "combat/bossanim_krozno.png",
+   "frameWidth": 96,
+   "frameHeight": 160,
+   "hd": 0.375
+  },
+  "bossanim_stanley": {
+   "file": "combat/bossanim_stanley.png",
+   "frameWidth": 88,
+   "frameHeight": 128,
+   "hd": 0.3846
   }
  },
  "vfx": {
