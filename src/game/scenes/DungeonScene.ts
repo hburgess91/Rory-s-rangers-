@@ -609,7 +609,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
     const themeTile = `tile_${r.theme}`;
     if (r.theme === "mind") this.mindTile();
     this.add.tileSprite(0, 0, r.w, r.h, themeTile).setOrigin(0).setDepth(0);
-    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a, mind: 0xb0246b, citadel: 0x140c1c }[r.theme];
+    const wallCol = { school: 0x6b5b4b, mansion: 0x3b2a1a, lounge: 0xd9ccae, network: 0x0b1530, industrial: 0x1f2937, temple: 0x4a3a2a, prison: 0x111827, wiki: 0xa2a9b1, colon: 0x7a1f3a, mind: 0xb0246b, citadel: 0x140c1c }[r.theme];
     const g = this.add.graphics().setDepth(1);
     g.fillStyle(wallCol, 1);
     g.fillRect(0, 0, r.w, 24);
@@ -670,6 +670,7 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
 
   private decorate(r: RoomDef) {
     const rnd = new Phaser.Math.RandomDataGenerator([`${this.dungeon.id}${this.roomIdx}`]);
+    if (r.theme === "lounge") return this.decorateLounge(r);
     // PixelLab set dressing along the walls, clear of the centre lane and the door
     const decor = [0, 1, 2].map((i) => `dec_${r.theme}_${i}`).filter((k) => this.textures.exists(k));
     if (decor.length) {
@@ -714,6 +715,32 @@ export class DungeonScene extends Phaser.Scene implements CombatWorld {
       this.add.text(60 + i * (r.w / Math.max(1, list.length)), r.h - 46, txt, { fontFamily: FONT, fontSize: "10px", color: "#ffffff" }).setAlpha(0.35).setDepth(2);
     });
     if (r.theme === "industrial") for (let x = 40; x < r.w - 40; x += 64) this.add.image(x, 34, "p_pipe").setScale(2).setDepth(1).setAlpha(0.8);
+  }
+
+  /**
+   * Polson's front room, cleared for the fight: the furniture's shoved back against the walls (sofa bed folded up,
+   * the telly, the fireplace, the guitar case, the cans), the rug in the middle, the curtains drawn behind.
+   */
+  private decorateLounge(r: RoomDef) {
+    const put = (key: string, x: number, y: number, block?: [number, number], depth?: number) => {
+      if (!this.textures.exists(key)) return;
+      this.add.image(x, y, key).setOrigin(0.5, 1).setDepth(depth ?? y).setScale(2.2);
+      if (block) this.obstacles.add(this.add.rectangle(x, y - block[1] / 2, block[0], block[1], 0, 0));
+    };
+    if (this.textures.exists("lounge_rug")) this.add.image(r.w / 2, r.h / 2 + 30, "lounge_rug").setDepth(1).setScale(3.2).setAlpha(0.95);
+    // the back wall: the bay window with the curtains drawn, the sign, the cheese
+    put("lounge_window", r.w * 0.3, 64, undefined, 2);
+    put("lounge_sign", r.w * 0.1, 50, undefined, 2);
+    put("lounge_cheese", r.w * 0.68, 52, undefined, 2);
+    // shoved against the walls
+    put("dec_lounge_1", r.w * 0.86, 150, [110, 50]);
+    put("dec_lounge_2", r.w - 70, r.h * 0.5, [100, 70]);
+    put("lounge_guitar", r.w - 70, r.h * 0.5 + 150, [50, 40]);
+    put("dec_lounge_0", 170, r.h - 30, [120, 60]);
+    put("lounge_table", 320, r.h - 30, [50, 40]);
+    put("lounge_lamp", r.w / 2, 150, undefined, 5000);
+    const notes = ["Polson Towers Wi-Fi: cheese", "THE SOFA BED HAS BEEN OUT SINCE 2022", "Shoes OFF"];
+    notes.forEach((txt, i) => this.add.text(60 + i * (r.w / notes.length), r.h - 46, txt, { fontFamily: FONT, fontSize: "10px", color: "#3b2a1a" }).setAlpha(0.45).setDepth(2));
   }
 
   /** Lulon's mind: a warm custard floor with pink swirls (drawn here; no art needed). */

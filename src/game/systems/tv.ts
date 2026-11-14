@@ -2,7 +2,7 @@
 
 export type TVBeat =
   | { type: "shot"; set: string; framing: string; duration?: number }
-  | { type: "speaker"; character: string; text: string; emotion?: string }
+  | { type: "speaker"; character: string; text: string; emotion?: string; mood?: string }
   | { type: "direction"; action: string }
   | { type: "sfx"; id: string }
   | { type: "music"; id: string; mode: "start" | "stop" | "fade" }
@@ -23,8 +23,15 @@ export interface TVEpisode {
   unlockFlag?: string;
   unlockHint?: string;
   contentNote?: string;
+  /** "pov": point-of-view presentation (big close-ups, the narrator's view under V.O., animated action; see TVPov.ts). */
+  style?: "pov";
+  /** Extra set art for this episode: a word in the scene heading -> backdrop key (tv_<key>), checked before the usual sets. */
+  sets?: Record<string, string>;
   beats: TVBeat[];
 }
+
+/** Delivery for inner-monologue lines. */
+export const VO_MOOD = "quietly, thoughtful";
 
 const AUDIENCE_CUES: Record<string, "laugh" | "biglaugh" | "cheer" | "gasp" | "whistle"> = {
   LAUGHTER: "laugh",
@@ -51,6 +58,7 @@ const AUDIENCE_CUES: Record<string, "laugh" | "biglaugh" | "cheer" | "gasp" | "w
  *   EXT. SOME PLACE - DAY            -> shot
  *   NAME: line of dialogue           -> speaker
  *   NAME (emotion): line             -> speaker with emotion
+ *   NAME (V.O.): line                -> inner monologue (same voice, recorded with VO_MOOD)
  *   (stage direction)                -> direction
  *   [LAUGHTER] / [CHEERING] ...      -> audience
  *   [SMASH CUT] [CUT] [FADE]         -> transition
@@ -106,7 +114,10 @@ export function parseScreenplay(text: string): TVBeat[] {
     }
     const sp = line.match(/^([A-Z][A-Z0-9 .'’\-]+?)(?:\s*\(([^)]+)\))?:\s*(.+)$/);
     if (sp) {
-      beats.push({ type: "speaker", character: sp[1].trim(), text: sp[3].trim().replace(/^["“]|["”]$/g, ""), emotion: sp[2]?.trim() });
+      const emotion = sp[2]?.trim();
+      // (V.O.) = inner monologue: the speaker's own voice, recorded as a quiet thought (scripts/voice-gen.py reads `mood`)
+      const vo = !!emotion && /^V\.?\s*O\.?$/i.test(emotion);
+      beats.push({ type: "speaker", character: sp[1].trim(), text: sp[3].trim().replace(/^["“]|["”]$/g, ""), emotion, ...(vo ? { mood: VO_MOOD } : {}) });
       continue;
     }
     beats.push({ type: "direction", action: line });

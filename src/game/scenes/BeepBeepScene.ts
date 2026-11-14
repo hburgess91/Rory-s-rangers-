@@ -46,6 +46,8 @@ export class BeepBeepScene extends Phaser.Scene {
   private things: Thing[] = [];
   private pos = 0;
   private speed = 0;
+  /** The engine: two detuned sawtooths through a low-pass, pitched and opened up by speed. */
+  private engine: { oscs: OscillatorNode[]; filt: BiquadFilterNode; gain: GainNode } | null = null;
   private px = 0;
   private hits = 0;
   private left = TIME;
@@ -148,6 +150,7 @@ export class BeepBeepScene extends Phaser.Scene {
       ])
       .then(() => {
         this.running = true;
+        this.startEngine();
         this.banner.setText(LYRICS[0]);
       });
   }
@@ -191,7 +194,62 @@ export class BeepBeepScene extends Phaser.Scene {
     });
   }
 
+  private startEngine() {
+    const ctx = synth.ctx;
+    if (!ctx || this.engine) return;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    const filt = ctx.createBiquadFilter();
+    filt.type = "lowpass";
+    filt.frequency.value = 400;
+    filt.Q.value = 6;
+    const oscs = [0, 7].map((det) => {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = 38;
+      o.detune.value = det;
+      o.connect(filt);
+      o.start();
+      return o;
+    });
+    // a bit of grit: a square an octave down
+    const sub = ctx.createOscillator();
+    sub.type = "square";
+    sub.frequency.value = 19;
+    sub.connect(filt);
+    sub.start();
+    oscs.push(sub);
+    filt.connect(gain).connect(synth.sfxGain);
+    this.engine = { oscs, filt, gain };
+    gain.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 0.4);
+    this.events.once("shutdown", () => this.stopEngine());
+  }
+
+  private stopEngine() {
+    const e = this.engine;
+    const ctx = synth.ctx;
+    if (!e || !ctx) return;
+    this.engine = null;
+    e.gain.gain.cancelScheduledValues(ctx.currentTime);
+    e.gain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.15);
+    e.oscs.forEach((o) => o.stop(ctx.currentTime + 0.6));
+  }
+
+  /** Revs follow speed (and a little wobble, like a real engine). */
+  private engineTick(time: number) {
+    const e = this.engine;
+    const ctx = synth.ctx;
+    if (!e || !ctx) return;
+    const k = Math.min(1, this.speed / 14000);
+    const wob = Math.sin(time / 60) * 1.5;
+    const base = 38 + k * 92 + wob;
+    e.oscs.forEach((o, i) => o.frequency.setTargetAtTime(i === 2 ? base / 2 : base, ctx.currentTime, 0.08));
+    e.filt.frequency.setTargetAtTime(350 + k * 1600, ctx.currentTime, 0.1);
+    e.gain.gain.setTargetAtTime(this.running ? 0.12 + k * 0.08 : 0.05, ctx.currentTime, 0.2);
+  }
+
   update(_t: number, delta: number) {
+    this.engineTick(_t);
     const dt = Math.min(delta, 50);
     const k = this.keys;
     if (this.running && !this.box.active) {

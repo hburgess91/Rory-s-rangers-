@@ -6801,6 +6801,45 @@
   },
   "bg_polson_home": {
    "file": "backdrops/bg_polson_home.png"
+  },
+  "tile_lounge": {
+   "file": "tiles/tile_lounge.png"
+  },
+  "dec_lounge_0": {
+   "file": "props/dec_lounge_0.png"
+  },
+  "dec_lounge_1": {
+   "file": "props/dec_lounge_1.png"
+  },
+  "dec_lounge_2": {
+   "file": "props/dec_lounge_2.png"
+  },
+  "lounge_window": {
+   "file": "props/lounge_window.png"
+  },
+  "lounge_guitar": {
+   "file": "props/lounge_guitar.png"
+  },
+  "lounge_table": {
+   "file": "props/lounge_table.png"
+  },
+  "lounge_lamp": {
+   "file": "props/lounge_lamp.png"
+  },
+  "lounge_sign": {
+   "file": "props/lounge_sign.png"
+  },
+  "lounge_cheese": {
+   "file": "props/lounge_cheese.png"
+  },
+  "lounge_rug": {
+   "file": "props/lounge_rug.png"
+  },
+  "wall_lounge": {
+   "file": "props/wall_lounge.png"
+  },
+  "bg_salem_museum": {
+   "file": "backdrops/bg_salem_museum.png"
   }
  },
  "sheets": {
